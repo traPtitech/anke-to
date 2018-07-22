@@ -3,7 +3,8 @@ use_mariadb: true
 
 entrypoint: ./anke-to
 
-PATH=$PATH:$GOPATH/bin
+startup: |
+  PATH=$PATH:$GOPATH/bin
   NS=$GOPATH/src/git.trapti.tech/SysAd
   REPO=$NS/anke-to
   mkdir -p $NS
