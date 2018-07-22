@@ -1,2 +1,18 @@
 type: runtime
 use_mariadb: true
+
+entrypoint: ./anke-to
+
+PATH=$PATH:$GOPATH/bin
+  NS=$GOPATH/src/git.trapti.tech/SysAd
+  REPO=$NS/anke-to
+  mkdir -p $NS
+  ln -s `pwd`/ $REPO
+  go get -u -v github.com/golang/dep/cmd/dep
+  cd $REPO
+  dep ensure
+  go build
+
+http_proxy: 8080
+
+internal: soft
