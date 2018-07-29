@@ -63,6 +63,11 @@ func establishConnection() (*sqlx.DB, error) {
     return sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&loc=Japan&charset=utf8mb4", user, pass, host, dbname))
 }
 
+func getID(c echo.Context) error {
+    user := c.Request().Header.Get("X-Showcase-User")
+
+    return c.String(http.StatusOK, "traQID:" + user);
+}
 
 // echoに追加するハンドラーは型に注意
 // echo.Contextを引数にとってerrorを返り値とする
@@ -217,6 +222,7 @@ func main(){
     e.Use(middleware.Recover())
     
     // Routes
+    e.GET("/", getID)
     e.GET("/questionnaire", getQuestionnaire)
     e.POST("/questionnaire", postQuestionnaire)
     e.PATCH("/questionnaire/:id", editQuestionnaire)

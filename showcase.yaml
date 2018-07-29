@@ -16,4 +16,4 @@ startup: |
 
 http_proxy: 1323
 
-internal: soft
+internal: hard
