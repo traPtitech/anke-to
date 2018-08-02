@@ -17,6 +17,11 @@ startup: |
   npm install
   npm run build
 
+branch:
+  master:
+  client:
+    expose: 1111
+
 http_proxy: 8080
 
 internal: hard
