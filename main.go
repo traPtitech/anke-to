@@ -221,8 +221,11 @@ func main(){
     e.Use(middleware.Logger())
     e.Use(middleware.Recover())
     
+    // Static Files
+    e.Static("/", "client/dist")
+    
     // Routes
-    e.GET("/", getID)
+    //e.GET("/", getID)
     e.GET("/questionnaire", getQuestionnaire)
     e.POST("/questionnaire", postQuestionnaire)
     e.PATCH("/questionnaire/:id", editQuestionnaire)
