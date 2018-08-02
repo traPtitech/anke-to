@@ -13,7 +13,10 @@ startup: |
   cd $REPO
   dep ensure
   go build
+  cd client
+  npm install
+  npm run build
 
-http_proxy: 1323
+http_proxy: 8080
 
 internal: hard
