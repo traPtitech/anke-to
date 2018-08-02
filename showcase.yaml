@@ -13,6 +13,14 @@ startup: |
   cd $REPO
   dep ensure
   go build
+  cd client
+  npm install
+  npm run build
+
+branch:
+  master:
+  client:
+    expose: 1111
 
 http_proxy: 1323
 
