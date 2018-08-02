@@ -22,6 +22,6 @@ branch:
   client:
     expose: 1111
 
-http_proxy: 8080
+http_proxy: 1323
 
 internal: hard
