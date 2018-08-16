@@ -15,7 +15,7 @@ import (
 type questionnaires struct {
     ID              int             `json:"questionnaireID" db:"id"`
     Title           string          `json:"title"           db:"title"`
-    Description     sql.NullString  `json:"description"     db:"description"`
+    Description     string          `json:"description"     db:"description"`
     Res_time_limit  mysql.NullTime  `json:"res_time_limit"  db:"res_time_limit"`
     Deleted_at      mysql.NullTime  `json:"deleted_at"      db:"deleted_at"`
     Res_shared_to   string          `json:"res_shared_to"   db:"res_shared_to"`
@@ -40,14 +40,6 @@ func timeConvert(time mysql.NullTime) string {
         return time.Time.String()
     } else {
         return "NULL"
-    }
-}
-
-func stringConvert(s sql.NullString) string {
-    if s.Valid {
-        return s.String
-    } else {
-        return ""
     }
 }
 
@@ -108,7 +100,7 @@ func getQuestionnaires(c echo.Context) error {
             questionnairesInfo{
                 v.ID,
                 v.Title,
-                stringConvert(v.Description),
+                v.Description,
                 timeConvert(v.Res_time_limit),
                 timeConvert(v.Deleted_at),
                 v.Res_shared_to,
@@ -153,7 +145,7 @@ func getQuestionnaire(c echo.Context) error {
     return c.JSON(http.StatusOK, map[string]interface{}{
         "questionnaireID":  questionnaire.ID,
         "title":            questionnaire.Title,
-        "description":      stringConvert(questionnaire.Description),
+        "description":      questionnaire.Description,
         "res_time_limit":   timeConvert(questionnaire.Res_time_limit),
         "deleted_at":       timeConvert(questionnaire.Deleted_at),
         "created_at":       questionnaire.Created_at,
@@ -201,7 +193,7 @@ func postQuestionnaire(c echo.Context) error {
     }
 
     if req.Title == "" {
-        return c.JSON(http.StatusBadRequest, echo.Map{"error": "name is null"})
+        return c.JSON(http.StatusBadRequest, echo.Map{"error": "title is null"})
     }
     
     if req.Res_shared_to == "" {
@@ -213,12 +205,12 @@ func postQuestionnaire(c echo.Context) error {
     // アンケートの追加    
     if req.Res_time_limit.IsZero() {
         result = db.MustExec(
-            "INSERT INTO questionnaires (title, res_shared_to) VALUES (?, ?)", 
-            req.Title, req.Res_shared_to)
+            "INSERT INTO questionnaires (title, description, res_shared_to) VALUES (?, ?, ?)", 
+            req.Title, req.Description, req.Res_shared_to)
     } else {
         result = db.MustExec(
-            "INSERT INTO questionnaires (title, res_time_limit, res_shared_to) VALUES (?, ?, ?)", 
-            req.Title, req.Res_time_limit, req.Res_shared_to)
+            "INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to) VALUES (?, ?, ?, ?)", 
+            req.Title, req.Description, req.Res_time_limit, req.Res_shared_to)
     }
 
     // エラーチェック
@@ -261,9 +253,16 @@ func postQuestionnaire(c echo.Context) error {
 
 func editQuestionnaire(c echo.Context) error {
     questionnaireID := c.Param("id")
+    
     req := struct {
-        Title string `json:"title"`
+        Title           string      `json:"title"`
+        Description     string      `json:"description"`
+        Res_time_limit  time.Time   `json:"res_time_limit"`
+        Res_shared_to   string      `json:"res_shared_to"`
+        Targets         []string    `json:"targets"`
+        Administrators  []string    `json:"administrators"`
     }{}
+
     err := c.Bind(&req)
     if err != nil {
         return c.JSON(http.StatusInternalServerError, err)
@@ -272,17 +271,31 @@ func editQuestionnaire(c echo.Context) error {
     if req.Title == "" {
         return c.JSON(http.StatusBadRequest, echo.Map{"error": "title is null"})
     }
-
-    // アップデートする
-    result := db.MustExec("UPDATE questionnaires SET title = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?", req.Title, questionnaireID)
-    _, err = result.LastInsertId()
-    if err != nil {
-        return c.JSON(http.StatusInternalServerError, err)
+    
+    if req.Res_shared_to == "" {
+        req.Res_shared_to = "administrators"
     }
 
-    t := questionnaires{}
-    db.Get(&t, "SELECT * FROM questionnaires WHERE id = ?", questionnaireID)
-    return c.JSON(http.StatusOK, t)
+    // アップデートする
+    if req.Res_time_limit.IsZero() {
+        if _, err := db.Exec(
+            "UPDATE questionnaires SET title = ?, description = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?", 
+            req.Title, req.Description, req.Res_shared_to, questionnaireID);
+        err != nil {
+            return c.JSON(http.StatusInternalServerError, err)
+        }
+    } else {
+        if _, err = db.Exec(
+            "UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?", 
+            req.Title, req.Description, req.Res_time_limit, req.Res_shared_to, questionnaireID);
+        err != nil {
+            return c.JSON(http.StatusInternalServerError, err)
+        }
+    }
+
+    // TargetsとAdministratorsの変更はまだ
+
+    return c.NoContent(http.StatusOK)
 }
 
 func deleteQuestionnaire(c echo.Context) error {
