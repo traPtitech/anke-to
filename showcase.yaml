@@ -21,6 +21,9 @@ branch:
   master:
   client:
     expose: 1111
+  db_syusei:
+    expose: 2222
+
 
 http_proxy: 1323
 
