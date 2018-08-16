@@ -57,12 +57,13 @@ func main(){
     e.Static("/", "client/dist")
     
     // Routes
-    //e.GET("/", getID)
     e.GET("/questionnaire", getQuestionnaire)
     e.POST("/questionnaire", postQuestionnaire)
     e.PATCH("/questionnaire/:id", editQuestionnaire)
     e.DELETE("/questionnaire/:id", deleteQuestionnaire)
     e.GET("/questionnaire/:id", getQuestions)
+
+    e.GET("/users/me", getID)
 
     // Start server
     e.Logger.Fatal(e.Start(":1323"))

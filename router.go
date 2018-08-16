@@ -3,6 +3,7 @@ package main
 import (
     "net/http"
     "time"
+    "strconv"
 
     "database/sql"
 
@@ -59,55 +60,36 @@ func getID(c echo.Context) error {
 // echoに追加するハンドラーは型に注意
 // echo.Contextを引数にとってerrorを返り値とする
 func getQuestionnaire(c echo.Context) error {
+    // query parametar
+    sort := c.QueryParam("sort")
+    page := c.QueryParam("page")
+    //nontargeted := c.QueryParam("nontargeted") == "true"
+
+    if page == "" {
+        page = "1"
+    }
+    num, _ := strconv.Atoi(page)
+
+    var list = map[string] string {
+        "":             "",
+        "created_at":   "ORDER BY created_at",
+        "-created_at":  "ORDER BY created_at DESC",
+        "title":        "ORDER BY title",
+        "-title":       "ORDER BY title DESC",
+        "modified_at":  "ORDER BY modified_at",
+        "-modified_at": "ORDER BY modified_at DESC",
+    }
     // アンケート一覧の配列
     allquestionnaires := []questionnaires{}
 
     // これで一気に取れる
-    err := db.Select(&allquestionnaires, "SELECT * FROM questionnaires")
+    err := db.Select(&allquestionnaires, "SELECT * FROM questionnaires " + list[sort] + " lIMIT 20 OFFSET " + strconv.Itoa(20 * (num-1)))
 
     // エラー処理
     if err != nil {
         return c.JSON(http.StatusInternalServerError, err)
     }
-/*
-    type questionnairesInfo struct {
-        ID              int             `json:"questionnaireID"`
-        Title           string          `json:"title"`
-        Description     string          `json:"description"`
-        Res_time_limit  string          `json:"res_time_limit"`
-        Deleted_at      string          `json:"deleted_at"`
-        Res_shared_to   string          `json:"res_shared_to"`
-        Created_at      time.Time       `json:"created_at"`
-        Modified_at     time.Time       `json:"modified_at"`
-        Is_targeted     bool            `json:"is_targeted"`
-    }
-    var ret []questionnairesInfo
-
-    for _, v := range allquestionnaires {
-        var po questionnairesInfo
-        po.ID = v.ID
-        po.Title = v.Title
-        if v.Description.Valid {
-            po.Description = v.Description.String
-        } else {
-            po.Description = ""
-        }
-        if v.Res_time_limit.Valid {
-            po.Res_time_limit = v.Res_time_limit.Time.String()
-        } else {
-            po.Res_time_limit = "NULL"
-        }
-        if v.Deleted_at.Valid {
-            po.Deleted_at = v.Deleted_at.Time.String()
-        } else {
-            po.Deleted_at = "NULL"
-        }
-        po.Res_shared_to = v.Res_shared_to
-        po.Created_at = v.Created_at
-        po.Modified_at = v.Modified_at
-        po.Is_targeted = true;
-        ret = append(ret, po)
-    }*/
+    
     type questionnairesInfo struct {
         ID              int             `json:"questionnaireID"`
         Title           string          `json:"title"`
