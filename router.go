@@ -59,7 +59,7 @@ func getID(c echo.Context) error {
 
 // echoに追加するハンドラーは型に注意
 // echo.Contextを引数にとってerrorを返り値とする
-func getQuestionnaire(c echo.Context) error {
+func getQuestionnaires(c echo.Context) error {
     // query parametar
     sort := c.QueryParam("sort")
     page := c.QueryParam("page")
@@ -120,6 +120,49 @@ func getQuestionnaire(c echo.Context) error {
 
     // 構造体の定義で書いたJSONのキーで変換される
     return c.JSON(http.StatusOK, ret)
+}
+
+func getQuestionnaire(c echo.Context) error {
+
+    questionnaireID := c.Param("id")
+    
+    questionnaire := questionnaires{}
+    if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ?", questionnaireID);
+    err != nil {
+        return c.JSON(http.StatusInternalServerError, err)
+    }
+    
+    targets := []string{}
+    if err := db.Select(&targets, "SELECT user_traqid FROM targets WHERE questionnaire_id = ?", questionnaireID);
+    err != nil {
+        return c.JSON(http.StatusInternalServerError, err)
+    }
+
+    administrators := []string{}
+    if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID);
+    err != nil {
+        return c.JSON(http.StatusInternalServerError, err)
+    }
+
+    respondents := []string{}
+    if err := db.Select(&respondents, "SELECT user_traqid FROM respondents WHERE questionnaire_id = ?", questionnaireID);
+    err != nil {
+        return c.JSON(http.StatusInternalServerError, err)
+    }
+
+    return c.JSON(http.StatusOK, map[string]interface{}{
+        "questionnaireID":  questionnaire.ID,
+        "title":            questionnaire.Title,
+        "description":      stringConvert(questionnaire.Description),
+        "res_time_limit":   timeConvert(questionnaire.Res_time_limit),
+        "deleted_at":       timeConvert(questionnaire.Deleted_at),
+        "created_at":       questionnaire.Created_at,
+        "modified_at":      questionnaire.Modified_at,
+        "res_shared_to":    questionnaire.Res_shared_to,
+        "targets":          targets,
+        "administrators":   administrators,
+        "respondents":      respondents,
+    })
 }
 
 func getQuestions(c echo.Context) error {

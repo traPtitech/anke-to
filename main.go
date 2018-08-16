@@ -57,11 +57,12 @@ func main(){
     e.Static("/", "client/dist")
     
     // Routes
-    e.GET("/questionnaire", getQuestionnaire)
-    e.POST("/questionnaire", postQuestionnaire)
-    e.PATCH("/questionnaire/:id", editQuestionnaire)
-    e.DELETE("/questionnaire/:id", deleteQuestionnaire)
-    e.GET("/questionnaire/:id", getQuestions)
+    e.GET("/questionnaires", getQuestionnaires)
+    e.POST("/questionnaires", postQuestionnaire)
+    e.GET("/questionnaires/:id", getQuestionnaire)
+    e.PATCH("/questionnaires/:id", editQuestionnaire)
+    e.DELETE("/questionnaires/:id", deleteQuestionnaire)
+    //e.GET("/questionnaires/:id", getQuestions)
 
     e.GET("/users/me", getID)
 
