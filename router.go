@@ -33,6 +33,12 @@ type questions struct {
 	CreatedAt       time.Time      `json:"created_at"          db:"created_at"`
 }
 
+type scaleLabels struct {
+	ID        int    `json:"questionID" db:"question_id"`
+	BodyLeft  string `json:"body_left"  db:"body_left"`
+	BodyRight string `json:"body_right" db:"body_right"`
+}
+
 func timeConvert(time mysql.NullTime) string {
 	if time.Valid {
 		return time.Time.String()
@@ -164,8 +170,53 @@ func getQuestions(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	// scale_labelはまだ
-	return c.JSON(http.StatusOK, allquestions)
+	type questionInfo struct {
+		QuestionID      int       `json:"question_ID"`
+		PageNum         int       `json:"page_num"`
+		QuestionNum     int       `json:"question_num"`
+		QuestionType    string    `json:"question_type"`
+		Body            string    `json:"body"`
+		IsRequrired     bool      `json:"is_required"`
+		CreatedAt       time.Time `json:"created_at"`
+		Options         []string  `json:"options"`
+		ScaleLabelRight string    `json:"scale_label_right"`
+		ScaleLabelLeft  string    `json:"scale_label_left"`
+	}
+	var ret []questionInfo
+
+	for _, v := range allquestions {
+		options := []string{}
+		if err := db.Select(
+			&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
+			v.ID); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+		scalelabel := scaleLabels{}
+		if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
+			if err != sql.ErrNoRows {
+				return c.JSON(http.StatusInternalServerError, err)
+			} else {
+				scalelabel.BodyLeft = ""
+				scalelabel.BodyRight = ""
+			}
+		}
+
+		ret = append(ret,
+			questionInfo{
+				QuestionID:      v.ID,
+				PageNum:         v.PageNum,
+				QuestionNum:     v.QuestionNum,
+				QuestionType:    v.Type,
+				Body:            v.Body,
+				IsRequrired:     v.IsRequrired,
+				CreatedAt:       v.CreatedAt,
+				Options:         options,
+				ScaleLabelRight: scalelabel.BodyRight,
+				ScaleLabelLeft:  scalelabel.BodyLeft,
+			})
+	}
+
+	return c.JSON(http.StatusOK, ret)
 }
 
 func postQuestionnaire(c echo.Context) error {
