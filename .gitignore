@@ -18,5 +18,7 @@
 /vendor/
 /Godeps/
 
+# app
+anke-to
 
 # End of https://www.gitignore.io/api/go
