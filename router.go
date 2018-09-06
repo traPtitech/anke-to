@@ -272,19 +272,17 @@ func postQuestionnaire(c echo.Context) error {
 	}
 
 	for _, v := range req.Targets {
-		_, err := db.Exec(
+		if _, err := db.Exec(
 			"INSERT INTO targets (questionnaire_id, user_traqid) VALUES (?, ?)",
-			lastID, v)
-		if err != nil {
+			lastID, v); err != nil {
 			return c.JSON(http.StatusInternalServerError, err)
 		}
 	}
 
 	for _, v := range req.Administrators {
-		_, err := db.Exec(
+		if _, err := db.Exec(
 			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			lastID, v)
-		if err != nil {
+			lastID, v); err != nil {
 			return c.JSON(http.StatusInternalServerError, err)
 		}
 	}
@@ -352,6 +350,155 @@ func deleteQuestionnaire(c echo.Context) error {
 
 	if _, err := db.Exec(
 		"UPDATE questionnaires SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionnaireID); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func getQuestion(c echo.Context) error {
+
+	questionID := c.Param("id")
+
+	question := questions{}
+	if err := db.Get(&question, "SELECT * FROM questions WHERE id = ?", questionID); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	options := []string{}
+	if err := db.Select(&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num", questionID); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	scalelabel := scaleLabels{}
+	if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", questionID); err != nil {
+		if err != sql.ErrNoRows {
+			return c.JSON(http.StatusInternalServerError, err)
+		} else {
+			scalelabel.BodyLeft = ""
+			scalelabel.BodyRight = ""
+		}
+	}
+
+	type questionInfo struct {
+		QuestionID      int       `json:"question_ID"`
+		PageNum         int       `json:"page_num"`
+		QuestionNum     int       `json:"question_num"`
+		QuestionType    string    `json:"question_type"`
+		Body            string    `json:"body"`
+		IsRequrired     bool      `json:"is_required"`
+		CreatedAt       time.Time `json:"created_at"`
+		Options         []string  `json:"options"`
+		ScaleLabelRight string    `json:"scale_label_right"`
+		ScaleLabelLeft  string    `json:"scale_label_left"`
+	}
+
+	return c.JSON(http.StatusOK,
+		questionInfo{
+			QuestionID:      question.ID,
+			PageNum:         question.PageNum,
+			QuestionNum:     question.QuestionNum,
+			QuestionType:    question.Type,
+			Body:            question.Body,
+			IsRequrired:     question.IsRequrired,
+			CreatedAt:       question.CreatedAt,
+			Options:         options,
+			ScaleLabelRight: scalelabel.BodyRight,
+			ScaleLabelLeft:  scalelabel.BodyLeft,
+		})
+}
+
+func postQuestion(c echo.Context) error {
+	req := struct {
+		QuestionnaireID int      `json:"questionnaireID"`
+		QuestionType    string   `json:"question_type"`
+		QuestionNum     int      `json:"question_num"`
+		PageNum         int      `json:"page_num"`
+		Body            string   `json:"body"`
+		IsRequrired     bool     `json:"is_required"`
+		Options         []string `json:"options"`
+		ScaleLabelRight string   `json:"scale_label_right"`
+		ScaleLabelLeft  string   `json:"scale_label_left"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	result, err := db.Exec(
+		"INSERT INTO questions (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
+		req.QuestionnaireID, req.QuestionNum, req.PageNum, req.QuestionType, req.Body, req.IsRequrired)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	lastID, err2 := result.LastInsertId()
+	if err2 != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	for i, v := range req.Options {
+		if _, err := db.Exec(
+			"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
+			lastID, i+1, v); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+	}
+
+	if req.ScaleLabelLeft != "" || req.ScaleLabelRight != "" {
+		if _, err := db.Exec(
+			"INSERT INTO scale_labels (question_id, body_left, body_right) VALUES (?, ?, ?)",
+			lastID, req.ScaleLabelLeft, req.ScaleLabelRight); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"questionID":        int(lastID),
+		"questionnaireID":   req.QuestionnaireID,
+		"question_type":     req.QuestionType,
+		"question_num":      req.QuestionNum,
+		"page_num":          req.PageNum,
+		"body":              req.Body,
+		"is_required":       req.IsRequrired,
+		"options":           req.Options,
+		"scale_label_right": req.ScaleLabelRight,
+		"scale_label_left":  req.ScaleLabelLeft,
+	})
+}
+
+func editQuestion(c echo.Context) error {
+	questionID := c.Param("id")
+
+	req := struct {
+		QuestionnaireID int      `json:"questionnaireID"`
+		QuestionType    string   `json:"question_type"`
+		QuestionNum     int      `json:"question_num"`
+		PageNum         int      `json:"page_num"`
+		Body            string   `json:"body"`
+		IsRequrired     bool     `json:"is_required"`
+		Options         []string `json:"options"`
+		ScaleLabelRight string   `json:"scale_label_right"`
+		ScaleLabelLeft  string   `json:"scale_label_left"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	if _, err := db.Exec(
+		"UPDATE questions SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
+		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func deleteQuestion(c echo.Context) error {
+	questionID := c.Param("id")
+
+	if _, err := db.Exec(
+		"UPDATE questions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionID); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 

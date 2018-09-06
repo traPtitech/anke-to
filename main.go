@@ -64,6 +64,11 @@ func main() {
 	e.DELETE("/questionnaires/:id", deleteQuestionnaire)
 	e.GET("/questionnaires/:id/questions", getQuestions)
 
+	e.POST("/questions", postQuestion)
+	e.GET("/questions/:id", getQuestion)
+	e.PATCH("/questions/:id", editQuestion)
+	e.DELETE("/questions/:id", deleteQuestion)
+
 	e.GET("/users/me", getID)
 
 	// Start server
