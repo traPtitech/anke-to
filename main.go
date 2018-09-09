@@ -47,7 +47,10 @@ func main(){
     db = _db
     
     e := echo.New()
-    e.Use(middleware.CORS())
+    e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+        AllowOrigins: []string{"http://localhost:8080"},
+        AllowCredentials: true,
+    }))
 
     // Middleware
     e.Use(middleware.Logger())

@@ -28,27 +28,14 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from '@/bin/axios'
 
-if (process.env.NODE_ENV === 'development') {
-  axios.defaults.baseURL = 'https://virtserver.swaggerhub.com/60-deg/anke-to/1.0.0/'
-} else {
-  axios.defaults.baseURL = 'https://sysad.trap.show/anke-to/'
-}
 export default {
   name: 'MypageLayout',
   data () {
     return {
       msg: 'mypage',
       questionnaires: [],
-      /* headers: [
-        { item: 'Title' },
-        { item: 'Time Limit' },
-        { item: 'Response' },
-        { item: 'Modified At' },
-        { item: 'Results' },
-        { item: 'Details' }
-      ] */
       headers: ['', 'Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details']
     }
   },
