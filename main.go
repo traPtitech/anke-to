@@ -65,7 +65,6 @@ func main() {
 	e.GET("/questionnaires/:id/questions", getQuestions)
 
 	e.POST("/questions", postQuestion)
-	e.GET("/questions/:id", getQuestion)
 	e.PATCH("/questions/:id", editQuestion)
 	e.DELETE("/questions/:id", deleteQuestion)
 

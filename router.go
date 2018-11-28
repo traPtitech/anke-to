@@ -55,7 +55,6 @@ func getID(c echo.Context) error {
 	})
 }
 
-// echoに追加するハンドラーは型に注意
 // echo.Contextを引数にとってerrorを返り値とする
 func getQuestionnaires(c echo.Context) error {
 	// query parametar
@@ -84,7 +83,7 @@ func getQuestionnaires(c echo.Context) error {
 	allquestionnaires := []questionnaires{}
 
 	if err := db.Select(&allquestionnaires,
-		"SELECT * FROM questionnaires "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
+		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -93,7 +92,6 @@ func getQuestionnaires(c echo.Context) error {
 		Title        string    `json:"title"`
 		Description  string    `json:"description"`
 		ResTimeLimit string    `json:"res_time_limit"`
-		DeletedAt    string    `json:"deleted_at"`
 		ResSharedTo  string    `json:"res_shared_to"`
 		CreatedAt    time.Time `json:"created_at"`
 		ModifiedAt   time.Time `json:"modified_at"`
@@ -108,7 +106,6 @@ func getQuestionnaires(c echo.Context) error {
 				Title:        v.Title,
 				Description:  v.Description,
 				ResTimeLimit: timeConvert(v.ResTimeLimit),
-				DeletedAt:    timeConvert(v.DeletedAt),
 				ResSharedTo:  v.ResSharedTo,
 				CreatedAt:    v.CreatedAt,
 				ModifiedAt:   v.ModifiedAt,
@@ -125,7 +122,7 @@ func getQuestionnaire(c echo.Context) error {
 	questionnaireID := c.Param("id")
 
 	questionnaire := questionnaires{}
-	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ?", questionnaireID); err != nil {
+	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -149,7 +146,6 @@ func getQuestionnaire(c echo.Context) error {
 		"title":           questionnaire.Title,
 		"description":     questionnaire.Description,
 		"res_time_limit":  timeConvert(questionnaire.ResTimeLimit),
-		"deleted_at":      timeConvert(questionnaire.DeletedAt),
 		"created_at":      questionnaire.CreatedAt,
 		"modified_at":     questionnaire.ModifiedAt,
 		"res_shared_to":   questionnaire.ResSharedTo,
@@ -166,7 +162,7 @@ func getQuestions(c echo.Context) error {
 
 	// アンケートidの一致する質問を取る
 	if err := db.Select(
-		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ?", questionnaireID); err != nil {
+		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -186,18 +182,23 @@ func getQuestions(c echo.Context) error {
 
 	for _, v := range allquestions {
 		options := []string{}
-		if err := db.Select(
-			&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
-			v.ID); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
-		}
 		scalelabel := scaleLabels{}
-		if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
-			if err != sql.ErrNoRows {
+
+		switch v.Type {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			if err := db.Select(
+				&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
+				v.ID); err != nil {
 				return c.JSON(http.StatusInternalServerError, err)
-			} else {
-				scalelabel.BodyLeft = ""
-				scalelabel.BodyRight = ""
+			}
+		case "LinearScale":
+			if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
+				if err != sql.ErrNoRows {
+					return c.JSON(http.StatusInternalServerError, err)
+				} else {
+					scalelabel.BodyLeft = ""
+					scalelabel.BodyRight = ""
+				}
 			}
 		}
 
@@ -356,57 +357,6 @@ func deleteQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func getQuestion(c echo.Context) error {
-
-	questionID := c.Param("id")
-
-	question := questions{}
-	if err := db.Get(&question, "SELECT * FROM questions WHERE id = ?", questionID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
-	options := []string{}
-	if err := db.Select(&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num", questionID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-	scalelabel := scaleLabels{}
-	if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", questionID); err != nil {
-		if err != sql.ErrNoRows {
-			return c.JSON(http.StatusInternalServerError, err)
-		} else {
-			scalelabel.BodyLeft = ""
-			scalelabel.BodyRight = ""
-		}
-	}
-
-	type questionInfo struct {
-		QuestionID      int       `json:"question_ID"`
-		PageNum         int       `json:"page_num"`
-		QuestionNum     int       `json:"question_num"`
-		QuestionType    string    `json:"question_type"`
-		Body            string    `json:"body"`
-		IsRequrired     bool      `json:"is_required"`
-		CreatedAt       time.Time `json:"created_at"`
-		Options         []string  `json:"options"`
-		ScaleLabelRight string    `json:"scale_label_right"`
-		ScaleLabelLeft  string    `json:"scale_label_left"`
-	}
-
-	return c.JSON(http.StatusOK,
-		questionInfo{
-			QuestionID:      question.ID,
-			PageNum:         question.PageNum,
-			QuestionNum:     question.QuestionNum,
-			QuestionType:    question.Type,
-			Body:            question.Body,
-			IsRequrired:     question.IsRequrired,
-			CreatedAt:       question.CreatedAt,
-			Options:         options,
-			ScaleLabelRight: scalelabel.BodyRight,
-			ScaleLabelLeft:  scalelabel.BodyLeft,
-		})
-}
-
 func postQuestion(c echo.Context) error {
 	req := struct {
 		QuestionnaireID int      `json:"questionnaireID"`
@@ -490,6 +440,10 @@ func editQuestion(c echo.Context) error {
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
+	/*
+		switch req.QuestionType {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+		case "LinearScale":*/
 
 	return c.NoContent(http.StatusOK)
 }
