@@ -34,9 +34,11 @@ type questions struct {
 }
 
 type scaleLabels struct {
-	ID        int    `json:"questionID" db:"question_id"`
-	BodyLeft  string `json:"body_left"  db:"body_left"`
-	BodyRight string `json:"body_right" db:"body_right"`
+	ID              int    `json:"questionID" db:"question_id"`
+	ScaleLabelRight string `json:"scale_label_right" db:"scale_label_right"`
+	ScaleLabelLeft  string `json:"scale_label_left"  db:"scale_label_left"`
+	ScaleMin        int    `json:"scale_min" db:"scale_min"`
+	ScaleMax        int    `json:"scale_max" db:"scale_max"`
 }
 
 func timeConvert(time mysql.NullTime) string {
@@ -177,6 +179,8 @@ func getQuestions(c echo.Context) error {
 		Options         []string  `json:"options"`
 		ScaleLabelRight string    `json:"scale_label_right"`
 		ScaleLabelLeft  string    `json:"scale_label_left"`
+		ScaleMin        int       `json:scale_min`
+		ScaleMax        int       `json:sclae_max`
 	}
 	var ret []questionInfo
 
@@ -196,8 +200,10 @@ func getQuestions(c echo.Context) error {
 				if err != sql.ErrNoRows {
 					return c.JSON(http.StatusInternalServerError, err)
 				} else {
-					scalelabel.BodyLeft = ""
-					scalelabel.BodyRight = ""
+					scalelabel.ScaleLabelLeft = ""
+					scalelabel.ScaleLabelRight = ""
+					scalelabel.ScaleMin = 0
+					scalelabel.ScaleMax = 0
 				}
 			}
 		}
@@ -212,8 +218,10 @@ func getQuestions(c echo.Context) error {
 				IsRequrired:     v.IsRequrired,
 				CreatedAt:       v.CreatedAt,
 				Options:         options,
-				ScaleLabelRight: scalelabel.BodyRight,
-				ScaleLabelLeft:  scalelabel.BodyLeft,
+				ScaleLabelRight: scalelabel.ScaleLabelRight,
+				ScaleLabelLeft:  scalelabel.ScaleLabelLeft,
+				ScaleMin:        scalelabel.ScaleMin,
+				ScaleMax:        scalelabel.ScaleMin,
 			})
 	}
 
