@@ -345,6 +345,8 @@ func postQuestion(c echo.Context) error {
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
 		ScaleLabelLeft  string   `json:"scale_label_left"`
+		ScaleMin        int      `json:"scale_min"`
+		ScaleMax        int      `json:"scale_max"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -373,8 +375,8 @@ func postQuestion(c echo.Context) error {
 
 	if req.ScaleLabelLeft != "" || req.ScaleLabelRight != "" {
 		if _, err := db.Exec(
-			"INSERT INTO scale_labels (question_id, body_left, body_right) VALUES (?, ?, ?)",
-			lastID, req.ScaleLabelLeft, req.ScaleLabelRight); err != nil {
+			"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
+			lastID, req.ScaleLabelLeft, req.ScaleLabelRight, req.ScaleMin, req.ScaleMax); err != nil {
 			return c.JSON(http.StatusInternalServerError, err)
 		}
 	}
@@ -390,6 +392,8 @@ func postQuestion(c echo.Context) error {
 		"options":           req.Options,
 		"scale_label_right": req.ScaleLabelRight,
 		"scale_label_left":  req.ScaleLabelLeft,
+		"scale_max":         req.ScaleMax,
+		"scale_min":         req.ScaleMin,
 	})
 }
 
