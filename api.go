@@ -422,10 +422,23 @@ func editQuestion(c echo.Context) error {
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	/*
-		switch req.QuestionType {
-		case "MultipleChoice", "Checkbox", "Dropdown":
-		case "LinearScale":*/
+
+	switch req.QuestionType {
+	case "MultipleChoice", "Checkbox", "Dropdown":
+		for i, v := range req.Options {
+			if _, err := db.Exec(
+				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE option_num = ?, body = ?",
+				questionID, i+1, v, i+1, v); err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+		}
+		if _, err := db.Exec(
+			"DELETE FROM options WHERE question_id= ? AND option_num > ?",
+			questionID, len(req.Options)); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+	case "LinearScale":
+	}
 
 	return c.NoContent(http.StatusOK)
 }
