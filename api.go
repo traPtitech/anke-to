@@ -365,15 +365,16 @@ func postQuestion(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	for i, v := range req.Options {
-		if _, err := db.Exec(
-			"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
-			lastID, i+1, v); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+	switch req.QuestionType {
+	case "MultipleChoice", "Checkbox", "Dropdown":
+		for i, v := range req.Options {
+			if _, err := db.Exec(
+				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
+				lastID, i+1, v); err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
 		}
-	}
-
-	if req.ScaleLabelLeft != "" || req.ScaleLabelRight != "" {
+	case "LinearScale":
 		if _, err := db.Exec(
 			"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
 			lastID, req.ScaleLabelLeft, req.ScaleLabelRight, req.ScaleMin, req.ScaleMax); err != nil {
