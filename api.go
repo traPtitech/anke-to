@@ -355,7 +355,7 @@ func postQuestion(c echo.Context) error {
 
 	result, err := db.Exec(
 		"INSERT INTO questions (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
-		req.QuestionnaireID, req.QuestionNum, req.PageNum, req.QuestionType, req.Body, req.IsRequrired)
+		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
