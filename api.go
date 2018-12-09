@@ -411,6 +411,8 @@ func editQuestion(c echo.Context) error {
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
 		ScaleLabelLeft  string   `json:"scale_label_left"`
+		ScaleMax        int      `json:"scale_max"`
+		ScaleMin        int      `json:"scale_min"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -427,7 +429,8 @@ func editQuestion(c echo.Context) error {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
 			if _, err := db.Exec(
-				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE option_num = ?, body = ?",
+				`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
+				ON DUPLICATE KEY UPDATE option_num = ?, body = ?`,
 				questionID, i+1, v, i+1, v); err != nil {
 				return c.JSON(http.StatusInternalServerError, err)
 			}
@@ -438,6 +441,14 @@ func editQuestion(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
+		if _, err := db.Exec(
+			`INSERT INTO scale_labels (question_id, scale_label_right, scale_label_left, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE scale_label_right = ?, scale_label_left = ?, scale_min = ?, scale_max = ?`,
+			questionID,
+			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax,
+			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
