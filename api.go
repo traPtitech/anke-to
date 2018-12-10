@@ -38,7 +38,8 @@ func getQuestionnaires(c echo.Context) error {
 	}
 	num, err := strconv.Atoi(page)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	var list = map[string]string{
@@ -55,7 +56,12 @@ func getQuestionnaires(c echo.Context) error {
 
 	if err := db.Select(&allquestionnaires,
 		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	type questionnairesInfo struct {
@@ -94,22 +100,30 @@ func getQuestionnaire(c echo.Context) error {
 
 	questionnaire := questionnaires{}
 	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	targets := []string{}
 	if err := db.Select(&targets, "SELECT user_traqid FROM targets WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	administrators := []string{}
 	if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	respondents := []string{}
 	if err := db.Select(&respondents, "SELECT user_traqid FROM respondents WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -134,7 +148,12 @@ func getQuestions(c echo.Context) error {
 	// アンケートidの一致する質問を取る
 	if err := db.Select(
 		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	type questionInfo struct {
@@ -148,8 +167,8 @@ func getQuestions(c echo.Context) error {
 		Options         []string  `json:"options"`
 		ScaleLabelRight string    `json:"scale_label_right"`
 		ScaleLabelLeft  string    `json:"scale_label_left"`
-		ScaleMin        int       `json:scale_min`
-		ScaleMax        int       `json:sclae_max`
+		ScaleMin        int       `json:"scale_min"`
+		ScaleMax        int       `json:"sclae_max"`
 	}
 	var ret []questionInfo
 
@@ -162,18 +181,13 @@ func getQuestions(c echo.Context) error {
 			if err := db.Select(
 				&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
 				v.ID); err != nil {
-				return c.JSON(http.StatusInternalServerError, err)
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		case "LinearScale":
 			if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
-				if err != sql.ErrNoRows {
-					return c.JSON(http.StatusInternalServerError, err)
-				} else {
-					scalelabel.ScaleLabelLeft = ""
-					scalelabel.ScaleLabelRight = ""
-					scalelabel.ScaleMin = 0
-					scalelabel.ScaleMax = 0
-				}
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 
@@ -211,11 +225,8 @@ func postQuestionnaire(c echo.Context) error {
 
 	// JSONを構造体につける
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
-	if req.Title == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "title is null"})
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if req.ResSharedTo == "" {
@@ -231,7 +242,8 @@ func postQuestionnaire(c echo.Context) error {
 			"INSERT INTO questionnaires (title, description, res_shared_to) VALUES (?, ?, ?)",
 			req.Title, req.Description, req.ResSharedTo)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		var err error
@@ -239,21 +251,24 @@ func postQuestionnaire(c echo.Context) error {
 			"INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to) VALUES (?, ?, ?, ?)",
 			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	// エラーチェック
 	lastID, err := result.LastInsertId()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	for _, v := range req.Targets {
 		if _, err := db.Exec(
 			"INSERT INTO targets (questionnaire_id, user_traqid) VALUES (?, ?)",
 			lastID, v); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -261,7 +276,8 @@ func postQuestionnaire(c echo.Context) error {
 		if _, err := db.Exec(
 			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
 			lastID, v); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -292,11 +308,8 @@ func editQuestionnaire(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
-	if req.Title == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "title is null"})
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if req.ResSharedTo == "" {
@@ -308,13 +321,15 @@ func editQuestionnaire(c echo.Context) error {
 		if _, err := db.Exec(
 			"UPDATE questionnaires SET title = ?, description = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
 			req.Title, req.Description, req.ResSharedTo, questionnaireID); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		if _, err := db.Exec(
 			"UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
 			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -328,7 +343,8 @@ func deleteQuestionnaire(c echo.Context) error {
 
 	if _, err := db.Exec(
 		"UPDATE questionnaires SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionnaireID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -350,19 +366,22 @@ func postQuestion(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	result, err := db.Exec(
 		"INSERT INTO questions (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	lastID, err2 := result.LastInsertId()
 	if err2 != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	switch req.QuestionType {
@@ -371,14 +390,16 @@ func postQuestion(c echo.Context) error {
 			if _, err := db.Exec(
 				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
 				lastID, i+1, v); err != nil {
-				return c.JSON(http.StatusInternalServerError, err)
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 	case "LinearScale":
 		if _, err := db.Exec(
 			"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
 			lastID, req.ScaleLabelLeft, req.ScaleLabelRight, req.ScaleMin, req.ScaleMax); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -416,13 +437,15 @@ func editQuestion(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if _, err := db.Exec(
 		"UPDATE questions SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	switch req.QuestionType {
@@ -432,13 +455,15 @@ func editQuestion(c echo.Context) error {
 				`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
 				ON DUPLICATE KEY UPDATE option_num = ?, body = ?`,
 				questionID, i+1, v, i+1, v); err != nil {
-				return c.JSON(http.StatusInternalServerError, err)
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 		if _, err := db.Exec(
 			"DELETE FROM options WHERE question_id= ? AND option_num > ?",
 			questionID, len(req.Options)); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	case "LinearScale":
 		if _, err := db.Exec(
@@ -447,7 +472,8 @@ func editQuestion(c echo.Context) error {
 			questionID,
 			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax,
 			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax); err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -459,7 +485,8 @@ func deleteQuestion(c echo.Context) error {
 
 	if _, err := db.Exec(
 		"UPDATE questions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionID); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusOK)
