@@ -57,11 +57,11 @@ func getQuestionnaires(c echo.Context) error {
 	if err := db.Select(&allquestionnaires,
 		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
 		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if len(allquestionnaires) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	type questionnairesInfo struct {
@@ -149,11 +149,11 @@ func getQuestions(c echo.Context) error {
 	if err := db.Select(
 		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if len(allquestions) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	type questionInfo struct {
