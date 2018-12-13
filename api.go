@@ -22,12 +22,12 @@ func getUserID(c echo.Context) string {
 	return c.Request().Header.Get("X-Showcase-User")
 }
 
-// echo.Contextを引数にとってerrorを返り値とする
-func getQuestionnaires(c echo.Context) error {
+// エラーが起きれば(nil, err)
+// 起こらなければ(allquestions, nil)を返す
+func getAllQuestionnaires(c echo.Context) ([]questionnaires, error) {
 	// query parametar
 	sort := c.QueryParam("sort")
 	page := c.QueryParam("page")
-	nontargeted := c.QueryParam("nontargeted") == "true"
 
 	if page == "" {
 		page = "1"
@@ -35,7 +35,7 @@ func getQuestionnaires(c echo.Context) error {
 	num, err := strconv.Atoi(page)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return nil, echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	var list = map[string]string{
@@ -53,7 +53,19 @@ func getQuestionnaires(c echo.Context) error {
 	if err := db.Select(&allquestionnaires,
 		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return allquestionnaires, nil
+}
+
+// echo.Contextを引数にとってerrorを返り値とする
+func getQuestionnaires(c echo.Context) error {
+	// query parametar
+	nontargeted := c.QueryParam("nontargeted") == "true"
+
+	allquestionnaires, err := getAllQuestionnaires(c)
+	if err != nil {
+		return err
 	}
 
 	userID := getUserID(c)
