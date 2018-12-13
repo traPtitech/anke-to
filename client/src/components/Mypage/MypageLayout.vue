@@ -1,29 +1,22 @@
 <template>
   <div class="wrapper">
-    <table class="table is-striped">
+    <p>自分が対象になっているアンケートの一覧</p>
+    <!-- <table class="box">
       <thead>
         <tr>
-          <th v-for="header in headers" :key="header.id">
-            {{ header }}
-          </th>
+          <th v-for="header in headers" :key="header.id">{{ header }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="questionnaire in questionnaires" :key="questionnaire.questionnaireID">
           <td></td>
-          <td>
-            {{ questionnaire.title }}
-          </td>
-          <td>
-            {{ questionnaire.res_time_limit }}
-          </td>
+          <td>{{ questionnaire.title }}</td>
+          <td>{{ questionnaire.res_time_limit }}</td>
           <td></td>
-          <td>
-            {{ questionnaire.modified_at }}
-          </td>
+          <td>{{ questionnaire.modified_at }}</td>
         </tr>
       </tbody>
-    </table>
+    </table>-->
   </div>
 </template>
 
