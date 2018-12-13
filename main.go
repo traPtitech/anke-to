@@ -58,7 +58,14 @@ func main() {
 	e.Static("/", "client/dist")
 
 	// Routes
-	e.GET("/questionnaires", getQuestionnaires)
+	e.GET("/questionnaires", func(c echo.Context) error {
+		if c.QueryParam("nontargeted") == "true" {
+			return getQuestionnaires(c, TargetType(Nontargeted))
+		} else {
+			return getQuestionnaires(c, TargetType(All))
+		}
+	})
+
 	e.POST("/questionnaires", postQuestionnaire)
 	e.GET("/questionnaires/:id", getQuestionnaire)
 	e.PATCH("/questionnaires/:id", editQuestionnaire)
@@ -73,6 +80,10 @@ func main() {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"traqID": getUserID(c),
 		})
+	})
+
+	e.GET("/users/me/targeted", func(c echo.Context) error {
+		return getQuestionnaires(c, TargetType(Targeted))
 	})
 
 	// Start server

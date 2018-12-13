@@ -58,10 +58,18 @@ func getAllQuestionnaires(c echo.Context) ([]questionnaires, error) {
 	return allquestionnaires, nil
 }
 
+type TargetType int
+
+const (
+	Targeted = iota
+	Nontargeted
+	All
+)
+
 // echo.Contextを引数にとってerrorを返り値とする
-func getQuestionnaires(c echo.Context) error {
-	// query parametar
-	nontargeted := c.QueryParam("nontargeted") == "true"
+func getQuestionnaires(c echo.Context, targettype TargetType) error { /*
+		// query parametar
+		nontargeted := c.QueryParam("nontargeted") == "true"*/
 
 	allquestionnaires, err := getAllQuestionnaires(c)
 	if err != nil {
@@ -100,18 +108,19 @@ func getQuestionnaires(c echo.Context) error {
 				targeted = true
 			}
 		}
-		if !nontargeted || targeted {
-			ret = append(ret,
-				questionnairesInfo{
-					ID:           v.ID,
-					Title:        v.Title,
-					Description:  v.Description,
-					ResTimeLimit: timeConvert(v.ResTimeLimit),
-					ResSharedTo:  v.ResSharedTo,
-					CreatedAt:    v.CreatedAt,
-					ModifiedAt:   v.ModifiedAt,
-					IsTargeted:   targeted})
+		if (targettype == TargetType(Targeted) && !targeted) || (targettype == TargetType(Nontargeted) && targeted) {
+			continue
 		}
+		ret = append(ret,
+			questionnairesInfo{
+				ID:           v.ID,
+				Title:        v.Title,
+				Description:  v.Description,
+				ResTimeLimit: timeConvert(v.ResTimeLimit),
+				ResSharedTo:  v.ResSharedTo,
+				CreatedAt:    v.CreatedAt,
+				ModifiedAt:   v.ModifiedAt,
+				IsTargeted:   targeted})
 	}
 
 	if len(ret) == 0 {
