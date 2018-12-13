@@ -19,19 +19,19 @@ export default {
       menuItems: [
         {
           name: 'MyPage',
-          url: '/',
+          url: '/'
         },
         {
           name: 'Created',
-          url: '/created',
+          url: '/created'
         },
         {
           name: 'Answered',
-          url: '/answered',
+          url: '/answered'
         },
         {
           name: 'Explorer',
-          url: '/explorer',
+          url: '/explorer'
         }
       ]
     }

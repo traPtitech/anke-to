@@ -58,6 +58,8 @@ func main(){
     
     // Static Files
     e.Static("/", "client/dist")
+    e.Static("/static", "client/dist/static")
+    e.File("*", "client/dist/index.html")
     
     // Routes
     e.GET("/questionnaires", getQuestionnaires)
