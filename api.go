@@ -18,12 +18,8 @@ func timeConvert(time mysql.NullTime) string {
 	}
 }
 
-func getID(c echo.Context) error {
-	user := c.Request().Header.Get("X-Showcase-User")
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"traqID": user,
-	})
+func getUserID(c echo.Context) string {
+	return c.Request().Header.Get("X-Showcase-User")
 }
 
 // echo.Contextを引数にとってerrorを返り値とする
@@ -31,7 +27,7 @@ func getQuestionnaires(c echo.Context) error {
 	// query parametar
 	sort := c.QueryParam("sort")
 	page := c.QueryParam("page")
-	//nontargeted := c.QueryParam("nontargeted") == "true"
+	nontargeted := c.QueryParam("nontargeted") == "true"
 
 	if page == "" {
 		page = "1"
@@ -60,8 +56,17 @@ func getQuestionnaires(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if len(allquestionnaires) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
+	userID := getUserID(c)
+	// test用
+	if userID == "" {
+		userID = "mds_boy"
+	}
+
+	targetedQuestionnaireID := []int{}
+	if err := db.Select(&targetedQuestionnaireID,
+		"SELECT questionnaire_id FROM targets WHERE user_traqid = ?", userID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	type questionnairesInfo struct {
@@ -77,17 +82,28 @@ func getQuestionnaires(c echo.Context) error {
 	var ret []questionnairesInfo
 
 	for _, v := range allquestionnaires {
-		ret = append(ret,
-			questionnairesInfo{
-				ID:           v.ID,
-				Title:        v.Title,
-				Description:  v.Description,
-				ResTimeLimit: timeConvert(v.ResTimeLimit),
-				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt,
-				ModifiedAt:   v.ModifiedAt,
-				// とりあえず仮でtrueにしている
-				IsTargeted: true})
+		var targeted = false
+		for _, w := range targetedQuestionnaireID {
+			if w == v.ID {
+				targeted = true
+			}
+		}
+		if !nontargeted || targeted {
+			ret = append(ret,
+				questionnairesInfo{
+					ID:           v.ID,
+					Title:        v.Title,
+					Description:  v.Description,
+					ResTimeLimit: timeConvert(v.ResTimeLimit),
+					ResSharedTo:  v.ResSharedTo,
+					CreatedAt:    v.CreatedAt,
+					ModifiedAt:   v.ModifiedAt,
+					IsTargeted:   targeted})
+		}
+	}
+
+	if len(ret) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// 構造体の定義で書いたJSONのキーで変換される

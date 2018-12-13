@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/labstack/echo"
@@ -68,7 +69,11 @@ func main() {
 	e.PATCH("/questions/:id", editQuestion)
 	e.DELETE("/questions/:id", deleteQuestion)
 
-	e.GET("/users/me", getID)
+	e.GET("/users/me", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"traqID": getUserID(c),
+		})
+	})
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
