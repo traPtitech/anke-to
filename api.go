@@ -67,10 +67,7 @@ const (
 )
 
 // echo.Contextを引数にとってerrorを返り値とする
-func getQuestionnaires(c echo.Context, targettype TargetType) error { /*
-		// query parametar
-		nontargeted := c.QueryParam("nontargeted") == "true"*/
-
+func getQuestionnaires(c echo.Context, targettype TargetType) error {
 	allquestionnaires, err := getAllQuestionnaires(c)
 	if err != nil {
 		return err
@@ -266,10 +263,6 @@ func postQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if req.ResSharedTo == "" {
-		req.ResSharedTo = "administrators"
-	}
-
 	var result sql.Result
 
 	// アンケートの追加
@@ -370,7 +363,37 @@ func editQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	// TargetsとAdministratorsの変更はまだ
+	if _, err := db.Exec(
+		"DELETE from targets WHERE questionnaire_id = ?",
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	for _, v := range req.Targets {
+		if _, err := db.Exec(
+			"INSERT INTO targets (questionnaire_id, user_traqid) VALUES (?, ?)",
+			questionnaireID, v); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	if _, err := db.Exec(
+		"DELETE from administrators WHERE questionnaire_id = ?",
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	for _, v := range req.Administrators {
+		if _, err := db.Exec(
+			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
+			questionnaireID, v); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
 
 	return c.NoContent(http.StatusOK)
 }
