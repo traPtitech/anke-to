@@ -277,14 +277,6 @@ func editQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := InsertTargets(c, questionnaireID, req.Targets); err != nil {
-		return err
-	}
-
-	if err := DeleteAdministrators(c, questionnaireID); err != nil {
-		return err
-	}
-
 	if err := InsertAdministrators(c, questionnaireID, req.Administrators); err != nil {
 		return err
 	}
@@ -305,7 +297,7 @@ func deleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if err := DeleteAdministrators(c, questionnaireID); err != nil {
+	if err := DeleteTargets(c, questionnaireID); err != nil {
 		return err
 	}
 

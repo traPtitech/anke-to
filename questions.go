@@ -217,5 +217,18 @@ func deleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	if _, err := db.Exec(
+		"DELETE FROM options WHERE question_id= ?",
+		questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if _, err := db.Exec(
+		"DELETE FROM options WHERE question_id= ?",
+		questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	return c.NoContent(http.StatusOK)
 }
