@@ -109,7 +109,10 @@ func getQuestionnaires(c echo.Context, targettype TargetType) error {
 
 func getQuestionnaire(c echo.Context) error {
 
-	questionnaireID := c.Param("id")
+	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
 
 	questionnaire := questionnaires{}
 	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
@@ -121,16 +124,14 @@ func getQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	targets := []string{}
-	if err := db.Select(&targets, "SELECT user_traqid FROM targets WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	targets, err := GetTargets(c, questionnaireID)
+	if err != nil {
+		return err
 	}
 
-	administrators := []string{}
-	if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	administrators, err := GetAdministrators(c, questionnaireID)
+	if err != nil {
+		return err
 	}
 
 	respondents := []string{}
@@ -194,29 +195,18 @@ func postQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	// エラーチェック
 	lastID, err := result.LastInsertId()
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	for _, v := range req.Targets {
-		if _, err := db.Exec(
-			"INSERT INTO targets (questionnaire_id, user_traqid) VALUES (?, ?)",
-			lastID, v); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := InsertTargets(c, int(lastID), req.Targets); err != nil {
+		return err
 	}
 
-	for _, v := range req.Administrators {
-		if _, err := db.Exec(
-			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			lastID, v); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := InsertAdministrators(c, int(lastID), req.Administrators); err != nil {
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
@@ -234,7 +224,11 @@ func postQuestionnaire(c echo.Context) error {
 }
 
 func editQuestionnaire(c echo.Context) error {
-	questionnaireID := c.Param("id")
+
+	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
 
 	req := struct {
 		Title          string    `json:"title"`
@@ -271,48 +265,52 @@ func editQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	if _, err := db.Exec(
-		"DELETE from targets WHERE questionnaire_id = ?",
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := DeleteTargets(c, questionnaireID); err != nil {
+		return err
 	}
 
-	for _, v := range req.Targets {
-		if _, err := db.Exec(
-			"INSERT INTO targets (questionnaire_id, user_traqid) VALUES (?, ?)",
-			questionnaireID, v); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := InsertTargets(c, questionnaireID, req.Targets); err != nil {
+		return err
 	}
 
-	if _, err := db.Exec(
-		"DELETE from administrators WHERE questionnaire_id = ?",
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := DeleteAdministrators(c, questionnaireID); err != nil {
+		return err
 	}
 
-	for _, v := range req.Administrators {
-		if _, err := db.Exec(
-			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			questionnaireID, v); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := InsertTargets(c, questionnaireID, req.Targets); err != nil {
+		return err
+	}
+
+	if err := DeleteAdministrators(c, questionnaireID); err != nil {
+		return err
+	}
+
+	if err := InsertAdministrators(c, questionnaireID, req.Administrators); err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
 }
 
 func deleteQuestionnaire(c echo.Context) error {
-	questionnaireID := c.Param("id")
+
+	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
 
 	if _, err := db.Exec(
 		"UPDATE questionnaires SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if err := DeleteAdministrators(c, questionnaireID); err != nil {
+		return err
+	}
+
+	if err := DeleteAdministrators(c, questionnaireID); err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
