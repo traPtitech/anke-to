@@ -1,59 +1,70 @@
 <template>
   <div class="wrapper">
-    <p>自分が対象になっているアンケートの一覧</p>
-    <!-- <table class="box">
-      <thead>
-        <tr>
-          <th v-for="header in headers" :key="header.id">{{ header }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="questionnaire in questionnaires" :key="questionnaire.questionnaireID">
-          <td></td>
-          <td>{{ questionnaire.title }}</td>
-          <td>{{ questionnaire.res_time_limit }}</td>
-          <td></td>
-          <td>{{ questionnaire.modified_at }}</td>
-        </tr>
-      </tbody>
-    </table>-->
+    <customtable :headers="headers" :itemrows="itemrows"></customtable>
+    <!-- -->
   </div>
 </template>
 
 <script>
 import axios from '@/bin/axios'
+import Table from '@/components/Main/Table.vue'
 
 export default {
   name: 'MypageLayout',
-  data () {
-    return {
-      msg: 'mypage',
-      questionnaires: [],
-      headers: ['', 'Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details']
-    }
+  components: {
+    'customtable': Table
   },
   async created () {
-    const resp = await axios.get('/questionnaires')
+    const resp = await axios.get('/users/me/targeted')
     this.questionnaires = resp.data
+  },
+  props: {
+    traqId: {
+      type: String,
+      required: true
+    }
+  },
+  data () {
+    return {
+      questionnaires: [],
+      headers: ['Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details']
+    }
+  },
+  computed: {
+    itemrows () {
+      let row = []
+      let rows = []
+      for (var i = 0; i < this.questionnaires.length; i++) {
+        row[0] = this.questionnaires[i].title
+        row[1] = this.questionnaires[i].res_time_limit
+        row[2] = this.hasResponded(i) ? 'sent' : '-' // saved も返せるようにしたさ
+        row[3] = this.questionnaires[i].modified_at
+        row[4] = this.getResultsLinkHtml(this.questionnaires[i].questionnaireID)
+        row[5] = this.getDetailsLinkHtml(this.questionnaires[i].questionnaireID)
+        rows.push(row)
+      }
+      return rows
+    }
+  },
+  methods: {
+    hasResponded (index) {
+      // 回答送信済み : ✔︎, 未送 : !
+      return this.questionnaires[index].responded_at != null
+    },
+    getResultsLinkHtml (id) {
+      return '<a href="/results/' + id + '">link</a>'
+    },
+    getDetailsLinkHtml (id) {
+      return '<a href="/questionnaires/' + id + '">link</a>'
+    }
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1,
-h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+.box {
+  width: fit-content;
+  margin: 1rem 2rem;
 }
 </style>

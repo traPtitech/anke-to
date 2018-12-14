@@ -4,18 +4,20 @@
       @toggle-side-menu="toggleSideMenu"
       @close-side-menu="closeSideMenu"
       :isSideMenuActive="isSideMenuActive"
+      :traqId="traqId"
     ></top-navbar>
     <div class="columns is-fullheight">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
       <side-menu class="sidemenu" v-show="isSideMenuActive"></side-menu>
       <div class="column app-main" @click="closeSideMenu">
-        <router-view></router-view>
+        <router-view :traqId="traqId"></router-view>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from '@/bin/axios'
 import TopNavbar from './components/Main/TopNavbar.vue'
 import SideMenu from './components/Main/SideMenu.vue'
 export default {
@@ -24,9 +26,19 @@ export default {
     'top-navbar': TopNavbar,
     'side-menu': SideMenu
   },
+  async created () {
+    const resp = await axios.get('/users/me')
+    this.user = resp.data
+  },
   data () {
     return {
-      isSideMenuActive: false
+      isSideMenuActive: false,
+      user: {}
+    }
+  },
+  computed: {
+    traqId () {
+      return String(this.user.traqID)
     }
   },
   methods: {

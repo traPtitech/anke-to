@@ -11,11 +11,15 @@ Vue.use(Router)
 
 export default new Router({
   mode: 'history',
+  props: {
+    traqId: String
+  },
   routes: [
     {
       path: '/',
       name: 'MypageLayout',
-      component: MypageLayout
+      component: MypageLayout,
+      props: { traqId: String(this.traqId) }
     },
     {
       path: '/created',
