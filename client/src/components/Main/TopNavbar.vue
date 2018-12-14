@@ -16,6 +16,7 @@
         <a class="navbar-item" href="/">
           <p class="title is-3">anke-to</p>
         </a>
+        <p class="subtitle pull-right">{{ traqId }}</p>
       </div>
       <!-- </div> -->
     </nav>
@@ -29,6 +30,10 @@ export default {
   props: {
     isSideMenuActive: {
       type: Boolean,
+      required: true
+    },
+    traqId: {
+      type: String,
       required: true
     }
   },
@@ -48,6 +53,15 @@ export default {
 <style scoped>
 .title {
   margin-bottom: 0;
+}
+.subtitle {
+  height: min-content;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  margin: auto;
+  padding: 0 1rem;
 }
 .navbar-burger {
   margin-left: 0;
