@@ -7,7 +7,7 @@
 
 <script>
 import axios from '@/bin/axios'
-import Table from '@/components/Main/Table.vue'
+import Table from '@/components/Utils/Table.vue'
 
 export default {
   name: 'MypageLayout',

@@ -18,8 +18,8 @@
 
 <script>
 import axios from '@/bin/axios'
-import TopNavbar from './components/Main/TopNavbar.vue'
-import SideMenu from './components/Main/SideMenu.vue'
+import TopNavbar from './components/Utils/TopNavbar.vue'
+import SideMenu from './components/Utils/SideMenu.vue'
 export default {
   name: 'App',
   components: {

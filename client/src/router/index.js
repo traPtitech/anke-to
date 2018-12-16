@@ -1,11 +1,11 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 // import HelloWorld from '@/components/HelloWorld'
-import MypageLayout from '@/components/Mypage/MypageLayout'
-import CreatedLayout from '@/components/Created/CreatedLayout'
-import AnsweredLayout from '@/components/Answered/AnsweredLayout'
-import ExplorerLayout from '@/components/Explorer/ExplorerLayout'
-import NotFound from '@/components/Main/NotFound'
+import MypageLayout from '@/components/MypageLayout'
+import CreatedLayout from '@/components/CreatedLayout'
+import AnsweredLayout from '@/components/AnsweredLayout'
+import ExplorerLayout from '@/components/ExplorerLayout'
+import NotFound from '@/components/Utils/NotFound'
 
 Vue.use(Router)
 
