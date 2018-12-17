@@ -1,5 +1,5 @@
 <template>
-  <div class="box">
+  <div class="card">
     <table class="table is-striped">
       <thead>
         <tr>
@@ -7,6 +7,9 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-for="(itemrow, index) in itemrows" :key="index">
+          <td v-for="(item, index) in itemrow" :key="index" v-html="item"></td>
+        </tr>
         <tr v-for="(itemrow, index) in itemrows" :key="index">
           <td v-for="(item, index) in itemrow" :key="index" v-html="item"></td>
         </tr>
@@ -30,3 +33,11 @@ export default {
   }
 }
 </script>
+<style scoped>
+/* .box {
+  margin: 1rem 2rem;
+  overflow-x: auto;
+  width: auto;
+  max-width: fit-content;
+} */
+</style>

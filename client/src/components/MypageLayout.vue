@@ -82,21 +82,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.card {
-  /* width: fit-content; */
-  margin: 1rem 1.5rem;
-  overflow-x: auto;
-  width: auto;
-  max-width: 800px;
-}
-.card-header-title {
-  color: #707880;
-  font-weight: 400;
-  padding: 1rem 1.5rem;
-}
-.card-content {
-  padding: 1rem;
-}
 .content {
   margin-left: 1.5rem;
 }
