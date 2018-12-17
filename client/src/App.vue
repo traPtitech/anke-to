@@ -54,6 +54,8 @@ export default {
 
 <style lang="scss">
 @import "../node_modules/bulma/bulma.sass";
+@import url("../static/css/themify-icons.css");
+// @import "../node_modules/themify-icons/themify-icons/_themify-icons.scss";
 #app {
   font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -103,5 +105,21 @@ html {
 
 body {
   height: 100%;
+}
+
+.card {
+  /* width: fit-content; */
+  margin: 1rem 1.5rem;
+  overflow-x: auto;
+  width: auto;
+  max-width: fit-content;
+}
+.card-header-title {
+  color: #707880;
+  font-weight: 400;
+  padding: 1rem 1.5rem;
+}
+.card-content {
+  padding: 1rem;
 }
 </style>
