@@ -79,6 +79,11 @@ func main() {
 	e.PATCH("/questions/:id", editQuestion)
 	e.DELETE("/questions/:id", deleteQuestion)
 
+	e.POST("/responses", postResponse)
+	e.GET("/responses/:id", getResponse)
+	e.PATCH("/responses/:id", editResponse)
+	e.DELETE("/responses/:id", deleteResponse)
+
 	e.GET("/users/me", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"traqID": getUserID(c),

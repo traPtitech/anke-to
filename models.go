@@ -36,3 +36,16 @@ type scaleLabels struct {
 	ScaleMin        int    `json:"scale_min" db:"scale_min"`
 	ScaleMax        int    `json:"scale_max" db:"scale_max"`
 }
+
+type responseBody struct {
+	QuestionID     int      `json:"questionID"`
+	QuestionType   string   `json:"question_type"`
+	Response       string   `json:"response"`
+	OptionResponse []string `json:"option_response"`
+}
+
+type responses struct {
+	ID          int            `json:"questionnaireID"`
+	SubmittedAt mysql.NullTime `json:"submitted_at"`
+	Body        []responseBody `json:"body"`
+}
