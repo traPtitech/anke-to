@@ -107,6 +107,15 @@ body {
   height: 100%;
 }
 
+.app-main {
+  padding: 0;
+}
+
+.columns {
+  margin: 0;
+  padding-top: 0;
+}
+
 .card {
   /* width: fit-content; */
   margin: 1rem 1.5rem;
