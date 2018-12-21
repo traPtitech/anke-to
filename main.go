@@ -90,6 +90,8 @@ func main() {
 		})
 	})
 
+	e.GET("/users/me/responses", getMyResponses)
+
 	e.GET("/users/me/targeted", func(c echo.Context) error {
 		return getQuestionnaires(c, TargetType(Targeted))
 	})

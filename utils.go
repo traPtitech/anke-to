@@ -14,5 +14,10 @@ func timeConvert(time mysql.NullTime) string {
 }
 
 func getUserID(c echo.Context) string {
-	return c.Request().Header.Get("X-Showcase-User")
+	res := c.Request().Header.Get("X-Showcase-User")
+	// test用
+	if res == "" {
+		return "mds_boy"
+	}
+	return res
 }

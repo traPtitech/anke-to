@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -79,24 +80,78 @@ func postResponse(c echo.Context) error {
 	})
 }
 
+func getMyResponses(c echo.Context) error {
+	responsesinfo := []struct {
+		QuestionnaireID int            `db:"questionnaire_id"`
+		ResponseID      int            `db:"response_id"`
+		ModifiedAt      mysql.NullTime `db:"modified_at"`
+		SubmittedAt     mysql.NullTime `db:"submitted_at"`
+	}{}
+
+	if err := db.Select(&responsesinfo,
+		`SELECT questionnaire_id, response_id, modified_at, submitted_at from responses
+		WHERE user_traqid = ? AND deleted_at IS NULL`,
+		getUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	type MyResponse struct {
+		ResponseID      int    `json:"responseID"`
+		QuestionnaireID int    `json:"questionnaireID"`
+		Title           string `json:"questionnaire_title"`
+		ResTimeLimit    string `json:"res_time_limit"`
+		SubmittedAt     string `json:"submitted_at"`
+		ModifiedAt      string `json:"modified_at"`
+	}
+	myresponses := []MyResponse{}
+
+	for _, response := range responsesinfo {
+		duplication := false
+		for _, other := range myresponses {
+			if response.ResponseID == other.ResponseID {
+				duplication = true
+				break
+			}
+		}
+		if !duplication {
+			fmt.Println(response.QuestionnaireID)
+			title, resTimeLimit, err := GetTitleAndLimit(c, response.QuestionnaireID)
+			if err != nil {
+				return err
+			}
+			myresponses = append(myresponses,
+				MyResponse{
+					ResponseID:      response.ResponseID,
+					QuestionnaireID: response.QuestionnaireID,
+					Title:           title,
+					ResTimeLimit:    resTimeLimit,
+					SubmittedAt:     timeConvert(response.SubmittedAt),
+					ModifiedAt:      timeConvert(response.ModifiedAt),
+				})
+		}
+	}
+
+	return c.JSON(http.StatusOK, myresponses)
+}
+
 func getResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	type responsesInfo struct {
+	responsesinfo := []struct {
 		QuestionnaireID int            `db:"questionnaire_id"`
 		QuestionID      int            `db:"question_id"`
 		Body            string         `db:"body"`
 		ModifiedAt      mysql.NullTime `db:"modified_at"`
 		SubmittedAt     mysql.NullTime `db:"submitted_at"`
-	}
+	}{}
 
-	responsesinfo := []responsesInfo{}
 	if err := db.Select(&responsesinfo,
 		`SELECT questionnaire_id, question_id, body, modified_at, submitted_at from responses
-		WHERE response_id = ? AND user_traqid = ? AND deleted_at = NULL`,
+		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
 		responseID, getUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)

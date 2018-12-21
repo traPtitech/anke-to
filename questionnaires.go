@@ -53,10 +53,6 @@ func getQuestionnaires(c echo.Context, targettype TargetType) error {
 	}
 
 	userID := getUserID(c)
-	// test用
-	if userID == "" {
-		userID = "mds_boy"
-	}
 
 	targetedQuestionnaireID := []int{}
 	if err := db.Select(&targetedQuestionnaireID,
@@ -306,4 +302,22 @@ func deleteQuestionnaire(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
+	res := struct {
+		Title        string `db:"title"`
+		ResTimeLimit string `db:"res_time_limit"`
+	}{}
+	if err := db.Get(&res,
+		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return "", "", echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return "", "", echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return res.Title, res.ResTimeLimit, nil
 }
