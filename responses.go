@@ -95,8 +95,8 @@ func getResponse(c echo.Context) error {
 
 	responsesinfo := []responsesInfo{}
 	if err := db.Select(&responsesinfo,
-		`SELECT questionnaire_id, question_id, body, modified_at, submitted_at
-        from responses WHERE response_id = ? AND user_traqid = ?`,
+		`SELECT questionnaire_id, question_id, body, modified_at, submitted_at from responses
+		WHERE response_id = ? AND user_traqid = ? AND deleted_at = NULL`,
 		responseID, getUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
@@ -166,5 +166,18 @@ func editResponse(c echo.Context) error {
 }
 
 func deleteResponse(c echo.Context) error {
+	responseID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if _, err := db.Exec(
+		`UPDATE responses SET deleted_at = CURRENT_TIMESTAMP
+		WHERE response_id = ? AND user_traqid = ?`,
+		responseID, getUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	return c.NoContent(http.StatusOK)
 }
