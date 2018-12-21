@@ -2,7 +2,9 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
@@ -78,7 +80,85 @@ func postResponse(c echo.Context) error {
 }
 
 func getResponse(c echo.Context) error {
-	return c.NoContent(http.StatusOK)
+	responseID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	type responsesInfo struct {
+		QuestionnaireID int            `db:"questionnaire_id"`
+		QuestionID      int            `db:"question_id"`
+		Body            string         `db:"body"`
+		ModifiedAt      mysql.NullTime `db:"modified_at"`
+		SubmittedAt     mysql.NullTime `db:"submitted_at"`
+	}
+
+	responsesinfo := []responsesInfo{}
+	if err := db.Select(&responsesinfo,
+		`SELECT questionnaire_id, question_id, body, modified_at, submitted_at
+        from responses WHERE response_id = ? AND user_traqid = ?`,
+		responseID, getUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if len(responsesinfo) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	responses := struct {
+		QuestionnaireID int            `json:"questionnaireID"`
+		SubmittedAt     string         `json:"submitted_at"`
+		ModifiedAt      string         `json:"modified_at"`
+		Body            []responseBody `json:"body"`
+	}{responsesinfo[0].QuestionnaireID,
+		timeConvert(responsesinfo[0].SubmittedAt),
+		timeConvert(responsesinfo[0].ModifiedAt),
+		[]responseBody{},
+	}
+
+	body := []responseBody{}
+	for _, response := range responsesinfo {
+		questionType := ""
+		questionID := response.QuestionID
+		if err := db.Get(&questionType,
+			"SELECT type FROM questions WHERE id = ?", questionID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		switch questionType {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			duplication := false
+			for i, b := range body {
+				if b.QuestionID == questionID {
+					body[i].OptionResponse = append(body[i].OptionResponse, response.Body)
+					duplication = true
+					break
+				}
+			}
+			if !duplication {
+				optionResponse := []string{response.Body}
+				body = append(body,
+					responseBody{
+						QuestionID:     questionID,
+						QuestionType:   questionType,
+						Response:       "",
+						OptionResponse: optionResponse,
+					})
+			}
+		default:
+			body = append(body,
+				responseBody{
+					QuestionID:     questionID,
+					QuestionType:   questionType,
+					Response:       response.Body,
+					OptionResponse: []string{},
+				})
+		}
+	}
+	responses.Body = body
+
+	return c.JSON(http.StatusOK, responses)
 }
 
 func editResponse(c echo.Context) error {
