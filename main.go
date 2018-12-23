@@ -49,7 +49,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowOrigins: []string{"http://localhost:8080"},
 		AllowCredentials: true,
 	}))
 
@@ -63,7 +63,7 @@ func main() {
 	e.File("*", "client/dist/index.html")
     
 	// Routes
-	e.GET("/questionnaires", func(c echo.Context) error {
+	e.GET("/api/questionnaires", func(c echo.Context) error {
 		if c.QueryParam("nontargeted") == "true" {
 			return getQuestionnaires(c, TargetType(Nontargeted))
 		} else {
@@ -71,23 +71,23 @@ func main() {
 		}
 	})
 
-	e.POST("/questionnaires", postQuestionnaire)
-	e.GET("/questionnaires/:id", getQuestionnaire)
-	e.PATCH("/questionnaires/:id", editQuestionnaire)
-	e.DELETE("/questionnaires/:id", deleteQuestionnaire)
-	e.GET("/questionnaires/:id/questions", getQuestions)
+	e.POST("/api/questionnaires", postQuestionnaire)
+	e.GET("/api/questionnaires/:id", getQuestionnaire)
+	e.PATCH("/api/questionnaires/:id", editQuestionnaire)
+	e.DELETE("/api/questionnaires/:id", deleteQuestionnaire)
+	e.GET("/api/questionnaires/:id/questions", getQuestions)
 
-	e.POST("/questions", postQuestion)
-	e.PATCH("/questions/:id", editQuestion)
-	e.DELETE("/questions/:id", deleteQuestion)
+	e.POST("/api/questions", postQuestion)
+	e.PATCH("/api/questions/:id", editQuestion)
+	e.DELETE("/api/questions/:id", deleteQuestion)
 
-	e.GET("/users/me", func(c echo.Context) error {
+	e.GET("/api/users/me", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"traqID": getUserID(c),
 		})
 	})
 
-	e.GET("/users/me/targeted", func(c echo.Context) error {
+	e.GET("/api/users/me/targeted", func(c echo.Context) error {
 		return getQuestionnaires(c, TargetType(Targeted))
 	})
 

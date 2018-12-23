@@ -5,12 +5,14 @@
         <div class="card-header-title subtitle">回答対象になっているアンケート</div>
       </header>
       <div class="card-content">
-        <article class="post columns" v-for="(row, index) in itemrows" :key="index">
-          <div class="column">
-            <h4 v-html="row.title"></h4>
+        <article class="post" v-for="(row, index) in itemrows" :key="index">
+          <div>
+            <div class="questionnaire-title">
+              <span>{{ row.status }}</span>
+              <span class="subtitle" v-html="row.title"></span>
+            </div>
             <p>{{ row.description }}</p>
             <div class="media">
-              <div class="media-left">{{ row.status }}</div>
               <div class="media-content has-text-weight-bold columns">
                 <div class="content column">回答期限: {{ row.res_time_limit }}</div>
                 <div class="content column">更新日: {{ row.modified_at }}</div>
@@ -51,14 +53,14 @@ export default {
   },
   computed: {
     itemrows () {
-      let row = {}
       let rows = []
       for (var i = 0; i < this.questionnaires.length; i++) {
+        let row = {}
         row.title = this.getTitleHtml(i)
         row.description = this.questionnaires[i].description
-        row.res_time_limit = this.questionnaires[i].res_time_limit
+        row.res_time_limit = this.getDateStr(this.questionnaires[i].res_time_limit)
         row.status = this.hasResponded(i) ? '✔︎' : '-' // saved も返せるようにしたさ
-        row.modified_at = this.questionnaires[i].modified_at
+        row.modified_at = this.getDateStr(this.questionnaires[i].modified_at)
         row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[i].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
 
         rows.push(row)
@@ -75,6 +77,9 @@ export default {
     },
     getResultsLinkHtml (id) {
       return '<a href="/resuslts/' + id + '" class="button is-info">Results</a>'
+    },
+    getDateStr (str) {
+      return str === 'NULL' ? '-' : new Date(str).toLocaleString()
     }
   }
 }
@@ -103,8 +108,8 @@ export default {
   padding-top: 1em;
 }
 article.post {
-  margin: 1rem;
-  padding-bottom: 0;
+  padding: 1rem;
+  /* padding-bottom: 0; */
   border-bottom: 1px solid #e6eaee;
 }
 .columns {
@@ -115,5 +120,8 @@ article.post {
 }
 .media-right.column {
   margin: auto;
+}
+.questionnaire-title {
+  padding-bottom: 1rem;
 }
 </style>

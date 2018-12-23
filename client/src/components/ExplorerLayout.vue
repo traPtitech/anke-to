@@ -7,7 +7,7 @@
             class="button"
             aria-haspopup="true"
             aria-controls="dropdown-menu"
-            @click="DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder"
+            @click="DropdownIsActive.targetedOption = false; DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder"
           >
             <p>並び替え</p>
             <span class="ti-angle-down"></span>
@@ -31,7 +31,7 @@
             class="button"
             aria-haspopup="true"
             aria-controls="dropdown-menu"
-            @click="DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption"
+            @click="DropdownIsActive.sortOrder = false; DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption"
           >
             <p>フィルター</p>
             <span class="ti-angle-down"></span>
