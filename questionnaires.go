@@ -321,3 +321,13 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 	}
 	return res.Title, res.ResTimeLimit, nil
 }
+
+func getMyQuestionnaire(c echo.Context) error {
+	/*
+		後で書く
+		questionnaireID, err := GetAdminQuestionnaires(c, getUserID(c))
+		if err != nil {
+			return nil
+		}*/
+	return c.NoContent(http.StatusOK)
+}

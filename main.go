@@ -96,6 +96,8 @@ func main() {
 		return getQuestionnaires(c, TargetType(Targeted))
 	})
 
+	e.GET("/users/me/administrates", getMyQuestionnaire)
+
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 }

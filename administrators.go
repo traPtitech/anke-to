@@ -36,3 +36,12 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 	}
 	return nil
 }
+
+func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
+	questionnaireID := []int{}
+	if err := db.Select(&questionnaireID, "SELECT questionnaire_id FROM administrators WHERE user_traqid = ?", user); err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return questionnaireID, nil
+}
