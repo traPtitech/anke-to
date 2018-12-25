@@ -5,29 +5,44 @@ import (
 	"net/http"
 	"strconv"
 
+	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
-func InsertResponse(c echo.Context, responseID int, req responses, body responseBody, data string) error {
+func InsertRespondents(c echo.Context, req responses) (int, error) {
+	var result sql.Result
+	var err error
 	if req.SubmittedAt.Valid {
-		if _, err := db.Exec(
-			`INSERT INTO responses
-				(questionnaire_id, question_id, response_id, body, user_traqid, submitted_at)
-				VALUES (?, ?, ?, ?, ?, ?)`,
-			req.ID, body.QuestionID, responseID, data, getUserID(c), req.SubmittedAt); err != nil {
+		if result, err = db.Exec(
+			`INSERT INTO respondents
+				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
+			req.ID, getUserID(c), req.SubmittedAt); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
-		if _, err := db.Exec(
-			`INSERT INTO responses
-				(questionnaire_id, question_id, response_id, body, user_traqid)
-				VALUES (?, ?, ?, ?, ?)`,
-			req.ID, body.QuestionID, responseID, data, getUserID(c)); err != nil {
+		if result, err = db.Exec(
+			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
+			req.ID, getUserID(c)); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
+	}
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.Logger().Error(err)
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return int(lastID), nil
+}
+
+func InsertResponse(c echo.Context, responseID int, req responses, body responseBody, data string) error {
+	if _, err := db.Exec(
+		`INSERT INTO responses (response_id, question_id, body) VALUES (?, ?, ?)`,
+		responseID, body.QuestionID, data); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
 }
@@ -41,22 +56,10 @@ func postResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	// responseIDを全部取って最大値+1をIDとする(もっといい方法がありそう)
-	responseIDlist := []int{}
-
-	if err := db.Select(&responseIDlist, "SELECT response_id from responses"); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	responseID, err := InsertRespondents(c, req)
+	if err != nil {
+		return nil
 	}
-
-	maxResponseID := 0
-	for _, responseID := range responseIDlist {
-		if maxResponseID < responseID {
-			maxResponseID = responseID
-		}
-	}
-
-	responseID := maxResponseID + 1
 
 	for _, body := range req.Body {
 		switch body.QuestionType {
