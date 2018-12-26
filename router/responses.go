@@ -12,43 +12,6 @@ import (
 	"git.trapti.tech/SysAd/anke-to/model"
 )
 
-func InsertRespondents(c echo.Context, req model.Responses) (int, error) {
-	var result sql.Result
-	var err error
-	if req.SubmittedAt.Valid {
-		if result, err = model.DB.Exec(
-			`INSERT INTO respondents
-				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
-			req.ID, model.GetUserID(c), req.SubmittedAt); err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	} else {
-		if result, err = model.DB.Exec(
-			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
-			req.ID, model.GetUserID(c)); err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return int(lastID), nil
-}
-
-func InsertResponse(c echo.Context, responseID int, req model.Responses, body model.ResponseBody, data string) error {
-	if _, err := model.DB.Exec(
-		`INSERT INTO responses (response_id, question_id, body) VALUES (?, ?, ?)`,
-		responseID, body.QuestionID, data); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return nil
-}
-
 func PostResponse(c echo.Context) error {
 
 	req := model.Responses{}
@@ -58,7 +21,7 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	responseID, err := InsertRespondents(c, req)
+	responseID, err := model.InsertRespondents(c, req)
 	if err != nil {
 		return nil
 	}
@@ -67,12 +30,12 @@ func PostResponse(c echo.Context) error {
 		switch body.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := InsertResponse(c, responseID, req, body, option); err != nil {
+				if err := model.InsertResponse(c, responseID, req, body, option); err != nil {
 					return err
 				}
 			}
 		default:
-			if err := InsertResponse(c, responseID, req, body, body.Response); err != nil {
+			if err := model.InsertResponse(c, responseID, req, body, body.Response); err != nil {
 				return err
 			}
 		}

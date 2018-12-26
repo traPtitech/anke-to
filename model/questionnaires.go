@@ -57,6 +57,63 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	return allquestionnaires, nil
 }
 
+func GetQuestionnaires(c echo.Context, targettype TargetType) error {
+	allquestionnaires, err := GetAllQuestionnaires(c)
+	if err != nil {
+		return err
+	}
+
+	userID := GetUserID(c)
+
+	targetedQuestionnaireID := []int{}
+	if err := DB.Select(&targetedQuestionnaireID,
+		"SELECT questionnaire_id FROM targets WHERE user_traqid = ?", userID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	type questionnairesInfo struct {
+		ID           int       `json:"questionnaireID"`
+		Title        string    `json:"title"`
+		Description  string    `json:"description"`
+		ResTimeLimit string    `json:"res_time_limit"`
+		ResSharedTo  string    `json:"res_shared_to"`
+		CreatedAt    time.Time `json:"created_at"`
+		ModifiedAt   time.Time `json:"modified_at"`
+		IsTargeted   bool      `json:"is_targeted"`
+	}
+	var ret []questionnairesInfo
+
+	for _, v := range allquestionnaires {
+		var targeted = false
+		for _, w := range targetedQuestionnaireID {
+			if w == v.ID {
+				targeted = true
+			}
+		}
+		if (targettype == TargetType(Targeted) && !targeted) || (targettype == TargetType(Nontargeted) && targeted) {
+			continue
+		}
+		ret = append(ret,
+			questionnairesInfo{
+				ID:           v.ID,
+				Title:        v.Title,
+				Description:  v.Description,
+				ResTimeLimit: TimeConvert(v.ResTimeLimit),
+				ResSharedTo:  v.ResSharedTo,
+				CreatedAt:    v.CreatedAt,
+				ModifiedAt:   v.ModifiedAt,
+				IsTargeted:   targeted})
+	}
+
+	if len(ret) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	// 構造体の定義で書いたJSONのキーで変換される
+	return c.JSON(http.StatusOK, ret)
+}
+
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
 		Title        string `db:"title"`

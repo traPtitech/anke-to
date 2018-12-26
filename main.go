@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -32,14 +30,7 @@ func main() {
 	e.Static("/", "client/dist")
 
 	// Routes
-	e.GET("/questionnaires", func(c echo.Context) error {
-		if c.QueryParam("nontargeted") == "true" {
-			return router.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
-		} else {
-			return router.GetQuestionnaires(c, model.TargetType(model.All))
-		}
-	})
-
+	e.GET("/questionnaires", router.GetQuestionnaires)
 	e.POST("/questionnaires", router.PostQuestionnaire)
 	e.GET("/questionnaires/:id", router.GetQuestionnaire)
 	e.PATCH("/questionnaires/:id", router.EditQuestionnaire)
@@ -55,18 +46,9 @@ func main() {
 	e.PATCH("/responses/:id", router.EditResponse)
 	e.DELETE("/responses/:id", router.DeleteResponse)
 
-	e.GET("/users/me", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"traqID": model.GetUserID(c),
-		})
-	})
-
+	e.GET("/users/me", router.GetUsersMe)
 	e.GET("/users/me/responses", router.GetMyResponses)
-
-	e.GET("/users/me/targeted", func(c echo.Context) error {
-		return router.GetQuestionnaires(c, model.TargetType(model.Targeted))
-	})
-
+	e.GET("/users/me/targeted", router.GetTargetedQuestionnaire)
 	e.GET("/users/me/administrates", router.GetMyQuestionnaire)
 
 	// Start server

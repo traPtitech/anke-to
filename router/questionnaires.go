@@ -11,62 +11,12 @@ import (
 	"git.trapti.tech/SysAd/anke-to/model"
 )
 
-// echo.Contextを引数にとってerrorを返り値とする
-func GetQuestionnaires(c echo.Context, targettype model.TargetType) error {
-	allquestionnaires, err := model.GetAllQuestionnaires(c)
-	if err != nil {
-		return err
+func GetQuestionnaires(c echo.Context) error {
+	if c.QueryParam("nontargeted") == "true" {
+		return model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
+	} else {
+		return model.GetQuestionnaires(c, model.TargetType(model.All))
 	}
-
-	userID := model.GetUserID(c)
-
-	targetedQuestionnaireID := []int{}
-	if err := model.DB.Select(&targetedQuestionnaireID,
-		"SELECT questionnaire_id FROM targets WHERE user_traqid = ?", userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	type questionnairesInfo struct {
-		ID           int       `json:"questionnaireID"`
-		Title        string    `json:"title"`
-		Description  string    `json:"description"`
-		ResTimeLimit string    `json:"res_time_limit"`
-		ResSharedTo  string    `json:"res_shared_to"`
-		CreatedAt    time.Time `json:"created_at"`
-		ModifiedAt   time.Time `json:"modified_at"`
-		IsTargeted   bool      `json:"is_targeted"`
-	}
-	var ret []questionnairesInfo
-
-	for _, v := range allquestionnaires {
-		var targeted = false
-		for _, w := range targetedQuestionnaireID {
-			if w == v.ID {
-				targeted = true
-			}
-		}
-		if (targettype == model.TargetType(model.Targeted) && !targeted) || (targettype == model.TargetType(model.Nontargeted) && targeted) {
-			continue
-		}
-		ret = append(ret,
-			questionnairesInfo{
-				ID:           v.ID,
-				Title:        v.Title,
-				Description:  v.Description,
-				ResTimeLimit: model.TimeConvert(v.ResTimeLimit),
-				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt,
-				ModifiedAt:   v.ModifiedAt,
-				IsTargeted:   targeted})
-	}
-
-	if len(ret) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	// 構造体の定義で書いたJSONのキーで変換される
-	return c.JSON(http.StatusOK, ret)
 }
 
 func GetQuestionnaire(c echo.Context) error {
@@ -278,4 +228,8 @@ func GetMyQuestionnaire(c echo.Context) error {
 			return nil
 		}*/
 	return c.NoContent(http.StatusOK)
+}
+
+func GetTargetedQuestionnaire(c echo.Context) error {
+	return model.GetQuestionnaires(c, model.TargetType(model.Targeted))
 }
