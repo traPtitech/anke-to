@@ -49,3 +49,8 @@ type responses struct {
 	SubmittedAt mysql.NullTime `json:"submitted_at"`
 	Body        []responseBody `json:"body"`
 }
+
+type questionIDType struct {
+	ID   int    `db:"id"`
+	Type string `db:"type"`
+}

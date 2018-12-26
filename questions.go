@@ -232,3 +232,14 @@ func deleteQuestion(c echo.Context) error {
 
 	return c.NoContent(http.StatusOK)
 }
+
+func getQuestionsType(c echo.Context, questionnaireID int) ([]questionIDType, error) {
+	ret := []questionIDType{}
+	if err := db.Select(&ret,
+		`SELECT id, type FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL`,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return ret, nil
+}

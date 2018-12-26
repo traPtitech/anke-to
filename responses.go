@@ -144,24 +144,22 @@ func getResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	responsesinfo := []struct {
+	respondentInfo := struct {
 		QuestionnaireID int            `db:"questionnaire_id"`
-		QuestionID      int            `db:"question_id"`
-		Body            string         `db:"body"`
 		ModifiedAt      mysql.NullTime `db:"modified_at"`
 		SubmittedAt     mysql.NullTime `db:"submitted_at"`
 	}{}
 
-	if err := db.Select(&responsesinfo,
-		`SELECT questionnaire_id, question_id, body, modified_at, submitted_at from responses
+	if err := db.Get(&respondentInfo,
+		`SELECT questionnaire_id, modified_at, submitted_at from respondents
 		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
 		responseID, getUserID(c)); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	if len(responsesinfo) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	responses := struct {
@@ -169,53 +167,49 @@ func getResponse(c echo.Context) error {
 		SubmittedAt     string         `json:"submitted_at"`
 		ModifiedAt      string         `json:"modified_at"`
 		Body            []responseBody `json:"body"`
-	}{responsesinfo[0].QuestionnaireID,
-		timeConvert(responsesinfo[0].SubmittedAt),
-		timeConvert(responsesinfo[0].ModifiedAt),
+	}{
+		respondentInfo.QuestionnaireID,
+		timeConvert(respondentInfo.SubmittedAt),
+		timeConvert(respondentInfo.ModifiedAt),
 		[]responseBody{},
 	}
 
-	body := []responseBody{}
-	for _, response := range responsesinfo {
-		questionType := ""
-		questionID := response.QuestionID
-		if err := db.Get(&questionType,
-			"SELECT type FROM questions WHERE id = ?", questionID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		switch questionType {
-		case "MultipleChoice", "Checkbox", "Dropdown":
-			duplication := false
-			for i, b := range body {
-				if b.QuestionID == questionID {
-					body[i].OptionResponse = append(body[i].OptionResponse, response.Body)
-					duplication = true
-					break
-				}
-			}
-			if !duplication {
-				optionResponse := []string{response.Body}
-				body = append(body,
-					responseBody{
-						QuestionID:     questionID,
-						QuestionType:   questionType,
-						Response:       "",
-						OptionResponse: optionResponse,
-					})
-			}
-		default:
-			body = append(body,
-				responseBody{
-					QuestionID:     questionID,
-					QuestionType:   questionType,
-					Response:       response.Body,
-					OptionResponse: []string{},
-				})
-		}
+	questionTypeList, err := getQuestionsType(c, responses.QuestionnaireID)
+	if err != nil {
+		return err
 	}
-	responses.Body = body
 
+	bodyList := []responseBody{}
+	for _, questionType := range questionTypeList {
+		body := responseBody{
+			QuestionID:   questionType.ID,
+			QuestionType: questionType.Type,
+		}
+		switch questionType.Type {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			option := []string{}
+			if err := db.Select(&option,
+				`SELECT body from responses
+				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
+				responseID, body.QuestionID); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+			body.OptionResponse = option
+		default:
+			var response string
+			if err := db.Get(&response,
+				`SELECT body from responses
+				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
+				responseID, body.QuestionID); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+			body.Response = response
+		}
+		bodyList = append(bodyList, body)
+	}
+	responses.Body = bodyList
 	return c.JSON(http.StatusOK, responses)
 }
 
