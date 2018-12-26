@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -57,7 +56,7 @@ func GetMyResponses(c echo.Context) error {
 	}{}
 
 	if err := model.DB.Select(&responsesinfo,
-		`SELECT questionnaire_id, response_id, modified_at, submitted_at from responses
+		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
 		WHERE user_traqid = ? AND deleted_at IS NULL`,
 		model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
@@ -75,29 +74,19 @@ func GetMyResponses(c echo.Context) error {
 	myresponses := []MyResponse{}
 
 	for _, response := range responsesinfo {
-		duplication := false
-		for _, other := range myresponses {
-			if response.ResponseID == other.ResponseID {
-				duplication = true
-				break
-			}
+		title, resTimeLimit, err := model.GetTitleAndLimit(c, response.QuestionnaireID)
+		if err != nil {
+			return err
 		}
-		if !duplication {
-			fmt.Println(response.QuestionnaireID)
-			title, resTimeLimit, err := model.GetTitleAndLimit(c, response.QuestionnaireID)
-			if err != nil {
-				return err
-			}
-			myresponses = append(myresponses,
-				MyResponse{
-					ResponseID:      response.ResponseID,
-					QuestionnaireID: response.QuestionnaireID,
-					Title:           title,
-					ResTimeLimit:    resTimeLimit,
-					SubmittedAt:     model.TimeConvert(response.SubmittedAt),
-					ModifiedAt:      model.TimeConvert(response.ModifiedAt),
-				})
-		}
+		myresponses = append(myresponses,
+			MyResponse{
+				ResponseID:      response.ResponseID,
+				QuestionnaireID: response.QuestionnaireID,
+				Title:           title,
+				ResTimeLimit:    resTimeLimit,
+				SubmittedAt:     model.TimeConvert(response.SubmittedAt),
+				ModifiedAt:      model.TimeConvert(response.ModifiedAt),
+			})
 	}
 
 	return c.JSON(http.StatusOK, myresponses)
