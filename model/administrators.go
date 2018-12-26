@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 
 func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 	administrators := []string{}
-	if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
+	if err := DB.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -17,7 +17,7 @@ func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 
 func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
 	for _, v := range administrators {
-		if _, err := db.Exec(
+		if _, err := DB.Exec(
 			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
 			questionnaireID, v); err != nil {
 			c.Logger().Error(err)
@@ -28,7 +28,7 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 }
 
 func DeleteAdministrators(c echo.Context, questionnaireID int) error {
-	if _, err := db.Exec(
+	if _, err := DB.Exec(
 		"DELETE from administrators WHERE questionnaire_id = ?",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
@@ -39,7 +39,7 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	questionnaireID := []int{}
-	if err := db.Select(&questionnaireID, "SELECT questionnaire_id FROM administrators WHERE user_traqid = ?", user); err != nil {
+	if err := DB.Select(&questionnaireID, "SELECT questionnaire_id FROM administrators WHERE user_traqid = ?", user); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}

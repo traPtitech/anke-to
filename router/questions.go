@@ -1,19 +1,21 @@
-package main
+package router
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo"
+
+	"git.trapti.tech/SysAd/anke-to/model"
 )
 
-func getQuestions(c echo.Context) error {
+func GetQuestions(c echo.Context) error {
 	questionnaireID := c.Param("id")
 	// 質問一覧の配列
-	allquestions := []questions{}
+	allquestions := []model.Questions{}
 
 	// アンケートidの一致する質問を取る
-	if err := db.Select(
+	if err := model.DB.Select(
 		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -41,18 +43,18 @@ func getQuestions(c echo.Context) error {
 
 	for _, v := range allquestions {
 		options := []string{}
-		scalelabel := scaleLabels{}
+		scalelabel := model.ScaleLabels{}
 
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			if err := db.Select(
+			if err := model.DB.Select(
 				&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
 				v.ID); err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		case "LinearScale":
-			if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
+			if err := model.DB.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
@@ -78,7 +80,7 @@ func getQuestions(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func postQuestion(c echo.Context) error {
+func PostQuestion(c echo.Context) error {
 	req := struct {
 		QuestionnaireID int      `json:"questionnaireID"`
 		QuestionType    string   `json:"question_type"`
@@ -98,7 +100,7 @@ func postQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	result, err := db.Exec(
+	result, err := model.DB.Exec(
 		"INSERT INTO questions (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired)
 	if err != nil {
@@ -115,7 +117,7 @@ func postQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if _, err := db.Exec(
+			if _, err := model.DB.Exec(
 				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
 				lastID, i+1, v); err != nil {
 				c.Logger().Error(err)
@@ -123,7 +125,7 @@ func postQuestion(c echo.Context) error {
 			}
 		}
 	case "LinearScale":
-		if _, err := db.Exec(
+		if _, err := model.DB.Exec(
 			"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
 			lastID, req.ScaleLabelLeft, req.ScaleLabelRight, req.ScaleMin, req.ScaleMax); err != nil {
 			c.Logger().Error(err)
@@ -147,7 +149,7 @@ func postQuestion(c echo.Context) error {
 	})
 }
 
-func editQuestion(c echo.Context) error {
+func EditQuestion(c echo.Context) error {
 	questionID := c.Param("id")
 
 	req := struct {
@@ -169,7 +171,7 @@ func editQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		"UPDATE questions SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
 		c.Logger().Error(err)
@@ -179,7 +181,7 @@ func editQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if _, err := db.Exec(
+			if _, err := model.DB.Exec(
 				`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
 				ON DUPLICATE KEY UPDATE option_num = ?, body = ?`,
 				questionID, i+1, v, i+1, v); err != nil {
@@ -187,14 +189,14 @@ func editQuestion(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
-		if _, err := db.Exec(
+		if _, err := model.DB.Exec(
 			"DELETE FROM options WHERE question_id= ? AND option_num > ?",
 			questionID, len(req.Options)); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	case "LinearScale":
-		if _, err := db.Exec(
+		if _, err := model.DB.Exec(
 			`INSERT INTO scale_labels (question_id, scale_label_right, scale_label_left, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)
 			ON DUPLICATE KEY UPDATE scale_label_right = ?, scale_label_left = ?, scale_min = ?, scale_max = ?`,
 			questionID,
@@ -208,22 +210,22 @@ func editQuestion(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func deleteQuestion(c echo.Context) error {
+func DeleteQuestion(c echo.Context) error {
 	questionID := c.Param("id")
 
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		"UPDATE questions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		"DELETE FROM options WHERE question_id= ?",
 		questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		"DELETE FROM options WHERE question_id= ?",
 		questionID); err != nil {
 		c.Logger().Error(err)
@@ -231,15 +233,4 @@ func deleteQuestion(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
-}
-
-func getQuestionsType(c echo.Context, questionnaireID int) ([]questionIDType, error) {
-	ret := []questionIDType{}
-	if err := db.Select(&ret,
-		`SELECT id, type FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL`,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return ret, nil
 }

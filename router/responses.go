@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"fmt"
@@ -8,23 +8,25 @@ import (
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
+
+	"git.trapti.tech/SysAd/anke-to/model"
 )
 
-func InsertRespondents(c echo.Context, req responses) (int, error) {
+func InsertRespondents(c echo.Context, req model.Responses) (int, error) {
 	var result sql.Result
 	var err error
 	if req.SubmittedAt.Valid {
-		if result, err = db.Exec(
+		if result, err = model.DB.Exec(
 			`INSERT INTO respondents
 				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
-			req.ID, getUserID(c), req.SubmittedAt); err != nil {
+			req.ID, model.GetUserID(c), req.SubmittedAt); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
-		if result, err = db.Exec(
+		if result, err = model.DB.Exec(
 			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
-			req.ID, getUserID(c)); err != nil {
+			req.ID, model.GetUserID(c)); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -37,8 +39,8 @@ func InsertRespondents(c echo.Context, req responses) (int, error) {
 	return int(lastID), nil
 }
 
-func InsertResponse(c echo.Context, responseID int, req responses, body responseBody, data string) error {
-	if _, err := db.Exec(
+func InsertResponse(c echo.Context, responseID int, req model.Responses, body model.ResponseBody, data string) error {
+	if _, err := model.DB.Exec(
 		`INSERT INTO responses (response_id, question_id, body) VALUES (?, ?, ?)`,
 		responseID, body.QuestionID, data); err != nil {
 		c.Logger().Error(err)
@@ -47,9 +49,9 @@ func InsertResponse(c echo.Context, responseID int, req responses, body response
 	return nil
 }
 
-func postResponse(c echo.Context) error {
+func PostResponse(c echo.Context) error {
 
-	req := responses{}
+	req := model.Responses{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
@@ -78,12 +80,12 @@ func postResponse(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"questionnaireID": req.ID,
-		"submitted_at":    timeConvert(req.SubmittedAt),
+		"submitted_at":    model.TimeConvert(req.SubmittedAt),
 		"body":            req.Body,
 	})
 }
 
-func getMyResponses(c echo.Context) error {
+func GetMyResponses(c echo.Context) error {
 	responsesinfo := []struct {
 		QuestionnaireID int            `db:"questionnaire_id"`
 		ResponseID      int            `db:"response_id"`
@@ -91,10 +93,10 @@ func getMyResponses(c echo.Context) error {
 		SubmittedAt     mysql.NullTime `db:"submitted_at"`
 	}{}
 
-	if err := db.Select(&responsesinfo,
+	if err := model.DB.Select(&responsesinfo,
 		`SELECT questionnaire_id, response_id, modified_at, submitted_at from responses
 		WHERE user_traqid = ? AND deleted_at IS NULL`,
-		getUserID(c)); err != nil {
+		model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -119,7 +121,7 @@ func getMyResponses(c echo.Context) error {
 		}
 		if !duplication {
 			fmt.Println(response.QuestionnaireID)
-			title, resTimeLimit, err := GetTitleAndLimit(c, response.QuestionnaireID)
+			title, resTimeLimit, err := model.GetTitleAndLimit(c, response.QuestionnaireID)
 			if err != nil {
 				return err
 			}
@@ -129,8 +131,8 @@ func getMyResponses(c echo.Context) error {
 					QuestionnaireID: response.QuestionnaireID,
 					Title:           title,
 					ResTimeLimit:    resTimeLimit,
-					SubmittedAt:     timeConvert(response.SubmittedAt),
-					ModifiedAt:      timeConvert(response.ModifiedAt),
+					SubmittedAt:     model.TimeConvert(response.SubmittedAt),
+					ModifiedAt:      model.TimeConvert(response.ModifiedAt),
 				})
 		}
 	}
@@ -138,7 +140,7 @@ func getMyResponses(c echo.Context) error {
 	return c.JSON(http.StatusOK, myresponses)
 }
 
-func getResponse(c echo.Context) error {
+func GetResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
@@ -150,10 +152,10 @@ func getResponse(c echo.Context) error {
 		SubmittedAt     mysql.NullTime `db:"submitted_at"`
 	}{}
 
-	if err := db.Get(&respondentInfo,
+	if err := model.DB.Get(&respondentInfo,
 		`SELECT questionnaire_id, modified_at, submitted_at from respondents
 		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
-		responseID, getUserID(c)); err != nil {
+		responseID, model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
 		if err == sql.ErrNoRows {
 			return echo.NewHTTPError(http.StatusNotFound)
@@ -163,32 +165,32 @@ func getResponse(c echo.Context) error {
 	}
 
 	responses := struct {
-		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     string         `json:"submitted_at"`
-		ModifiedAt      string         `json:"modified_at"`
-		Body            []responseBody `json:"body"`
+		QuestionnaireID int                  `json:"questionnaireID"`
+		SubmittedAt     string               `json:"submitted_at"`
+		ModifiedAt      string               `json:"modified_at"`
+		Body            []model.ResponseBody `json:"body"`
 	}{
 		respondentInfo.QuestionnaireID,
-		timeConvert(respondentInfo.SubmittedAt),
-		timeConvert(respondentInfo.ModifiedAt),
-		[]responseBody{},
+		model.TimeConvert(respondentInfo.SubmittedAt),
+		model.TimeConvert(respondentInfo.ModifiedAt),
+		[]model.ResponseBody{},
 	}
 
-	questionTypeList, err := getQuestionsType(c, responses.QuestionnaireID)
+	questionTypeList, err := model.GetQuestionsType(c, responses.QuestionnaireID)
 	if err != nil {
 		return err
 	}
 
-	bodyList := []responseBody{}
+	bodyList := []model.ResponseBody{}
 	for _, questionType := range questionTypeList {
-		body := responseBody{
+		body := model.ResponseBody{
 			QuestionID:   questionType.ID,
 			QuestionType: questionType.Type,
 		}
 		switch questionType.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			option := []string{}
-			if err := db.Select(&option,
+			if err := model.DB.Select(&option,
 				`SELECT body from responses
 				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 				responseID, body.QuestionID); err != nil {
@@ -198,7 +200,7 @@ func getResponse(c echo.Context) error {
 			body.OptionResponse = option
 		default:
 			var response string
-			if err := db.Get(&response,
+			if err := model.DB.Get(&response,
 				`SELECT body from responses
 				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 				responseID, body.QuestionID); err != nil {
@@ -213,25 +215,26 @@ func getResponse(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses)
 }
 
-func editResponse(c echo.Context) error {
+func EditResponse(c echo.Context) error {
+	// 後で実装
 	return c.NoContent(http.StatusOK)
 }
 
-func deleteResponse(c echo.Context) error {
+func DeleteResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		`UPDATE respondents SET deleted_at = CURRENT_TIMESTAMP
 		WHERE response_id = ? AND user_traqid = ?`,
-		responseID, getUserID(c)); err != nil {
+		responseID, model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if _, err := db.Exec(
+	if _, err := model.DB.Exec(
 		`UPDATE responses SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
 		responseID); err != nil {
 		c.Logger().Error(err)

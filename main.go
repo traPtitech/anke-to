@@ -1,51 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
-	"github.com/jmoiron/sqlx"
+	"git.trapti.tech/SysAd/anke-to/model"
+	"git.trapti.tech/SysAd/anke-to/router"
 )
-
-var (
-	db *sqlx.DB
-)
-
-func establishConnection() (*sqlx.DB, error) {
-	user := os.Getenv("MARIADB_USERNAME")
-	if user == "" {
-		user = "root"
-	}
-
-	pass := os.Getenv("MARIADB_PASSWORD")
-	if pass == "" {
-		pass = "password"
-	}
-
-	host := os.Getenv("MARIADB_HOSTNAME")
-	if host == "" {
-		host = "localhost"
-	}
-
-	dbname := os.Getenv("MARIADB_DATABASE")
-	if dbname == "" {
-		dbname = "anke-to"
-	}
-
-	return sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&loc=Japan&charset=utf8mb4", user, pass, host, dbname))
-}
 
 func main() {
 
-	_db, err := establishConnection()
+	_db, err := model.EstablishConnection()
 	if err != nil {
 		panic(err)
 	}
-	db = _db
+	model.DB = _db
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -63,40 +34,40 @@ func main() {
 	// Routes
 	e.GET("/questionnaires", func(c echo.Context) error {
 		if c.QueryParam("nontargeted") == "true" {
-			return getQuestionnaires(c, TargetType(Nontargeted))
+			return router.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
 		} else {
-			return getQuestionnaires(c, TargetType(All))
+			return router.GetQuestionnaires(c, model.TargetType(model.All))
 		}
 	})
 
-	e.POST("/questionnaires", postQuestionnaire)
-	e.GET("/questionnaires/:id", getQuestionnaire)
-	e.PATCH("/questionnaires/:id", editQuestionnaire)
-	e.DELETE("/questionnaires/:id", deleteQuestionnaire)
-	e.GET("/questionnaires/:id/questions", getQuestions)
+	e.POST("/questionnaires", router.PostQuestionnaire)
+	e.GET("/questionnaires/:id", router.GetQuestionnaire)
+	e.PATCH("/questionnaires/:id", router.EditQuestionnaire)
+	e.DELETE("/questionnaires/:id", router.DeleteQuestionnaire)
+	e.GET("/questionnaires/:id/questions", router.GetQuestions)
 
-	e.POST("/questions", postQuestion)
-	e.PATCH("/questions/:id", editQuestion)
-	e.DELETE("/questions/:id", deleteQuestion)
+	e.POST("/questions", router.PostQuestion)
+	e.PATCH("/questions/:id", router.EditQuestion)
+	e.DELETE("/questions/:id", router.DeleteQuestion)
 
-	e.POST("/responses", postResponse)
-	e.GET("/responses/:id", getResponse)
-	e.PATCH("/responses/:id", editResponse)
-	e.DELETE("/responses/:id", deleteResponse)
+	e.POST("/responses", router.PostResponse)
+	e.GET("/responses/:id", router.GetResponse)
+	e.PATCH("/responses/:id", router.EditResponse)
+	e.DELETE("/responses/:id", router.DeleteResponse)
 
 	e.GET("/users/me", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
-			"traqID": getUserID(c),
+			"traqID": model.GetUserID(c),
 		})
 	})
 
-	e.GET("/users/me/responses", getMyResponses)
+	e.GET("/users/me/responses", router.GetMyResponses)
 
 	e.GET("/users/me/targeted", func(c echo.Context) error {
-		return getQuestionnaires(c, TargetType(Targeted))
+		return router.GetQuestionnaires(c, model.TargetType(model.Targeted))
 	})
 
-	e.GET("/users/me/administrates", getMyQuestionnaire)
+	e.GET("/users/me/administrates", router.GetMyQuestionnaire)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
