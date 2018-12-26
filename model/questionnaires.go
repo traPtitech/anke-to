@@ -114,6 +114,42 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {
+	questionnaire := Questionnaires{}
+	if err := DB.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return Questionnaires{}, echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return Questionnaires{}, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return questionnaire, nil
+}
+
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaires, []string, []string, []string, error) {
+	questionnaire, err := GetQuestionnaire(c, questionnaireID)
+	if err != nil {
+		return Questionnaires{}, nil, nil, nil, err
+	}
+
+	targets, err := GetTargets(c, questionnaireID)
+	if err != nil {
+		return Questionnaires{}, nil, nil, nil, err
+	}
+
+	administrators, err := GetAdministrators(c, questionnaireID)
+	if err != nil {
+		return Questionnaires{}, nil, nil, nil, err
+	}
+
+	respondents, err := GetRespondents(c, questionnaireID)
+	if err != nil {
+		return Questionnaires{}, nil, nil, nil, err
+	}
+	return questionnaire, targets, administrators, respondents, nil
+}
+
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
 		Title        string `db:"title"`

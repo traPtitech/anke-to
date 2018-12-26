@@ -20,36 +20,14 @@ func GetQuestionnaires(c echo.Context) error {
 }
 
 func GetQuestionnaire(c echo.Context) error {
-
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	questionnaire := model.Questionnaires{}
-	if err := model.DB.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
-		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	targets, err := model.GetTargets(c, questionnaireID)
+	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
 	if err != nil {
 		return err
-	}
-
-	administrators, err := model.GetAdministrators(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	respondents := []string{}
-	if err := model.DB.Select(&respondents, "SELECT user_traqid FROM respondents WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -221,13 +199,61 @@ func DeleteQuestionnaire(c echo.Context) error {
 }
 
 func GetMyQuestionnaire(c echo.Context) error {
-	/*
-		後で書く
-		questionnaireID, err := GetAdminQuestionnaires(c, getUserID(c))
+	questionnaireIDs, err := model.GetAdminQuestionnaires(c, model.GetUserID(c))
+	if err != nil {
+		return nil
+	}
+
+	type QuestionnaireInfo struct {
+		ID             int      `json:"questionnaireID"`
+		Title          string   `json:"title"`
+		Description    string   `json:"description"`
+		ResTimeLimit   string   `json:"res_time_limit"`
+		CreatedAt      string   `json:"created_at"`
+		ModifiedAt     string   `json:"modified_at"`
+		ResSharedTo    string   `json:"res_shared_to"`
+		AllResponded   bool     `json:"all_responded"`
+		Targets        []string `json:"targets"`
+		Administrators []string `json:"administrators"`
+		Respondents    []string `json:"respondents"`
+	}
+	ret := []QuestionnaireInfo{}
+
+	for _, questionnaireID := range questionnaireIDs {
+		questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
 		if err != nil {
-			return nil
-		}*/
-	return c.NoContent(http.StatusOK)
+			return err
+		}
+		allresponded := true
+		for _, t := range targets {
+			found := false
+			for _, r := range respondents {
+				if t == r {
+					found = true
+					break
+				}
+			}
+			if !found {
+				allresponded = false
+				break
+			}
+		}
+
+		ret = append(ret, QuestionnaireInfo{
+			ID:             questionnaire.ID,
+			Title:          questionnaire.Title,
+			Description:    questionnaire.Description,
+			ResTimeLimit:   model.TimeConvert(questionnaire.ResTimeLimit),
+			CreatedAt:      questionnaire.CreatedAt.String(),
+			ModifiedAt:     questionnaire.ModifiedAt.String(),
+			ResSharedTo:    questionnaire.ResSharedTo,
+			AllResponded:   allresponded,
+			Targets:        targets,
+			Administrators: administrators,
+			Respondents:    respondents,
+		})
+	}
+	return c.JSON(http.StatusOK, ret)
 }
 
 func GetTargetedQuestionnaire(c echo.Context) error {
