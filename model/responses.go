@@ -68,7 +68,7 @@ func InsertRespondents(c echo.Context, req Responses) (int, error) {
 
 func InsertResponse(c echo.Context, responseID int, req Responses, body ResponseBody, data string) error {
 	if _, err := DB.Exec(
-		`INSERT INTO responses (response_id, question_id, body) VALUES (?, ?, ?)`,
+		`INSERT INTO response (response_id, question_id, body) VALUES (?, ?, ?)`,
 		responseID, body.QuestionID, data); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -117,7 +117,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		option := []string{}
 		if err := DB.Select(&option,
-			`SELECT body from responses
+			`SELECT body from response
 			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 			responseID, body.QuestionID); err != nil {
 			c.Logger().Error(err)
@@ -127,7 +127,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 	default:
 		var response string
 		if err := DB.Get(&response,
-			`SELECT body from responses
+			`SELECT body from response
 			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 			responseID, body.QuestionID); err != nil {
 			c.Logger().Error(err)

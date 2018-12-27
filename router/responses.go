@@ -311,7 +311,7 @@ func DeleteResponse(c echo.Context) error {
 	}
 
 	if _, err := model.DB.Exec(
-		`UPDATE responses SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
+		`UPDATE response SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
 		responseID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
