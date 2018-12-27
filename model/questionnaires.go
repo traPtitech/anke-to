@@ -21,6 +21,17 @@ type Questionnaires struct {
 	ModifiedAt   time.Time      `json:"modified_at"     db:"modified_at"`
 }
 
+type QuestionnairesInfo struct {
+	ID           int       `json:"questionnaireID"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	ResTimeLimit string    `json:"res_time_limit"`
+	ResSharedTo  string    `json:"res_shared_to"`
+	CreatedAt    time.Time `json:"created_at"`
+	ModifiedAt   time.Time `json:"modified_at"`
+	IsTargeted   bool      `json:"is_targeted"`
+}
+
 // エラーが起きれば(nil, err)
 // 起こらなければ(allquestions, nil)を返す
 func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
@@ -57,10 +68,10 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	return allquestionnaires, nil
 }
 
-func GetQuestionnaires(c echo.Context, targettype TargetType) error {
+func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesInfo, error) {
 	allquestionnaires, err := GetAllQuestionnaires(c)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	userID := GetUserID(c)
@@ -69,21 +80,10 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) error {
 	if err := DB.Select(&targetedQuestionnaireID,
 		"SELECT questionnaire_id FROM targets WHERE user_traqid = ?", userID); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	type questionnairesInfo struct {
-		ID           int       `json:"questionnaireID"`
-		Title        string    `json:"title"`
-		Description  string    `json:"description"`
-		ResTimeLimit string    `json:"res_time_limit"`
-		ResSharedTo  string    `json:"res_shared_to"`
-		CreatedAt    time.Time `json:"created_at"`
-		ModifiedAt   time.Time `json:"modified_at"`
-		IsTargeted   bool      `json:"is_targeted"`
-	}
-	var ret []questionnairesInfo
-
+	ret := []QuestionnairesInfo{}
 	for _, v := range allquestionnaires {
 		var targeted = false
 		for _, w := range targetedQuestionnaireID {
@@ -95,7 +95,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) error {
 			continue
 		}
 		ret = append(ret,
-			questionnairesInfo{
+			QuestionnairesInfo{
 				ID:           v.ID,
 				Title:        v.Title,
 				Description:  v.Description,
@@ -107,11 +107,10 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) error {
 	}
 
 	if len(ret) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
+		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	// 構造体の定義で書いたJSONのキーで変換される
-	return c.JSON(http.StatusOK, ret)
+	return ret, nil
 }
 
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {

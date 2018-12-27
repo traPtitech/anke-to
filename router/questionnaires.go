@@ -13,9 +13,17 @@ import (
 
 func GetQuestionnaires(c echo.Context) error {
 	if c.QueryParam("nontargeted") == "true" {
-		return model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
+		questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
+		if err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, questionnaires)
 	} else {
-		return model.GetQuestionnaires(c, model.TargetType(model.All))
+		questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.All))
+		if err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, questionnaires)
 	}
 }
 
@@ -257,5 +265,43 @@ func GetMyQuestionnaire(c echo.Context) error {
 }
 
 func GetTargetedQuestionnaire(c echo.Context) error {
-	return model.GetQuestionnaires(c, model.TargetType(model.Targeted))
+	questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.Targeted))
+	if err != nil {
+		return err
+	}
+
+	type QuestionnairesInfo struct {
+		ID           int       `json:"questionnaireID"`
+		Title        string    `json:"title"`
+		Description  string    `json:"description"`
+		ResTimeLimit string    `json:"res_time_limit"`
+		ResSharedTo  string    `json:"res_shared_to"`
+		CreatedAt    time.Time `json:"created_at"`
+		ModifiedAt   time.Time `json:"modified_at"`
+		RespondedAt  string    `json:"responded_at"`
+	}
+	questionnairesInfo := []QuestionnairesInfo{}
+
+	for _, q := range questionnaires {
+		respondedAt := sql.NullString{}
+		if err := model.DB.Get(&respondedAt,
+			`SELECT MAX(submitted_at) FROM respondents
+			WHERE user_traqid = ? AND questionnaire_id = ? AND deleted_at IS NULL`,
+			model.GetUserID(c), q.ID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		questionnairesInfo = append(questionnairesInfo,
+			QuestionnairesInfo{
+				ID:           q.ID,
+				Title:        q.Title,
+				Description:  q.Description,
+				ResTimeLimit: q.ResTimeLimit,
+				ResSharedTo:  q.ResSharedTo,
+				CreatedAt:    q.CreatedAt,
+				ModifiedAt:   q.ModifiedAt,
+				RespondedAt:  model.NullStringConvert(respondedAt),
+			})
+	}
+	return c.JSON(http.StatusOK, questionnairesInfo)
 }

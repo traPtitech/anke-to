@@ -1,6 +1,8 @@
 package model
 
 import (
+	"database/sql"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
@@ -8,6 +10,14 @@ import (
 func TimeConvert(time mysql.NullTime) string {
 	if time.Valid {
 		return time.Time.String()
+	} else {
+		return "NULL"
+	}
+}
+
+func NullStringConvert(str sql.NullString) string {
+	if str.Valid {
+		return str.String
 	} else {
 		return "NULL"
 	}

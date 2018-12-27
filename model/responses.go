@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"database/sql"
-	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
@@ -17,14 +16,14 @@ type ResponseBody struct {
 
 type Responses struct {
 	ID          int            `json:"questionnaireID"`
-	SubmittedAt mysql.NullTime `json:"submitted_at"`
+	SubmittedAt string         `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
 }
 
 func InsertRespondents(c echo.Context, req Responses) (int, error) {
 	var result sql.Result
 	var err error
-	if req.SubmittedAt.Valid {
+	if req.SubmittedAt != "NULL" {
 		if result, err = DB.Exec(
 			`INSERT INTO respondents
 				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
