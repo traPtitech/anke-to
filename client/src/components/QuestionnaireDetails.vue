@@ -34,7 +34,7 @@
 <script>
 
 // import <componentname> from '<path to component file>'
-import Information from '@/components/QuestionnaireDetails/information'
+import Information from '@/components/QuestionnaireDetails/Information'
 import Questions from '@/components/QuestionnaireDetails/Questions'
 
 export default {
