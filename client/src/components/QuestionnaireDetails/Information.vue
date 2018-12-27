@@ -55,7 +55,25 @@
             <header class="card-header">
               <div class="card-header-title subtitle">自分の回答</div>
             </header>
-            <div class="card-content">このアンケートに対する自分の回答一覧</div>
+            <div class="card-content">
+              <ul>
+                <li v-for="(response, index) in responses" :key="index">
+                  <span
+                    :class="{'ti-save': response.submitted_at==='NULL', 'ti-check': response.submitted_at!=='NULL'}"
+                    title="po"
+                  ></span>
+                  <a
+                    :href="'/responses/' + response.responseID"
+                  >{{ getDateStr(response.modified_at) }}</a>
+                  <a>
+                    <span
+                      class="ti-trash is-pulled-right"
+                      @click="deleteResponse(response.responseID, index)"
+                    ></span>
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -96,11 +114,13 @@ export default {
   components: {
   },
   async created () {
-    const resp = await axios.get('/questionnaires/' + this.questionnaireId)
-    this.details = resp.data
+    const respDetails = await axios.get('/questionnaires/' + this.questionnaireId)
+    this.details = respDetails.data
     if (this.administrates) {
       this.$emit('enable-edit-button')
     }
+    const respResponses = await axios.get('/users/me/responses/' + this.questionnaireId)
+    this.responses = respResponses.data
   },
   props: {
     props: {
@@ -110,7 +130,8 @@ export default {
   },
   data () {
     return {
-      details: {}
+      details: {},
+      responses: []
     }
   },
   methods: {
@@ -124,6 +145,10 @@ export default {
       }
       ret += list[ list.length - 1 ]
       return ret
+    },
+    deleteResponse (responseId, index) {
+      axios.delete('/responses/' + responseId, {method: 'delete', withCredentials: true})
+      this.responses.splice(index, 1)
     }
   },
   computed: {
@@ -156,11 +181,11 @@ export default {
         (this.details.res_shared_to === 'administrators' && this.administrates) ||
         (this.details.res_shared_to === 'respondents' && this.responses.length > 0))
     },
-    responses () {
-      // このアンケートに対する自分の回答一覧を返す 未実装
-      let ret = []
-      return ret
-    },
+    // responses () {
+    //   // このアンケートに対する自分の回答一覧を返す 未実装
+    //   let ret = []
+    //   return ret
+    // },
     userLists () {
       return [
         {
