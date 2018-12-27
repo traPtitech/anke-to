@@ -10,9 +10,6 @@
         <tr v-for="(itemrow, index) in itemrows" :key="index">
           <td v-for="(item, index) in itemrow" :key="index" v-html="item"></td>
         </tr>
-        <tr v-for="(itemrow, index) in itemrows" :key="index">
-          <td v-for="(item, index) in itemrow" :key="index" v-html="item"></td>
-        </tr>
       </tbody>
     </table>
   </div>
