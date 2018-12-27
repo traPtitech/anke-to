@@ -8,7 +8,7 @@
         <article class="post" v-for="(row, index) in itemrows" :key="index">
           <div>
             <div class="questionnaire-title">
-              <span>{{ row.status }}</span>
+              <span :class="{'ti-check': row.status==='sent', 'ti-alert' : row.status==='unsent'}"></span>
               <span class="subtitle" v-html="row.title"></span>
             </div>
             <p>{{ row.description }}</p>
@@ -23,17 +23,16 @@
         </article>
       </div>
     </div>
+    <!-- {{ questionnaires }} -->
   </div>
 </template>
 
 <script>
 import axios from '@/bin/axios'
-import Table from '@/components/Utils/Table.vue'
 
 export default {
-  name: 'MypageLayout',
+  name: 'Mypage',
   components: {
-    'customtable': Table
   },
   async created () {
     const resp = await axios.get('/users/me/targeted')
@@ -43,12 +42,16 @@ export default {
     traqId: {
       type: String,
       required: true
+    },
+    getDateStr: {
+      type: Function,
+      required: true
     }
   },
   data () {
     return {
       questionnaires: [],
-      headers: ['Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details']
+      headers: [ 'Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details' ]
     }
   },
   computed: {
@@ -57,11 +60,12 @@ export default {
       for (var i = 0; i < this.questionnaires.length; i++) {
         let row = {}
         row.title = this.getTitleHtml(i)
-        row.description = this.questionnaires[i].description
-        row.res_time_limit = this.getDateStr(this.questionnaires[i].res_time_limit)
-        row.status = this.hasResponded(i) ? '✔︎' : '-' // saved も返せるようにしたさ
-        row.modified_at = this.getDateStr(this.questionnaires[i].modified_at)
-        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[i].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
+        row.description = this.questionnaires[ i ].description
+        row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
+        row.status = this.getStatus(i)
+        // row.status = this.hasResponded(i) ? '✔︎' : '-' // saved も返せるようにしたさ
+        row.modified_at = this.getDateStr(this.questionnaires[ i ].modified_at)
+        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
 
         rows.push(row)
       }
@@ -69,17 +73,18 @@ export default {
     }
   },
   methods: {
-    hasResponded (index) {
-      return this.questionnaires[index].responded_at != null
+    getStatus (i) {
+      if (this.questionnaires[ i ].responded_at != null) {
+        return 'sent'
+      } else {
+        return 'unsent'
+      }
     },
     getTitleHtml (i) {
-      return '<a href="/questionnaires/' + this.questionnaires[i].questionnaireID + '">' + this.questionnaires[i].title + '</a>'
+      return '<a href="/questionnaires/' + this.questionnaires[ i ].questionnaireID + '">' + this.questionnaires[ i ].title + '</a>'
     },
     getResultsLinkHtml (id) {
       return '<a href="/resuslts/' + id + '" class="button is-info">Results</a>'
-    },
-    getDateStr (str) {
-      return str === 'NULL' ? '-' : new Date(str).toLocaleString()
     }
   }
 }

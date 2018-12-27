@@ -13,7 +13,7 @@
           <span></span>
           <span></span>
         </a>
-        <a class="navbar-item" href="/">
+        <a class="navbar-item" href="/targeted">
           <p class="title is-3">anke-to</p>
         </a>
         <p class="subtitle pull-right">{{ traqId }}</p>

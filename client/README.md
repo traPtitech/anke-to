@@ -30,7 +30,7 @@ For a detailed explanation on how things work, check out the [guide](http://vuej
 
 - `/` : 自分が対象になっているアンケート一覧
 - `/administrates` : 自分が管理者になっているアンケート一覧
-- `/answered` : 自分の回答一覧
+- `/responses` : 自分の回答一覧
 - `/explorer` : すべてのアンケート一覧
 - `/questionnaires/:id` : questionnaireID = id のアンケートの詳細
   - 編集のときは `#edit-form` を末尾につける

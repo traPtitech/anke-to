@@ -82,7 +82,7 @@ import axios from '@/bin/axios'
 import Table from '@/components/Utils/Table.vue'
 
 export default {
-  name: 'ExplorerLayout',
+  name: 'Explorer',
   components: {
     'customtable': Table
   },
@@ -93,12 +93,16 @@ export default {
     traqId: {
       type: String,
       required: true
+    },
+    getDateStr: {
+      type: Function,
+      required: true
     }
   },
   data () {
     return {
       questionnaires: [],
-      headers: ['', '回答期限', '更新日時', '作成日時', '結果'],
+      headers: [ '', '回答期限', '更新日時', '作成日時', '結果' ],
       sortOrder: '-modified_at',
       sortOrders: [
         {
@@ -149,10 +153,10 @@ export default {
       for (let i = 0; i < this.questionnaires.length; i++) {
         let row = {}
         row.title = this.getTitleHtml(i)
-        row.res_time_limit = this.getDateStr(this.questionnaires[i].res_time_limit)
-        row.modified_at = this.getDateStr(this.questionnaires[i].modified_at)
-        row.created_at = this.getDateStr(this.questionnaires[i].created_at)
-        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[i].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
+        row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
+        row.modified_at = this.getDateStr(this.questionnaires[ i ].modified_at)
+        row.created_at = this.getDateStr(this.questionnaires[ i ].created_at)
+        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
         itemrows.push(row)
       }
       return itemrows
@@ -160,13 +164,10 @@ export default {
   },
   methods: {
     getTitleHtml (i) {
-      return '<a href="/questionnaires/' + this.questionnaires[i].questionnaireID + '">' + this.questionnaires[i].title + '</a>'
+      return '<a href="/questionnaires/' + this.questionnaires[ i ].questionnaireID + '">' + this.questionnaires[ i ].title + '</a>'
     },
     getResultsLinkHtml (id) {
-      return '<a href="/resuslts/' + id + '">' + '<span class="ti-new-window"></span><br>Open' + '</a>'
-    },
-    getDateStr (str) {
-      return str === 'NULL' ? '-' : new Date(str).toLocaleString()
+      return '<a href="/results/' + id + '">' + '<span class="ti-new-window"></span><br>Open' + '</a>'
     },
     getQuestionnaires () {
       axios

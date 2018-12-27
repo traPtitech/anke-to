@@ -1,10 +1,12 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-// import HelloWorld from '@/components/HelloWorld'
-import MypageLayout from '@/components/MypageLayout'
-import CreatedLayout from '@/components/CreatedLayout'
-import AnsweredLayout from '@/components/AnsweredLayout'
-import ExplorerLayout from '@/components/ExplorerLayout'
+import Targeted from '@/components/Targeted'
+import Administrates from '@/components/Administrates'
+import Responses from '@/components/Responses'
+import Explorer from '@/components/Explorer'
+import QuestionnaireDetails from '@/components/QuestionnaireDetails'
+import Results from '@/components/Results'
+import EditResponse from '@/components/EditResponse'
 import NotFound from '@/components/Utils/NotFound'
 
 Vue.use(Router)
@@ -17,24 +19,43 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'MypageLayout',
-      component: MypageLayout,
+      redirect: '/targeted'
+    },
+    {
+      path: '/targeted',
+      name: 'Targeted',
+      component: Targeted,
       props: { traqId: String(this.traqId) }
     },
     {
-      path: '/created',
-      name: 'Created',
-      component: CreatedLayout
+      path: '/administrates',
+      name: 'Administrates',
+      component: Administrates
     },
     {
-      path: '/answered',
-      name: 'Answered',
-      component: AnsweredLayout
+      path: '/responses',
+      name: 'Responses',
+      component: Responses
     },
     {
       path: '/explorer',
       name: 'Explorer',
-      component: ExplorerLayout
+      component: Explorer
+    },
+    {
+      path: '/questionnaires/:id',
+      name: 'QuestionnaireDetails',
+      component: QuestionnaireDetails
+    },
+    {
+      path: '/results/:id',
+      name: 'Results',
+      component: Results
+    },
+    {
+      path: '/questionnaires/:id/new-response',
+      name: 'EditResponse',
+      component: EditResponse
     },
     {
       path: '*',
