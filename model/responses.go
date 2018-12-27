@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"time"
 
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
@@ -24,7 +25,7 @@ type Responses struct {
 type ResponseInfo struct {
 	QuestionnaireID int            `db:"questionnaire_id"`
 	ResponseID      int            `db:"response_id"`
-	ModifiedAt      mysql.NullTime `db:"modified_at"`
+	ModifiedAt      time.Time      `db:"modified_at"`
 	SubmittedAt     mysql.NullTime `db:"submitted_at"`
 }
 
@@ -100,8 +101,50 @@ func GetResponsesInfo(c echo.Context, responsesinfo []ResponseInfo) ([]MyRespons
 				Title:           title,
 				ResTimeLimit:    resTimeLimit,
 				SubmittedAt:     NullTimeToString(response.SubmittedAt),
-				ModifiedAt:      NullTimeToString(response.ModifiedAt),
+				ModifiedAt:      response.ModifiedAt.Format(time.RFC3339),
 			})
 	}
 	return myresponses, nil
+}
+
+func GetResponseBody(c echo.Context, responseID int, questionID int, questionType string) (ResponseBody, error) {
+	body := ResponseBody{
+		QuestionID:   questionID,
+		QuestionType: questionType,
+	}
+	switch questionType {
+	case "MultipleChoice", "Checkbox", "Dropdown":
+		option := []string{}
+		if err := DB.Select(&option,
+			`SELECT body from responses
+			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
+			responseID, body.QuestionID); err != nil {
+			c.Logger().Error(err)
+			return ResponseBody{}, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		body.OptionResponse = option
+	default:
+		var response string
+		if err := DB.Get(&response,
+			`SELECT body from responses
+			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
+			responseID, body.QuestionID); err != nil {
+			c.Logger().Error(err)
+			return ResponseBody{}, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		body.Response = response
+	}
+	return body, nil
+}
+
+func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
+	respondedAt := sql.NullString{}
+	if err := DB.Get(&respondedAt,
+		`SELECT MAX(submitted_at) FROM respondents
+		WHERE user_traqid = ? AND questionnaire_id = ? AND deleted_at IS NULL`,
+		GetUserID(c), questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return "", echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return NullStringConvert(respondedAt), nil
 }

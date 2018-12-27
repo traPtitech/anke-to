@@ -286,13 +286,9 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 	questionnairesInfo := []QuestionnairesInfo{}
 
 	for _, q := range questionnaires {
-		respondedAt := sql.NullString{}
-		if err := model.DB.Get(&respondedAt,
-			`SELECT MAX(submitted_at) FROM respondents
-			WHERE user_traqid = ? AND questionnaire_id = ? AND deleted_at IS NULL`,
-			model.GetUserID(c), q.ID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		respondedAt, err := model.RespondedAt(c, q.ID)
+		if err != nil {
+			return err
 		}
 		questionnairesInfo = append(questionnairesInfo,
 			QuestionnairesInfo{
@@ -303,7 +299,7 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 				ResSharedTo:  q.ResSharedTo,
 				CreatedAt:    q.CreatedAt,
 				ModifiedAt:   q.ModifiedAt,
-				RespondedAt:  model.NullStringConvert(respondedAt),
+				RespondedAt:  respondedAt,
 			})
 	}
 	return c.JSON(http.StatusOK, questionnairesInfo)

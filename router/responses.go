@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
@@ -90,6 +91,99 @@ func GetMyResponsesByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, myresponses)
 }
 
+func GetResponsesByID(c echo.Context) error {
+	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	resSharedTo := ""
+	if err := model.DB.Get(&resSharedTo,
+		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	switch resSharedTo {
+	case "administrators":
+		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	case "respondents":
+		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		RespondedAt, err := model.RespondedAt(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin && RespondedAt == "NULL" {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	}
+
+	responsesinfo := []struct {
+		ResponseID  int            `db:"response_id"`
+		UserID      string         `db:"user_traqid"`
+		ModifiedAt  time.Time      `db:"modified_at"`
+		SubmittedAt mysql.NullTime `db:"submitted_at"`
+	}{}
+
+	if err := model.DB.Select(&responsesinfo,
+		`SELECT response_id, user_traqid, modified_at, submitted_at from respondents
+		WHERE deleted_at IS NULL AND questionnaire_id = ?`,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	type ResponsesInfo struct {
+		ResponseID  int                  `json:"responseID"`
+		UserID      string               `json:"traqID"`
+		SubmittedAt string               `json:"submitted_at"`
+		ModifiedAt  string               `json:"modified_at"`
+		Body        []model.ResponseBody `json:"body"`
+	}
+	responses := []ResponsesInfo{}
+
+	questionTypeList, err := model.GetQuestionsType(c, questionnaireID)
+	if err != nil {
+		return err
+	}
+
+	for _, response := range responsesinfo {
+		bodyList := []model.ResponseBody{}
+		for _, questionType := range questionTypeList {
+			body, err := model.GetResponseBody(c, response.ResponseID, questionType.ID, questionType.Type)
+			if err != nil {
+				return err
+			}
+			bodyList = append(bodyList, body)
+		}
+		responses = append(responses,
+			ResponsesInfo{
+				ResponseID:  response.ResponseID,
+				UserID:      response.UserID,
+				SubmittedAt: model.NullTimeToString(response.SubmittedAt),
+				ModifiedAt:  response.ModifiedAt.Format(time.RFC3339),
+				Body:        bodyList,
+			})
+	}
+
+	return c.JSON(http.StatusOK, responses)
+}
+
 func GetResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -133,31 +227,9 @@ func GetResponse(c echo.Context) error {
 
 	bodyList := []model.ResponseBody{}
 	for _, questionType := range questionTypeList {
-		body := model.ResponseBody{
-			QuestionID:   questionType.ID,
-			QuestionType: questionType.Type,
-		}
-		switch questionType.Type {
-		case "MultipleChoice", "Checkbox", "Dropdown":
-			option := []string{}
-			if err := model.DB.Select(&option,
-				`SELECT body from responses
-				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
-				responseID, body.QuestionID); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-			body.OptionResponse = option
-		default:
-			var response string
-			if err := model.DB.Get(&response,
-				`SELECT body from responses
-				WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
-				responseID, body.QuestionID); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-			body.Response = response
+		body, err := model.GetResponseBody(c, responseID, questionType.ID, questionType.Type)
+		if err != nil {
+			return err
 		}
 		bodyList = append(bodyList, body)
 	}

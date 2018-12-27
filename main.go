@@ -46,11 +46,14 @@ func main() {
 	e.PATCH("/responses/:id", router.EditResponse)
 	e.DELETE("/responses/:id", router.DeleteResponse)
 
+	//e.GET("/users", )
 	e.GET("/users/me", router.GetUsersMe)
 	e.GET("/users/me/responses", router.GetMyResponses)
 	e.GET("/users/me/responses/:questionnaireID", router.GetMyResponsesByID)
 	e.GET("/users/me/targeted", router.GetTargetedQuestionnaire)
 	e.GET("/users/me/administrates", router.GetMyQuestionnaire)
+
+	e.GET("/results/:questionnaireID", router.GetResponsesByID)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

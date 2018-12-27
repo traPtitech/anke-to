@@ -45,3 +45,25 @@ func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	}
 	return questionnaireID, nil
 }
+
+// 自分がadminなら(true, nil)
+func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
+	user := GetUserID(c)
+	administrators, err := GetAdministrators(c, questionnaireID)
+	if err != nil {
+		c.Logger().Error(err)
+		return false, err
+	}
+
+	found := false
+	for _, admin := range administrators {
+		if admin == user {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false, nil
+	}
+	return true, nil
+}
