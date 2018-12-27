@@ -30,6 +30,7 @@ func GetQuestionnaires(c echo.Context) error {
 func GetQuestionnaire(c echo.Context) error {
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -42,9 +43,9 @@ func GetQuestionnaire(c echo.Context) error {
 		"questionnaireID": questionnaire.ID,
 		"title":           questionnaire.Title,
 		"description":     questionnaire.Description,
-		"res_time_limit":  model.TimeConvert(questionnaire.ResTimeLimit),
-		"created_at":      questionnaire.CreatedAt,
-		"modified_at":     questionnaire.ModifiedAt,
+		"res_time_limit":  model.NullTimeToString(questionnaire.ResTimeLimit),
+		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
+		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
 		"res_shared_to":   questionnaire.ResSharedTo,
 		"targets":         targets,
 		"administrators":  administrators,
@@ -56,12 +57,12 @@ func PostQuestionnaire(c echo.Context) error {
 
 	// リクエストで投げられるJSONのスキーマ
 	req := struct {
-		Title          string    `json:"title"`
-		Description    string    `json:"description"`
-		ResTimeLimit   time.Time `json:"res_time_limit"`
-		ResSharedTo    string    `json:"res_shared_to"`
-		Targets        []string  `json:"targets"`
-		Administrators []string  `json:"administrators"`
+		Title          string   `json:"title"`
+		Description    string   `json:"description"`
+		ResTimeLimit   string   `json:"res_time_limit"`
+		ResSharedTo    string   `json:"res_shared_to"`
+		Targets        []string `json:"targets"`
+		Administrators []string `json:"administrators"`
 	}{}
 
 	// JSONを構造体につける
@@ -73,7 +74,8 @@ func PostQuestionnaire(c echo.Context) error {
 	var result sql.Result
 
 	// アンケートの追加
-	if req.ResTimeLimit.IsZero() {
+	if req.ResTimeLimit == "" || req.ResTimeLimit == "NULL" {
+		req.ResTimeLimit = "NULL"
 		var err error
 		result, err = model.DB.Exec(
 			"INSERT INTO questionnaires (title, description, res_shared_to) VALUES (?, ?, ?)",
@@ -113,8 +115,8 @@ func PostQuestionnaire(c echo.Context) error {
 		"description":     req.Description,
 		"res_time_limit":  req.ResTimeLimit,
 		"deleted_at":      "NULL",
-		"created_at":      time.Now(),
-		"modified_at":     time.Now(),
+		"created_at":      time.Now().Format(time.RFC3339),
+		"modified_at":     time.Now().Format(time.RFC3339),
 		"res_shared_to":   req.ResSharedTo,
 		"targets":         req.Targets,
 		"administrators":  req.Administrators,
@@ -129,12 +131,12 @@ func EditQuestionnaire(c echo.Context) error {
 	}
 
 	req := struct {
-		Title          string    `json:"title"`
-		Description    string    `json:"description"`
-		ResTimeLimit   time.Time `json:"res_time_limit"`
-		ResSharedTo    string    `json:"res_shared_to"`
-		Targets        []string  `json:"targets"`
-		Administrators []string  `json:"administrators"`
+		Title          string   `json:"title"`
+		Description    string   `json:"description"`
+		ResTimeLimit   string   `json:"res_time_limit"`
+		ResSharedTo    string   `json:"res_shared_to"`
+		Targets        []string `json:"targets"`
+		Administrators []string `json:"administrators"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -147,9 +149,10 @@ func EditQuestionnaire(c echo.Context) error {
 	}
 
 	// アップデートする
-	if req.ResTimeLimit.IsZero() {
+	if req.ResTimeLimit == "" || req.ResTimeLimit == "NULL" {
+		req.ResTimeLimit = "NULL"
 		if _, err := model.DB.Exec(
-			"UPDATE questionnaires SET title = ?, description = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
+			"UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
 			req.Title, req.Description, req.ResSharedTo, questionnaireID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -251,9 +254,9 @@ func GetMyQuestionnaire(c echo.Context) error {
 			ID:             questionnaire.ID,
 			Title:          questionnaire.Title,
 			Description:    questionnaire.Description,
-			ResTimeLimit:   model.TimeConvert(questionnaire.ResTimeLimit),
-			CreatedAt:      questionnaire.CreatedAt.String(),
-			ModifiedAt:     questionnaire.ModifiedAt.String(),
+			ResTimeLimit:   model.NullTimeToString(questionnaire.ResTimeLimit),
+			CreatedAt:      questionnaire.CreatedAt.Format(time.RFC3339),
+			ModifiedAt:     questionnaire.ModifiedAt.Format(time.RFC3339),
 			ResSharedTo:    questionnaire.ResSharedTo,
 			AllResponded:   allresponded,
 			Targets:        targets,
@@ -271,14 +274,14 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 	}
 
 	type QuestionnairesInfo struct {
-		ID           int       `json:"questionnaireID"`
-		Title        string    `json:"title"`
-		Description  string    `json:"description"`
-		ResTimeLimit string    `json:"res_time_limit"`
-		ResSharedTo  string    `json:"res_shared_to"`
-		CreatedAt    time.Time `json:"created_at"`
-		ModifiedAt   time.Time `json:"modified_at"`
-		RespondedAt  string    `json:"responded_at"`
+		ID           int    `json:"questionnaireID"`
+		Title        string `json:"title"`
+		Description  string `json:"description"`
+		ResTimeLimit string `json:"res_time_limit"`
+		ResSharedTo  string `json:"res_shared_to"`
+		CreatedAt    string `json:"created_at"`
+		ModifiedAt   string `json:"modified_at"`
+		RespondedAt  string `json:"responded_at"`
 	}
 	questionnairesInfo := []QuestionnairesInfo{}
 

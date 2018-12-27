@@ -26,18 +26,18 @@ func GetQuestions(c echo.Context) error {
 	}
 
 	type questionInfo struct {
-		QuestionID      int       `json:"question_ID"`
-		PageNum         int       `json:"page_num"`
-		QuestionNum     int       `json:"question_num"`
-		QuestionType    string    `json:"question_type"`
-		Body            string    `json:"body"`
-		IsRequrired     bool      `json:"is_required"`
-		CreatedAt       time.Time `json:"created_at"`
-		Options         []string  `json:"options"`
-		ScaleLabelRight string    `json:"scale_label_right"`
-		ScaleLabelLeft  string    `json:"scale_label_left"`
-		ScaleMin        int       `json:"scale_min"`
-		ScaleMax        int       `json:"sclae_max"`
+		QuestionID      int      `json:"question_ID"`
+		PageNum         int      `json:"page_num"`
+		QuestionNum     int      `json:"question_num"`
+		QuestionType    string   `json:"question_type"`
+		Body            string   `json:"body"`
+		IsRequrired     bool     `json:"is_required"`
+		CreatedAt       string   `json:"created_at"`
+		Options         []string `json:"options"`
+		ScaleLabelRight string   `json:"scale_label_right"`
+		ScaleLabelLeft  string   `json:"scale_label_left"`
+		ScaleMin        int      `json:"scale_min"`
+		ScaleMax        int      `json:"sclae_max"`
 	}
 	var ret []questionInfo
 
@@ -68,7 +68,7 @@ func GetQuestions(c echo.Context) error {
 				QuestionType:    v.Type,
 				Body:            v.Body,
 				IsRequrired:     v.IsRequrired,
-				CreatedAt:       v.CreatedAt,
+				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
 				Options:         options,
 				ScaleLabelRight: scalelabel.ScaleLabelRight,
 				ScaleLabelLeft:  scalelabel.ScaleLabelLeft,

@@ -2,14 +2,15 @@ package model
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
-func TimeConvert(time mysql.NullTime) string {
-	if time.Valid {
-		return time.Time.String()
+func NullTimeToString(t mysql.NullTime) string {
+	if t.Valid {
+		return t.Time.Format(time.RFC3339)
 	} else {
 		return "NULL"
 	}

@@ -22,14 +22,14 @@ type Questionnaires struct {
 }
 
 type QuestionnairesInfo struct {
-	ID           int       `json:"questionnaireID"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description"`
-	ResTimeLimit string    `json:"res_time_limit"`
-	ResSharedTo  string    `json:"res_shared_to"`
-	CreatedAt    time.Time `json:"created_at"`
-	ModifiedAt   time.Time `json:"modified_at"`
-	IsTargeted   bool      `json:"is_targeted"`
+	ID           int    `json:"questionnaireID"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	ResTimeLimit string `json:"res_time_limit"`
+	ResSharedTo  string `json:"res_shared_to"`
+	CreatedAt    string `json:"created_at"`
+	ModifiedAt   string `json:"modified_at"`
+	IsTargeted   bool   `json:"is_targeted"`
 }
 
 // エラーが起きれば(nil, err)
@@ -94,15 +94,16 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 		if (targettype == TargetType(Targeted) && !targeted) || (targettype == TargetType(Nontargeted) && targeted) {
 			continue
 		}
+
 		ret = append(ret,
 			QuestionnairesInfo{
 				ID:           v.ID,
 				Title:        v.Title,
 				Description:  v.Description,
-				ResTimeLimit: TimeConvert(v.ResTimeLimit),
+				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
 				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt,
-				ModifiedAt:   v.ModifiedAt,
+				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
+				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
 				IsTargeted:   targeted})
 	}
 

@@ -84,8 +84,8 @@ func GetMyResponses(c echo.Context) error {
 				QuestionnaireID: response.QuestionnaireID,
 				Title:           title,
 				ResTimeLimit:    resTimeLimit,
-				SubmittedAt:     model.TimeConvert(response.SubmittedAt),
-				ModifiedAt:      model.TimeConvert(response.ModifiedAt),
+				SubmittedAt:     model.NullTimeToString(response.SubmittedAt),
+				ModifiedAt:      model.NullTimeToString(response.ModifiedAt),
 			})
 	}
 
@@ -123,8 +123,8 @@ func GetResponse(c echo.Context) error {
 		Body            []model.ResponseBody `json:"body"`
 	}{
 		respondentInfo.QuestionnaireID,
-		model.TimeConvert(respondentInfo.SubmittedAt),
-		model.TimeConvert(respondentInfo.ModifiedAt),
+		model.NullTimeToString(respondentInfo.SubmittedAt),
+		model.NullTimeToString(respondentInfo.ModifiedAt),
 		[]model.ResponseBody{},
 	}
 
