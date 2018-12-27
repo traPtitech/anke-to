@@ -8,7 +8,7 @@ axios.defaults.baseURL = '/api'
 // }
 
 if (process.env.NODE_ENV === 'development') {
-  axios.defaults.baseURL = 'http://anke-to.sysad.trap.show/'
+  axios.defaults.baseURL = 'http://anke-to.sysad.trap.show/api'
 }
 
 // if (process.env.NODE_ENV === 'development') {

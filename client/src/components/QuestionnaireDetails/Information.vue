@@ -3,19 +3,34 @@
     <div class="columns">
       <article class="column is-11">
         <div class="card">
+          <!-- タイトル、説明、回答期限 -->
           <div>
             <header class="card-header">
-              <div class="card-header-title title">{{ details.title }}</div>
+              <div class="card-header-title title" :class="{'is-editing' : isEditing}">
+                <input v-show="isEditing" id="title" v-model="details.title" class="input">
+                <div v-show="!isEditing">{{ details.title }}</div>
+              </div>
             </header>
-            <div class="card-content">{{ details.description }}</div>
+            <div class="card-content">
+              <textarea
+                v-show="isEditing"
+                id="description"
+                v-model="details.description"
+                class="textarea"
+                rows="5"
+              ></textarea>
+              <pre v-show="!isEditing">{{ details.description }}</pre>
+            </div>
             <div class="has-text-right">回答期限 : {{ props.getDateStr(details.res_time_limit) }}</div>
           </div>
         </div>
       </article>
     </div>
+
     <div class="columns details">
       <article class="column is-4">
         <div class="card">
+          <!-- 操作 -->
           <div>
             <header class="card-header">
               <div class="card-header-title subtitle">操作</div>
@@ -32,8 +47,10 @@
           </div>
         </div>
       </article>
+
       <article class="column is-7">
         <div class="card">
+          <!-- 自分の回答一覧 -->
           <div>
             <header class="card-header">
               <div class="card-header-title subtitle">自分の回答</div>
@@ -41,7 +58,9 @@
             <div class="card-content">このアンケートに対する自分の回答一覧</div>
           </div>
         </div>
+
         <div class="card">
+          <!-- 情報 -->
           <div>
             <header class="card-header">
               <div class="card-header-title subtitle">情報</div>
@@ -108,6 +127,15 @@ export default {
     }
   },
   computed: {
+    traqId () {
+      return this.props.traqId
+    },
+    getDateStr () {
+      return this.props.getDateStr
+    },
+    isEditing () {
+      return this.props.isEditing
+    },
     questionnaireId () {
       return this.$route.params.id
     },
@@ -164,6 +192,16 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+pre {
+  white-space: pre-line;
+  font-size: inherit;
+  -webkit-font-smoothing: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  background-color: inherit;
+  color: inherit;
+  padding: 0.625em;
+}
 .card {
   max-width: 100%;
   padding: 0.7rem;
@@ -174,21 +212,35 @@ article.column {
 .columns {
   margin-bottom: 0;
 }
-.card-content.subtitle {
-  margin: 0;
+.columns:first-child {
+  display: flex;
 }
-.card-content > details {
-  margin: 0.5rem;
+
+.card-header-title.is-editing {
+  padding: 0;
 }
-.card-content > details > p {
-  padding: 0 0.5rem;
+.card-content {
+  .subtitle {
+    margin: 0;
+  }
+  > details {
+    margin: 0.5rem;
+    > p {
+      padding: 0 0.5rem;
+    }
+  }
 }
-.management-buttons > .button:not(:last-child) {
-  margin-bottom: 0.7rem;
+.management-buttons {
+  > .button:not(:last-child) {
+    margin-bottom: 0.7rem;
+  }
+  > .button {
+    max-width: fit-content;
+    display: block;
+  }
 }
-.management-buttons > .button {
-  max-width: fit-content;
-  display: block;
+#title.input {
+  font-size: 2rem;
 }
 @media screen and (min-width: 769px) {
   // widthが大きいときは横並びのカードの間を狭くする

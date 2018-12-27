@@ -70,7 +70,8 @@ export default {
     detailTabsProps () {
       return {
         traqId: this.traqId,
-        getDateStr: this.getDateStr
+        getDateStr: this.getDateStr,
+        isEditing: this.isEditing
       }
     },
     currentTabComponent () {
