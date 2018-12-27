@@ -238,7 +238,61 @@ func GetResponse(c echo.Context) error {
 }
 
 func EditResponse(c echo.Context) error {
-	// 後で実装
+	responseID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	req := model.Responses{}
+	if err := c.Bind(&req); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
+		req.SubmittedAt = "NULL"
+		if _, err := model.DB.Exec(
+			`UPDATE respondents
+			SET questionnaire_id = ?, submitted_at = NULL, modified_at = CURRENT_TIMESTAMP
+			WHERE response_id = ?`,
+			req.ID, responseID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		if _, err := model.DB.Exec(
+			`UPDATE respondents
+			SET questionnaire_id = ?, submitted_at = ?, modified_at = CURRENT_TIMESTAMP
+			WHERE response_id = ?`,
+			req.ID, req.SubmittedAt, responseID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	//全消し&追加(レコード数爆発しそう)
+	if _, err := model.DB.Exec(
+		`UPDATE responses SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
+		responseID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	for _, body := range req.Body {
+		switch body.QuestionType {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			for _, option := range body.OptionResponse {
+				if err := model.InsertResponse(c, responseID, req, body, option); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := model.InsertResponse(c, responseID, req, body, body.Response); err != nil {
+				return err
+			}
+		}
+	}
+
 	return c.NoContent(http.StatusOK)
 }
 

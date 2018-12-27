@@ -41,18 +41,19 @@ type MyResponse struct {
 func InsertRespondents(c echo.Context, req Responses) (int, error) {
 	var result sql.Result
 	var err error
-	if req.SubmittedAt != "NULL" {
+	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
+		req.SubmittedAt = "NULL"
 		if result, err = DB.Exec(
-			`INSERT INTO respondents
-				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
-			req.ID, GetUserID(c), req.SubmittedAt); err != nil {
+			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
+			req.ID, GetUserID(c)); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		if result, err = DB.Exec(
-			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
-			req.ID, GetUserID(c)); err != nil {
+			`INSERT INTO respondents
+				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
+			req.ID, GetUserID(c), req.SubmittedAt); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
