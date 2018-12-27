@@ -48,6 +48,7 @@ func main() {
 
 	e.GET("/users/me", router.GetUsersMe)
 	e.GET("/users/me/responses", router.GetMyResponses)
+	e.GET("/users/me/responses/:questionnaireID", router.GetMyResponsesByID)
 	e.GET("/users/me/targeted", router.GetTargetedQuestionnaire)
 	e.GET("/users/me/administrates", router.GetMyQuestionnaire)
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"database/sql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
@@ -18,6 +19,22 @@ type Responses struct {
 	ID          int            `json:"questionnaireID"`
 	SubmittedAt string         `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
+}
+
+type ResponseInfo struct {
+	QuestionnaireID int            `db:"questionnaire_id"`
+	ResponseID      int            `db:"response_id"`
+	ModifiedAt      mysql.NullTime `db:"modified_at"`
+	SubmittedAt     mysql.NullTime `db:"submitted_at"`
+}
+
+type MyResponse struct {
+	ResponseID      int    `json:"responseID"`
+	QuestionnaireID int    `json:"questionnaireID"`
+	Title           string `json:"questionnaire_title"`
+	ResTimeLimit    string `json:"res_time_limit"`
+	SubmittedAt     string `json:"submitted_at"`
+	ModifiedAt      string `json:"modified_at"`
 }
 
 func InsertRespondents(c echo.Context, req Responses) (int, error) {
@@ -66,4 +83,25 @@ func GetRespondents(c echo.Context, questionnaireID int) ([]string, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return respondents, nil
+}
+
+func GetResponsesInfo(c echo.Context, responsesinfo []ResponseInfo) ([]MyResponse, error) {
+	myresponses := []MyResponse{}
+
+	for _, response := range responsesinfo {
+		title, resTimeLimit, err := GetTitleAndLimit(c, response.QuestionnaireID)
+		if err != nil {
+			return nil, err
+		}
+		myresponses = append(myresponses,
+			MyResponse{
+				ResponseID:      response.ResponseID,
+				QuestionnaireID: response.QuestionnaireID,
+				Title:           title,
+				ResTimeLimit:    resTimeLimit,
+				SubmittedAt:     NullTimeToString(response.SubmittedAt),
+				ModifiedAt:      NullTimeToString(response.ModifiedAt),
+			})
+	}
+	return myresponses, nil
 }

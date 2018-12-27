@@ -48,12 +48,7 @@ func PostResponse(c echo.Context) error {
 }
 
 func GetMyResponses(c echo.Context) error {
-	responsesinfo := []struct {
-		QuestionnaireID int            `db:"questionnaire_id"`
-		ResponseID      int            `db:"response_id"`
-		ModifiedAt      mysql.NullTime `db:"modified_at"`
-		SubmittedAt     mysql.NullTime `db:"submitted_at"`
-	}{}
+	responsesinfo := []model.ResponseInfo{}
 
 	if err := model.DB.Select(&responsesinfo,
 		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
@@ -63,30 +58,33 @@ func GetMyResponses(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	type MyResponse struct {
-		ResponseID      int    `json:"responseID"`
-		QuestionnaireID int    `json:"questionnaireID"`
-		Title           string `json:"questionnaire_title"`
-		ResTimeLimit    string `json:"res_time_limit"`
-		SubmittedAt     string `json:"submitted_at"`
-		ModifiedAt      string `json:"modified_at"`
+	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
+	if err != nil {
+		return err
 	}
-	myresponses := []MyResponse{}
 
-	for _, response := range responsesinfo {
-		title, resTimeLimit, err := model.GetTitleAndLimit(c, response.QuestionnaireID)
-		if err != nil {
-			return err
-		}
-		myresponses = append(myresponses,
-			MyResponse{
-				ResponseID:      response.ResponseID,
-				QuestionnaireID: response.QuestionnaireID,
-				Title:           title,
-				ResTimeLimit:    resTimeLimit,
-				SubmittedAt:     model.NullTimeToString(response.SubmittedAt),
-				ModifiedAt:      model.NullTimeToString(response.ModifiedAt),
-			})
+	return c.JSON(http.StatusOK, myresponses)
+}
+
+func GetMyResponsesByID(c echo.Context) error {
+	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	responsesinfo := []model.ResponseInfo{}
+
+	if err := model.DB.Select(&responsesinfo,
+		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
+		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ?`,
+		model.GetUserID(c), questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(http.StatusOK, myresponses)
