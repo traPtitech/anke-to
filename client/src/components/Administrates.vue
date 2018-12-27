@@ -7,10 +7,10 @@
 // import axios from '@/bin/axios'
 
 export default {
-  name: 'CreatedLayout',
+  name: 'Administrates',
   data () {
     return {
-      msg: '自分が作成したアンケートの一覧'
+      msg: '自分が管理者になっているアンケートの一覧'
     }
   }
 }

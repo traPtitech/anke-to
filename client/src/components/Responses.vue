@@ -7,6 +7,6 @@
 <script>
 
 export default {
-  name: 'AnsweredLayout'
+  name: 'Responses'
 }
 </script>

@@ -18,16 +18,16 @@ export default {
     return {
       menuItems: [
         {
-          name: 'MyPage',
-          url: '/'
+          name: 'Targeted',
+          url: '/targeted'
         },
         {
-          name: 'Created',
-          url: '/created'
+          name: 'Administrates',
+          url: '/administrates'
         },
         {
-          name: 'Answered',
-          url: '/answered'
+          name: 'Responses',
+          url: '/responses'
         },
         {
           name: 'Explorer',
