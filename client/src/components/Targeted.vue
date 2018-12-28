@@ -14,8 +14,8 @@
             <p>{{ row.description }}</p>
             <div class="media">
               <div class="media-content has-text-weight-bold columns">
-                <div class="content column">回答期限: {{ row.res_time_limit }}</div>
-                <div class="content column">更新日: {{ row.modified_at }}</div>
+                <div class="content column res-time-limit">回答期限: {{ row.res_time_limit }}</div>
+                <div class="content column modified-at">更新日: {{ row.modified_at }}</div>
               </div>
             </div>
           </div>
@@ -29,6 +29,7 @@
 
 <script>
 import axios from '@/bin/axios'
+import {customDateStr, relativeDateStr} from '@/util/common'
 
 export default {
   name: 'Mypage',
@@ -41,10 +42,6 @@ export default {
   props: {
     traqId: {
       type: String,
-      required: true
-    },
-    getDateStr: {
-      type: Function,
       required: true
     }
   },
@@ -64,7 +61,7 @@ export default {
         row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
         row.status = this.getStatus(i)
         // row.status = this.hasResponded(i) ? '✔︎' : '-' // saved も返せるようにしたさ
-        row.modified_at = this.getDateStr(this.questionnaires[ i ].modified_at)
+        row.modified_at = this.getRelativeDateStr(this.questionnaires[ i ].modified_at)
         row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
 
         rows.push(row)
@@ -73,6 +70,12 @@ export default {
     }
   },
   methods: {
+    getDateStr (str) {
+      return customDateStr(str)
+    },
+    getRelativeDateStr (str) {
+      return relativeDateStr(str)
+    },
     getStatus (i) {
       if (this.questionnaires[ i ].responded_at != null) {
         return 'sent'
@@ -91,26 +94,28 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="scss" scoped>
 .content {
   margin-left: 1.5rem;
-}
-.content p {
-  margin-bottom: 0.5em;
-  word-break: break-all;
-  line-height: 1.1em;
-}
-.content h4 {
-  margin-bottom: 0.7em;
+  p {
+    margin-bottom: 0.5em;
+    word-break: break-all;
+    line-height: 1.1em;
+  }
+  h4 {
+    margin-bottom: 0.7em;
+  }
 }
 .content.column {
   padding: 0;
   margin-bottom: 0;
-  max-width: fit-content;
   display: inline-block;
 }
-.columns.media-content {
-  padding-top: 1em;
+.content.column.res-time-limit {
+  width: 15rem;
+}
+.content.column.modified-at {
+  width: 10rem;
 }
 article.post {
   padding: 1rem;
@@ -119,12 +124,15 @@ article.post {
 }
 .columns {
   padding-top: 0;
+  .media-content {
+    padding-top: 1em;
+  }
 }
 .column {
   padding-left: 0;
-}
-.media-right.column {
-  margin: auto;
+  .media-right {
+    margin: auto;
+  }
 }
 .questionnaire-title {
   padding-bottom: 1rem;

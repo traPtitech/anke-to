@@ -48,10 +48,6 @@ export default {
     traqId: {
       type: String,
       required: true
-    },
-    getDateStr: {
-      type: Function,
-      required: true
     }
   },
   data () {
@@ -75,7 +71,6 @@ export default {
     detailTabsProps () {
       return {
         traqId: this.traqId,
-        getDateStr: this.getDateStr,
         isEditing: this.isEditing
       }
     },

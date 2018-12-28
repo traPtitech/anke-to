@@ -24,13 +24,18 @@
               </div>
               <div class="is-pulled-right wrapper editable">
                 <span class="label">回答期限 :</span>
-                <span v-show="!isEditing">{{ props.getDateStr(details.res_time_limit) }}</span>
+                <span v-show="!isEditing">{{ getDateStr(details.res_time_limit) }}</span>
                 <input
                   v-show="isEditing"
                   class="input"
                   type="datetime-local"
                   v-model="resTimeLimitEditStr"
+                  :disabled="noTimeLimit"
                 >
+                <label class="checkbox" v-show="isEditing">
+                  <input type="checkbox" v-model="noTimeLimit">
+                  なし
+                </label>
               </div>
             </div>
           </div>
@@ -47,8 +52,8 @@
               </header>
               <div class="card-content">
                 <div class="has-text-weight-bold">
-                  <div>更新日時 : {{ props.getDateStr(details.modified_at) }}</div>
-                  <div>作成日時 : {{ props.getDateStr(details.created_at) }}</div>
+                  <div>更新日時 : {{ getDateStr(details.modified_at) }}</div>
+                  <div>作成日時 : {{ getDateStr(details.created_at) }}</div>
                 </div>
 
                 <!-- user lists -->
@@ -167,6 +172,7 @@
 
 // import <componentname> from '<path to component file>'
 import axios from '@/bin/axios'
+import {customDateStr} from '@/util/common'
 
 export default {
   name: 'Information',
@@ -179,6 +185,9 @@ export default {
       this.$emit('enable-edit-button')
     }
     // this.details.res_time_limit = this.details.res_time_limit.toISOString().splice(0, 16)
+    if (!(typeof this.details.res_time_limit === 'undefined' || this.details.res_time_limit === 'NULL')) {
+      this.noTimeLimit = false
+    }
     const respResponses = await axios.get('/users/me/responses/' + this.questionnaireId)
     this.responses = respResponses.data
   },
@@ -194,10 +203,14 @@ export default {
       responses: [],
       activeModal: {},
       isModalActive: false,
-      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ] // テスト用
+      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
+      noTimeLimit: true
     }
   },
   methods: {
+    getDateStr (str) {
+      return customDateStr(str)
+    },
     toListString (list) {
       if (typeof list === 'undefined' || list.length === 0) {
         return ''
@@ -226,7 +239,7 @@ export default {
       const data = {
         title: this.details.title,
         description: this.details.description,
-        res_time_limit: new Date(this.details.res_time_limit).toLocaleString(),
+        res_time_limit: this.details.res_time_limit === 'NULL' ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString(),
         res_shared_to: this.details.res_shared_to,
         targets: this.details.targets,
         administrators: this.details.administrators
@@ -240,9 +253,6 @@ export default {
   computed: {
     traqId () {
       return this.props.traqId
-    },
-    getDateStr () {
-      return this.props.getDateStr
     },
     isEditing () {
       return this.props.isEditing
@@ -336,6 +346,15 @@ export default {
       }
     }
   },
+  watch: {
+    noTimeLimit: function () {
+      if (this.noTimeLimit) {
+        this.details.res_time_limit = 'NULL'
+      } else {
+        // this.details.res_time_limit = moment().format().slice(0, 16)
+      }
+    }
+  },
   mounted () {
   }
 }
@@ -393,6 +412,10 @@ article.column {
 }
 .editable.wrapper {
   display: flex;
+  > .checkbox {
+    width: 6rem;
+    margin: auto 1rem;
+  }
 }
 .management-buttons {
   > .button:not(:last-child) {

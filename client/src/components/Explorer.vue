@@ -80,6 +80,7 @@
 <script>
 import axios from '@/bin/axios'
 import Table from '@/components/Utils/Table.vue'
+import {customDateStr, relativeDateStr} from '@/util/common'
 
 export default {
   name: 'Explorer',
@@ -92,10 +93,6 @@ export default {
   props: {
     traqId: {
       type: String,
-      required: true
-    },
-    getDateStr: {
-      type: Function,
       required: true
     }
   },
@@ -154,8 +151,8 @@ export default {
         let row = {}
         row.title = this.getTitleHtml(i)
         row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
-        row.modified_at = this.getDateStr(this.questionnaires[ i ].modified_at)
-        row.created_at = this.getDateStr(this.questionnaires[ i ].created_at)
+        row.modified_at = this.getRelativeDateStr(this.questionnaires[ i ].modified_at)
+        row.created_at = this.getRelativeDateStr(this.questionnaires[ i ].created_at)
         row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
         itemrows.push(row)
       }
@@ -163,6 +160,12 @@ export default {
     }
   },
   methods: {
+    getDateStr (str) {
+      return customDateStr(str)
+    },
+    getRelativeDateStr (str) {
+      return relativeDateStr(str)
+    },
     getTitleHtml (i) {
       return '<a href="/questionnaires/' + this.questionnaires[ i ].questionnaireID + '">' + this.questionnaires[ i ].title + '</a>'
     },

@@ -10,7 +10,7 @@
       <side-menu class="fixed-sidemenu desktop"></side-menu>
       <side-menu class="sidemenu" v-show="isSideMenuActive"></side-menu>
       <div class="column app-main" @click="closeSideMenu">
-        <router-view :traqId="traqId" :getDateStr="getDateStr"></router-view>
+        <router-view :traqId="traqId"></router-view>
       </div>
     </div>
   </div>
@@ -47,9 +47,6 @@ export default {
     },
     closeSideMenu () {
       this.isSideMenuActive = false
-    },
-    getDateStr (str) {
-      return str === 'NULL' ? '-' : new Date(str).toLocaleString().slice(0, -3)
     }
   }
 }
