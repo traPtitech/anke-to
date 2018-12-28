@@ -27,6 +27,7 @@
       :class="{'is-editing' : isEditing}"
       :name="currentTabComponent"
       @enable-edit-button="enableEditButton"
+      @disable-editing="disableEditing"
     ></component>
   </div>
 </template>
@@ -64,6 +65,10 @@ export default {
   methods: {
     enableEditButton () {
       this.showEditButton = true
+    },
+    disableEditing () {
+      console.log('QuestionnaireDetails.vue disableEditing()')
+      this.isEditing = false
     }
   },
   computed: {
