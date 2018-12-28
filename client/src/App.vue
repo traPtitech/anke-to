@@ -49,7 +49,7 @@ export default {
       this.isSideMenuActive = false
     },
     getDateStr (str) {
-      return str === 'NULL' ? '-' : new Date(str).toLocaleString()
+      return str === 'NULL' ? '-' : new Date(str).toLocaleString().slice(0, -3)
     }
   }
 }

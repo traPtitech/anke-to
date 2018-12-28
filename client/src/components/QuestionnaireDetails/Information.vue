@@ -29,7 +29,7 @@
                   v-show="isEditing"
                   class="input"
                   type="datetime-local"
-                  v-model="resTimeLimitIsoString"
+                  v-model="resTimeLimitEditStr"
                 >
               </div>
             </div>
@@ -102,6 +102,23 @@
         </article>
         <article class="column is-5">
           <div class="card" v-show="!isEditing">
+            <!-- 操作 -->
+            <div>
+              <header class="card-header">
+                <div class="card-header-title subtitle">操作</div>
+              </header>
+              <div class="card-content management-buttons">
+                <a class="button" :href="questionnaireId + '/new-response'">新しい回答を作成</a>
+                <a
+                  class="button"
+                  :disabled="!canViewResults"
+                  :class="{'disabled' : !canViewResults}"
+                  :href="'/results/' + questionnaireId"
+                >結果を見る</a>
+              </div>
+            </div>
+          </div>
+          <div class="card" v-show="!isEditing">
             <!-- 自分の回答一覧 -->
             <div>
               <header class="card-header">
@@ -125,23 +142,6 @@
                     </a>
                   </li>
                 </ul>
-              </div>
-            </div>
-          </div>
-          <div class="card" v-show="!isEditing">
-            <!-- 操作 -->
-            <div>
-              <header class="card-header">
-                <div class="card-header-title subtitle">操作</div>
-              </header>
-              <div class="card-content management-buttons">
-                <a class="button" :href="questionnaireId + '/new-response'">新しい回答を作成</a>
-                <a
-                  class="button"
-                  :disabled="!canViewResults"
-                  :class="{'disabled' : !canViewResults}"
-                  :href="'/results/' + questionnaireId"
-                >結果を見る</a>
               </div>
             </div>
           </div>
@@ -178,6 +178,7 @@ export default {
     if (this.administrates) {
       this.$emit('enable-edit-button')
     }
+    // this.details.res_time_limit = this.details.res_time_limit.toISOString().splice(0, 16)
     const respResponses = await axios.get('/users/me/responses/' + this.questionnaireId)
     this.responses = respResponses.data
   },
@@ -267,6 +268,9 @@ export default {
         (this.details.res_shared_to === 'respondents' && this.responses.length > 0))
     },
     userLists () {
+      if (typeof this.details.targets === 'undefined') {
+        return {}
+      }
       return {
         targets: {
           name: 'targets',
@@ -274,15 +278,19 @@ export default {
           list: this.details.targets,
           liststr: this.toListString(this.details.targets),
           editable: this.isEditing
-          // isModalActive: false
         },
         respondents: {
           name: 'respondents',
           summary: '回答済みの人',
-          list: this.details.respondents,
-          liststr: this.toListString(this.details.respondents),
+          list: this.details.respondents.filter((user, index, array) => {
+            // 重複除去
+            return array.indexOf(user) === index
+          }),
+          liststr: this.toListString(this.details.respondents.filter((user, index, array) => {
+            // 重複除去
+            return array.indexOf(user) === index
+          })),
           editable: false
-          // isModalActive: false
         },
         administrators: {
           name: 'administrators',
@@ -290,7 +298,6 @@ export default {
           list: this.details.administrators,
           liststr: this.toListString(this.details.administrators),
           editable: this.isEditing
-          // isModalActive: false
         }
       }
     },
@@ -319,13 +326,13 @@ export default {
         }
       }
     },
-    resTimeLimitIsoString: {
+    resTimeLimitEditStr: {
       get: function () {
         if (typeof this.details.res_time_limit === 'undefined' || this.details.res_time_limit === 'NULL') return ''
-        return new Date(this.details.res_time_limit).toISOString().slice(0, -8)
+        return this.details.res_time_limit.slice(0, 16)
       },
-      set: function (newValue) {
-        this.details.res_time_limit = new Date(newValue).toLocaleString()
+      set: function (str) {
+        this.details.res_time_limit = str
       }
     }
   },
