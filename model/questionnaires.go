@@ -152,8 +152,8 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaires, 
 
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
-		Title        string `db:"title"`
-		ResTimeLimit string `db:"res_time_limit"`
+		Title        string         `db:"title"`
+		ResTimeLimit mysql.NullTime `db:"res_time_limit"`
 	}{}
 	if err := DB.Get(&res,
 		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
@@ -165,5 +165,5 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 			return "", "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	return res.Title, res.ResTimeLimit, nil
+	return res.Title, NullTimeToString(res.ResTimeLimit), nil
 }
