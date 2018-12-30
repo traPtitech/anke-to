@@ -1,29 +1,28 @@
 <template>
   <div>
     <nav class="navbar has-background-white-bis" role="navigation" aria-label="main navigation">
-      <!-- <div class="container"> -->
       <div class="navbar-brand">
         <a
           role="button"
           class="navbar-burger"
-          @click="toggleMenu"
+          @click="$emit('toggle-side-menu')"
           :class="{'is-active' : isSideMenuActive}"
         >
           <span></span>
           <span></span>
           <span></span>
         </a>
-        <a class="navbar-item" href="/targeted">
-          <p class="title is-3">anke-to</p>
-        </a>
+        <div @click="$emit('close-side-menu')">
+          <router-link class="navbar-item" to="/targeted">
+            <p class="title is-3">anke-to</p>
+          </router-link>
+        </div>
         <p class="subtitle pull-right">{{ traqId }}</p>
       </div>
-      <!-- </div> -->
     </nav>
   </div>
 </template>
 <script>
-// import axios from '@/bin/axios'
 
 export default {
   name: 'TopNavbar',
@@ -38,14 +37,6 @@ export default {
     }
   },
   methods: {
-    toggleMenu () {
-      this.$emit('toggle-side-menu')
-      // this.isMenuActive = !this.isMenuActive
-    },
-    closeMenu () {
-      this.$emit('close-side-menu')
-      // this.isMenuActive = false
-    }
   }
 }
 </script>

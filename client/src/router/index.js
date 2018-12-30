@@ -6,7 +6,7 @@ import Responses from '@/components/Responses'
 import Explorer from '@/components/Explorer'
 import QuestionnaireDetails from '@/components/QuestionnaireDetails'
 import Results from '@/components/Results'
-import EditResponse from '@/components/EditResponse'
+import ResponseDetails from '@/components/ResponseDetails'
 import NotFound from '@/components/Utils/NotFound'
 
 Vue.use(Router)
@@ -45,7 +45,8 @@ export default new Router({
     {
       path: '/questionnaires/:id',
       name: 'QuestionnaireDetails',
-      component: QuestionnaireDetails
+      component: QuestionnaireDetails,
+      props: true /* $route をデータとして渡す */
     },
     {
       path: '/results/:id',
@@ -53,9 +54,10 @@ export default new Router({
       component: Results
     },
     {
-      path: '/questionnaires/:id/new-response',
-      name: 'EditResponse',
-      component: EditResponse
+      path: '/responses/:id',
+      name: 'ResponseDetails',
+      component: ResponseDetails,
+      props: true
     },
     {
       path: '*',

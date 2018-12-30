@@ -2,8 +2,8 @@
   <div class="submenu column is-2 has-background-light is-fullheight">
     <aside class="nav menu">
       <ul class="menu-list">
-        <li v-for="(menuItem, index) in menuItems" :key="index">
-          <a :href="menuItem.url">{{ menuItem.name }}</a>
+        <li v-for="(menuItem, index) in menuItems" :key="index" @click="$emit('close-side-menu')">
+          <router-link :to="menuItem.url">{{ menuItem.name }}</router-link>
         </li>
       </ul>
     </aside>

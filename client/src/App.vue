@@ -8,9 +8,9 @@
     ></top-navbar>
     <div class="columns is-fullheight">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
-      <side-menu class="sidemenu" v-show="isSideMenuActive"></side-menu>
+      <side-menu class="sidemenu" v-show="isSideMenuActive" @close-side-menu="closeSideMenu"></side-menu>
       <div class="column app-main" @click="closeSideMenu">
-        <router-view :traqId="traqId" :getDateStr="getDateStr"></router-view>
+        <router-view :traqId="traqId"></router-view>
       </div>
     </div>
   </div>
@@ -47,9 +47,6 @@ export default {
     },
     closeSideMenu () {
       this.isSideMenuActive = false
-    },
-    getDateStr (str) {
-      return str === 'NULL' ? '-' : new Date(str).toLocaleString()
     }
   }
 }
@@ -72,10 +69,16 @@ export default {
 
 .column {
   padding: 1rem;
+  max-width: 100%;
 }
 
 .is-fullheight {
   height: 100%;
+}
+
+.is-disabled {
+  // マウス操作を無効化
+  pointer-events: none;
 }
 
 @media screen and (max-width: 768px) {

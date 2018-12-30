@@ -26,10 +26,10 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-    // Static Files
-    e.Static("/", "client/dist")
-    e.Static("/static", "client/dist/static")
-    e.File("*", "client/dist/index.html")
+	// Static Files
+	e.Static("/", "client/dist")
+	e.Static("/static", "client/dist/static")
+	e.File("*", "client/dist/index.html")
     
 	// Routes
 	e.GET("/api/questionnaires", router.GetQuestionnaires)
