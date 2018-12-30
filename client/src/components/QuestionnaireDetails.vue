@@ -35,6 +35,7 @@
 <script>
 
 // import <componentname> from '<path to component file>'
+import router from '@/router'
 import Information from '@/components/QuestionnaireDetails/Information'
 import Questions from '@/components/QuestionnaireDetails/Questions'
 
@@ -54,8 +55,8 @@ export default {
     return {
       detailTabs: [ 'Information', 'Questions' ],
       selectedTab: 'Information',
-      isEditing: false,
-      showEditButton: false
+      showEditButton: false,
+      questionnaireId: this.$route.params.id
     }
   },
   methods: {
@@ -63,11 +64,28 @@ export default {
       this.showEditButton = true
     },
     disableEditing () {
-      console.log('QuestionnaireDetails.vue disableEditing()')
       this.isEditing = false
+      // router.push('/questionnaires/' + this.questionnaireId)
     }
   },
   computed: {
+    isEditing: {
+      get: function () {
+        if (this.$route.hash === '#edit') {
+          return true
+        }
+        return false
+      },
+      set: function (newBool) {
+        if (newBool) {
+          // 閲覧 -> 編集
+          router.push('/questionnaires/' + this.questionnaireId + '#edit')
+        } else {
+          // 編集 -> 閲覧
+          router.push('/questionnaires/' + this.questionnaireId)
+        }
+      }
+    },
     detailTabsProps () {
       return {
         traqId: this.traqId,
@@ -75,7 +93,6 @@ export default {
       }
     },
     currentTabComponent () {
-      // return 'product-reviews'
       return this.selectedTab.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
     }
   },

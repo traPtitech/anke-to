@@ -22,17 +22,19 @@
                 ></textarea>
                 <pre v-show="!isEditing">{{ details.description }}</pre>
               </div>
-              <div class="is-pulled-right wrapper editable">
-                <span class="label">回答期限 :</span>
-                <span v-show="!isEditing">{{ getDateStr(details.res_time_limit) }}</span>
-                <input
-                  v-show="isEditing"
-                  class="input"
-                  type="datetime-local"
-                  v-model="resTimeLimitEditStr"
-                  :disabled="noTimeLimit"
-                >
-                <label class="checkbox" v-show="isEditing">
+              <div class="is-pulled-right is-inline-block wrapper">
+                <div class="wrapper editable">
+                  <span class="label">回答期限 :</span>
+                  <span v-show="!isEditing">{{ getDateStr(details.res_time_limit) }}</span>
+                  <input
+                    v-show="isEditing"
+                    class="input"
+                    type="datetime-local"
+                    v-model="resTimeLimitEditStr"
+                    :disabled="noTimeLimit"
+                  >
+                </div>
+                <label class="checkbox is-pulled-right" v-show="isEditing">
                   <input type="checkbox" v-model="noTimeLimit">
                   なし
                 </label>
@@ -113,13 +115,13 @@
                 <div class="card-header-title subtitle">操作</div>
               </header>
               <div class="card-content management-buttons">
-                <a class="button" :href="questionnaireId + '/new-response'">新しい回答を作成</a>
-                <a
+                <!-- <button class="button" :href="questionnaireId + '/new-response'">新しい回答を作成</button> -->
+                <button class="button" @click.prevent="createResponse">新しい回答を作成</button>
+                <router-link
+                  :to="{ name: 'Results', params: { id: questionnaireId }}"
                   class="button"
-                  :disabled="!canViewResults"
-                  :class="{'disabled' : !canViewResults}"
-                  :href="'/results/' + questionnaireId"
-                >結果を見る</a>
+                  :class="{'is-disabled' : !canViewResults}"
+                >結果を見る</router-link>
               </div>
             </div>
           </div>
@@ -155,13 +157,19 @@
       <div class="columns" v-show="isEditing">
         <div class="column is-9"></div>
         <article class="column is-2 is-flex">
-          <input
-            type="submit"
-            value="送信"
-            class="button is-large is-pulled-right"
-            id="submitbutton"
-            @click.prevent="submitQuestionnaire"
-          >
+          <div class="editorbuttons">
+            <input
+              type="submit"
+              value="送信"
+              class="button is-medium is-pulled-right"
+              id="submitbutton"
+              @click.prevent="submitQuestionnaire"
+            >
+            <button
+              class="button is-medium is-pulled-right"
+              @click.prevent="$emit('disable-editing')"
+            >キャンセル</button>
+          </div>
         </article>
       </div>
     </form>
@@ -172,6 +180,8 @@
 
 // import <componentname> from '<path to component file>'
 import axios from '@/bin/axios'
+import router from '@/router'
+import moment from 'moment'
 import {customDateStr} from '@/util/common'
 
 export default {
@@ -179,17 +189,12 @@ export default {
   components: {
   },
   async created () {
-    const respDetails = await axios.get('/questionnaires/' + this.questionnaireId)
-    this.details = respDetails.data
-    if (this.administrates) {
-      this.$emit('enable-edit-button')
-    }
-    // this.details.res_time_limit = this.details.res_time_limit.toISOString().splice(0, 16)
-    if (!(typeof this.details.res_time_limit === 'undefined' || this.details.res_time_limit === 'NULL')) {
-      this.noTimeLimit = false
-    }
-    const respResponses = await axios.get('/users/me/responses/' + this.questionnaireId)
-    this.responses = respResponses.data
+    this.getDetails()
+    axios
+      .get('/users/me/responses/' + this.questionnaireId)
+      .then(res => {
+        this.responses = res.data
+      })
   },
   props: {
     props: {
@@ -201,6 +206,7 @@ export default {
     return {
       details: {},
       responses: [],
+      questionnaireId: this.$route.params.id,
       activeModal: {},
       isModalActive: false,
       userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
@@ -208,11 +214,43 @@ export default {
     }
   },
   methods: {
+    getDetails () {
+      // サーバーにアンケートの情報をリクエストする
+      axios
+        .get('/questionnaires/' + this.questionnaireId)
+        .then(res => {
+          this.details = res.data
+          if (this.administrates) {
+            this.$emit('enable-edit-button')
+          }
+          if (this.details.res_time_limit && this.details.res_time_limit !== 'NULL') {
+            this.noTimeLimit = false
+          }
+        })
+    },
+    submitQuestionnaire () {
+      this.$emit('disable-editing') // 編集モード終了
+      const data = {
+        title: this.details.title,
+        description: this.details.description,
+        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString(),
+        res_shared_to: this.details.res_shared_to,
+        targets: this.details.targets,
+        administrators: this.details.administrators
+      }
+      axios.patch('/questionnaires/' + this.questionnaireId, data)
+        // PATCHリクエストを送る
+        .then(this.getDetails)
+        // detailsをアップデート
+        .catch(function (error) {
+          console.log(error)
+        })
+    },
     getDateStr (str) {
       return customDateStr(str)
     },
     toListString (list) {
-      if (typeof list === 'undefined' || list.length === 0) {
+      if (list && list.length === 0) {
         return ''
       }
       let ret = ''
@@ -221,6 +259,23 @@ export default {
       }
       ret += list[ list.length - 1 ]
       return ret
+    },
+    createResponse () {
+      const data = {
+        questionnaireID: parseInt(this.questionnaireId),
+        submitted_at: 'NULL',
+        body: []
+      }
+      axios
+        .post('/responses', data)
+        .then(resp => {
+          // POSTリクエストで返ってきたresponseIDをもとに、responses/:responseID に編集モードで飛ぶ
+          // router.push('/responses/' + resp.data.responseID + '#edit')
+          router.push('/responses/' + 1 + '#edit') // テスト用
+        })
+        .catch(error => {
+          console.log(error)
+        })
     },
     deleteResponse (responseId, index) {
       axios.delete('/responses/' + responseId, {method: 'delete', withCredentials: true})
@@ -233,21 +288,6 @@ export default {
     },
     disableModal () {
       this.isModalActive = false
-    },
-    submitQuestionnaire () {
-      this.$emit('disable-editing')
-      const data = {
-        title: this.details.title,
-        description: this.details.description,
-        res_time_limit: this.details.res_time_limit === 'NULL' ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString(),
-        res_shared_to: this.details.res_shared_to,
-        targets: this.details.targets,
-        administrators: this.details.administrators
-      }
-      axios.patch('/questionnaires/' + this.questionnaireId, data)
-        .catch(function (error) {
-          console.log(error)
-        })
     }
   },
   computed: {
@@ -257,12 +297,9 @@ export default {
     isEditing () {
       return this.props.isEditing
     },
-    questionnaireId () {
-      return this.$route.params.id
-    },
     administrates () {
       // 管理者かどうかを返す
-      if (typeof this.details.administrators !== 'undefined') {
+      if (this.details.administrators) {
         for (let i = 0; i < this.details.administrators.length; i++) {
           if (this.props.traqId === this.details.administrators[ i ]) {
             return true
@@ -278,7 +315,7 @@ export default {
         (this.details.res_shared_to === 'respondents' && this.responses.length > 0))
     },
     userLists () {
-      if (typeof this.details.targets === 'undefined') {
+      if (!this.details.targets) {
         return {}
       }
       return {
@@ -338,7 +375,7 @@ export default {
     },
     resTimeLimitEditStr: {
       get: function () {
-        if (typeof this.details.res_time_limit === 'undefined' || this.details.res_time_limit === 'NULL') return ''
+        if (!this.details.res_time_limit || this.details.res_time_limit === 'NULL') return ''
         return this.details.res_time_limit.slice(0, 16)
       },
       set: function (str) {
@@ -347,11 +384,17 @@ export default {
     }
   },
   watch: {
-    noTimeLimit: function () {
-      if (this.noTimeLimit) {
-        this.details.res_time_limit = 'NULL'
-      } else {
-        // this.details.res_time_limit = moment().format().slice(0, 16)
+    isEditing: function (newBool, oldBool) {
+      if (oldBool && !newBool) {
+        // 編集モードから閲覧モードに変わったときはdetailsをサーバーの状態に戻す
+        this.$emit('disable-editing')
+        this.getDetails()
+      }
+    },
+    noTimeLimit: function (newBool, oldBool) {
+      if (oldBool && !newBool && this.details.res_time_limit === 'NULL') {
+        // 新しく回答期限を作ろうとすると、1週間後の日時が設定される
+        this.details.res_time_limit = moment().add(7, 'days').format().slice(0, -6)
       }
     }
   },
@@ -393,15 +436,15 @@ article.column {
   .subtitle {
     margin: 0;
   }
-  > details {
+  details {
     margin: 0.5rem;
-    > p {
+    p {
       padding: 0 0.5rem;
     }
   }
 }
 .editable {
-  > span {
+  span {
     width: fit-content;
     height: fit-content;
     top: 0;
@@ -412,22 +455,24 @@ article.column {
 }
 .editable.wrapper {
   display: flex;
-  > .checkbox {
-    width: 6rem;
-    margin: auto 1rem;
+}
+.wrapper {
+  .checkbox {
+    width: 4rem;
+    margin: 0.5rem;
   }
 }
 .management-buttons {
-  > .button:not(:last-child) {
+  .button:not(:last-child) {
     margin-bottom: 0.7rem;
   }
-  > .button {
+  .button {
     max-width: fit-content;
     display: block;
   }
 }
 .modal-card-head {
-  > .ti-check {
+  .ti-check {
     background-color: darkgrey;
     color: white;
     font-weight: bolder;
@@ -440,11 +485,14 @@ article.column {
 #title.input {
   font-size: 2rem;
 }
-#submitbutton {
+.editorbuttons {
   margin: auto;
-  margin-bottom: 1rem;
-  width: 7rem;
-  max-width: 100%;
+  .button {
+    margin: 0 1rem 2rem 1rem;
+    // margin-bottom: 1rem;
+    width: 8rem;
+    max-width: 100%;
+  }
 }
 @media screen and (min-width: 769px) {
   // widthが大きいときは横並びのカードの間を狭くする

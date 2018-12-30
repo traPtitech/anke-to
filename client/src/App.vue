@@ -69,10 +69,16 @@ export default {
 
 .column {
   padding: 1rem;
+  max-width: 100%;
 }
 
 .is-fullheight {
   height: 100%;
+}
+
+.is-disabled {
+  // マウス操作を無効化
+  pointer-events: none;
 }
 
 @media screen and (max-width: 768px) {
