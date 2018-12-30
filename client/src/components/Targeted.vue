@@ -5,25 +5,33 @@
         <div class="card-header-title subtitle">回答対象になっているアンケート</div>
       </header>
       <div class="card-content">
-        <article class="post" v-for="(row, index) in itemrows" :key="index">
+        <article class="post" v-for="(questionnaire, index) in questionnaires" :key="index">
           <div>
             <div class="questionnaire-title">
-              <span :class="{'ti-check': row.status==='sent', 'ti-alert' : row.status==='unsent'}"></span>
-              <span class="subtitle" v-html="row.title"></span>
+              <span
+                :class="{'ti-check': questionnaire.status==='sent', 'ti-save': questionnaire.status==='saved', 'ti-alert' : questionnaire.status==='not-created'}"
+              ></span>
+              <span class="subtitle">
+                <router-link
+                  :to="'/questionnaires/' + questionnaire.questionnaireID"
+                >{{ questionnaire.title }}</router-link>
+              </span>
             </div>
-            <p>{{ row.description }}</p>
+            <p>{{ questionnaire.description }}</p>
             <div class="media">
               <div class="media-content has-text-weight-bold columns">
-                <div class="content column res-time-limit">回答期限: {{ row.res_time_limit }}</div>
-                <div class="content column modified-at">更新日: {{ row.modified_at }}</div>
+                <div
+                  class="content column res-time-limit"
+                >回答期限: {{ getDateStr(questionnaire.res_time_limit) }}</div>
+                <div
+                  class="content column modified-at"
+                >更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}</div>
               </div>
             </div>
           </div>
-          <!-- <div class="media-right column is-narrow" v-html="row.resultsLinkHtml"></div> -->
         </article>
       </div>
     </div>
-    <!-- {{ questionnaires }} -->
   </div>
 </template>
 
@@ -36,8 +44,12 @@ export default {
   components: {
   },
   async created () {
-    const resp = await axios.get('/users/me/targeted')
-    this.questionnaires = resp.data
+    axios
+      .get('/users/me/targeted')
+      .then(resp => {
+        this.questionnaires = resp.data
+        this.getStatus()
+      })
   },
   props: {
     traqId: {
@@ -52,22 +64,6 @@ export default {
     }
   },
   computed: {
-    itemrows () {
-      let rows = []
-      for (var i = 0; i < this.questionnaires.length; i++) {
-        let row = {}
-        row.title = this.getTitleHtml(i)
-        row.description = this.questionnaires[ i ].description
-        row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
-        row.status = this.getStatus(i)
-        // row.status = this.hasResponded(i) ? '✔︎' : '-' // saved も返せるようにしたさ
-        row.modified_at = this.getRelativeDateStr(this.questionnaires[ i ].modified_at)
-        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
-
-        rows.push(row)
-      }
-      return rows
-    }
   },
   methods: {
     getDateStr (str) {
@@ -76,18 +72,31 @@ export default {
     getRelativeDateStr (str) {
       return relativeDateStr(str)
     },
-    getStatus (i) {
-      if (this.questionnaires[ i ].responded_at != null) {
-        return 'sent'
-      } else {
-        return 'unsent'
+    getStatus () {
+      for (let i = 0; i < this.questionnaires.length; i++) {
+        if (this.questionnaires[ i ].responded_at !== 'NULL') {
+          // 回答送信済み
+          this.setStatus(i, 'sent')
+        } else {
+          axios
+            .get('/users/me/responses/' + this.questionnaires[ i ].questionnaireID)
+            .then(resp => {
+              console.log(resp.data.length)
+              if (resp.data.length > 0) {
+                // 保存済み
+                this.setStatus(i, 'saved')
+              } else {
+                // 回答が存在しない
+                this.setStatus(i, 'not-created')
+              }
+            })
+        }
       }
     },
-    getTitleHtml (i) {
-      return '<a href="/questionnaires/' + this.questionnaires[ i ].questionnaireID + '">' + this.questionnaires[ i ].title + '</a>'
-    },
-    getResultsLinkHtml (id) {
-      return '<a href="/resuslts/' + id + '" class="button is-info">Results</a>'
+    setStatus (index, newStatus) {
+      let questionnaire = this.questionnaires[ index ]
+      this.$set(questionnaire, 'status', newStatus)
+      this.$set(this.questionnaires, index, questionnaire)
     }
   }
 }

@@ -2,7 +2,11 @@
   <div class="is-fullheight">
     <div class="tabs is-centered">
       <ul></ul>
-      <a :href="editButtonLink" id="edit-button" :class="{'is-editing': isEditing}">
+      <a
+        id="edit-button"
+        :class="{'is-editing': isEditing}"
+        @click.prevent="isEditing = !isEditing"
+      >
         <span class="ti-pencil"></span>
       </a>
     </div>
@@ -15,6 +19,7 @@
 <script>
 
 // import <componentname> from '<path to component file>'
+import router from '@/router'
 
 export default {
   name: 'ResponseDetails',
@@ -32,11 +37,22 @@ export default {
     responseId () {
       return this.$route.params.id
     },
-    isEditing () {
-      if (this.$route.hash === '#edit') {
-        return true
+    isEditing: {
+      get: function () {
+        if (this.$route.hash === '#edit') {
+          return true
+        }
+        return false
+      },
+      set: function (newBool) {
+        if (newBool) {
+          // 閲覧 -> 編集
+          router.push('/responses/' + this.responseId + '#edit')
+        } else {
+          // 編集 -> 閲覧
+          router.push('/responses/' + this.responseId)
+        }
       }
-      return false
     },
     editButtonLink () {
       if (!this.isEditing) {

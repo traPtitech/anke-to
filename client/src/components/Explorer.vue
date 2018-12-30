@@ -63,12 +63,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in itemrows" :key="index">
-              <td class="table-item-title" v-html="row.title"></td>
-              <td class="table-item-date">{{ row.res_time_limit }}</td>
-              <td class="table-item-date">{{ row.modified_at }}</td>
-              <td class="table-item-date">{{ row.created_at }}</td>
-              <td v-html="row.resultsLinkHtml"></td>
+            <tr v-for="(questionnaire, index) in questionnaires" :key="index">
+              <td class="table-item-title">
+                <router-link
+                  :to="'/questionnaires/' + questionnaire.questionnaireID"
+                >{{ questionnaire.title }}</router-link>
+              </td>
+              <td class="table-item-date">{{ getDateStr(questionnaire.res_time_limit) }}</td>
+              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.modified_at) }}</td>
+              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.created_at) }}</td>
+              <td>
+                <router-link :to="'/results/' + questionnaire.questionnaireID">
+                  <span class="ti-new-window"></span>
+                  <br>Open
+                </router-link>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -145,19 +154,6 @@ export default {
     }
   },
   computed: {
-    itemrows () {
-      let itemrows = []
-      for (let i = 0; i < this.questionnaires.length; i++) {
-        let row = {}
-        row.title = this.getTitleHtml(i)
-        row.res_time_limit = this.getDateStr(this.questionnaires[ i ].res_time_limit)
-        row.modified_at = this.getRelativeDateStr(this.questionnaires[ i ].modified_at)
-        row.created_at = this.getRelativeDateStr(this.questionnaires[ i ].created_at)
-        row.resultsLinkHtml = this.getResultsLinkHtml(this.questionnaires[ i ].questionnaireID) // 結果を見る権限があるかどうかでボタンの色を変えたりしたい
-        itemrows.push(row)
-      }
-      return itemrows
-    }
   },
   methods: {
     getDateStr (str) {
@@ -165,12 +161,6 @@ export default {
     },
     getRelativeDateStr (str) {
       return relativeDateStr(str)
-    },
-    getTitleHtml (i) {
-      return '<a href="/questionnaires/' + this.questionnaires[ i ].questionnaireID + '">' + this.questionnaires[ i ].title + '</a>'
-    },
-    getResultsLinkHtml (id) {
-      return '<a href="/results/' + id + '">' + '<span class="ti-new-window"></span><br>Open' + '</a>'
     },
     getQuestionnaires () {
       axios

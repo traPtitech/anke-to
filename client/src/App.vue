@@ -8,7 +8,7 @@
     ></top-navbar>
     <div class="columns is-fullheight">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
-      <side-menu class="sidemenu" v-show="isSideMenuActive"></side-menu>
+      <side-menu class="sidemenu" v-show="isSideMenuActive" @close-side-menu="closeSideMenu"></side-menu>
       <div class="column app-main" @click="closeSideMenu">
         <router-view :traqId="traqId"></router-view>
       </div>

@@ -115,7 +115,6 @@
                 <div class="card-header-title subtitle">操作</div>
               </header>
               <div class="card-content management-buttons">
-                <!-- <button class="button" :href="questionnaireId + '/new-response'">新しい回答を作成</button> -->
                 <button class="button" @click.prevent="createResponse">新しい回答を作成</button>
                 <router-link
                   :to="{ name: 'Results', params: { id: questionnaireId }}"
@@ -138,9 +137,9 @@
                       :class="{'ti-save': response.submitted_at==='NULL', 'ti-check': response.submitted_at!=='NULL'}"
                       title="po"
                     ></span>
-                    <a
-                      :href="'/responses/' + response.responseID"
-                    >{{ getDateStr(response.modified_at) }}</a>
+                    <router-link
+                      :to="'/responses/' + response.responseID"
+                    >{{ getDateStr(response.modified_at) }}</router-link>
                     <a>
                       <span
                         class="ti-trash is-pulled-right"
