@@ -42,6 +42,7 @@ func PostResponse(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"responseID":      responseID,
 		"questionnaireID": req.ID,
 		"submitted_at":    req.SubmittedAt,
 		"body":            req.Body,
