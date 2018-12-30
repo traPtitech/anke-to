@@ -2,7 +2,7 @@ import moment from 'moment'
 /* eslint-disable */
 
 function customDateStr(str) {
-  return str === 'NULL' ? '-' : moment(str).format('YYYY/MM/DD h:mm')
+  return str === 'NULL' ? '-' : moment(str).format('YYYY/MM/DD HH:mm')
 }
 
 function relativeDateStr(str) {

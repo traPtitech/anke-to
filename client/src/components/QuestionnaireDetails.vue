@@ -37,13 +37,17 @@
 // import <componentname> from '<path to component file>'
 import router from '@/router'
 import Information from '@/components/QuestionnaireDetails/Information'
+import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/QuestionnaireDetails/Questions'
+import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 
 export default {
   name: 'QuestionnaireDetails',
   components: {
     'information': Information,
-    'questions': Questions
+    'information-edit': InformationEdit,
+    'questions': Questions,
+    'questions-edit': QuestionsEdit
   },
   props: {
     traqId: {
@@ -55,8 +59,7 @@ export default {
     return {
       detailTabs: [ 'Information', 'Questions' ],
       selectedTab: 'Information',
-      showEditButton: false,
-      questionnaireId: this.$route.params.id
+      showEditButton: false
     }
   },
   methods: {
@@ -65,13 +68,18 @@ export default {
     },
     disableEditing () {
       this.isEditing = false
-      // router.push('/questionnaires/' + this.questionnaireId)
     }
   },
   computed: {
+    questionnaireId () {
+      return this.isNewQuestionnaire ? '' : this.$route.params.id
+    },
+    isNewQuestionnaire () {
+      return this.$route.params.id === 'new'
+    },
     isEditing: {
       get: function () {
-        if (this.$route.hash === '#edit') {
+        if (this.isNewQuestionnaire || this.$route.hash === '#edit') {
           return true
         }
         return false
@@ -88,12 +96,26 @@ export default {
     },
     detailTabsProps () {
       return {
-        traqId: this.traqId,
-        isEditing: this.isEditing
+        traqId: this.traqId
       }
     },
     currentTabComponent () {
-      return this.selectedTab.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+      switch (this.selectedTab) {
+        case 'Information': {
+          if (this.isEditing) {
+            return 'information-edit'
+          } else {
+            return 'information'
+          }
+        }
+        case 'Questions': {
+          if (this.isEditing) {
+            return 'questions-edit'
+          } else {
+            return 'questions'
+          }
+        }
+      }
     }
   },
   mounted () {

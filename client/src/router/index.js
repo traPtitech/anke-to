@@ -46,7 +46,7 @@ export default new Router({
       path: '/questionnaires/:id',
       name: 'QuestionnaireDetails',
       component: QuestionnaireDetails,
-      props: true /* $route をデータとして渡す */
+      props: true
     },
     {
       path: '/results/:id',
