@@ -81,7 +81,6 @@ export default {
           axios
             .get('/users/me/responses/' + this.questionnaires[ i ].questionnaireID)
             .then(resp => {
-              console.log(resp.data.length)
               if (resp.data.length > 0) {
                 // 保存済み
                 this.setStatus(i, 'saved')
