@@ -11,7 +11,12 @@
             </header>
             <div class="card-content questions">
               <div v-for="(question, index) in questions" :key="index">
-                <component :is="question.component" :content="question.content" class="question"></component>
+                <component
+                  :editMode="editMode"
+                  :is="question.component"
+                  :content="question.content"
+                  class="question"
+                ></component>
                 <hr>
               </div>
               <!-- <short-answer class="question" :content="shortAnswerContent"></short-answer>
@@ -19,7 +24,7 @@
               <short-answer class="question" :content="shortAnswerContent" editMode="question"></short-answer>
               <hr>
               <short-answer class="question" :content="shortAnswerContent" editMode="response"></short-answer>-->
-              <div v-for="(question, index) in questions" :key="index">
+              <!-- <div v-for="(question, index) in questions" :key="index">
                 <component
                   :is="question.component"
                   editMode="question"
@@ -27,9 +32,8 @@
                   class="question"
                 ></component>
                 <hr>
-              </div>
-
-              <div v-for="(question, index) in questions" :key="index">
+              </div>-->
+              <!-- <div v-for="(question, index) in questions" :key="index">
                 <component
                   :is="question.component"
                   editMode="response"
@@ -37,7 +41,7 @@
                   class="question"
                 ></component>
                 <hr>
-              </div>
+              </div>-->
             </div>
           </div>
         </div>
@@ -65,14 +69,18 @@ export default {
     'short-answer': ShortAnswer
   },
   props: {
-    // name: {
-    //   type: ,
-    //   required:
-    // }
+    // questions: {
+    //   type: Array,
+    //   required: false
+    // },
+    editMode: {
+      type: String,
+      required: false
+    }
   },
   data () {
     return {
-      questions: [
+      questions: [ // テスト用
         {
           questionId: 1,
           type: 'Number',
@@ -93,12 +101,7 @@ export default {
             responseType: 'number'
           }
         }
-      ],
-      shortAnswerContent: {
-        questionBody: 'ペンは持っていますか？',
-        responseBody: '12',
-        responseType: 'number'
-      }
+      ]
     }
   },
   methods: {

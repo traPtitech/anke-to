@@ -128,8 +128,8 @@ export default {
       })
   },
   props: {
-    props: {
-      type: Object,
+    traqId: {
+      type: String,
       required: true
     }
   },
@@ -194,7 +194,6 @@ export default {
         .then(resp => {
           // POSTリクエストで返ってきたresponseIDをもとに、responses/:responseID に編集モードで飛ぶ
           router.push('/responses/' + resp.data.responseID + '#edit')
-          // router.push('/responses/' + 1 + '#edit') // テスト用
         })
         .catch(error => {
           console.log(error)
@@ -209,14 +208,11 @@ export default {
     questionnaireId () {
       return this.$route.params.id
     },
-    traqId () {
-      return this.props.traqId
-    },
     administrates () {
       // 管理者かどうかを返す
       if (this.details.administrators) {
         for (let i = 0; i < this.details.administrators.length; i++) {
-          if (this.props.traqId === this.details.administrators[ i ]) {
+          if (this.traqId === this.details.administrators[ i ]) {
             return true
           }
         }

@@ -21,7 +21,7 @@
 
 // import <componentname> from '<path to component file>'
 import Information from '@/components/QuestionnaireDetails/Information'
-import Questions from '@/components/QuestionnaireDetails/Questions'
+import Questions from '@/components/Questions'
 
 export default {
   name: 'Tabs',

@@ -146,4 +146,73 @@ body {
 .card-content {
   padding: 1rem;
 }
+
+.details {
+  .tabs {
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+  }
+  .tabs:first-child {
+    margin-top: 1rem;
+  }
+  .is-editing {
+    background-color: #c2c2c2;
+  }
+  #edit-button {
+    border: #dbdbdb solid 1px;
+  }
+  .is-fullheight {
+    min-height: fit-content;
+  }
+  .has-navbar-fixed-bottom {
+    padding-bottom: 100px;
+  }
+  .details-child {
+    // 子コンポーネント Information, InformationEdit, Questions に適用される
+    pre {
+      white-space: pre-line;
+      font-size: inherit;
+      -webkit-font-smoothing: inherit;
+      font-family: inherit;
+      line-height: inherit;
+      background-color: inherit;
+      color: inherit;
+      padding: 0.625em;
+    }
+    article.column {
+      padding: 0;
+    }
+    .columns {
+      margin-bottom: 0;
+    }
+    .columns:first-child {
+      display: flex;
+    }
+    .card {
+      max-width: 100%;
+      padding: 0.7rem;
+    }
+    .card-content {
+      .subtitle {
+        margin: 0;
+      }
+      details {
+        margin: 0.5rem;
+        p {
+          padding: 0 0.5rem;
+        }
+      }
+    }
+    .navbar.is-fixed-bottom {
+      background-color: gray;
+    }
+    @media screen and (min-width: 769px) {
+      // widthが大きいときは横並びのカードの間を狭くする
+      .column:not(:last-child) > .card {
+        margin-right: 0;
+      }
+    }
+  }
+}
 </style>
