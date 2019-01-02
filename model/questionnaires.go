@@ -76,9 +76,11 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 
 	userID := GetUserID(c)
 
+	// 自分またはtraPが含まれているアンケートのID
 	targetedQuestionnaireID := []int{}
 	if err := DB.Select(&targetedQuestionnaireID,
-		"SELECT questionnaire_id FROM targets WHERE user_traqid = ?", userID); err != nil {
+		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
+		userID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}

@@ -39,7 +39,9 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	questionnaireID := []int{}
-	if err := DB.Select(&questionnaireID, "SELECT questionnaire_id FROM administrators WHERE user_traqid = ?", user); err != nil {
+	if err := DB.Select(&questionnaireID,
+		`SELECT DISTINCT questionnaire_id FROM administrators WHERE user_traqid = ? OR user_traqid = 'traP'`,
+		user); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -57,7 +59,7 @@ func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
 
 	found := false
 	for _, admin := range administrators {
-		if admin == user {
+		if admin == user || admin == "traP" {
 			found = true
 			break
 		}
