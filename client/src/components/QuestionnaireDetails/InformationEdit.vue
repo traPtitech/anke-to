@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form class="questionnaire-details" @submit="submitQuestionnaire">
+    <form @submit="submitQuestionnaire">
       <div class="columns">
         <article class="column is-11">
           <div class="card">
@@ -130,26 +130,22 @@
           </div>
         </article>
       </div>
-      <div class="columns">
-        <div class="column is-9"></div>
-        <article class="column is-2 is-flex">
-          <div class="editorbuttons">
-            <input
-              type="submit"
-              value="送信"
-              class="button is-medium is-pulled-right"
-              id="submitbutton"
-              :disabled="!submitOk"
-              @click.prevent="submitQuestionnaire"
-            >
-            <button
-              class="button is-medium is-pulled-right"
-              @click.prevent="$emit('disable-editing')"
-            >キャンセル</button>
-          </div>
-        </article>
-      </div>
     </form>
+    <nav class="navbar is-fixed-bottom">
+      <article class="is-2 is-flex">
+        <div class="editor-buttons is-pulled-right">
+          <input
+            type="submit"
+            value="送信"
+            class="button is-medium"
+            id="submitbutton"
+            :disabled="!submitOk"
+            @click.prevent="submitQuestionnaire"
+          >
+          <button class="button is-medium" @click.prevent="$emit('disable-editing')">キャンセル</button>
+        </div>
+      </article>
+    </nav>
   </div>
 </template>
 
@@ -218,7 +214,7 @@ export default {
       const data = {
         title: this.details.title,
         description: this.details.description,
-        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString(),
+        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString('ja-GB'),
         res_shared_to: this.details.res_shared_to,
         targets: this.details.targets,
         administrators: this.details.administrators
@@ -404,43 +400,8 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-pre {
-  white-space: pre-line;
-  font-size: inherit;
-  -webkit-font-smoothing: inherit;
-  font-family: inherit;
-  line-height: inherit;
-  background-color: inherit;
-  color: inherit;
-  padding: 0.625em;
-}
-.card {
-  max-width: 100%;
-  padding: 0.7rem;
-}
-article.column {
-  padding: 0;
-}
-.columns {
-  margin-bottom: 0;
-}
-.columns:first-child {
-  display: flex;
-}
-
 .card-header-title.is-editing {
   padding: 0;
-}
-.card-content {
-  .subtitle {
-    margin: 0;
-  }
-  details {
-    margin: 0.5rem;
-    p {
-      padding: 0 0.5rem;
-    }
-  }
 }
 .editable {
   span {
@@ -496,19 +457,13 @@ article.column {
     margin: 0.5rem;
   }
 }
-.editorbuttons {
+.editor-buttons {
   margin: auto;
   .button {
-    margin: 0 1rem 2rem 1rem;
+    margin: 1rem;
     // margin-bottom: 1rem;
     width: 8rem;
     max-width: 100%;
-  }
-}
-@media screen and (min-width: 769px) {
-  // widthが大きいときは横並びのカードの間を狭くする
-  .column:not(:last-child) > .card {
-    margin-right: 0;
   }
 }
 </style>
