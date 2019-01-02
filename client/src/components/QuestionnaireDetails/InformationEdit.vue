@@ -165,8 +165,8 @@ export default {
     this.getDetails()
   },
   props: {
-    props: {
-      type: Object,
+    traqId: {
+      type: String,
       required: true
     }
   },
@@ -286,9 +286,6 @@ export default {
         this.getDetails()
       }
     },
-    traqId () {
-      return this.props.traqId
-    },
     isNewQuestionnaire () {
       return this.$route.params.id === 'new'
     },
@@ -296,7 +293,7 @@ export default {
       // 管理者かどうかを返す
       if (this.details.administrators) {
         for (let i = 0; i < this.details.administrators.length; i++) {
-          if (this.props.traqId === this.details.administrators[ i ]) {
+          if (this.traqId === this.details.administrators[ i ]) {
             return true
           }
         }

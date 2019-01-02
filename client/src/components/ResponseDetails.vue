@@ -1,5 +1,5 @@
 <template>
-  <div class="is-fullheight">
+  <div class="is-fullheight details">
     <div class="tabs is-centered">
       <ul></ul>
       <a
@@ -10,8 +10,9 @@
         <span class="ti-pencil"></span>
       </a>
     </div>
-    <div :class="{'is-editing' : isEditing}" class="is-fullheight">
-      <p>responseId = {{ responseId }} の回答詳細画面</p>
+    <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
+      <!-- <p>responseId = {{ responseId }} の回答詳細画面</p> -->
+      <questions :traqId="traqId" :editMode="isEditing? 'response' : undefined"></questions>
     </div>
   </div>
 </template>
@@ -20,12 +21,18 @@
 
 // import <componentname> from '<path to component file>'
 import router from '@/router'
+import Questions from '@/components/Questions'
 
 export default {
   name: 'ResponseDetails',
   components: {
+    'questions': Questions
   },
   props: {
+    traqId: {
+      type: String,
+      required: true
+    }
   },
   data () {
     return {
@@ -68,19 +75,5 @@ export default {
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
-.tabs {
-  margin-bottom: 0;
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
-}
-.tabs:first-child {
-  margin-top: 1rem;
-}
-.is-editing {
-  background-color: #c2c2c2;
-}
-#edit-button {
-  border: #dbdbdb solid 1px;
-}
+<style lang="scss" scoped>
 </style>
