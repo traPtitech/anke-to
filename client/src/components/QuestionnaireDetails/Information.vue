@@ -302,44 +302,10 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-pre {
-  white-space: pre-line;
-  font-size: inherit;
-  -webkit-font-smoothing: inherit;
-  font-family: inherit;
-  line-height: inherit;
-  background-color: inherit;
-  color: inherit;
-  padding: 0.625em;
-}
-.card {
-  max-width: 100%;
-  padding: 0.7rem;
-}
-article.column {
-  padding: 0;
-}
-.columns {
-  margin-bottom: 0;
-}
-.columns:first-child {
-  display: flex;
-}
-
 .card-header-title.is-editing {
   padding: 0;
 }
-.card-content {
-  .subtitle {
-    margin: 0;
-  }
-  details {
-    margin: 0.5rem;
-    p {
-      padding: 0 0.5rem;
-    }
-  }
-}
+
 .editable {
   span {
     width: fit-content;
@@ -398,12 +364,6 @@ article.column {
     // margin-bottom: 1rem;
     width: 8rem;
     max-width: 100%;
-  }
-}
-@media screen and (min-width: 769px) {
-  // widthが大きいときは横並びのカードの間を狭くする
-  .column:not(:last-child) > .card {
-    margin-right: 0;
   }
 }
 </style>

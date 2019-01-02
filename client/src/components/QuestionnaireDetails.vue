@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="questionnaire-details is-fullheight">
     <div class="tabs is-centered">
       <ul>
         <li
@@ -24,7 +24,8 @@
     <component
       :is="currentTabComponent"
       :props="detailTabsProps"
-      :class="{'is-editing' : isEditing}"
+      :class="{'is-editing' : isEditing, 'has-navbar-fixed-bottom': isEditing}"
+      class="questionnaire-details-child is-fullheight"
       :name="currentTabComponent"
       @enable-edit-button="enableEditButton"
       @disable-editing="disableEditing"
@@ -138,5 +139,57 @@ export default {
 }
 #edit-button {
   border: #dbdbdb solid 1px;
+}
+.is-fullheight {
+  min-height: fit-content;
+}
+.has-navbar-fixed-bottom {
+  padding-bottom: 100px;
+}
+.questionnaire-details /deep/ .questionnaire-details-child {
+  // 子コンポーネント Information, InformationEdit, Questions, QuestionsEdit に適用される
+  pre {
+    white-space: pre-line;
+    font-size: inherit;
+    -webkit-font-smoothing: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    background-color: inherit;
+    color: inherit;
+    padding: 0.625em;
+  }
+  article.column {
+    padding: 0;
+  }
+  .columns {
+    margin-bottom: 0;
+  }
+  .columns:first-child {
+    display: flex;
+  }
+  .card {
+    max-width: 100%;
+    padding: 0.7rem;
+  }
+  .card-content {
+    .subtitle {
+      margin: 0;
+    }
+    details {
+      margin: 0.5rem;
+      p {
+        padding: 0 0.5rem;
+      }
+    }
+  }
+  .navbar.is-fixed-bottom {
+    background-color: gray;
+  }
+  @media screen and (min-width: 769px) {
+    // widthが大きいときは横並びのカードの間を狭くする
+    .column:not(:last-child) > .card {
+      margin-right: 0;
+    }
+  }
 }
 </style>
