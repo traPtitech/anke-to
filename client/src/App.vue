@@ -162,6 +162,10 @@ body {
   #edit-button {
     border: #dbdbdb solid 1px;
   }
+  .checkbox {
+    width: 4rem;
+    margin: 0.5rem;
+  }
   .is-fullheight {
     min-height: fit-content;
   }
@@ -169,7 +173,10 @@ body {
     padding-bottom: 100px;
   }
   .details-child {
-    // 子コンポーネント Information, InformationEdit, Questions に適用される
+    .checkbox {
+      // 1行に1つの選択肢
+      display: block;
+    }
     pre {
       white-space: pre-line;
       font-size: inherit;
@@ -214,5 +221,10 @@ body {
       }
     }
   }
+}
+
+.icon.circled {
+  background-color: lightgray;
+  border-radius: 1rem;
 }
 </style>

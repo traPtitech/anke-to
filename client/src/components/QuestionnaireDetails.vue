@@ -24,10 +24,10 @@
     <component
       :is="currentTabComponent"
       :traqId="traqId"
-      :editMode="isEditing ? 'question' : undefined"
       :class="{'is-editing' : isEditing, 'has-navbar-fixed-bottom': isEditing}"
       class="details-child is-fullheight"
       :name="currentTabComponent"
+      :editMode="isEditing ? 'question' : undefined"
       @enable-edit-button="enableEditButton"
       @disable-editing="disableEditing"
     ></component>
@@ -40,6 +40,7 @@ import router from '@/router'
 import Information from '@/components/QuestionnaireDetails/Information'
 import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/Questions'
+// import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 
 export default {
   name: 'QuestionnaireDetails',
@@ -47,6 +48,7 @@ export default {
     'information': Information,
     'information-edit': InformationEdit,
     'questions': Questions
+    // 'questions-edit': QuestionsEdit
   },
   props: {
     traqId: {
@@ -103,7 +105,11 @@ export default {
           }
         }
         case 'Questions': {
+          // if (this.isEditing) {
+          // //   return 'questions-edit'
+          // // } else {
           return 'questions'
+          // }
         }
       }
     }
