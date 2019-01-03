@@ -113,7 +113,7 @@
 // import <componentname> from '<path to component file>'
 import axios from '@/bin/axios'
 import router from '@/router'
-import {customDateStr} from '@/util/common'
+import common from '@/util/common'
 
 export default {
   name: 'Information',
@@ -170,7 +170,7 @@ export default {
         })
     },
     getDateStr (str) {
-      return customDateStr(str)
+      return common.customDateStr(str)
     },
     toListString (list) {
       if (list && list.length === 0) {
