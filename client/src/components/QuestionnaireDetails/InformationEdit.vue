@@ -155,7 +155,7 @@
 import axios from '@/bin/axios'
 import router from '@/router'
 import moment from 'moment'
-import {customDateStr} from '@/util/common'
+import common from '@/util/common'
 
 export default {
   name: 'InformationEdit',
@@ -253,7 +253,7 @@ export default {
       }
     },
     getDateStr (str) {
-      return customDateStr(str)
+      return common.customDateStr(str)
     },
     toListString (list) {
       if (list && list.length === 0) {
@@ -412,12 +412,6 @@ export default {
 }
 .editable.wrapper {
   display: flex;
-}
-.wrapper {
-  .checkbox {
-    width: 4rem;
-    margin: 0.5rem;
-  }
 }
 .management-buttons {
   .button:not(:last-child) {

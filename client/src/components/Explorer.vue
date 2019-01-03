@@ -89,7 +89,7 @@
 <script>
 import axios from '@/bin/axios'
 import Table from '@/components/Utils/Table.vue'
-import {customDateStr, relativeDateStr} from '@/util/common'
+import common from '@/util/common'
 
 export default {
   name: 'Explorer',
@@ -157,10 +157,10 @@ export default {
   },
   methods: {
     getDateStr (str) {
-      return customDateStr(str)
+      return common.customDateStr(str)
     },
     getRelativeDateStr (str) {
-      return relativeDateStr(str)
+      return common.relativeDateStr(str)
     },
     getQuestionnaires () {
       axios
