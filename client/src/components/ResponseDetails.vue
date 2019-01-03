@@ -11,7 +11,6 @@
       </a>
     </div>
     <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
-      <!-- <p>responseId = {{ responseId }} の回答詳細画面</p> -->
       <questions :traqId="traqId" :editMode="isEditing? 'response' : undefined"></questions>
     </div>
   </div>

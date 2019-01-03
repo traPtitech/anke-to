@@ -1,32 +1,20 @@
 <template>
   <div>
-    <div class="question-body">
-      <p class="subtitle" v-if="editMode!=='question'">{{ content.questionBody }}</p>
-      <input
-        type="text"
-        class="subtitle input has-underline"
-        v-if="editMode==='question'"
-        placeholder="質問文"
-        v-model="content.questionBody"
-      >
-    </div>
-    <div class="response-body">
-      <p class="has-underline" v-if="editMode!=='response'">{{ content.responseBody }}</p>
-      <input
-        type="text"
-        class="input has-underline"
-        v-if="editMode==='response' && content.responseType==='text'"
-        placeholder="回答"
-        v-model="content.responseBody"
-      >
-      <input
-        type="number"
-        class="input has-underline"
-        v-if="editMode==='response' && content.responseType==='number'"
-        placeholder="0"
-        v-model.number="content.responseBody"
-      >
-    </div>
+    <p class="has-underline" v-if="editMode!=='response'">{{ content.body }}</p>
+    <input
+      type="text"
+      class="input has-underline"
+      v-if="editMode==='response' && content.type==='Text'"
+      placeholder="回答"
+      v-model="content.body"
+    >
+    <input
+      type="number"
+      class="input has-underline"
+      v-if="editMode==='response' && content.type==='Number'"
+      placeholder="0"
+      v-model.number="content.body"
+    >
   </div>
 </template>
 
