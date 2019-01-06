@@ -1,18 +1,17 @@
 <template>
   <div>
+    <!-- view only -->
     <div v-if="!editMode">
-      <!-- Checkbox, RadioButton, LinearScale -->
       <div v-for="(option, index) in content.options" :key="index" class="is-flex">
-        <!-- view only -->
         <span :class="[readOnlyBoxClass, isSelected(index) ? 'checked' : 'empty']"></span>
         <span class="option-label">{{ option.label }}</span>
       </div>
     </div>
 
+    <!-- edit question -->
     <div v-if="editMode==='question'">
       <transition-group name="list" tag="div">
         <div v-for="(option, index) in content.options" :key="option.id" class="is-flex">
-          <!-- edit question -->
           <span class="sort-handle">
             <span
               class="ti-angle-up icon"
@@ -42,9 +41,9 @@
       </div>
     </div>
 
+    <!-- edit response -->
     <div v-if="editMode==='response'">
       <div class="is-flex" v-for="(option, index) in content.options" :key="index">
-        <!-- edit response -->
         <input
           v-if="content.type==='Checkbox'"
           type="checkbox"
@@ -134,23 +133,6 @@ export default {
 <style lang="scss" scoped>
 input[type="checkbox"] {
   margin: auto 0;
-}
-.readonly-checkbox,
-.readonly-radiobutton {
-  width: 0.8rem;
-  height: 0.8rem;
-  border: grey solid 1px;
-  display: inline-block;
-  margin: auto;
-}
-.readonly-checkbox {
-  border-radius: 0.1rem;
-}
-.readonly-radiobutton {
-  border-radius: 0.5rem;
-}
-.checked {
-  background-color: darkgray;
 }
 .option-label {
   width: 100%;

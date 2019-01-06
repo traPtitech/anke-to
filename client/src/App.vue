@@ -227,4 +227,22 @@ body {
   background-color: lightgray;
   border-radius: 1rem;
 }
+
+.readonly-checkbox,
+.readonly-radiobutton {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: grey solid 1px;
+  display: inline-block;
+  margin: auto;
+}
+.readonly-checkbox {
+  border-radius: 0.1rem;
+}
+.readonly-radiobutton {
+  border-radius: 0.5rem;
+}
+.checked {
+  background-color: darkgray;
+}
 </style>
