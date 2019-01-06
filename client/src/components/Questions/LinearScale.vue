@@ -1,5 +1,74 @@
 <template>
-  <div></div>
+  <div>
+    <!-- view only -->
+    <div v-if="!editMode">
+      <div class="columns">
+        <div class="column">{{ content.scaleLabels.left }}</div>
+        <div class="column is-9 is-9-mobile is-flex">
+          <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
+            <div>{{ num }}</div>
+            <div>
+              <span class="readonly-radiobutton" :class="{'checked' : isSelected(num)}"></span>
+            </div>
+          </span>
+        </div>
+        <div class="column has-text-right">{{ content.scaleLabels.right }}</div>
+      </div>
+    </div>
+
+    <!-- edit question -->
+    <div v-if="editMode==='question'">
+      <div class="is-flex scale-range-edit">
+        <span class="select">
+          <select v-model.number="content.scaleRange.left">
+            <option v-for="(num, index) in progressiveArray(0, 1)" :key="index">{{ num }}</option>
+          </select>
+        </span>
+        <span>to</span>
+        <span class="select">
+          <select v-model.number="content.scaleRange.right">
+            <option v-for="(num, index) in progressiveArray(2, 10)" :key="index">{{ num }}</option>
+          </select>
+        </span>
+      </div>
+      <div class="scale-label-edit is-flex">
+        <span>{{ content.scaleRange.left }}</span>
+        <span>
+          <input
+            type="text"
+            placeholder="ラベル (任意)"
+            class="input has-underline is-editable"
+            v-model="content.scaleLabels.left"
+          >
+        </span>
+      </div>
+      <div class="scale-label-edit is-flex">
+        <span>{{ content.scaleRange.right }}</span>
+        <span>
+          <input
+            type="text"
+            placeholder="ラベル (任意)"
+            class="input has-underline is-editable"
+            v-model="content.scaleLabels.right"
+          >
+        </span>
+      </div>
+    </div>
+
+    <!-- edit response -->
+    <div v-if="editMode==='response'">
+      <div class="columns">
+        <div class="column">{{ content.scaleLabels.left }}</div>
+        <div class="column is-9 is-9-mobile is-flex">
+          <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
+            <div>{{ num }}</div>
+            <input type="radio" :value="num" v-model="content.selected">
+          </span>
+        </div>
+        <div class="column has-text-right">{{ content.scaleLabels.right }}</div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -7,22 +76,40 @@
 // import <componentname> from '<path to component file>'
 
 export default {
-  name: '',
+  name: 'LinearScale',
   components: {
   },
   props: {
-    // name: {
-    //   type: ,
-    //   required:
-    // }
+    content: {
+      type: Object,
+      required: true
+    },
+    editMode: {
+      type: String,
+      required: false
+    }
   },
   data () {
     return {
     }
   },
   methods: {
+    isSelected (num) {
+      return this.content.selected === num
+    },
+    progressiveArray (min, max) {
+      const len = max - min + 1
+      let arr = []
+      for (let i = 0; i < len; i++) {
+        arr[ i ] = min + i
+      }
+      return arr
+    }
   },
   computed: {
+    scaleArray () {
+      return this.progressiveArray(this.content.scaleRange.left, this.content.scaleRange.right)
+    }
   },
   mounted () {
   }
@@ -30,5 +117,20 @@ export default {
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="scss" scoped>
+.column {
+  padding: 0.5rem;
+}
+.scale-num {
+  margin: auto;
+}
+.scale-range-edit,
+.scale-label-edit {
+  span {
+    margin: auto 0.5rem;
+  }
+}
+.scale-label-edit {
+  margin: 1rem 0.5rem;
+}
 </style>

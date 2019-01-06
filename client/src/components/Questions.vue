@@ -125,6 +125,21 @@ export default {
             }
           ],
           selected: ''
+        },
+        {
+          questionId: 5,
+          type: 'LinearScale',
+          component: 'linear-scale',
+          questionBody: '好きなペンの太さは？',
+          scaleRange: {
+            left: 0,
+            right: 10
+          },
+          scaleLabels: {
+            left: '細い',
+            right: '太い'
+          },
+          selected: 3
         }
       ]
     }
