@@ -30,7 +30,9 @@
             class="input has-underline option-label is-editable"
             v-model="content.options[index].label"
           >
-          <span class="ti-trash icon is-medium" @click="removeOption(index)"></span>
+          <span class="delete-button">
+            <span class="ti-trash icon is-medium" @click="removeOption(index)"></span>
+          </span>
         </div>
       </transition-group>
       <div class="wrapper add-option">
@@ -141,18 +143,10 @@ input[type="checkbox"] {
 }
 .sort-handle {
   margin-right: 0.7rem;
-  width: min-content;
 }
-.icon {
-  cursor: pointer;
+.delete-button {
+  height: fit-content;
   margin: auto;
-}
-.icon.disabled {
-  color: lightgray;
-  pointer-events: none;
-}
-.icon.is-medium {
-  font-size: 1.2rem;
 }
 .wrapper.add-option {
   display: flex;
