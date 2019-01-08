@@ -228,6 +228,7 @@ body {
   border-radius: 1rem;
 }
 
+// readonly buttons
 .readonly-checkbox,
 .readonly-radiobutton {
   width: 0.8rem;
@@ -244,5 +245,37 @@ body {
 }
 .checked {
   background-color: darkgray;
+}
+
+// list animation
+.list-move {
+  transition: transform 1s;
+}
+.list-leave-to,
+.list-enter {
+  transition: all 1s;
+  opacity: 0;
+  transform: translateX(30px);
+}
+.list-leave-active {
+  position: absolute;
+}
+
+// sort handles and trash buttons
+.sort-handle,
+.delete-button {
+  width: min-content;
+  margin: 0 auto;
+  .icon {
+    cursor: pointer;
+    margin: auto;
+  }
+  .icon.disabled {
+    color: lightgray;
+    pointer-events: none;
+  }
+  .icon.is-medium {
+    font-size: 1.2rem;
+  }
 }
 </style>

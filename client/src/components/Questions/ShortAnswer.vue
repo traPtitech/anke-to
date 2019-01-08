@@ -1,6 +1,7 @@
 <template>
   <div>
-    <p class="has-underline" v-if="editMode!=='response'">{{ content.body }}</p>
+    <p class="has-underline" v-if="!editMode">{{ content.body }}</p>
+    <p class="has-underline placeholder" v-if="editMode==='question'">回答</p>
     <input
       type="text"
       class="input has-underline"
@@ -51,4 +52,7 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
+.placeholder {
+  color: grey;
+}
 </style>
