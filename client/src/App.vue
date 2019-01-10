@@ -173,10 +173,6 @@ body {
     padding-bottom: 100px;
   }
   .details-child {
-    .checkbox {
-      // 1行に1つの選択肢
-      display: block;
-    }
     pre {
       white-space: pre-line;
       font-size: inherit;
@@ -276,6 +272,56 @@ body {
   }
   .icon.is-medium {
     font-size: 1.2rem;
+  }
+}
+
+// questions
+.questions {
+  .question {
+    .columns {
+      width: 100%;
+    }
+    .column {
+      padding: 0.2rem;
+    }
+    .column.question {
+      padding: 0.5rem 1rem;
+    }
+    .column.left-bar {
+      width: fit-content;
+      max-width: fit-content;
+      padding: 0;
+    }
+    input,
+    textarea {
+      border: none;
+      outline: none;
+      -webkit-box-shadow: none;
+      box-shadow: none;
+      border-radius: 0;
+    }
+    .question-body {
+      margin-bottom: 0.5rem;
+    }
+    .response-body {
+      margin: 0.5rem 0.5rem;
+      p {
+        margin-top: 1rem;
+      }
+      p.has-underline {
+        padding-bottom: 0.25rem;
+      }
+    }
+    .has-underline {
+      padding: 0 0.5rem;
+      border-bottom: grey dotted 0.5px;
+    }
+    .is-editable.has-underline {
+      border-bottom: lightgrey solid 0.5px;
+    }
+    input:focus.has-underline {
+      border-bottom: black solid 2px;
+    }
   }
 }
 </style>
