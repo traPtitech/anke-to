@@ -46,19 +46,21 @@
     <!-- edit response -->
     <div v-if="editMode==='response'">
       <div class="is-flex" v-for="(option, index) in content.options" :key="index">
-        <input
-          v-if="content.type==='Checkbox'"
-          type="checkbox"
-          :value="option"
-          v-model="content.isSelected[index]"
-        >
-        <input
-          v-if="content.type==='MultipleChoice'"
-          type="radio"
-          :value="option"
-          v-model="content.selected"
-        >
-        <label class="option-label">{{ option.label }}</label>
+        <label class="option-label">
+          <input
+            v-if="content.type==='Checkbox'"
+            type="checkbox"
+            :value="option"
+            v-model="content.isSelected[index]"
+          >
+          <input
+            v-if="content.type==='MultipleChoice'"
+            type="radio"
+            :value="option"
+            v-model="content.selected"
+          >
+          {{ option.label }}
+        </label>
       </div>
     </div>
   </div>

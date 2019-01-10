@@ -41,15 +41,15 @@ import router from '@/router'
 import Information from '@/components/QuestionnaireDetails/Information'
 import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/Questions'
-// import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
+import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 
 export default {
   name: 'QuestionnaireDetails',
   components: {
     'information': Information,
     'information-edit': InformationEdit,
-    'questions': Questions
-    // 'questions-edit': QuestionsEdit
+    'questions': Questions,
+    'questions-edit': QuestionsEdit
   },
   props: {
     traqId: {
@@ -184,11 +184,11 @@ export default {
           }
         }
         case 'Questions': {
-          // if (this.isEditing) {
-          // //   return 'questions-edit'
-          // // } else {
-          return 'questions'
-          // }
+          if (this.isEditing) {
+            return 'questions-edit'
+          } else {
+            return 'questions'
+          }
         }
       }
     }

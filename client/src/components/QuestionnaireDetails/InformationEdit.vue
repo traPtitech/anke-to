@@ -95,7 +95,7 @@
                       <!-- Content ... -->
                       <label class="checkbox" v-for="(user, index) in userTraqIdList" :key="index">
                         <input type="checkbox" v-model="details[activeModal.name]" :value="user">
-                        {{ user }}
+                        <span>{{ user }}</span>
                       </label>
                     </section>
                   </div>
@@ -431,6 +431,13 @@ export default {
     height: 1.5rem;
     padding: 0.25rem;
     border-radius: 1rem;
+  }
+}
+.modal-card-body {
+  .details.checkbox {
+    margin: 0.5rem;
+    display: -webkit-inline-box;
+    width: fit-content;
   }
 }
 #title {

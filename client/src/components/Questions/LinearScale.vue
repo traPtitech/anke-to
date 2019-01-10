@@ -61,8 +61,10 @@
         <div class="column">{{ content.scaleLabels.left }}</div>
         <div class="column is-9 is-9-mobile is-flex">
           <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
-            <div>{{ num }}</div>
-            <input type="radio" :value="num" v-model="content.selected">
+            <label>
+              {{ num }}
+              <input type="radio" :value="num" v-model="content.selected">
+            </label>
           </span>
         </div>
         <div class="column has-text-right">{{ content.scaleLabels.right }}</div>
@@ -123,6 +125,7 @@ export default {
 }
 .scale-num {
   margin: auto;
+  width: min-content;
 }
 .scale-range-edit,
 .scale-label-edit {
