@@ -8,16 +8,24 @@
         <article class="post" v-for="(questionnaire, index) in questionnaires" :key="index">
           <div>
             <div class="questionnaire-title">
-              <span :class="{'ti-check': questionnaire.status==='all-respond', 'ti-alert' : questionnaire.status==='not-all-respond'}"></span>
+              <span
+                :class="{'ti-check': questionnaire.status==='all-respond', 'ti-alert' : questionnaire.status==='not-all-respond'}"
+              ></span>
               <span class="subtitle">
-                <router-link :to="'/questionnaires/' + questionnaire.questionnaireID">{{ questionnaire.title }}</router-link>
+                <router-link
+                  :to="'/questionnaires/' + questionnaire.questionnaireID"
+                >{{ questionnaire.title }}</router-link>
               </span>
             </div>
             <p>{{ questionnaire.description }}</p>
             <div class="media">
               <div class="media-content has-text-weight-bold columns">
-                <div class="content column res-time-limit">回答期限: {{ getDateStr(questionnaire.res_time_limit) }}</div>
-                <div class="content column modified-at">更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}</div>
+                <div
+                  class="content column res-time-limit"
+                >回答期限: {{ getDateStr(questionnaire.res_time_limit) }}</div>
+                <div
+                  class="content column modified-at"
+                >更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}</div>
               </div>
             </div>
           </div>
@@ -29,12 +37,12 @@
 
 <script>
 import axios from '@/bin/axios'
-import { customDateStr, relativeDateStr } from '@/util/common'
+import common from '@/util/common'
 
 export default {
   name: 'Administrates',
   components: {},
-  async created() {
+  async created () {
     axios.get('/users/me/administrates').then(resp => {
       this.questionnaires = resp.data
       this.getStatus()
@@ -46,7 +54,7 @@ export default {
       required: true
     }
   },
-  data() {
+  data () {
     return {
       questionnaires: [],
       headers: [
@@ -61,15 +69,15 @@ export default {
   },
   computed: {},
   methods: {
-    getDateStr(str) {
-      return customDateStr(str)
+    getDateStr (str) {
+      return common.customDateStr(str)
     },
-    getRelativeDateStr(str) {
-      return relativeDateStr(str)
+    getRelativeDateStr (str) {
+      return common.relativeDateStr(str)
     },
-    getStatus() {
+    getStatus () {
       for (let i = 0; i < this.questionnaires.length; i++) {
-        if (this.questionnaires[i].all_responded) {
+        if (this.questionnaires[ i ].all_responded) {
           // 全員回答済み
           this.setStatus(i, 'all-respond')
         } else {
@@ -78,8 +86,8 @@ export default {
         }
       }
     },
-    setStatus(index, newStatus) {
-      let questionnaire = this.questionnaires[index]
+    setStatus (index, newStatus) {
+      let questionnaire = this.questionnaires[ index ]
       this.$set(questionnaire, 'status', newStatus)
       this.$set(this.questionnaires, index, questionnaire)
     }

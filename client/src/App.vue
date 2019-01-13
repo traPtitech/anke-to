@@ -78,7 +78,8 @@ export default {
 }
 
 .is-fullheight {
-  height: 100%;
+  // height: 100%;
+  min-height: -webkit-fill-available;
 }
 
 .button.is-disabled {

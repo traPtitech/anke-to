@@ -26,7 +26,7 @@ func GetQuestions(c echo.Context) error {
 	}
 
 	type questionInfo struct {
-		QuestionID      int      `json:"question_ID"`
+		QuestionID      int      `json:"questionID"`
 		PageNum         int      `json:"page_num"`
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
@@ -37,7 +37,7 @@ func GetQuestions(c echo.Context) error {
 		ScaleLabelRight string   `json:"scale_label_right"`
 		ScaleLabelLeft  string   `json:"scale_label_left"`
 		ScaleMin        int      `json:"scale_min"`
-		ScaleMax        int      `json:"sclae_max"`
+		ScaleMax        int      `json:"scale_max"`
 	}
 	var ret []questionInfo
 
