@@ -13,10 +13,14 @@
         <tbody>
           <tr v-for="(response, index) in responses" :key="index">
             <td class="table-item-title">
-              <router-link :to="'/questionnaires/' + response.questionnaireID">{{ response.questionnaire_title }}</router-link>
+              <router-link
+                :to="'/questionnaires/' + response.questionnaireID"
+              >{{ response.questionnaire_title }}</router-link>
             </td>
             <td class="table-item-date">{{ getDateStr(response.res_time_limit) }}</td>
-            <td class="table-item-date">{{ response.submitted_at == 'NULL' ? '未提出' : getRelativeDateStr(response.submitted_at) }}</td>
+            <td
+              class="table-item-date"
+            >{{ response.submitted_at == 'NULL' ? '未提出' : getRelativeDateStr(response.submitted_at) }}</td>
             <td class="table-item-date">{{ getRelativeDateStr(response.modified_at) }}</td>
             <td>
               <router-link :to="'/responses/' + response.responseID" target="_blank">
@@ -34,14 +38,14 @@
 <script>
 import axios from '@/bin/axios'
 import Table from '@/components/Utils/Table.vue'
-import { customDateStr, relativeDateStr } from '@/util/common'
+import common from '@/util/common'
 
 export default {
   name: 'Responses',
   components: {
     customtable: Table
   },
-  async created() {
+  async created () {
     axios.get('/users/me/responses').then(resp => {
       this.responses = resp.data
     })
@@ -52,19 +56,19 @@ export default {
       required: true
     }
   },
-  data() {
+  data () {
     return {
       responses: [],
-      headers: ['', '回答期限', '回答日時', '更新日時', '回答']
+      headers: [ '', '回答期限', '回答日時', '更新日時', '回答' ]
     }
   },
   computed: {},
   methods: {
-    getDateStr(str) {
-      return customDateStr(str)
+    getDateStr (str) {
+      return common.customDateStr(str)
     },
-    getRelativeDateStr(str) {
-      return relativeDateStr(str)
+    getRelativeDateStr (str) {
+      return common.relativeDateStr(str)
     }
   }
 }
