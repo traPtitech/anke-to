@@ -1,5 +1,8 @@
 <template>
   <div class="wrapper">
+    <button v-on:click="downloadCSV">
+      CSV形式でダウンロード
+    </button>
     <div class="card">
       <table class="table is-striped">
         <thead>
@@ -60,16 +63,38 @@ export default {
         case 'Checkbox':
         case 'Dropdown':
           let ret = ''
-          for (const response of body.option_response) {
+          body.option_response.forEach(response => {
             if (ret != '') {
               ret += ', '
             }
             ret += response
-          }
+          })
           return ret
         default:
           return body.response
       }
+    },
+    downloadCSV() {
+      let csv = '\ufeff'
+      this.headers.concat(this.questions).forEach(header => {
+        if (csv != '\ufeff') {
+          csv += ','
+        }
+        csv += '"' + header + '"'
+      })
+      csv += '\n'
+      this.results.forEach(result => {
+        csv += result.traqID + ',' + this.getDateStr(result.submitted_at)
+        result.response_body.forEach(response => {
+          csv += ',' + '"' + this.getResponse(response) + '"'
+        })
+        csv += '\n'
+      })
+      const blob = new Blob([csv], { type: 'text/csv' })
+      let link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.download = 'Result.csv'
+      link.click()
     }
   },
   computed: {},
