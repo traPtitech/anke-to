@@ -6,6 +6,7 @@
         id="edit-button"
         :class="{'is-editing': isEditing}"
         @click.prevent="isEditing = !isEditing"
+        v-if="!isNewResponse"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -118,11 +119,14 @@ export default {
   },
   computed: {
     responseId () {
-      return this.$route.params.id
+      return this.isNewResponse ? '' : this.$route.params.id
+    },
+    isNewResponse () {
+      return this.$route.params.id === 'new'
     },
     isEditing: {
       get: function () {
-        if (this.$route.hash === '#edit') {
+        if (this.isNewResponse || this.$route.hash === '#edit') {
           return true
         }
         return false

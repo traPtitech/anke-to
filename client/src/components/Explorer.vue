@@ -73,7 +73,7 @@
               <td class="table-item-date">{{ getRelativeDateStr(questionnaire.modified_at) }}</td>
               <td class="table-item-date">{{ getRelativeDateStr(questionnaire.created_at) }}</td>
               <td>
-                <router-link :to="'/results/' + questionnaire.questionnaireID">
+                <router-link :to="'/results/' + questionnaire.questionnaireID" target="_blank">
                   <span class="ti-new-window"></span>
                   <br>Open
                 </router-link>
