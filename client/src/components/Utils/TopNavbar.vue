@@ -17,7 +17,10 @@
             <p class="title is-3">anke-to</p>
           </router-link>
         </div>
-        <p class="subtitle pull-right">{{ traqId }}</p>
+        <div class="subtitle pull-right">
+          <img class="user-icon" v-bind:src="'https://q.trapti.tech/static/icon/' + traqId + '/64.png'">
+          <p class="user-name">{{traqId}}</p>
+        </div>
       </div>
     </nav>
   </div>
@@ -46,7 +49,7 @@ export default {
   margin-bottom: 0;
 }
 .subtitle {
-  height: min-content;
+  min-width: 100px;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -56,5 +59,16 @@ export default {
 }
 .navbar-burger {
   margin-left: 0;
+}
+.user-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  display:inline-block;
+  vertical-align: middle;
+}
+.user-name {
+  display: inline;
+  vertical-align: middle;
 }
 </style>
