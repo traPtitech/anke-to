@@ -143,7 +143,7 @@ func GetResponsesByID(c echo.Context) error {
 
 	if err := model.DB.Select(&responsesinfo,
 		`SELECT response_id, user_traqid, modified_at, submitted_at from respondents
-		WHERE deleted_at IS NULL AND questionnaire_id = ?`,
+		WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`,
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -154,7 +154,7 @@ func GetResponsesByID(c echo.Context) error {
 		UserID      string               `json:"traqID"`
 		SubmittedAt string               `json:"submitted_at"`
 		ModifiedAt  string               `json:"modified_at"`
-		Body        []model.ResponseBody `json:"body"`
+		Body        []model.ResponseBody `json:"response_body"`
 	}
 	responses := []ResponsesInfo{}
 

@@ -18,6 +18,7 @@
       class="details-child is-fullheight"
       :name="currentTabComponent"
       :results="results"
+      :questions="questions"
     ></component>
   </div>
 </template>
@@ -41,12 +42,20 @@ export default {
       .then(res => {
         this.results = res.data
       })
+    axios
+      .get('/questionnaires/' + this.questionnaireId + '/questions')
+      .then(res => {
+        for(const question of res.data) {
+          this.questions.push(question.body)
+        }
+      })
   },
   props: {
   },
   data () {
     return {
       results: [],
+      questions: [],
       detailTabs: [ 'Spreadsheet', 'Individual' ],
       selectedTab: 'Spreadsheet'
     }
