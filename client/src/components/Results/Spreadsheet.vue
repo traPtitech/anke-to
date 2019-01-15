@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <button v-on:click="downloadCSV">
-      CSV形式でダウンロード
+      CSV形式でダウンロード(chrome,firefox)
     </button>
     <div class="card">
       <table class="table is-striped">
@@ -94,7 +94,9 @@ export default {
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = 'Result.csv'
+      document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
     }
   },
   computed: {},
@@ -104,12 +106,10 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+th,
 td {
   vertical-align: middle;
   font-size: 0.9em;
-}
-th,
-td {
   min-width: 10em;
 }
 </style>
