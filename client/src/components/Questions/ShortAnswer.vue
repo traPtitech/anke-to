@@ -1,7 +1,12 @@
 <template>
   <div>
+    <!-- view only -->
     <p class="has-underline" v-if="!editMode">{{ content.body }}</p>
+
+    <!-- edit question -->
     <p class="has-underline placeholder" v-if="editMode==='question'">回答</p>
+
+    <!-- edit response -->
     <input
       type="text"
       class="input has-underline"
@@ -28,7 +33,7 @@ export default {
   components: {
   },
   props: {
-    content: {
+    contentProps: {
       type: Object,
       required: true
     },
@@ -44,6 +49,9 @@ export default {
   methods: {
   },
   computed: {
+    content () {
+      return this.contentProps
+    }
   },
   mounted () {
   }
@@ -51,8 +59,11 @@ export default {
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="scss" scoped>
 .placeholder {
-  color: grey;
+  color: lightgrey;
+  &.has-underline {
+    border-bottom: lightgrey dotted 0.5px;
+  }
 }
 </style>

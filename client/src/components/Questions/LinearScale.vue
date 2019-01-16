@@ -20,13 +20,19 @@
     <div v-if="editMode==='question'">
       <div class="is-flex scale-range-edit">
         <span class="select">
-          <select v-model.number="content.scaleRange.left">
+          <select
+            :value="content.scaleRange.left"
+            @input="setScaleRange('left', Number($event.target.value))"
+          >
             <option v-for="(num, index) in progressiveArray(0, 1)" :key="index">{{ num }}</option>
           </select>
         </span>
         <span>to</span>
         <span class="select">
-          <select v-model.number="content.scaleRange.right">
+          <select
+            :value="content.scaleRange.right"
+            @input="setScaleRange('right', Number($event.target.value))"
+          >
             <option v-for="(num, index) in progressiveArray(2, 10)" :key="index">{{ num }}</option>
           </select>
         </span>
@@ -38,7 +44,8 @@
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
-            v-model="content.scaleLabels.left"
+            :value="content.scaleLabels.left"
+            @input="setScaleLabels('left', $event.target.value)"
           >
         </span>
       </div>
@@ -49,7 +56,8 @@
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
-            v-model="content.scaleLabels.right"
+            :value="content.scaleLabels.right"
+            @input="setScaleLabels('right', $event.target.value)"
           >
         </span>
       </div>
@@ -63,7 +71,7 @@
           <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
             <label>
               {{ num }}
-              <input type="radio" :value="num" v-model="content.selected">
+              <input type="radio" :value="num" v-model="contentProps.selected">
             </label>
           </span>
         </div>
@@ -76,13 +84,18 @@
 <script>
 
 // import <componentname> from '<path to component file>'
+import question from '@/util/question.js'
 
 export default {
   name: 'LinearScale',
   components: {
   },
   props: {
-    content: {
+    questionIndex: {
+      type: Number,
+      required: false
+    },
+    contentProps: {
       type: Object,
       required: true
     },
@@ -96,6 +109,17 @@ export default {
     }
   },
   methods: {
+    setContent: question.setContent,
+    setScaleRange (side, value) {
+      let newScaleRange = Object.assign({}, this.content.scaleRange)
+      newScaleRange[ side ] = value
+      this.setContent('scaleRange', newScaleRange)
+    },
+    setScaleLabels (side, value) {
+      let newScaleLabels = Object.assign({}, this.content.scaleLabels)
+      newScaleLabels[ side ] = value
+      this.setContent('scaleLabels', newScaleLabels)
+    },
     isSelected (num) {
       return this.content.selected === num
     },
@@ -109,6 +133,9 @@ export default {
     }
   },
   computed: {
+    content () {
+      return this.contentProps
+    },
     scaleArray () {
       return this.progressiveArray(this.content.scaleRange.left, this.content.scaleRange.right)
     }

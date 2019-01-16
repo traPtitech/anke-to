@@ -184,20 +184,21 @@ export default {
       return ret
     },
     createResponse () {
-      const data = {
-        questionnaireID: parseInt(this.questionnaireId),
-        submitted_at: 'NULL',
-        body: []
-      }
-      axios
-        .post('/responses', data)
-        .then(resp => {
-          // POSTリクエストで返ってきたresponseIDをもとに、responses/:responseID に編集モードで飛ぶ
-          router.push('/responses/' + resp.data.responseID + '#edit')
-        })
-        .catch(error => {
-          console.log(error)
-        })
+      // const data = {
+      //   questionnaireID: parseInt(this.questionnaireId),
+      //   submitted_at: 'NULL',
+      //   body: []
+      // }
+      // axios
+      //   .post('/responses', data)
+      //   .then(resp => {
+      //     // POSTリクエストで返ってきたresponseIDをもとに、responses/:responseID に編集モードで飛ぶ
+      //     router.push('/responses/' + resp.data.responseID + '#edit')
+      //   })
+      //   .catch(error => {
+      //     console.log(error)
+      //   })
+      router.push('/responses/' + 'new')
     },
     deleteResponse (responseId, index) {
       axios.delete('/responses/' + responseId, {method: 'delete', withCredentials: true})

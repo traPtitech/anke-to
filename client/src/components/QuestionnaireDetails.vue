@@ -16,7 +16,7 @@
         @click="isEditing = !isEditing"
         id="edit-button"
         :class="{'is-editing': isEditing}"
-        v-show="showEditButton"
+        v-if="showEditButton"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -28,9 +28,11 @@
       class="details-child is-fullheight"
       :name="currentTabComponent"
       :editMode="isEditing ? 'question' : undefined"
-      :questions="questions"
+      :questionsProps="questions"
       @enable-edit-button="enableEditButton"
       @disable-editing="disableEditing"
+      @set-questions="setQuestions"
+      @set-question-content="setQuestionContent"
     ></component>
   </div>
 </template>
@@ -148,6 +150,12 @@ export default {
     },
     disableEditing () {
       this.isEditing = false
+    },
+    setQuestions (questions) {
+      this.questions = questions
+    },
+    setQuestionContent (index, label, value) {
+      this.questions[ index ][ label ] = value
     }
   },
   computed: {

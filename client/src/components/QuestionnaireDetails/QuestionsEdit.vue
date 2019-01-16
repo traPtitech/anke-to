@@ -48,8 +48,10 @@
                   <component
                     :editMode="'question'"
                     :is="question.component"
-                    :content="question"
+                    :contentProps="question"
+                    :questionIndex="index"
                     class="response-body"
+                    @set-question-content="setQuestionContent"
                   ></component>
                 </div>
               </div>
@@ -87,14 +89,14 @@ import ShortAnswer from '@/components/Questions/ShortAnswer'
 import common from '@/util/common'
 
 export default {
-  name: 'Questions',
+  name: 'QuestionsEdit',
   components: {
     'multiple-choice': MultipleChoice,
     'linear-scale': LinearScale,
     'short-answer': ShortAnswer
   },
   props: {
-    questions: {
+    questionsProps: {
       type: Array,
       required: false
     }
@@ -134,6 +136,12 @@ export default {
   },
   methods: {
     swapOrder: common.swapOrder,
+    setQuestions (questions) {
+      this.$emit('set-questions', questions)
+    },
+    setQuestionContent (index, label, value) {
+      this.$emit('set-question-content', index, label, value)
+    },
     isFirstQuestion (index) {
       return index === 0
     },
@@ -142,9 +150,11 @@ export default {
     },
     removeQuestion (index) {
       this.questions.splice(index, 1)
+      this.setQuestions(this.questions)
     },
     insertQuestion (questionType) {
       this.questions.push(this.getDefaultQuestion(questionType))
+      this.setQuestions(this.questions)
     },
     toggleNewQuestionDropdown () {
       this.newQuestionDropdownIsActive = !this.newQuestionDropdownIsActive
@@ -179,6 +189,9 @@ export default {
     }
   },
   computed: {
+    questions () {
+      return this.questionsProps
+    }
   },
   mounted () {
   }

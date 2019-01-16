@@ -28,7 +28,8 @@
           <input
             type="text"
             class="input has-underline option-label is-editable"
-            v-model="content.options[index].label"
+            :value="content.options[index].label"
+            @input="setOption(index, $event.target.value)"
           >
           <span class="delete-button">
             <span class="ti-trash icon is-medium" @click="removeOption(index)"></span>
@@ -51,13 +52,13 @@
             v-if="content.type==='Checkbox'"
             type="checkbox"
             :value="option"
-            v-model="content.isSelected[index]"
+            v-model="contentProps.isSelected[index]"
           >
           <input
             v-if="content.type==='MultipleChoice'"
             type="radio"
             :value="option"
-            v-model="content.selected"
+            v-model="contentProps.selected"
           >
           {{ option.label }}
         </label>
@@ -97,6 +98,12 @@ export default {
   },
   methods: {
     swapOrder: common.swapOrder,
+    setContent: question.setContent,
+    setOption (index, value) {
+      let newOptions = Object.assign({}, this.content.options)
+      newOptions[ index ].label = value
+      this.setContent('options', newOptions)
+    },
     isFirstOption (index) {
       return index === 0
     },
@@ -114,17 +121,24 @@ export default {
       this.newId--
     },
     addOption () {
-      let newId = this.content.options.length
-      this.content.options.push({
+      let newOptions = Object.assign([], this.content.options)
+      newOptions.push({
         id: this.newId,
         label: ''
       })
+      this.updateOptionId()
+      this.setContent('options', newOptions)
     },
     removeOption (index) {
-      this.content.options.splice(index, 1)
+      let newOptions = Object.assign([], this.content.options)
+      newOptions.splice(index, 1)
+      this.setContent('options', newOptions)
     }
   },
   computed: {
+    content () {
+      return this.contentProps
+    },
     readOnlyBoxClass () {
       switch (this.content.type) {
         case 'Checkbox':
@@ -135,6 +149,8 @@ export default {
           return undefined
       }
     }
+  },
+  watch: {
   },
   mounted () {
   }

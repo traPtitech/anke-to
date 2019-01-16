@@ -15,7 +15,9 @@
       <questions
         :traqId="traqId"
         :editMode="isEditing? 'response' : undefined"
-        :questions="questions"
+        :questionsProps="questions"
+        @set-questions="setQuestions"
+        @set-question-content="setQuestionContent"
       ></questions>
     </div>
   </div>
@@ -116,6 +118,17 @@ export default {
     }
   },
   methods: {
+    setQuestions (questions) {
+      this.questions = questions
+    },
+    setQuestionContent (index, label, value) {
+      console.log(index)
+      console.log(value)
+      // this.questions[ index ][ label ] = value
+      let newQuestion = Object.assign({}, this.questions[ index ])
+      newQuestion[ label ] = value
+      this.$set(this.questions, index, newQuestion)
+    }
   },
   computed: {
     responseId () {
