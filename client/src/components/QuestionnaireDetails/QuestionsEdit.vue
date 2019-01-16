@@ -68,8 +68,8 @@
             </div>
             <div v-show="newQuestionDropdownIsActive" class="question-type-buttons">
               <button
-                v-for="questionType in questionTypes"
-                :key="questionType.type"
+                v-for="(questionType, key) in questionTypes"
+                :key="key"
                 class="button"
                 @click="insertQuestion(questionType)"
               >{{ questionType.label }}</button>
@@ -104,33 +104,7 @@ export default {
   data () {
     return {
       newQuestionDropdownIsActive: false,
-      questionTypes: [
-        {
-          type: 'Text',
-          label: 'テキスト',
-          component: 'short-answer'
-        },
-        {
-          type: 'Number',
-          label: '数値',
-          component: 'short-answer'
-        },
-        {
-          type: 'Checkbox',
-          label: 'チェックボックス',
-          component: 'multiple-choice'
-        },
-        {
-          type: 'MultipleChoice',
-          label: 'ラジオボタン',
-          component: 'multiple-choice'
-        },
-        {
-          type: 'LinearScale',
-          label: '目盛り',
-          component: 'linear-scale'
-        }
-      ],
+      questionTypes: common.questionTypes,
       lastQuestionId: 0
     }
   },
