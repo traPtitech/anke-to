@@ -3,7 +3,7 @@
     <!-- view only -->
     <div v-if="!editMode">
       <div v-for="(option, index) in content.options" :key="index" class="is-flex">
-        <span :class="[readOnlyBoxClass, isSelected(index) ? 'checked' : 'empty']"></span>
+        <span :class="[readOnlyBoxClass, isSelected(option.label) ? 'checked' : 'empty']"></span>
         <span class="option-label">{{ option.label }}</span>
       </div>
     </div>
@@ -51,13 +51,13 @@
           <input
             v-if="content.type==='Checkbox'"
             type="checkbox"
-            :value="option"
-            v-model="contentProps.isSelected[index]"
+            :value="option.label"
+            v-model="contentProps.isSelected[option.label]"
           >
           <input
             v-if="content.type==='MultipleChoice'"
             type="radio"
-            :value="option"
+            :value="option.label"
             v-model="contentProps.selected"
           >
           {{ option.label }}
@@ -110,11 +110,11 @@ export default {
     isLastOption (index) {
       return index === this.content.options.length - 1
     },
-    isSelected (index) {
+    isSelected (label) {
       if (this.content.type === 'Checkbox') {
-        return this.content.isSelected[ index ]
+        return this.content.isSelected[ label ]
       } else if (this.content.type === 'MultipleChoice') {
-        return this.content.selected === this.content.options[ index ]
+        return this.content.selected === label
       }
     },
     updateOptionId () {

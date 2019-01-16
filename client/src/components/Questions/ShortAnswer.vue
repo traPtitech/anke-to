@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- view only -->
-    <p class="has-underline" v-if="!editMode">{{ content.body }}</p>
+    <p class="has-underline" v-if="!editMode">{{ content.responseBody }}</p>
 
     <!-- edit question -->
     <p class="has-underline placeholder" v-if="editMode==='question'">回答</p>
@@ -12,14 +12,14 @@
       class="input has-underline"
       v-if="editMode==='response' && content.type==='Text'"
       placeholder="回答"
-      v-model="content.body"
+      v-model="content.responseBody"
     >
     <input
       type="number"
       class="input has-underline"
       v-if="editMode==='response' && content.type==='Number'"
       placeholder="0"
-      v-model.number="content.body"
+      v-model.number="content.responseBody"
     >
   </div>
 </template>
