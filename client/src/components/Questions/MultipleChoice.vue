@@ -70,15 +70,20 @@
 
 // import <componentname> from '<path to component file>'
 import common from '@/util/common'
+import question from '@/util/question'
 
 export default {
   name: 'MultipleChoice',
   components: {
   },
   props: {
-    content: {
+    contentProps: {
       type: Object,
       required: true
+    },
+    questionIndex: {
+      type: Number,
+      required: false
     },
     editMode: {
       type: String,
@@ -87,7 +92,7 @@ export default {
   },
   data () {
     return {
-      options: []
+      newId: -1
     }
   },
   methods: {
@@ -105,10 +110,13 @@ export default {
         return this.content.selected === this.content.options[ index ]
       }
     },
+    updateOptionId () {
+      this.newId--
+    },
     addOption () {
       let newId = this.content.options.length
       this.content.options.push({
-        id: newId,
+        id: this.newId,
         label: ''
       })
     },
