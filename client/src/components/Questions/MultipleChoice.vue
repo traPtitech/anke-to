@@ -3,7 +3,7 @@
     <!-- view only -->
     <div v-if="!editMode">
       <div v-for="(option, index) in content.options" :key="index" class="is-flex">
-        <span :class="[readOnlyBoxClass, isSelected(index) ? 'checked' : 'empty']"></span>
+        <span :class="[readOnlyBoxClass, isSelected(option.label) ? 'checked' : 'empty']"></span>
         <span class="option-label">{{ option.label }}</span>
       </div>
     </div>
@@ -28,7 +28,8 @@
           <input
             type="text"
             class="input has-underline option-label is-editable"
-            v-model="content.options[index].label"
+            :value="content.options[index].label"
+            @input="setOption(index, $event.target.value)"
           >
           <span class="delete-button">
             <span class="ti-trash icon is-medium" @click="removeOption(index)"></span>
@@ -50,14 +51,14 @@
           <input
             v-if="content.type==='Checkbox'"
             type="checkbox"
-            :value="option"
-            v-model="content.isSelected[index]"
+            :value="option.label"
+            v-model="contentProps.isSelected[option.label]"
           >
           <input
             v-if="content.type==='MultipleChoice'"
             type="radio"
-            :value="option"
-            v-model="content.selected"
+            :value="option.label"
+            v-model="contentProps.selected"
           >
           {{ option.label }}
         </label>
@@ -70,15 +71,20 @@
 
 // import <componentname> from '<path to component file>'
 import common from '@/util/common'
+import question from '@/util/question'
 
 export default {
   name: 'MultipleChoice',
   components: {
   },
   props: {
-    content: {
+    contentProps: {
       type: Object,
       required: true
+    },
+    questionIndex: {
+      type: Number,
+      required: false
     },
     editMode: {
       type: String,
@@ -87,36 +93,52 @@ export default {
   },
   data () {
     return {
-      options: []
+      newId: -1
     }
   },
   methods: {
     swapOrder: common.swapOrder,
+    setContent: question.setContent,
+    setOption (index, value) {
+      let newOptions = Object.assign({}, this.content.options)
+      newOptions[ index ].label = value
+      this.setContent('options', newOptions)
+    },
     isFirstOption (index) {
       return index === 0
     },
     isLastOption (index) {
       return index === this.content.options.length - 1
     },
-    isSelected (index) {
+    isSelected (label) {
       if (this.content.type === 'Checkbox') {
-        return this.content.isSelected[ index ]
+        return this.content.isSelected[ label ]
       } else if (this.content.type === 'MultipleChoice') {
-        return this.content.selected === this.content.options[ index ]
+        return this.content.selected === label
       }
     },
+    updateOptionId () {
+      this.newId--
+    },
     addOption () {
-      let newId = this.content.options.length
-      this.content.options.push({
-        id: newId,
+      let newOptions = Object.assign([], this.content.options)
+      newOptions.push({
+        id: this.newId,
         label: ''
       })
+      this.updateOptionId()
+      this.setContent('options', newOptions)
     },
     removeOption (index) {
-      this.content.options.splice(index, 1)
+      let newOptions = Object.assign([], this.content.options)
+      newOptions.splice(index, 1)
+      this.setContent('options', newOptions)
     }
   },
   computed: {
+    content () {
+      return this.contentProps
+    },
     readOnlyBoxClass () {
       switch (this.content.type) {
         case 'Checkbox':
@@ -127,6 +149,8 @@ export default {
           return undefined
       }
     }
+  },
+  watch: {
   },
   mounted () {
   }

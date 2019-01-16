@@ -22,8 +22,10 @@
               <component
                 :editMode="editMode"
                 :is="question.component"
-                :content="question"
+                :contentProps="question"
+                :questionIndex="index"
                 class="response-body"
+                @set-question-content="setQuestionContent"
               ></component>
               <hr>
             </div>
@@ -49,7 +51,7 @@ export default {
     'short-answer': ShortAnswer
   },
   props: {
-    questions: {
+    questionsProps: {
       type: Array,
       required: false
     },
@@ -65,9 +67,15 @@ export default {
   methods: {
     showRequiredIcon (index) {
       return this.questions[ index ].isRequired
+    },
+    setQuestionContent (index, label, value) {
+      this.$emit('set-question-content', index, label, value)
     }
   },
   computed: {
+    questions () {
+      return this.questionsProps
+    }
   },
   mounted () {
   }

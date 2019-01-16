@@ -16,7 +16,7 @@
         @click="isEditing = !isEditing"
         id="edit-button"
         :class="{'is-editing': isEditing}"
-        v-show="showEditButton"
+        v-if="showEditButton"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -28,9 +28,11 @@
       class="details-child is-fullheight"
       :name="currentTabComponent"
       :editMode="isEditing ? 'question' : undefined"
-      :questions="questions"
+      :questionsProps="questions"
       @enable-edit-button="enableEditButton"
       @disable-editing="disableEditing"
+      @set-questions="setQuestions"
+      @set-question-content="setQuestionContent"
     ></component>
   </div>
 </template>
@@ -42,9 +44,14 @@ import Information from '@/components/QuestionnaireDetails/Information'
 import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/Questions'
 import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
+import axios from '@/bin/axios'
+import common from '@/util/common'
 
 export default {
   name: 'QuestionnaireDetails',
+  async created () {
+    this.getQuestions()
+  },
   components: {
     'information': Information,
     'information-edit': InformationEdit,
@@ -62,92 +69,31 @@ export default {
       detailTabs: [ 'Information', 'Questions' ],
       selectedTab: 'Information',
       showEditButton: false,
-      questions: [ // テスト用
-        {
-          questionId: 1,
-          type: 'Text',
-          component: 'short-answer',
-          questionBody: 'ペンは持っていますか？',
-          isRequired: true
-          // body: 'はい'
-        },
-        {
-          questionId: 2,
-          type: 'Number',
-          component: 'short-answer',
-          questionBody: 'ペンは何本持っていますか？',
-          isRequired: true
-          // body: '12'
-        },
-        {
-          questionId: 3,
-          type: 'Checkbox',
-          component: 'multiple-choice',
-          questionBody: '何色のペンを持っていますか？',
-          options: [
-            {
-              label: '赤',
-              id: 0
-            },
-            {
-              label: '青',
-              id: 1
-            },
-            {
-              label: '黄色',
-              id: 2
-            }
-          ],
-          isSelected: [ false, false, false ],
-          isRequired: true
-        },
-        {
-          questionId: 4,
-          type: 'MultipleChoice',
-          component: 'multiple-choice',
-          questionBody: '何色のペンが欲しいですか？',
-          options: [
-            {
-              label: '赤',
-              id: 0
-            },
-            {
-              label: '青',
-              id: 1
-            },
-            {
-              label: '黄色',
-              id: 2
-            }
-          ],
-          selected: '',
-          isRequired: false
-        },
-        {
-          questionId: 5,
-          type: 'LinearScale',
-          component: 'linear-scale',
-          questionBody: '好きなペンの太さは？',
-          scaleRange: {
-            left: 0,
-            right: 10
-          },
-          scaleLabels: {
-            left: '細い',
-            right: '太い'
-          },
-          isRequired: true
-          // selected: 3
-        }
-      ]
+      questions: []
     }
   },
   methods: {
+    getQuestions () {
+      axios
+        .get('/questionnaires/' + this.questionnaireId + '/questions')
+        .then(res => {
+          this.questions = []
+          res.data.forEach(data => {
+            this.questions.push(common.convertDataToQuestion(data))
+          })
+        })
+    },
     enableEditButton () {
       this.showEditButton = true
     },
     disableEditing () {
       this.isEditing = false
+    },
+    setQuestions (questions) {
+      this.questions = questions
+    },
+    setQuestionContent (index, label, value) {
+      this.questions[ index ][ label ] = value
     }
   },
   computed: {

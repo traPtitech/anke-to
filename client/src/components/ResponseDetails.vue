@@ -6,6 +6,7 @@
         id="edit-button"
         :class="{'is-editing': isEditing}"
         @click.prevent="isEditing = !isEditing"
+        v-if="!isNewResponse"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -14,7 +15,9 @@
       <questions
         :traqId="traqId"
         :editMode="isEditing? 'response' : undefined"
-        :questions="questions"
+        :questionsProps="questions"
+        @set-questions="setQuestions"
+        @set-question-content="setQuestionContent"
       ></questions>
     </div>
   </div>
@@ -23,13 +26,18 @@
 <script>
 
 // import <componentname> from '<path to component file>'
+import axios from 'axios'
 import router from '@/router'
+import common from '@/util/common'
 import Questions from '@/components/Questions'
 
 export default {
   name: 'ResponseDetails',
   components: {
     'questions': Questions
+  },
+  async created () {
+    this.getQuestions()
   },
   props: {
     traqId: {
@@ -39,90 +47,64 @@ export default {
   },
   data () {
     return {
-      questions: [ // テスト用
-        {
-          questionId: 1,
-          type: 'Text',
-          component: 'short-answer',
-          questionBody: 'ペンは持っていますか？',
-          body: 'はい'
-        },
-        {
-          questionId: 2,
-          type: 'Number',
-          component: 'short-answer',
-          questionBody: 'ペンは何本持っていますか？',
-          body: '12'
-        },
-        {
-          questionId: 3,
-          type: 'Checkbox',
-          component: 'multiple-choice',
-          questionBody: '何色のペンを持っていますか？',
-          options: [
-            {
-              label: '赤',
-              id: 0
-            },
-            {
-              label: '青',
-              id: 1
-            },
-            {
-              label: '黄色',
-              id: 2
-            }
-          ],
-          isSelected: [ false, false, false ]
-        },
-        {
-          questionId: 4,
-          type: 'MultipleChoice',
-          component: 'multiple-choice',
-          questionBody: '何色のペンが欲しいですか？',
-          options: [
-            {
-              label: '赤',
-              id: 0
-            },
-            {
-              label: '青',
-              id: 1
-            },
-            {
-              label: '黄色',
-              id: 2
-            }
-          ],
-          selected: ''
-        },
-        {
-          questionId: 5,
-          type: 'LinearScale',
-          component: 'linear-scale',
-          questionBody: '好きなペンの太さは？',
-          scaleRange: {
-            left: 0,
-            right: 10
-          },
-          scaleLabels: {
-            left: '細い',
-            right: '太い'
-          },
-          selected: 3
-        }
-      ]
+      questions: []
     }
   },
   methods: {
+    getQuestions () {
+      let responseData = {}
+
+      // 該当する回答のデータを取得して responseData に保存
+      axios
+        .get('/responses/' + this.responseId)
+        .then(res => {
+          responseData = res.data
+          // console.log(responseData)
+        })
+        .then(() => {
+          // 該当するアンケートの質問一覧を取得して、convertDataToQuestion を通したものを this.questions に保存
+          axios
+            .get('/questionnaires/' + responseData.questionnaireID + '/questions')
+            .then(res => {
+              res.data.forEach(data => {
+                this.questions.push(common.convertDataToQuestion(data))
+              })
+            })
+            .then(() => {
+              // 各質問に対して、該当する回答の情報を this.questions に入れる
+              // questions[i] の questionId と responseData.body[i] の questionID は一致するはず (怪しい)
+              this.questions.forEach((question, index) => {
+                if (question.questionId === responseData.body[ index ].questionID) {
+                  this.$set(this.questions, index, common.setResponseToQuestion(question, responseData.body[ index ]))
+                } else {
+                  // questionとresponseのquestionIDが一致しなかった場合の処理 (未実装)
+                }
+              })
+            })
+        })
+    },
+    setQuestions (questions) {
+      this.questions = questions
+    },
+    setQuestionContent (index, label, value) {
+      console.log(index)
+      console.log(value)
+      // this.questions[ index ][ label ] = value
+      let newQuestion = Object.assign({}, this.questions[ index ])
+      newQuestion[ label ] = value
+      this.$set(this.questions, index, newQuestion)
+    }
   },
   computed: {
     responseId () {
-      return this.$route.params.id
+      return this.isNewResponse ? '' : this.$route.params.id
+    },
+    isNewResponse () {
+      return this.$route.params.id === 'new'
     },
     isEditing: {
       get: function () {
-        if (this.$route.hash === '#edit') {
+        if (this.isNewResponse || this.$route.hash === '#edit') {
           return true
         }
         return false

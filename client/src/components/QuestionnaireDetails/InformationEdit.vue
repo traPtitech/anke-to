@@ -71,7 +71,7 @@
                     <a>
                       <span
                         class="ti-pencil"
-                        v-show="userList.editable"
+                        v-if="userList.editable"
                         @click="changeActiveModal(userList)"
                       ></span>
                     </a>
