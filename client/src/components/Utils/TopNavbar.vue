@@ -18,7 +18,11 @@
           </router-link>
         </div>
         <div class="subtitle pull-right">
-          <img class="user-icon" v-bind:src="'https://q.trapti.tech/static/icon/' + traqId + '/64.png'">
+          <img
+            class="user-icon"
+            v-if="traqId"
+            v-bind:src="'https://q.trapti.tech/static/icon/' + traqId + '/64.png'"
+          >
           <p class="user-name">{{traqId}}</p>
         </div>
       </div>
@@ -35,8 +39,7 @@ export default {
       required: true
     },
     traqId: {
-      type: String,
-      required: true
+      required: false
     }
   },
   methods: {
@@ -64,7 +67,7 @@ export default {
   width: 36px;
   height: 36px;
   border-radius: 18px;
-  display:inline-block;
+  display: inline-block;
   vertical-align: middle;
 }
 .user-name {

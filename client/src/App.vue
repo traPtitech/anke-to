@@ -43,7 +43,7 @@ export default {
   },
   computed: {
     traqId () {
-      return String(this.user.traqID)
+      return this.user.traqID
     }
   },
   methods: {
