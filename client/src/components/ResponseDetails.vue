@@ -58,26 +58,27 @@ export default {
         .get('/responses/' + this.responseId)
         .then(res => {
           responseData = res.data
-          // console.log(responseData)
+          // questionIdをキーにしてresponseData.body の各要素をとれるようにする
+          let newBody = {}
+          responseData.body.forEach(data => {
+            newBody[ data.questionID ] = data
+          })
+          responseData.body = newBody
         })
         .then(() => {
-          // 該当するアンケートの質問一覧を取得して、convertDataToQuestion を通したものを this.questions に保存
+          // 該当するアンケートの質問一覧を取得
           axios
             .get('/questionnaires/' + responseData.questionnaireID + '/questions')
             .then(res => {
+              // convertDataToQuestion を通したものを this.questions に保存
               res.data.forEach(data => {
                 this.questions.push(common.convertDataToQuestion(data))
               })
             })
             .then(() => {
               // 各質問に対して、該当する回答の情報を this.questions に入れる
-              // questions[i] の questionId と responseData.body[i] の questionID は一致するはず (怪しい)
               this.questions.forEach((question, index) => {
-                if (question.questionId === responseData.body[ index ].questionID) {
-                  this.$set(this.questions, index, common.setResponseToQuestion(question, responseData.body[ index ]))
-                } else {
-                  // questionとresponseのquestionIDが一致しなかった場合の処理 (未実装)
-                }
+                this.$set(this.questions, index, common.setResponseToQuestion(question, responseData.body[ question.questionId ]))
               })
             })
         })

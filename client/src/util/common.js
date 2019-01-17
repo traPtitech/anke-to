@@ -89,7 +89,7 @@ export default {
         question.selected = responseData.option_response[0]
         break
       case 'LinearScale':
-        console.log(responseData)
+        // console.log(responseData)
         question.selected = Number(responseData.response)
         break
       default:
