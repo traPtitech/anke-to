@@ -1,5 +1,5 @@
 <template>
-  <div class="is-fullheight details">
+  <div class="is-fullheight details" :class="{'has-navbar-fixed-bottom': isEditing}">
     <div class="tabs is-centered">
       <ul></ul>
       <a
@@ -18,6 +18,13 @@
         :questionsProps="questions"
       ></questions>
     </div>
+    <edit-nav-bar
+      v-if="isEditing"
+      :editButtons="editButtons"
+      @submit-response="submitResponse"
+      @save-response="saveResponse"
+      @disable-editing="disableEditing"
+    ></edit-nav-bar>
   </div>
 </template>
 
@@ -28,11 +35,13 @@ import axios from 'axios'
 import router from '@/router'
 import common from '@/util/common'
 import Questions from '@/components/Questions'
+import EditNavBar from '@/components/Utils/EditNavBar.vue'
 
 export default {
   name: 'ResponseDetails',
   components: {
-    'questions': Questions
+    'questions': Questions,
+    'edit-nav-bar': EditNavBar
   },
   async created () {
     if (this.isNewResponse) {
@@ -55,7 +64,7 @@ export default {
   data () {
     return {
       questions: [],
-      responseData: {}
+      responseData: {}.isEditing
     }
   },
   methods: {
@@ -88,6 +97,86 @@ export default {
       this.questions.forEach((question, index) => {
         this.$set(this.questions, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
       })
+    },
+    sendResponse (data) {
+      if (this.isNewResponse) {
+        axios
+          .post('/responses', data)
+          .then(resp => {
+            const responseId = resp.data.responseID
+            router.push({
+              name: 'ResponseDetails',
+              params: {id: responseId}
+            })
+          })
+      } else {
+        axios
+          .patch('/responses/' + this.responseId, data)
+          .then(() => {
+            this.isEditing = false
+          })
+      }
+    },
+    submitResponse () {
+      // 回答の送信
+      let data = this.createResponseData()
+      data.submitted_at = new Date().toLocaleString('ja-GB')
+      this.sendResponse(data)
+    },
+    saveResponse () {
+      // 回答の保存
+      let data = this.createResponseData()
+      data.submitted_at = 'NULL'
+      this.sendResponse(data)
+    },
+    disableEditing () {
+      if (this.isNewResponse) {
+        // 新しい回答の場合は、アンケートの詳細画面に戻る
+        router.push({
+          name: 'QuestionnaireDetails',
+          params: {id: this.questionnaireId}
+        })
+      } else {
+        this.isEditing = false
+      }
+    },
+    createResponseData () {
+      // サーバーに送るフォーマットのresponseDataを作成する
+      let data = {
+        questionnaireID: this.questionnaireId,
+        body: []
+      }
+      this.questions.forEach(question => {
+        let body = {
+          questionID: question.questionId,
+          question_type: question.type,
+          response: '',
+          option_response: []
+        }
+        switch (question.type) {
+          case 'MultipleChoice':
+            body.option_response = [ question.selected ]
+            break
+          case 'Checkbox':
+            Object.keys(question.isSelected).forEach(key => {
+              if (question.isSelected[ key ]) {
+                body.option_response.push(key)
+              }
+            })
+            break
+          case 'Text':
+          case 'Number':
+            body.option_response = [ '' ]
+            body.response = String(question.responseBody)
+            break
+          case 'LinearScale':
+            body.option_response = [ '' ]
+            body.response = String(question.selected)
+            break
+        }
+        data.body.push(body)
+      })
+      return data
     }
   },
   computed: {
@@ -118,6 +207,29 @@ export default {
         }
         router.push(newRoute)
       }
+    },
+    submitOk () {
+      // 未実装
+      return true
+    },
+    editButtons () {
+      return [
+        {
+          label: '送信',
+          atClick: 'submit-response',
+          disabled: !this.submitOk
+        },
+        {
+          label: '保存',
+          atClick: 'save-response',
+          disabled: false
+        },
+        {
+          label: 'キャンセル',
+          atClick: 'disable-editing',
+          disabled: false
+        }
+      ]
     }
   },
   mounted () {
