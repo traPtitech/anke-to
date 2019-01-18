@@ -208,9 +208,6 @@ body {
         }
       }
     }
-    .navbar.is-fixed-bottom {
-      background-color: gray;
-    }
     @media screen and (min-width: 769px) {
       // widthが大きいときは横並びのカードの間を狭くする
       .column:not(:last-child) > .card {
