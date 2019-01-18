@@ -16,8 +16,6 @@
         :traqId="traqId"
         :editMode="isEditing? 'response' : undefined"
         :questionsProps="questions"
-        @set-questions="setQuestions"
-        @set-question-content="setQuestionContent"
       ></questions>
     </div>
   </div>
@@ -37,70 +35,71 @@ export default {
     'questions': Questions
   },
   async created () {
-    this.getQuestions()
+    if (this.isNewResponse) {
+      this.getQuestions()
+    } else {
+      this.getResponseData()
+        .then(this.getQuestions)
+        .then(this.setResponsesToQuestions)
+    }
   },
   props: {
     traqId: {
       required: true
+    },
+    isNewResponse: {
+      type: Boolean,
+      required: false
     }
   },
   data () {
     return {
-      questions: []
+      questions: [],
+      responseData: {}
     }
   },
   methods: {
-    getQuestions () {
-      let responseData = {}
-
-      // 該当する回答のデータを取得して responseData に保存
-      axios
+    getResponseData () {
+      return axios
         .get('/responses/' + this.responseId)
         .then(res => {
-          responseData = res.data
+          this.responseData = res.data
+
           // questionIdをキーにしてresponseData.body の各要素をとれるようにする
           let newBody = {}
-          responseData.body.forEach(data => {
+          this.responseData.body.forEach(data => {
             newBody[ data.questionID ] = data
           })
-          responseData.body = newBody
-        })
-        .then(() => {
-          // 該当するアンケートの質問一覧を取得
-          axios
-            .get('/questionnaires/' + responseData.questionnaireID + '/questions')
-            .then(res => {
-              // convertDataToQuestion を通したものを this.questions に保存
-              res.data.forEach(data => {
-                this.questions.push(common.convertDataToQuestion(data))
-              })
-            })
-            .then(() => {
-              // 各質問に対して、該当する回答の情報を this.questions に入れる
-              this.questions.forEach((question, index) => {
-                this.$set(this.questions, index, common.setResponseToQuestion(question, responseData.body[ question.questionId ]))
-              })
-            })
+          this.responseData.body = newBody
         })
     },
-    setQuestions (questions) {
-      this.questions = questions
+    getQuestions () {
+      return axios
+        .get('/questionnaires/' + this.questionnaireId + '/questions')
+        .then(res => {
+          // convertDataToQuestion を通したものを this.questions に保存
+          res.data.forEach(data => {
+            this.questions.push(common.convertDataToQuestion(data))
+          })
+        })
     },
-    setQuestionContent (index, label, value) {
-      console.log(index)
-      console.log(value)
-      // this.questions[ index ][ label ] = value
-      let newQuestion = Object.assign({}, this.questions[ index ])
-      newQuestion[ label ] = value
-      this.$set(this.questions, index, newQuestion)
+    setResponsesToQuestions () {
+      // 各質問に対して、該当する回答の情報を this.questions に入れる
+      this.questions.forEach((question, index) => {
+        this.$set(this.questions, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
+      })
     }
   },
   computed: {
     responseId () {
-      return this.isNewResponse ? '' : this.$route.params.id
+      return this.isNewResponse ? undefined : Number(this.$route.params.id)
     },
-    isNewResponse () {
-      return this.$route.params.id === 'new'
+    questionnaireId () {
+      if (this.isNewResponse) {
+        return Number(this.$route.params.questionnaireId)
+      } else {
+        return this.responseData.questionnaireID
+      }
     },
     isEditing: {
       get: function () {
@@ -110,20 +109,14 @@ export default {
         return false
       },
       set: function (newBool) {
-        if (newBool) {
-          // 閲覧 -> 編集
-          router.push('/responses/' + this.responseId + '#edit')
-        } else {
-          // 編集 -> 閲覧
-          router.push('/responses/' + this.responseId)
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'ResponseDetails',
+          params: {id: this.responseId},
+          hash: newBool ? '#edit' : undefined
         }
-      }
-    },
-    editButtonLink () {
-      if (!this.isEditing) {
-        return this.responseId + '#edit'
-      } else {
-        return this.responseId
+        router.push(newRoute)
       }
     }
   },
