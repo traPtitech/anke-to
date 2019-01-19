@@ -1,7 +1,10 @@
 <template>
   <div class="wrapper">
-    <button v-on:click="downloadCSV">
-      CSV形式でダウンロード(chrome,firefox)
+    <button
+      class="button"
+      v-on:click="downloadCSV"
+    >
+      CSV形式でダウンロード
     </button>
     <div class="card">
       <table class="table is-striped">
