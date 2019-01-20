@@ -14,7 +14,9 @@
               v-for="(header, index) in headers.concat(questions)"
               :key="index"
               @click="sort(index+1)"
-            >{{ header }}
+              :class="{ active: sorted == index+1 || sorted == -1-index }"
+            >
+              {{ header }}
               <span
                 class="arrow"
                 :class="sorted != index+1 ? 'asc' : 'dsc'"
@@ -123,6 +125,8 @@ export default {
         case 2:
           param += 'submitted_at'
           break
+        default:
+          param += index - 2
       }
       axios
         .get('/results/' + this.questionnaireId + '?sort=' + param)
@@ -149,26 +153,28 @@ td {
   min-width: 10em;
 }
 
+th.active {
+  background-color: #fafafa;
+}
+
 .arrow {
   opacity: 1;
-  color: #000;
+  color: black;
   display: inline-block;
   vertical-align: middle;
-  width: 0;
-  height: 0;
   margin: auto;
-  opacity: 0.66;
+  opacity: 1;
 }
 
 .arrow.asc {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-bottom: 4px solid #000;
+  border-bottom: 4px solid black;
 }
 
 .arrow.dsc {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 4px solid #000;
+  border-top: 4px solid black;
 }
 </style>

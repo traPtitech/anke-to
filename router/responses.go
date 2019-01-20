@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -144,8 +145,9 @@ func GetResponsesByID(c echo.Context) error {
 	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
 			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
 
-	sort := c.QueryParam("sort")
-	switch sort {
+	sortQuery := c.QueryParam("sort")
+	sortNum := 0
+	switch sortQuery {
 	case "traqid":
 		sql += ` ORDER BY user_traqid`
 	case "-traqid":
@@ -154,6 +156,13 @@ func GetResponsesByID(c echo.Context) error {
 		sql += ` ORDER BY submitted_at`
 	case "-submitted_at":
 		sql += ` ORDER BY submitted_at DESC`
+	case "":
+	default:
+		sortNum, err = strconv.Atoi(sortQuery)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
 	}
 
 	if err := model.DB.Select(&responsesinfo, sql,
@@ -193,6 +202,19 @@ func GetResponsesByID(c echo.Context) error {
 				ModifiedAt:  response.ModifiedAt.Format(time.RFC3339),
 				Body:        bodyList,
 			})
+	}
+
+	// 昇順
+	if sortNum > 0 {
+		sort.Slice(responses, func(i, j int) bool {
+			return responses[i].Body[sortNum-1].Response < responses[j].Body[sortNum-1].Response
+		})
+	}
+	// 降順
+	if sortNum < 0 {
+		sort.Slice(responses, func(i, j int) bool {
+			return responses[i].Body[-sortNum-1].Response > responses[j].Body[-sortNum-1].Response
+		})
 	}
 
 	return c.JSON(http.StatusOK, responses)

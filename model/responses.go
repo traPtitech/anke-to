@@ -124,6 +124,13 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 			return ResponseBody{}, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		body.OptionResponse = option
+		// sortで比較するため
+		for _, op := range option {
+			if body.Response != "" {
+				body.Response += ", "
+			}
+			body.Response += op
+		}
 	default:
 		var response string
 		if err := DB.Get(&response,
