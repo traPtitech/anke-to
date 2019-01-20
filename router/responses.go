@@ -141,9 +141,22 @@ func GetResponsesByID(c echo.Context) error {
 		SubmittedAt mysql.NullTime `db:"submitted_at"`
 	}{}
 
-	if err := model.DB.Select(&responsesinfo,
-		`SELECT response_id, user_traqid, modified_at, submitted_at from respondents
-		WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`,
+	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
+			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
+
+	sort := c.QueryParam("sort")
+	switch sort {
+	case "traqid":
+		sql += ` ORDER BY user_traqid`
+	case "-traqid":
+		sql += ` ORDER BY user_traqid DESC`
+	case "submitted_at":
+		sql += ` ORDER BY submitted_at`
+	case "-submitted_at":
+		sql += ` ORDER BY submitted_at DESC`
+	}
+
+	if err := model.DB.Select(&responsesinfo, sql,
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

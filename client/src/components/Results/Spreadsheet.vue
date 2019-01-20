@@ -13,7 +13,13 @@
             <th
               v-for="(header, index) in headers.concat(questions)"
               :key="index"
-            >{{ header }}</th>
+              @click="sort(index+1)"
+            >{{ header }}
+              <span
+                class="arrow"
+                :class="sorted != index+1 ? 'asc' : 'dsc'"
+              >
+              </span></th>
           </tr>
         </thead>
         <tbody>
@@ -35,7 +41,7 @@
 
 <script>
 // import <componentname> from '<path to component file>'
-
+import axios from '@/bin/axios'
 import common from '@/util/common'
 
 export default {
@@ -53,7 +59,8 @@ export default {
   },
   data() {
     return {
-      headers: ['traQID', '回答日時']
+      headers: ['traQID', '回答日時'],
+      sorted: ''
     }
   },
   methods: {
@@ -100,9 +107,35 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+    sort(index) {
+      let param = ''
+      if (this.sorted != index) {
+        param += '-'
+        this.sorted = index
+      } else {
+        this.sorted = -index
+      }
+      switch (index) {
+        case 1:
+          param += 'traqid'
+          break
+        case 2:
+          param += 'submitted_at'
+          break
+      }
+      axios
+        .get('/results/' + this.questionnaireId + '?sort=' + param)
+        .then(res => {
+          this.results = res.data
+        })
     }
   },
-  computed: {},
+  computed: {
+    questionnaireId() {
+      return this.$route.params.id
+    }
+  },
   mounted() {}
 }
 </script>
@@ -114,5 +147,28 @@ td {
   vertical-align: middle;
   font-size: 0.9em;
   min-width: 10em;
+}
+
+.arrow {
+  opacity: 1;
+  color: #000;
+  display: inline-block;
+  vertical-align: middle;
+  width: 0;
+  height: 0;
+  margin: auto;
+  opacity: 0.66;
+}
+
+.arrow.asc {
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid #000;
+}
+
+.arrow.dsc {
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #000;
 }
 </style>
