@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form @submit="submitQuestionnaire">
+    <form>
       <div class="columns">
         <article class="column is-11">
           <div class="card">
@@ -131,126 +131,37 @@
         </article>
       </div>
     </form>
-    <nav class="navbar is-fixed-bottom">
-      <article class="is-2 is-flex">
-        <div class="editor-buttons is-pulled-right">
-          <input
-            type="submit"
-            value="送信"
-            class="button is-medium"
-            id="submitbutton"
-            :disabled="!submitOk"
-            @click.prevent="submitQuestionnaire"
-          >
-          <button class="button is-medium" @click.prevent="$emit('disable-editing')">キャンセル</button>
-        </div>
-      </article>
-    </nav>
   </div>
 </template>
 
 <script>
 
 // import <componentname> from '<path to component file>'
-import axios from '@/bin/axios'
-import router from '@/router'
-import moment from 'moment'
 import common from '@/util/common'
 
 export default {
   name: 'InformationEdit',
   components: {
   },
-  async created () {
-    this.getDetails()
-  },
   props: {
+    informationProps: {
+      type: Object,
+      required: true
+    },
     traqId: {
       required: true
     }
   },
   data () {
     return {
-      details: {
-        title: '',
-        description: '',
-        res_time_limit: 'NULL',
-        res_shared_to: 'public',
-        targets: [],
-        administrators: []
-      },
       responses: [],
       activeModal: {},
       isModalActive: false,
-      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
-      noTimeLimit: true
+      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ] // テスト用
+      // noTimeLimit: true
     }
   },
   methods: {
-    getDetails () {
-      // サーバーにアンケートの情報をリクエストする
-      if (this.isNewQuestionnaire) {
-        this.details.administrators = [ this.traqId ]
-        this.details.targets = [ this.traqId ]
-      } else {
-        axios
-          .get('/questionnaires/' + this.questionnaireId)
-          .then(res => {
-            this.details = res.data
-            if (this.administrates) {
-              this.$emit('enable-edit-button')
-            }
-            if (this.details.res_time_limit && this.details.res_time_limit !== 'NULL') {
-              this.noTimeLimit = false
-            }
-            if (!this.submitOk) {
-              this.newQuestionnaire = true // 新しいアンケートの作成
-            }
-          })
-      }
-    },
-    submitQuestionnaire () {
-      const data = {
-        title: this.details.title,
-        description: this.details.description,
-        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.details.res_time_limit).toLocaleString('ja-GB'),
-        res_shared_to: this.details.res_shared_to,
-        targets: this.details.targets,
-        administrators: this.details.administrators
-      }
-      if (this.isNewQuestionnaire) {
-        axios.post('/questionnaires', data)
-          .then((resp) => {
-            let questionnaireId = resp.data.questionnaireID
-            router.push('/questionnaires/' + questionnaireId)
-          })
-      } else {
-        axios.patch('/questionnaires/' + this.questionnaireId, data)
-          // PATCHリクエストを送る
-          .then(() => {
-            this.getDetails()
-            this.$emit('disable-editing') // 編集モード終了
-          })
-          // detailsをアップデート
-          .catch(function (error) {
-            console.log(error)
-          })
-      }
-    },
-    deleteQuestionnaire () {
-      if (this.isNewQuestionnaire) {
-        router.push('/administrates')
-      } else {
-        axios
-          .delete('/questionnaires/' + this.questionnaireId)
-          .then(() => {
-            router.push('/administrates') // アンケートを削除したら、Administratesページに戻る
-          })
-          .catch(error => {
-            console.log(error)
-          })
-      }
-    },
     getDateStr (str) {
       return common.customDateStr(str)
     },
@@ -265,6 +176,9 @@ export default {
       ret += list[ list.length - 1 ]
       return ret
     },
+    setInformation (information) {
+      this.$emit('set-data', 'information', information)
+    },
     changeActiveModal (obj) {
       this.activeModal = obj
       this.isModalActive = true
@@ -274,30 +188,28 @@ export default {
     }
   },
   computed: {
-    questionnaireId: {
+    details () {
+      return this.informationProps.details
+    },
+    administrates () {
+      return this.informationProps.administrates
+    },
+    deleteQuestionnaire () {
+      return this.informationProps.deleteQuestionnaire
+    },
+    questionnaireId () {
+      return this.informationProps.questionnaireId
+    },
+    noTimeLimit: {
       get () {
-        if (this.isNewQuestionnaire) {
-          return ''
-        }
-        return this.$route.params.id
+        return this.informationProps.noTimeLimit
       },
-      set (newId) {
-        this.getDetails()
+      set (newBool) {
+        this.$emit('set-data', 'noTimeLimit', newBool)
       }
     },
     isNewQuestionnaire () {
       return this.$route.params.id === 'new'
-    },
-    administrates () {
-      // 管理者かどうかを返す
-      if (this.details.administrators) {
-        for (let i = 0; i < this.details.administrators.length; i++) {
-          if (this.traqId === this.details.administrators[ i ]) {
-            return true
-          }
-        }
-      }
-      return false
     },
     userLists () {
       if (!this.details.targets) {
@@ -366,9 +278,6 @@ export default {
       set: function (str) {
         this.details.res_time_limit = str
       }
-    },
-    submitOk: function () {
-      return this.details.title !== '' && this.details.administrators && this.details.administrators.length > 0
     }
   },
   watch: {
@@ -376,16 +285,6 @@ export default {
       if (this.isNewQuestionnaire) {
         this.details.administrators = [ this.traqId ]
         this.details.targets = [ this.traqId ]
-      }
-    },
-    questionnaireId: function () {
-      // 異なるquestionnaireIdのページに飛んだらdetailsをサーバーの状態に戻す
-      this.getDetails()
-    },
-    noTimeLimit: function (newBool, oldBool) {
-      if (oldBool && !newBool && this.details.res_time_limit === 'NULL') {
-        // 新しく回答期限を作ろうとすると、1週間後の日時が設定される
-        this.details.res_time_limit = moment().add(7, 'days').format().slice(0, -6)
       }
     }
   },

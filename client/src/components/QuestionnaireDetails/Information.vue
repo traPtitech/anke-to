@@ -47,7 +47,7 @@
 
               <div class="wrapper editable">
                 <span class="label">結果の公開範囲:</span>
-                <span>{{ resSharedToStr }}</span>
+                <span>{{ resSharedToLabel }}</span>
               </div>
             </div>
           </div>
@@ -120,7 +120,6 @@ export default {
   components: {
   },
   async created () {
-    this.getDetails()
     axios
       .get('/users/me/responses/' + this.questionnaireId)
       .then(res => {
@@ -128,13 +127,17 @@ export default {
       })
   },
   props: {
+    informationProps: {
+      type: Object,
+      required: true
+    },
     traqId: {
       required: true
     }
   },
   data () {
     return {
-      details: {},
+      // details: {},
       responses: [],
       activeModal: {},
       isModalActive: false,
@@ -144,30 +147,6 @@ export default {
     }
   },
   methods: {
-    getDetails () {
-      // サーバーにアンケートの情報をリクエストする
-      axios
-        .get('/questionnaires/' + this.questionnaireId)
-        .then(res => {
-          this.details = res.data
-          if (this.administrates) {
-            this.$emit('enable-edit-button')
-          }
-          if (this.details.res_time_limit && this.details.res_time_limit !== 'NULL') {
-            this.noTimeLimit = false
-          }
-        })
-    },
-    deleteQuestionnaire () {
-      axios
-        .delete('/questionnaires/' + this.questionnaireId)
-        .then(() => {
-          router.push('/administrates') // アンケートを削除したら、Administratesページに戻る
-        })
-        .catch(error => {
-          console.log(error)
-        })
-    },
     getDateStr (str) {
       return common.customDateStr(str)
     },
@@ -194,19 +173,17 @@ export default {
     }
   },
   computed: {
-    questionnaireId () {
-      return this.$route.params.id
+    details () {
+      return this.informationProps.details
     },
     administrates () {
-      // 管理者かどうかを返す
-      if (this.details.administrators) {
-        for (let i = 0; i < this.details.administrators.length; i++) {
-          if (this.traqId === this.details.administrators[ i ]) {
-            return true
-          }
-        }
-      }
-      return false
+      return this.informationProps.administrates
+    },
+    deleteQuestionnaire () {
+      return this.informationProps.deleteQuestionnaire
+    },
+    questionnaireId () {
+      return this.informationProps.questionnaireId
     },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す
@@ -248,37 +225,16 @@ export default {
         }
       }
     },
-    resSharedToStr: {
-      get: function () {
-        switch (this.details.res_shared_to) {
-          case 'public': return '全体'
-          case 'administrators': return '管理者のみ'
-          case 'respondents': return '回答済みの人'
-        }
-      },
-      set: function (str) {
-        switch (str) {
-          case '全体': {
-            this.details.res_shared_to = 'public'
-            break
-          }
-          case '管理者のみ': {
-            this.details.res_shared_to = 'administrators'
-            break
-          }
-          case '回答済みの人': {
-            this.details.res_shared_to = 'respondents'
-            break
-          }
-        }
+    resSharedToLabel () {
+      const labels = {
+        public: '全体',
+        respondents: '回答済みの人',
+        administrators: '管理者のみ'
       }
+      return labels[ this.details.res_shared_to ]
     }
   },
   watch: {
-    questionnaireId: function () {
-      // 異なるquestionnaireIdのページに飛んだらdetailsをサーバーの状態に戻す
-      this.getDetails()
-    }
   },
   mounted () {
   }
