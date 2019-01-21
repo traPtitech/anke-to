@@ -54,17 +54,20 @@ import Questions from '@/components/Questions'
 import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 import axios from '@/bin/axios'
 import common from '@/util/common'
+import EditNavBar from '@/components/Utils/EditNavBar.vue'
 
 export default {
   name: 'QuestionnaireDetails',
   async created () {
+    this.getInformation()
     this.getQuestions()
   },
   components: {
     'information': Information,
     'information-edit': InformationEdit,
     'questions': Questions,
-    'questions-edit': QuestionsEdit
+    'questions-edit': QuestionsEdit,
+    'edit-nav-bar': EditNavBar
   },
   props: {
     traqId: {
@@ -76,11 +79,21 @@ export default {
       detailTabs: [ 'Information', 'Questions' ],
       selectedTab: 'Information',
       showEditButton: false,
-      questions: []
       noTimeLimit: true,
+      information: {
+        title: '',
+        description: '',
+        res_time_limit: 'NULL',
+        res_shared_to: 'public',
+        targets: [],
+        administrators: []
+      },
+      questions: [],
+      newQuestionnaireId: undefined
     }
   },
   methods: {
+    alertNetworkError: common.alertNetworkError,
     getInformation () {
       // サーバーにアンケートの情報をリクエストする
       if (this.isNewQuestionnaire) {
@@ -108,14 +121,84 @@ export default {
       }
     },
     getQuestions () {
-      axios
-        .get('/questionnaires/' + this.questionnaireId + '/questions')
-        .then(res => {
-          this.questions = []
-          res.data.forEach(data => {
-            this.questions.push(common.convertDataToQuestion(data))
+      this.questions = []
+      if (!this.isNewQuestionnaire) {
+        axios
+          .get('/questionnaires/' + this.questionnaireId + '/questions')
+          .then(res => {
+            this.questions = []
+            res.data.forEach(data => {
+              this.questions.push(common.convertDataToQuestion(data))
+            })
           })
-        })
+      }
+    },
+    submitQuestionnaire () {
+      const informationData = {
+        title: this.information.title,
+        description: this.information.description,
+        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.information.res_time_limit).toLocaleString('ja-GB'),
+        res_shared_to: this.information.res_shared_to,
+        targets: this.information.targets,
+        administrators: this.information.administrators
+      }
+
+      if (this.isNewQuestionnaire) {
+        axios.post('/questionnaires', informationData)
+          .then(resp => {
+            this.newQuestionnaireId = resp.data.questionnaireID
+          })
+          .then(() => {
+            this.sendQuestions(0)
+              .then(() => {
+                // 作成したアンケートの個別ページに遷移
+                router.push('/questionnaires/' + this.newQuestionnaireId)
+              })
+              .catch(error => {
+                // エラーが起きた場合は、送信済みのInformationを削除する
+                console.log(error)
+                axios.delete('/questionnaires/' + this.newQuestionnaireId)
+                this.alertNetworkError()
+              })
+          })
+      } else {
+        axios.patch('/questionnaires/' + this.questionnaireId, informationData)
+          .then(() => {
+            this.sendQuestions(0)
+              .then(() => {
+                // informationをアップデート
+                this.getInformation()
+                // 編集モード終了
+                this.disableEditing()
+              })
+              .catch(error => {
+                console.log(error)
+                this.alertNetworkError()
+              })
+          })
+      }
+    },
+    sendQuestions (index) {
+      const question = this.questions[ index ]
+      const data = this.createQuestionData(index)
+      if (this.isNewQuestion(question)) {
+        return axios
+          .post('/questions', data)
+          .then(() => {
+            if (index < this.questions.length - 1) {
+              this.sendQuestions(index + 1)
+            }
+          })
+      } else {
+        return axios
+          .patch('/questions/' + question.questionId, data)
+          .then(() => {
+            if (index < this.questions.length - 1) {
+              this.sendQuestions(index + 1)
+            }
+          })
+      }
+    },
     deleteQuestionnaire () {
       if (this.isNewQuestionnaire) {
         router.push('/administrates')
@@ -128,6 +211,40 @@ export default {
           })
       }
     },
+    createQuestionData (index) {
+      // 与えられた質問1つ分のデータをサーバーに送るフォーマットのquestionDataにして返す
+      const question = this.questions[ index ]
+      let data = {
+        questionnaireID: this.isNewQuestionnaire ? this.newQuestionnaireId : this.questionnaireId,
+        question_type: question.type,
+        question_num: index,
+        page_num: question.pageNum,
+        body: question.questionBody,
+        is_required: question.isRequired,
+        options: [],
+        scale_label_left: '',
+        scale_label_right: '',
+        scale_min: 0,
+        scale_max: 0
+      }
+      switch (question.type) {
+        case 'Checkbox':
+        case 'MultipleChoice':
+          question.options.forEach(option => {
+            data.options.push(option.label)
+          })
+          break
+        case 'LinearScale':
+          data.scale_label_left = question.scaleLabels.left
+          data.scale_label_right = question.scaleLabels.right
+          data.scale_min = question.scaleRange.left
+          data.scale_max = question.scaleRange.right
+          break
+      }
+      return data
+    },
+    isNewQuestion (question) {
+      return question.questionId < 0
     },
     enableEditButton () {
       this.showEditButton = true
@@ -135,8 +252,18 @@ export default {
     disableEditing () {
       this.isEditing = false
     },
-    setQuestions (questions) {
-      this.questions = questions
+    setData (name, data) {
+      switch (name) {
+        case 'questions':
+          this.questions = data
+          break
+        case 'information':
+          this.information = data
+          break
+        case 'noTimeLimit':
+          this.noTimeLimit = data
+          break
+      }
     },
     setQuestionContent (index, label, value) {
       this.questions[ index ][ label ] = value
@@ -144,7 +271,11 @@ export default {
   },
   computed: {
     questionnaireId () {
-      return this.isNewQuestionnaire ? '' : this.$route.params.id
+      if (this.isNewQuestionnaire) {
+        return undefined
+      } else {
+        return Number(this.$route.params.id)
+      }
     },
     isNewQuestionnaire () {
       return this.$route.params.id === 'new'

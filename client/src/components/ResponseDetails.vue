@@ -14,8 +14,10 @@
     <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
       <questions
         :traqId="traqId"
-        :editMode="isEditing? 'response' : undefined"
+        :editMode="isEditing ? 'response' : undefined"
         :questionsProps="questions"
+        :title="title"
+        :titleLink="isEditing ? undefined : titleLink"
       ></questions>
     </div>
     <edit-nav-bar
@@ -46,8 +48,10 @@ export default {
   async created () {
     if (this.isNewResponse) {
       this.getQuestions()
+      this.getQuestionnaireData()
     } else {
       this.getResponseData()
+        .then(this.getQuestionnaireData)
         .then(this.getQuestions)
         .then(this.setResponsesToQuestions)
     }
@@ -63,11 +67,19 @@ export default {
   },
   data () {
     return {
+      title: '',
       questions: [],
       responseData: {}.isEditing
     }
   },
   methods: {
+    getQuestionnaireData () {
+      return axios
+        .get('/questionnaires/' + this.questionnaireId)
+        .then(res => {
+          this.title = res.data.title
+        })
+    },
     getResponseData () {
       return axios
         .get('/responses/' + this.responseId)
@@ -99,6 +111,7 @@ export default {
       })
     },
     sendResponse (data) {
+      // サーバーにPOST/PATCHリクエストを送る
       if (this.isNewResponse) {
         axios
           .post('/responses', data)
@@ -186,6 +199,8 @@ export default {
     questionnaireId () {
       if (this.isNewResponse) {
         return Number(this.$route.params.questionnaireId)
+      } else if (!this.responseData) {
+        return undefined
       } else {
         return this.responseData.questionnaireID
       }
@@ -230,6 +245,9 @@ export default {
           disabled: false
         }
       ]
+    },
+    titleLink () {
+      return '/questionnaires/' + this.questionnaireId
     }
   },
   mounted () {
@@ -239,4 +257,7 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+.details-child.is-fullheight {
+  min-height: -webkit-fill-available;
+}
 </style>

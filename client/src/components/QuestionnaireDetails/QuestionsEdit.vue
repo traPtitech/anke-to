@@ -5,7 +5,7 @@
         <div class="card">
           <header class="card-header">
             <div id="title" class="card-header-title title">
-              <div>タイトル</div>
+              <div>{{ title }}</div>
             </div>
           </header>
           <transition-group name="list" tag="div" class="card-content questions">
@@ -99,6 +99,10 @@ export default {
     questionsProps: {
       type: Array,
       required: false
+    },
+    title: {
+      type: String,
+      required: true
     }
   },
   data () {

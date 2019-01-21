@@ -1,38 +1,37 @@
 <template>
-  <div>
-    <div class="columns">
-      <article class="column is-11">
-        <div class="card">
-          <header class="card-header">
-            <div id="title" class="card-header-title title">
-              <div>タイトル</div>
+  <div class="columns">
+    <article class="column is-11">
+      <div class="card">
+        <header class="card-header">
+          <div id="title" class="card-header-title title">
+            <router-link v-if="titleLink" :to="titleLink">{{ title }}</router-link>
+            <p v-if="!titleLink">{{ title }}</p>
+          </div>
+        </header>
+        <div class="card-content questions">
+          <div v-for="(question, index) in questions" :key="index" class="question">
+            <div class="question-body">
+              <p class="subtitle">
+                {{ question.questionBody }}
+                <span
+                  class="ti-alert required-question-icon"
+                  v-if="showRequiredIcon(index)"
+                >必須</span>
+              </p>
             </div>
-          </header>
-          <div class="card-content questions">
-            <div v-for="(question, index) in questions" :key="index" class="question">
-              <div class="question-body">
-                <p class="subtitle">
-                  {{ question.questionBody }}
-                  <span
-                    class="ti-alert required-question-icon"
-                    v-if="showRequiredIcon(index)"
-                  >必須</span>
-                </p>
-              </div>
-              <component
-                :editMode="editMode"
-                :is="question.component"
-                :contentProps="question"
-                :questionIndex="index"
-                class="response-body"
-                @set-question-content="setQuestionContent"
-              ></component>
-              <hr>
-            </div>
+            <component
+              :editMode="editMode"
+              :is="question.component"
+              :contentProps="question"
+              :questionIndex="index"
+              class="response-body"
+              @set-question-content="setQuestionContent"
+            ></component>
+            <hr>
           </div>
         </div>
-      </article>
-    </div>
+      </div>
+    </article>
   </div>
 </template>
 
@@ -56,6 +55,14 @@ export default {
       required: false
     },
     editMode: {
+      type: String,
+      required: false
+    },
+    title: {
+      type: String,
+      required: true
+    },
+    titleLink: {
       type: String,
       required: false
     }
