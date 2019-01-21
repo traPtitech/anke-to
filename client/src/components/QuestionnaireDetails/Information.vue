@@ -16,7 +16,7 @@
             <div class="is-pulled-right is-inline-block wrapper">
               <div class="wrapper editable">
                 <span class="label">回答期限 :</span>
-                <span>{{ getDateStr(details.res_time_limit) }}</span>
+                <span class="time-limit-str">{{ getTimeLimitStr(details.res_time_limit) }}</span>
               </div>
             </div>
           </div>
@@ -142,13 +142,15 @@ export default {
       activeModal: {},
       isModalActive: false,
       userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
-      noTimeLimit: true,
       newQuestionnaire: false
     }
   },
   methods: {
     getDateStr (str) {
       return common.customDateStr(str)
+    },
+    getTimeLimitStr (str) {
+      return this.noTimeLimit ? 'なし' : common.customDateStr(str)
     },
     toListString (list) {
       if (list && list.length === 0) {
@@ -184,6 +186,9 @@ export default {
     },
     questionnaireId () {
       return this.informationProps.questionnaireId
+    },
+    noTimeLimit () {
+      return this.informationProps.noTimeLimit
     },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す

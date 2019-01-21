@@ -8,6 +8,7 @@
               <div>{{ title }}</div>
             </div>
           </header>
+          <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
           <transition-group name="list" tag="div" class="card-content questions">
             <div v-for="(question, index) in questions" :key="question.questionId" class="question">
               <div class="question-body columns">
@@ -86,6 +87,7 @@
 import MultipleChoice from '@/components/Questions/MultipleChoice'
 import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
+import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/util/common'
 
 export default {
@@ -93,7 +95,8 @@ export default {
   components: {
     'multiple-choice': MultipleChoice,
     'linear-scale': LinearScale,
-    'short-answer': ShortAnswer
+    'short-answer': ShortAnswer,
+    'input-error-message': InputErrorMessage
   },
   props: {
     questionsProps: {
@@ -102,6 +105,10 @@ export default {
     },
     title: {
       type: String,
+      required: true
+    },
+    inputErrors: {
+      type: Object,
       required: true
     }
   },
