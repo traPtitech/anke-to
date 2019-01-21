@@ -127,8 +127,7 @@ export default {
       return index === this.questions.length - 1
     },
     removeQuestion (index) {
-      this.questions.splice(index, 1)
-      this.setQuestions(this.questions)
+      this.$emit('remove-question', index)
     },
     insertQuestion (questionType) {
       this.questions.push(this.getDefaultQuestion(questionType))

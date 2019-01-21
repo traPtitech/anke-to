@@ -33,6 +33,7 @@
         :title="title"
         @set-data="setData"
         @set-question-content="setQuestionContent"
+        @remove-question="removeQuestion"
       ></component>
       <edit-nav-bar
         v-if="isEditing"
@@ -89,7 +90,8 @@ export default {
         administrators: []
       },
       questions: [],
-      newQuestionnaireId: undefined
+      newQuestionnaireId: undefined,
+      removedQuestionIds: []
     }
   },
   methods: {
@@ -146,47 +148,56 @@ export default {
       if (this.isNewQuestionnaire) {
         axios.post('/questionnaires', informationData)
           .then(resp => {
+            // 返ってきたquestionnaireIDを保存
             this.newQuestionnaireId = resp.data.questionnaireID
           })
           .then(() => {
-            this.sendQuestions(0)
-              .then(() => {
-                // 作成したアンケートの個別ページに遷移
-                router.push('/questionnaires/' + this.newQuestionnaireId)
-              })
-              .catch(error => {
-                // エラーが起きた場合は、送信済みのInformationを削除する
-                console.log(error)
-                axios.delete('/questionnaires/' + this.newQuestionnaireId)
-                this.alertNetworkError()
-              })
+            // 質問をサーバーに送信
+            return this.sendQuestions(0)
+          })
+          .then(() => {
+            // 作成したアンケートの個別ページに遷移
+            router.push('/questionnaires/' + this.newQuestionnaireId)
+          })
+          .catch(error => {
+            // エラーが起きた場合は、送信済みのInformationを削除する
+            console.log(error)
+            axios.delete('/questionnaires/' + this.newQuestionnaireId)
+            this.alertNetworkError()
           })
       } else {
         axios.patch('/questionnaires/' + this.questionnaireId, informationData)
           .then(() => {
-            this.sendQuestions(0)
-              .then(() => {
-                // informationをアップデート
-                this.getInformation()
-                // 編集モード終了
-                this.disableEditing()
-              })
-              .catch(error => {
-                console.log(error)
-                this.alertNetworkError()
-              })
+            // 質問を送信
+            return this.sendQuestions(0)
+          })
+          .then(() => {
+            if (this.removedQuestionIds.length > 0) {
+              // 削除された質問がある場合、それを送信
+              return this.deleteRemovedQuestions(0)
+            }
+          })
+          .then(this.getInformation) // 情報をアップデート
+          .then(this.getQuestions) // 質問をアップデート
+          .then(this.disableEditing) // 編集を終了
+          .catch(error => {
+            console.log(error)
+            this.alertNetworkError()
           })
       }
     },
     sendQuestions (index) {
+      // questions配列の、index番目以降の質問をサーバーに送信する
       const question = this.questions[ index ]
       const data = this.createQuestionData(index)
+
       if (this.isNewQuestion(question)) {
         return axios
           .post('/questions', data)
           .then(() => {
             if (index < this.questions.length - 1) {
-              this.sendQuestions(index + 1)
+              // 残りの質問を送信
+              return this.sendQuestions(index + 1)
             }
           })
       } else {
@@ -194,10 +205,22 @@ export default {
           .patch('/questions/' + question.questionId, data)
           .then(() => {
             if (index < this.questions.length - 1) {
-              this.sendQuestions(index + 1)
+              // 残りの質問を送信
+              return this.sendQuestions(index + 1)
             }
           })
       }
+    },
+    deleteRemovedQuestions (index) {
+      // removedQuestionIds配列の、index以降の質問について、DELETEリクエストを送る
+      const id = this.removedQuestionIds[ index ]
+      return axios
+        .delete('/questions/' + id)
+        .then(() => {
+          if (index < this.removedQuestionIds.length - 1) {
+            return this.deleteRemovedQuestions(index + 1)
+          }
+        })
     },
     deleteQuestionnaire () {
       if (this.isNewQuestionnaire) {
@@ -267,6 +290,14 @@ export default {
     },
     setQuestionContent (index, label, value) {
       this.questions[ index ][ label ] = value
+    },
+    removeQuestion (index) {
+      const id = this.questions[ index ].questionId
+      if (id > 0) {
+        // サーバーに存在する質問を削除した場合はリストに追加
+        this.removedQuestionIds.push(id)
+      }
+      this.questions.splice(index, 1)
     }
   },
   computed: {
