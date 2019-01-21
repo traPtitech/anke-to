@@ -60,6 +60,12 @@ export default new Router({
       props: true
     },
     {
+      path: '/responses/new/:questionnaireId',
+      name: 'NewResponseDetails',
+      component: ResponseDetails,
+      props: { default: true, isNewResponse: true }
+    },
+    {
       path: '*',
       name: 'NotFound',
       component: NotFound

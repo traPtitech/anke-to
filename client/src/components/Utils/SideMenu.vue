@@ -20,7 +20,6 @@ export default {
   name: 'SideMenu',
   props: {
     traqId: {
-      type: String,
       required: true
     }
   },

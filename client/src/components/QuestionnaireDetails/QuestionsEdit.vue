@@ -5,7 +5,7 @@
         <div class="card">
           <header class="card-header">
             <div id="title" class="card-header-title title">
-              <div>タイトル</div>
+              <div>{{ title }}</div>
             </div>
           </header>
           <transition-group name="list" tag="div" class="card-content questions">
@@ -99,6 +99,10 @@ export default {
     questionsProps: {
       type: Array,
       required: false
+    },
+    title: {
+      type: String,
+      required: true
     }
   },
   data () {
@@ -111,7 +115,7 @@ export default {
   methods: {
     swapOrder: common.swapOrder,
     setQuestions (questions) {
-      this.$emit('set-questions', questions)
+      this.$emit('set-data', 'questions', questions)
     },
     setQuestionContent (index, label, value) {
       this.$emit('set-question-content', index, label, value)
@@ -139,7 +143,8 @@ export default {
         type: questionType.type,
         component: questionType.component,
         questionBody: '',
-        isRequired: false
+        isRequired: false,
+        pageNum: 1 // ぺージ分けは未実装
       }
       switch (questionType.type) {
         case 'Checkbox':
@@ -154,6 +159,7 @@ export default {
           ret.scaleLabels = {left: '', right: ''}
           break
       }
+      console.log(ret)
       return ret
     },
     getNewQuestionId () {
@@ -232,5 +238,8 @@ export default {
 }
 .question:first-child {
   padding-top: 1rem;
+}
+.details-child.is-fullheight {
+  min-height: -webkit-fill-available;
 }
 </style>

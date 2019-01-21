@@ -23,15 +23,13 @@ export default {
 
   convertDataToQuestion(data) {
     // サーバーから送られてきた質問1つ分のデータを、Questionsで使えるフォーマットに変換して返す
-    // console.log(data)
-    // console.log(this.questionTypes)
-    // console.log(data.question_type)
     let question = {
       questionId: data.questionID,
       type: data.question_type,
       component: this.questionTypes[data.question_type].component,
       questionBody: data.body,
-      isRequired: data.is_required
+      isRequired: data.is_required,
+      pageNum: data.page_num
     }
     switch (data.question_type) {
       case 'Checkbox':
@@ -71,7 +69,6 @@ export default {
 
   setResponseToQuestion(questionData, responseData) {
     // サーバーから送られてきた回答1つ分のデータを、指定されたquestionに入れる
-    // console.log(responseData)
     let question = Object.assign({}, questionData)
     switch (question.type) {
       case 'Text':
@@ -89,7 +86,6 @@ export default {
         question.selected = responseData.option_response[0]
         break
       case 'LinearScale':
-        console.log(responseData)
         question.selected = Number(responseData.response)
         break
       default:
@@ -124,5 +120,9 @@ export default {
       label: '目盛り',
       component: 'linear-scale'
     }
+  },
+
+  alertNetworkError() {
+    alert('Network Error')
   }
 }

@@ -100,7 +100,7 @@ export default {
     swapOrder: common.swapOrder,
     setContent: question.setContent,
     setOption (index, value) {
-      let newOptions = Object.assign({}, this.content.options)
+      let newOptions = Object.assign([], this.content.options)
       newOptions[ index ].label = value
       this.setContent('options', newOptions)
     },

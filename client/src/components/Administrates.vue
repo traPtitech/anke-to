@@ -50,7 +50,6 @@ export default {
   },
   props: {
     traqId: {
-      type: String,
       required: true
     }
   },

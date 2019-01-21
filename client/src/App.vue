@@ -43,7 +43,7 @@ export default {
   },
   computed: {
     traqId () {
-      return String(this.user.traqID)
+      return this.user.traqID
     }
   },
   methods: {
@@ -207,9 +207,6 @@ body {
           padding: 0 0.5rem;
         }
       }
-    }
-    .navbar.is-fixed-bottom {
-      background-color: gray;
     }
     @media screen and (min-width: 769px) {
       // widthが大きいときは横並びのカードの間を狭くする
