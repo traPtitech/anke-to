@@ -50,9 +50,13 @@ export default {
   margin: auto;
   .button {
     margin: 1rem;
-    // margin-bottom: 1rem;
     width: 8rem;
     max-width: 100%;
+  }
+  @media screen and (max-width: 768px) {
+    .button {
+      width: fit-content;
+    }
   }
 }
 .navbar.is-fixed-bottom {
