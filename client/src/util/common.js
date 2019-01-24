@@ -124,5 +124,22 @@ export default {
 
   alertNetworkError() {
     alert('Network Error')
+  },
+
+  administrates(administrators, traqId) {
+    for (let i = 0; i < administrators.length; i++) {
+      if (traqId === administrators[i]) {
+        return true
+      }
+    }
+    return false
+  },
+
+  canViewResults(information, administrates, hasResponded) {
+    return (
+      information.res_shared_to === 'public' ||
+      (information.res_shared_to === 'administrators' && administrates) ||
+      (information.res_shared_to === 'respondents' && hasResponded)
+    )
   }
 }

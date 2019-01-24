@@ -307,6 +307,10 @@ export default {
     }
   },
   computed: {
+    administrates () {
+      // 管理者かどうかを返す
+      return common.administrates(this.information.administrators, this.traqId)
+    },
     questionnaireId () {
       if (this.isNewQuestionnaire) {
         return undefined
@@ -316,17 +320,6 @@ export default {
     },
     isNewQuestionnaire () {
       return this.$route.params.id === 'new'
-    },
-    administrates () {
-      // 管理者かどうかを返す
-      if (this.information.administrators) {
-        for (let i = 0; i < this.information.administrators.length; i++) {
-          if (this.traqId === this.information.administrators[ i ]) {
-            return true
-          }
-        }
-      }
-      return false
     },
     submitOk () {
       // 送信できるかどうかを返す
@@ -401,8 +394,8 @@ export default {
       }
     },
     newTimeLimit () {
-      // 1週間後の日時
-      return moment().add(7, 'days').format().slice(0, -6)
+      // 1週間後の23:59
+      return moment().add(7, 'days').endOf('day').format().slice(0, -6)
     },
     inputErrors () {
       return {
@@ -424,6 +417,7 @@ export default {
   watch: {
     $route: function (newRoute, oldRoute) {
       if (newRoute.params.id !== oldRoute.params.id) {
+        this.showEditButton = false
         this.getInformation()
         this.getQuestions()
         this.newQuestionnaireId = undefined
@@ -431,7 +425,7 @@ export default {
     },
     noTimeLimit: function (newBool, oldBool) {
       if (oldBool && !newBool && (this.information.res_time_limit === 'NULL' || this.information.res_time_limit === '')) {
-        // 新しく回答期限を作ろうとすると、1週間後の日時が設定される
+        // 新しく回答期限を作ろうとしたとき
         this.information.res_time_limit = this.newTimeLimit
       }
     }
