@@ -15,8 +15,9 @@ func GetQuestions(c echo.Context) error {
 	allquestions := []model.Questions{}
 
 	// アンケートidの一致する質問を取る
-	if err := model.DB.Select(
-		&allquestions, "SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
+	if err := model.DB.Select(&allquestions,
+		"SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
+		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
