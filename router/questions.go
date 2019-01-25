@@ -16,7 +16,7 @@ func GetQuestions(c echo.Context) error {
 
 	// アンケートidの一致する質問を取る
 	if err := model.DB.Select(&allquestions,
-		"SELECT * FROM questions WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
+		"SELECT * FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -102,7 +102,7 @@ func PostQuestion(c echo.Context) error {
 	}
 
 	result, err := model.DB.Exec(
-		"INSERT INTO questions (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO question (questionnaire_id, page_num, question_num, type, body, is_required) VALUES (?, ?, ?, ?, ?, ?)",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired)
 	if err != nil {
 		c.Logger().Error(err)
@@ -173,7 +173,7 @@ func EditQuestion(c echo.Context) error {
 	}
 
 	if _, err := model.DB.Exec(
-		"UPDATE questions SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
+		"UPDATE question SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
 		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -215,7 +215,7 @@ func DeleteQuestion(c echo.Context) error {
 	questionID := c.Param("id")
 
 	if _, err := model.DB.Exec(
-		"UPDATE questions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionID); err != nil {
+		"UPDATE question SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
