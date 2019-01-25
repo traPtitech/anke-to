@@ -18,9 +18,7 @@
                   </div>
                 </div>
               </header>
-              <div class="message is-warning">
-                <p class="message-header error-message" v-show="details.title===''">※ タイトルは入力必須です</p>
-              </div>
+              <input-error-message :inputError="inputErrors.noTitle"></input-error-message>
               <div class="card-content">
                 <textarea
                   id="description"
@@ -79,9 +77,7 @@
 
                   <p class="has-text-grey">{{ userList.liststr }}</p>
                 </details>
-                <div class="message is-warning" v-show="details.administrators.length === 0">
-                  <p class="message-header error-message">※ 管理者は最低1人以上必要です</p>
-                </div>
+                <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
 
                 <!-- modal -->
                 <div class="modal" v-if="isModalActive" :class="{'is-active': isModalActive}">
@@ -138,13 +134,19 @@
 
 // import <componentname> from '<path to component file>'
 import common from '@/util/common'
+import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 
 export default {
   name: 'InformationEdit',
   components: {
+    'input-error-message': InputErrorMessage
   },
   props: {
     informationProps: {
+      type: Object,
+      required: true
+    },
+    inputErrors: {
       type: Object,
       required: true
     },
@@ -346,13 +348,13 @@ export default {
     width: 100%;
   }
 }
-.message {
-  margin-bottom: 0.5rem;
-  .error-message {
-    font-size: 1rem;
-    margin: 0.5rem;
-  }
-}
+// .message {
+//   margin-bottom: 0.5rem;
+//   // .error-message {
+//   //   font-size: 1rem;
+//   //   margin: 0.5rem;
+//   // }
+// }
 .editor-buttons {
   margin: auto;
   .button {

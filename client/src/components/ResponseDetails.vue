@@ -1,32 +1,41 @@
 <template>
-  <div class="is-fullheight details" :class="{'has-navbar-fixed-bottom': isEditing}">
-    <div class="tabs is-centered">
-      <ul></ul>
-      <a
-        id="edit-button"
-        :class="{'is-editing': isEditing}"
-        @click.prevent="isEditing = !isEditing"
-        v-if="!isNewResponse"
-      >
-        <span class="ti-pencil"></span>
-      </a>
+  <div>
+    <div v-if="timeLimitExceeded" class="message is-danger">
+      <p class="message-body error-message">回答期限が過ぎています</p>
     </div>
-    <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
-      <questions
-        :traqId="traqId"
-        :editMode="isEditing ? 'response' : undefined"
-        :questionsProps="questions"
-        :title="title"
-        :titleLink="isEditing ? undefined : titleLink"
-      ></questions>
+
+    <div
+      v-if="information.res_time_limit && !timeLimitExceeded"
+      class="is-fullheight details"
+      :class="{'has-navbar-fixed-bottom': isEditing}"
+    >
+      <div class="tabs is-centered">
+        <a
+          id="edit-button"
+          :class="{'is-editing': isEditing}"
+          @click.prevent="isEditing = !isEditing"
+          v-if="!isNewResponse"
+        >
+          <span class="ti-pencil"></span>
+        </a>
+      </div>
+      <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
+        <questions
+          :traqId="traqId"
+          :editMode="isEditing ? 'response' : undefined"
+          :questionsProps="questions"
+          :title="String(information.title)"
+          :titleLink="isEditing ? undefined : titleLink"
+        ></questions>
+      </div>
+      <edit-nav-bar
+        v-if="isEditing"
+        :editButtons="editButtons"
+        @submit-response="submitResponse"
+        @save-response="saveResponse"
+        @disable-editing="disableEditing"
+      ></edit-nav-bar>
     </div>
-    <edit-nav-bar
-      v-if="isEditing"
-      :editButtons="editButtons"
-      @submit-response="submitResponse"
-      @save-response="saveResponse"
-      @disable-editing="disableEditing"
-    ></edit-nav-bar>
   </div>
 </template>
 
@@ -48,10 +57,10 @@ export default {
   async created () {
     if (this.isNewResponse) {
       this.getQuestions()
-      this.getQuestionnaireData()
+      this.getInformation()
     } else {
       this.getResponseData()
-        .then(this.getQuestionnaireData)
+        .then(this.getInformation)
         .then(this.getQuestions)
         .then(this.setResponsesToQuestions)
     }
@@ -67,17 +76,17 @@ export default {
   },
   data () {
     return {
-      title: '',
       questions: [],
-      responseData: {}.isEditing
+      information: {},
+      responseData: {}
     }
   },
   methods: {
-    getQuestionnaireData () {
+    getInformation () {
       return axios
         .get('/questionnaires/' + this.questionnaireId)
         .then(res => {
-          this.title = res.data.title
+          this.information = res.data
         })
     },
     getResponseData () {
@@ -95,6 +104,7 @@ export default {
         })
     },
     getQuestions () {
+      this.questions = []
       return axios
         .get('/questionnaires/' + this.questionnaireId + '/questions')
         .then(res => {
@@ -227,6 +237,10 @@ export default {
       // 未実装
       return true
     },
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return this.information.res_time_limit && new Date(this.information.res_time_limit).getTime() < new Date().getTime()
+    },
     editButtons () {
       return [
         {
@@ -250,6 +264,16 @@ export default {
       return '/questionnaires/' + this.questionnaireId
     }
   },
+  watch: {
+    $route: function (newRoute, oldRoute) {
+      if (newRoute.params.id !== oldRoute.params.id) {
+        this.getResponseData()
+          .then(this.getQuestionnaireData)
+          .then(this.getQuestions)
+          .then(this.setResponsesToQuestions)
+      }
+    }
+  },
   mounted () {
   }
 }
@@ -259,5 +283,9 @@ export default {
 <style lang="scss" scoped>
 .details-child.is-fullheight {
   min-height: -webkit-fill-available;
+}
+.error-message {
+  font-size: 1rem;
+  margin: 1rem;
 }
 </style>

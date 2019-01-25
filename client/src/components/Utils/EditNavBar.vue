@@ -1,16 +1,14 @@
 <template>
-  <nav class="navbar is-fixed-bottom">
-    <article class="is-2 is-flex">
-      <div class="editor-buttons is-pulled-right">
-        <button
-          v-for="editButton in editButtons"
-          :key="editButton.label"
-          class="button is-medium"
-          :disabled="editButton.disabled"
-          @click.prevent="atClick(editButton.atClick)"
-        >{{ editButton.label }}</button>
-      </div>
-    </article>
+  <nav class="navbar is-fixed-bottom is-flex">
+    <div class="editor-buttons">
+      <button
+        v-for="editButton in editButtons"
+        :key="editButton.label"
+        class="button is-medium"
+        :disabled="editButton.disabled"
+        @click.prevent="atClick(editButton.atClick)"
+      >{{ editButton.label }}</button>
+    </div>
   </nav>
 </template>
 

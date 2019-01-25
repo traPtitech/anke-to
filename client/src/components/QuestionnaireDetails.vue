@@ -31,6 +31,7 @@
         :informationProps="informationProps"
         :questionsProps="questions"
         :title="title"
+        :inputErrors="inputErrors"
         @set-data="setData"
         @set-question-content="setQuestionContent"
         @remove-question="removeQuestion"
@@ -39,7 +40,7 @@
         v-if="isEditing"
         :editButtons="editButtons"
         @submit-questionnaire="submitQuestionnaire"
-        @disable-editing="disableEditing"
+        @abort-editing="abortEditing"
       ></edit-nav-bar>
     </div>
   </div>
@@ -109,7 +110,7 @@ export default {
           targets: [ this.traqId ]
         }
       } else {
-        axios
+        return axios
           .get('/questionnaires/' + this.questionnaireId)
           .then(res => {
             this.information = res.data
@@ -275,6 +276,11 @@ export default {
     disableEditing () {
       this.isEditing = false
     },
+    abortEditing () {
+      this.getInformation()
+        .then(this.getQuestions)
+        .then(this.disableEditing)
+    },
     setData (name, data) {
       switch (name) {
         case 'questions':
@@ -301,6 +307,10 @@ export default {
     }
   },
   computed: {
+    administrates () {
+      // 管理者かどうかを返す
+      return common.administrates(this.information.administrators, this.traqId)
+    },
     questionnaireId () {
       if (this.isNewQuestionnaire) {
         return undefined
@@ -311,21 +321,15 @@ export default {
     isNewQuestionnaire () {
       return this.$route.params.id === 'new'
     },
-    administrates () {
-      // 管理者かどうかを返す
-      if (this.information.administrators) {
-        for (let i = 0; i < this.information.administrators.length; i++) {
-          if (this.traqId === this.information.administrators[ i ]) {
-            return true
-          }
-        }
-      }
-      return false
-    },
     submitOk () {
       // 送信できるかどうかを返す
-      return this.information.title !== '' && this.information.administrators && this.information.administrators.length > 0 &&
-        this.questions.length > 0
+      const keys = Object.keys(this.inputErrors)
+      for (let i = 0; i < keys.length; i++) {
+        if (this.inputErrors[ keys[ i ] ].isError) {
+          return false
+        }
+      }
+      return true
     },
     isEditing: {
       get: function () {
@@ -335,13 +339,14 @@ export default {
         return false
       },
       set: function (newBool) {
-        if (newBool) {
-          // 閲覧 -> 編集
-          router.push('/questionnaires/' + this.questionnaireId + '#edit')
-        } else {
-          // 編集 -> 閲覧
-          router.push('/questionnaires/' + this.questionnaireId)
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'QuestionnaireDetails',
+          params: {id: this.questionnaireId},
+          hash: newBool ? '#edit' : undefined
         }
+        router.push(newRoute)
       }
     },
     currentTabComponent () {
@@ -374,7 +379,7 @@ export default {
         },
         {
           label: 'キャンセル',
-          atClick: 'disable-editing',
+          atClick: 'abort-editing',
           disabled: false
         }
       ]
@@ -389,13 +394,30 @@ export default {
       }
     },
     newTimeLimit () {
-      // 1週間後の日時
-      return moment().add(7, 'days').format().slice(0, -6)
+      // 1週間後の23:59
+      return moment().add(7, 'days').endOf('day').format().slice(0, -6)
+    },
+    inputErrors () {
+      return {
+        noTitle: {
+          message: 'タイトルは入力必須です',
+          isError: this.information.title === ''
+        },
+        noAdministrator: {
+          message: '管理者がいません',
+          isError: this.information.administrators && this.information.administrators.length === 0
+        },
+        noQuestions: {
+          message: '質問がありません',
+          isError: this.questions.length === 0
+        }
+      }
     }
   },
   watch: {
     $route: function (newRoute, oldRoute) {
       if (newRoute.params.id !== oldRoute.params.id) {
+        this.showEditButton = false
         this.getInformation()
         this.getQuestions()
         this.newQuestionnaireId = undefined
@@ -403,7 +425,7 @@ export default {
     },
     noTimeLimit: function (newBool, oldBool) {
       if (oldBool && !newBool && (this.information.res_time_limit === 'NULL' || this.information.res_time_limit === '')) {
-        // 新しく回答期限を作ろうとすると、1週間後の日時が設定される
+        // 新しく回答期限を作ろうとしたとき
         this.information.res_time_limit = this.newTimeLimit
       }
     }

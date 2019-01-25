@@ -16,7 +16,7 @@
             <div class="is-pulled-right is-inline-block wrapper">
               <div class="wrapper editable">
                 <span class="label">回答期限 :</span>
-                <span>{{ getDateStr(details.res_time_limit) }}</span>
+                <span class="time-limit-str">{{ getTimeLimitStr(details.res_time_limit) }}</span>
               </div>
             </div>
           </div>
@@ -62,16 +62,23 @@
               <div class="card-header-title subtitle">操作</div>
             </header>
             <div class="card-content management-buttons">
-              <button class="button" @click.prevent="createResponse">新しい回答を作成</button>
+              <button
+                class="button"
+                @click.prevent="createResponse"
+                :class="{'is-disabled': timeLimitExceeded}"
+                :disabled="timeLimitExceeded"
+              >新しい回答を作成</button>
               <router-link
+                v-if="canViewResults"
                 :to="{ name: 'Results', params: { id: questionnaireId }}"
                 class="button"
-                :class="{'is-disabled' : !canViewResults}"
               >結果を見る</router-link>
+              <div v-if="!canViewResults" class="button is-disabled">結果を見る</div>
               <button
                 class="button"
                 @click.prevent="deleteQuestionnaire"
                 :class="{'is-disabled' : !administrates}"
+                :disabled="!administrates"
               >アンケートを削除</button>
             </div>
           </div>
@@ -142,13 +149,15 @@ export default {
       activeModal: {},
       isModalActive: false,
       userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
-      noTimeLimit: true,
       newQuestionnaire: false
     }
   },
   methods: {
     getDateStr (str) {
       return common.customDateStr(str)
+    },
+    getTimeLimitStr (str) {
+      return this.noTimeLimit ? 'なし' : common.customDateStr(str)
     },
     toListString (list) {
       if (list && list.length === 0) {
@@ -185,11 +194,12 @@ export default {
     questionnaireId () {
       return this.informationProps.questionnaireId
     },
+    noTimeLimit () {
+      return this.informationProps.noTimeLimit
+    },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す
-      return ((this.details.res_shared_to === 'public') ||
-        (this.details.res_shared_to === 'administrators' && this.administrates) ||
-        (this.details.res_shared_to === 'respondents' && this.responses.length > 0))
+      return common.canViewResults(this.details, this.administrates, this.responses.length > 0)
     },
     userLists () {
       if (typeof this.details.respondents === 'undefined') {
@@ -232,6 +242,10 @@ export default {
         administrators: '管理者のみ'
       }
       return labels[ this.details.res_shared_to ]
+    },
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return new Date(this.details.res_time_limit).getTime() < new Date().getTime()
     }
   },
   watch: {
