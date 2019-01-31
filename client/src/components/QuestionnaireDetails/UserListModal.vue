@@ -20,11 +20,13 @@
         </label>
         <div class="user-list-wrapper">
           <span v-for="(user, index) in userTraqIdList" :key="index">
+            <!-- user: traP -->
             <label v-if="!isUserTrap" class="checkbox">
               <input type="checkbox" v-model="selectedUserList" :value="user">
               <span>{{ user }}</span>
             </label>
-            
+
+            <!-- not user: traP -->
             <span v-if="isUserTrap" class="dummy-checkbox">
               <span class="readonly-checkbox checked"></span>
               {{ user }}

@@ -230,10 +230,10 @@ export default {
     }
   },
   watch: {
-    traqId: function () {
-      if (this.isNewQuestionnaire) {
+    traqId: function (newVal) {
+      // traqIdがundefinedから変わったらStringに変わった時に呼ばれる
+      if (newVal && this.isNewQuestionnaire) {
         this.details.administrators = [ this.traqId ]
-        this.details.targets = [ this.traqId ]
       }
     }
   },

@@ -27,6 +27,7 @@
           :questionsProps="questions"
           :title="String(information.title)"
           :titleLink="isEditing ? undefined : titleLink"
+          :responseIconClass="responseIconClass"
         ></questions>
       </div>
       <edit-nav-bar
@@ -134,8 +135,10 @@ export default {
             })
           })
       } else {
-        axios
+        return axios
           .patch('/responses/' + this.responseId, data)
+          .then(this.getResponseData)
+          .then(this.setResponsesToQuestions)
           .then(() => {
             this.isEditing = false
           })
@@ -263,6 +266,14 @@ export default {
     },
     titleLink () {
       return '/questionnaires/' + this.questionnaireId
+    },
+    responseIconClass () {
+      switch (this.responseData.submitted_at) {
+        case 'NULL':
+          return 'ti-save'
+        default:
+          return 'ti-check'
+      }
     }
   },
   watch: {

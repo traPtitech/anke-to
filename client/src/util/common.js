@@ -162,8 +162,6 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: details.targets,
-          // isUserTrap:
-          //   details.targets.length === 1 && details.targets[0] === 'traP',
           liststr: this.toListString(details.targets),
           editable: true
         },
@@ -171,9 +169,6 @@ export default {
           name: 'administrators',
           summary: '管理者',
           list: details.administrators,
-          // isUserTrap:
-          //   details.administrators.length === 1 &&
-          //   details.administrators[0] === 'traP',
           liststr: this.toListString(details.administrators),
           editable: true
         },

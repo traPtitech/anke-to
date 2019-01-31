@@ -107,7 +107,7 @@ export default {
           res_time_limit: this.newTimeLimit,
           respondents: [],
           administrators: [ this.traqId ],
-          targets: [ this.traqId ]
+          targets: [ 'traP' ]
         }
       } else {
         return axios

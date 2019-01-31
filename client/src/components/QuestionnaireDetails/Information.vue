@@ -94,7 +94,6 @@
                 <li v-for="(response, index) in responses" :key="index">
                   <span
                     :class="{'ti-save': response.submitted_at==='NULL', 'ti-check': response.submitted_at!=='NULL'}"
-                    title="po"
                   ></span>
                   <router-link
                     :to="'/responses/' + response.responseID"

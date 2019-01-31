@@ -132,6 +132,10 @@ body {
   padding-top: 0;
 }
 
+summary {
+  cursor: pointer;
+}
+
 .card {
   /* width: fit-content; */
   margin: 1rem 1.5rem;

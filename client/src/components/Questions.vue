@@ -4,6 +4,7 @@
       <div class="card">
         <header class="card-header">
           <div id="title" class="card-header-title title">
+            <span v-if="responseIconClass" :class="responseIconClass" class="response-icon"></span>
             <router-link v-if="titleLink" :to="titleLink">{{ title }}</router-link>
             <p v-if="!titleLink">{{ title }}</p>
           </div>
@@ -65,6 +66,9 @@ export default {
     titleLink: {
       type: String,
       required: false
+    },
+    responseIconClass: {
+      required: false
     }
   },
   data () {
@@ -99,5 +103,9 @@ export default {
 }
 .required-question-icon::before {
   margin-right: 0.2rem;
+}
+.response-icon {
+  font-size: large;
+  margin-right: 0.5rem;
 }
 </style>
