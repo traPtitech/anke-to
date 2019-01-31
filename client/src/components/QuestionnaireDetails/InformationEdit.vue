@@ -70,25 +70,17 @@
                   </div>
                   <p class="has-text-grey user-list">{{ userList.liststr }}</p>
                 </div>
-                <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
 
                 <!-- modal -->
-                <div class="modal" v-if="isModalActive" :class="{'is-active': isModalActive}">
-                  <div class="modal-background"></div>
-                  <div class="modal-card">
-                    <header class="modal-card-head">
-                      <p class="modal-card-title">{{ activeModal.summary }}</p>
-                      <span class="ti-check" @click.prevent="disableModal"></span>
-                    </header>
-                    <section class="modal-card-body">
-                      <!-- Content ... -->
-                      <label class="checkbox" v-for="(user, index) in userTraqIdList" :key="index">
-                        <input type="checkbox" v-model="details[activeModal.name]" :value="user">
-                        <span>{{ user }}</span>
-                      </label>
-                    </section>
-                  </div>
-                </div>
+                <user-list-modal
+                  v-if="isModalActive"
+                  :class="{'is-active': isModalActive}"
+                  :activeModal="activeModal"
+                  :userListProps="details[activeModal.name]"
+                  :traqId="traqId"
+                  @disable-modal="disableModal"
+                  @set-user-list="setUserList"
+                ></user-list-modal>
 
                 <div class="wrapper editable">
                   <span class="label">結果の公開範囲:</span>
@@ -128,11 +120,13 @@
 // import <componentname> from '<path to component file>'
 import common from '@/util/common'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+import UserListModal from '@/components/QuestionnaireDetails/UserListModal'
 
 export default {
   name: 'InformationEdit',
   components: {
-    'input-error-message': InputErrorMessage
+    'input-error-message': InputErrorMessage,
+    'user-list-modal': UserListModal
   },
   props: {
     informationProps: {
@@ -151,25 +145,12 @@ export default {
     return {
       responses: [],
       activeModal: {},
-      isModalActive: false,
-      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ] // テスト用
-      // noTimeLimit: true
+      isModalActive: false
     }
   },
   methods: {
     getDateStr (str) {
       return common.customDateStr(str)
-    },
-    toListString (list) {
-      if (list && list.length === 0) {
-        return ''
-      }
-      let ret = ''
-      for (let i = 0; i < list.length - 1; i++) {
-        ret += list[ i ] + ', '
-      }
-      ret += list[ list.length - 1 ]
-      return ret
     },
     setInformation (information) {
       this.$emit('set-data', 'information', information)
@@ -180,6 +161,10 @@ export default {
     },
     disableModal () {
       this.isModalActive = false
+    },
+    setUserList (listName, newList) {
+      this.details[ listName ] = newList
+      this.setInformation(this.details)
     }
   },
   computed: {
@@ -207,38 +192,7 @@ export default {
       return this.$route.params.id === 'new'
     },
     userLists () {
-      if (!this.details.targets) {
-        return {}
-      }
-      return {
-        targets: {
-          name: 'targets',
-          summary: '対象者',
-          list: this.details.targets,
-          liststr: this.toListString(this.details.targets),
-          editable: true
-        },
-        respondents: {
-          name: 'respondents',
-          summary: '回答済みの人',
-          list: this.details.respondents ? this.details.respondents.filter((user, index, array) => {
-            // 重複除去
-            return array.indexOf(user) === index
-          }) : [],
-          liststr: this.details.respondents ? this.toListString(this.details.respondents.filter((user, index, array) => {
-            // 重複除去
-            return array.indexOf(user) === index
-          })) : '',
-          editable: false
-        },
-        administrators: {
-          name: 'administrators',
-          summary: '管理者',
-          list: this.details.administrators,
-          liststr: this.toListString(this.details.administrators),
-          editable: true
-        }
-      }
+      return common.getUserLists(this.details)
     },
     resSharedToStr: {
       get: function () {
@@ -315,24 +269,6 @@ export default {
     display: block;
   }
 }
-.modal-card-head {
-  .ti-check {
-    background-color: darkgrey;
-    color: white;
-    font-weight: bolder;
-    width: 1.5rem;
-    height: 1.5rem;
-    padding: 0.25rem;
-    border-radius: 1rem;
-  }
-}
-.modal-card-body {
-  .details.checkbox {
-    margin: 0.5rem;
-    display: -webkit-inline-box;
-    width: fit-content;
-  }
-}
 .user-list {
   margin: 0 0.5rem;
 }
@@ -344,13 +280,6 @@ export default {
     width: 100%;
   }
 }
-// .message {
-//   margin-bottom: 0.5rem;
-//   // .error-message {
-//   //   font-size: 1rem;
-//   //   margin: 0.5rem;
-//   // }
-// }
 .editor-buttons {
   margin: auto;
   .button {

@@ -144,11 +144,9 @@ export default {
   },
   data () {
     return {
-      // details: {},
       responses: [],
       activeModal: {},
       isModalActive: false,
-      userTraqIdList: [ 'mds_boy', '60', 'xxkiritoxx', 'yamada' ], // テスト用
       newQuestionnaire: false
     }
   },
@@ -158,17 +156,6 @@ export default {
     },
     getTimeLimitStr (str) {
       return this.noTimeLimit ? 'なし' : common.customDateStr(str)
-    },
-    toListString (list) {
-      if (list && list.length === 0) {
-        return ''
-      }
-      let ret = ''
-      for (let i = 0; i < list.length - 1; i++) {
-        ret += list[ i ] + ', '
-      }
-      ret += list[ list.length - 1 ]
-      return ret
     },
     createResponse () {
       router.push({
@@ -202,38 +189,7 @@ export default {
       return common.canViewResults(this.details, this.administrates, this.responses.length > 0)
     },
     userLists () {
-      if (typeof this.details.respondents === 'undefined') {
-        return {}
-      }
-      return {
-        targets: {
-          name: 'targets',
-          summary: '対象者',
-          list: this.details.targets,
-          liststr: this.toListString(this.details.targets),
-          editable: true
-        },
-        respondents: {
-          name: 'respondents',
-          summary: '回答済みの人',
-          list: this.details.respondents.filter((user, index, array) => {
-            // 重複除去
-            return array.indexOf(user) === index
-          }),
-          liststr: this.toListString(this.details.respondents.filter((user, index, array) => {
-            // 重複除去
-            return array.indexOf(user) === index
-          })),
-          editable: false
-        },
-        administrators: {
-          name: 'administrators',
-          summary: '管理者',
-          list: this.details.administrators,
-          liststr: this.toListString(this.details.administrators),
-          editable: true
-        }
-      }
+      return common.getUserLists(this.details)
     },
     resSharedToLabel () {
       const labels = {

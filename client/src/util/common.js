@@ -127,6 +127,9 @@ export default {
   },
 
   administrates(administrators, traqId) {
+    if (administrators[0] === 'traP') {
+      return true
+    }
     for (let i = 0; i < administrators.length; i++) {
       if (traqId === administrators[i]) {
         return true
@@ -141,5 +144,67 @@ export default {
       (information.res_shared_to === 'administrators' && administrates) ||
       (information.res_shared_to === 'respondents' && hasResponded)
     )
+  },
+  toListString(list) {
+    let ret = ''
+    if (list.length > 0) {
+      for (let i = 0; i < list.length - 1; i++) {
+        ret += list[i] + ', '
+      }
+      ret += list[list.length - 1]
+    }
+    return ret
+  },
+  getUserLists(details) {
+    if (details.targets && details.respondents && details.administrators) {
+      return {
+        targets: {
+          name: 'targets',
+          summary: '対象者',
+          list: details.targets,
+          // isUserTrap:
+          //   details.targets.length === 1 && details.targets[0] === 'traP',
+          liststr: this.toListString(details.targets),
+          editable: true
+        },
+        administrators: {
+          name: 'administrators',
+          summary: '管理者',
+          list: details.administrators,
+          // isUserTrap:
+          //   details.administrators.length === 1 &&
+          //   details.administrators[0] === 'traP',
+          liststr: this.toListString(details.administrators),
+          editable: true
+        },
+        respondents: {
+          name: 'respondents',
+          summary: '回答済みの人',
+          list: details.respondents.filter((user, index, array) => {
+            // 重複除去
+            return array.indexOf(user) === index
+          }),
+          liststr: this.toListString(
+            details.respondents.filter((user, index, array) => {
+              // 重複除去
+              return array.indexOf(user) === index
+            })
+          ),
+          editable: false
+        }
+      }
+    }
+    return {}
+  },
+
+  noErrors(errors) {
+    // 送信できるかどうかを返す
+    const keys = Object.keys(errors)
+    for (let i = 0; i < keys.length; i++) {
+      if (errors[keys[i]].isError) {
+        return false
+      }
+    }
+    return true
   }
 }

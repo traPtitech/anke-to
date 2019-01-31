@@ -230,15 +230,15 @@ body {
   border: grey solid 1px;
   display: inline-block;
   margin: auto;
+  &.checked {
+    background-color: darkgray;
+  }
 }
 .readonly-checkbox {
   border-radius: 0.1rem;
 }
 .readonly-radiobutton {
   border-radius: 0.5rem;
-}
-.checked {
-  background-color: darkgray;
 }
 
 // list animation

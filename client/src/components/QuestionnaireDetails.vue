@@ -116,6 +116,8 @@ export default {
             this.information = res.data
             if (this.administrates) {
               this.enableEditButton()
+            } else {
+              this.disableEditButton()
             }
             if (this.information.res_time_limit && this.information.res_time_limit !== 'NULL') {
               this.noTimeLimit = false
@@ -273,6 +275,9 @@ export default {
     enableEditButton () {
       this.showEditButton = true
     },
+    disableEditButton () {
+      this.showEditButton = false
+    },
     disableEditing () {
       this.isEditing = false
     },
@@ -322,14 +327,7 @@ export default {
       return this.$route.params.id === 'new'
     },
     submitOk () {
-      // 送信できるかどうかを返す
-      const keys = Object.keys(this.inputErrors)
-      for (let i = 0; i < keys.length; i++) {
-        if (this.inputErrors[ keys[ i ] ].isError) {
-          return false
-        }
-      }
-      return true
+      return common.noErrors(this.inputErrors)
     },
     isEditing: {
       get: function () {
@@ -402,10 +400,6 @@ export default {
         noTitle: {
           message: 'タイトルは入力必須です',
           isError: this.information.title === ''
-        },
-        noAdministrator: {
-          message: '管理者がいません',
-          isError: this.information.administrators && this.information.administrators.length === 0
         },
         noQuestions: {
           message: '質問がありません',
