@@ -10,6 +10,7 @@
       :class="{'has-navbar-fixed-bottom': isEditing}"
     >
       <div class="tabs is-centered">
+        <ul></ul>
         <a
           id="edit-button"
           :class="{'is-editing': isEditing}"
@@ -287,5 +288,10 @@ export default {
 .error-message {
   font-size: 1rem;
   margin: 1rem;
+}
+.tabs {
+  ul {
+    height: 2.5rem;
+  }
 }
 </style>

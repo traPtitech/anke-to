@@ -50,22 +50,16 @@
 
       <div class="columns details">
         <article class="column is-6">
-          <div class="card">
+          <div class="card information-card">
             <!-- 情報 -->
             <div>
               <header class="card-header">
                 <div class="card-header-title subtitle">情報</div>
               </header>
               <div class="card-content">
-                <div class="has-text-weight-bold">
-                  <div>更新日時 : {{ getDateStr(details.modified_at) }}</div>
-                  <div>作成日時 : {{ getDateStr(details.created_at) }}</div>
-                </div>
-
-                <!-- user lists -->
-                <details v-for="(userList, key) in userLists" :key="key">
-                  <summary>
-                    {{ userList.summary }}
+                <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
+                  <div>
+                    <span class="has-text-weight-bold">{{ userList.summary }}</span>
                     <a>
                       <span
                         class="ti-pencil"
@@ -73,10 +67,9 @@
                         @click="changeActiveModal(userList)"
                       ></span>
                     </a>
-                  </summary>
-
-                  <p class="has-text-grey">{{ userList.liststr }}</p>
-                </details>
+                  </div>
+                  <p class="has-text-grey user-list">{{ userList.liststr }}</p>
+                </div>
                 <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
 
                 <!-- modal -->
@@ -340,6 +333,9 @@ export default {
     width: fit-content;
   }
 }
+.user-list {
+  margin: 0 0.5rem;
+}
 #title {
   .input {
     font-size: 2rem;
@@ -363,5 +359,8 @@ export default {
     width: 8rem;
     max-width: 100%;
   }
+}
+.user-list-wrapper {
+  margin-bottom: 0.5rem;
 }
 </style>

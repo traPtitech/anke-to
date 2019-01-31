@@ -1,10 +1,13 @@
 <template>
   <div>
-    <!-- view only -->
-    <p class="has-underline" v-if="!editMode">{{ content.responseBody }}</p>
+    <!-- view or edit question -->
+    <p
+      class="has-underline placeholder"
+      v-if="editMode==='question' || !content.responseBody"
+    >{{ responsePlaceholder }}</p>
 
-    <!-- edit question -->
-    <p class="has-underline placeholder" v-if="editMode==='question'">回答</p>
+    <!-- view response -->
+    <p class="has-underline" v-if="!editMode && content.responseBody">{{ content.responseBody }}</p>
 
     <!-- edit response -->
     <input
@@ -51,6 +54,15 @@ export default {
   computed: {
     content () {
       return this.contentProps
+    },
+    responsePlaceholder () {
+      if (this.content.type === "Text") {
+        return '回答 (テキスト)'
+      } else if (this.content.type === "Number") {
+        return '回答 (数値)'
+      } else {
+        return ''
+      }
     }
   },
   mounted () {
