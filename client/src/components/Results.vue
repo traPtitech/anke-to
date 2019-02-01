@@ -8,9 +8,8 @@
             :class="{ 'is-active': selectedTab===tab }"
             v-for="(tab, index) in detailTabs"
             :key="index"
-            @click="selectedTab = tab"
           >
-            <a>{{ tab }}</a>
+            <router-link :to="getTabLink(tab)">{{ tab }}</router-link>
           </li>
         </ul>
       </div>
@@ -64,8 +63,9 @@ export default {
       questions: [],
       information: {},
       hasResponded: false,
-      detailTabs: [ 'Spreadsheet', 'Individual' ],
-      selectedTab: 'Spreadsheet'
+      detailTabs: [ 'Spreadsheet', 'Individual' ]
+      // selectedTab: 'Spreadsheet'
+      // selectedTab: 'Individual'
     }
   },
   methods: {
@@ -101,6 +101,16 @@ export default {
             this.hasResponded = true
           }
         })
+    },
+    getTabLink (tab) {
+      let ret = {
+        name: 'Results',
+        params: {id: this.$route.params.id}
+      }
+      if (tab === 'Individual') {
+        ret.hash = "#individual"
+      }
+      return ret
     }
   },
   computed: {
@@ -122,6 +132,13 @@ export default {
           return 'spreadsheet'
         case 'Individual':
           return 'individual'
+      }
+    },
+    selectedTab () {
+      if (this.$route.hash === '#individual') {
+        return 'Individual'
+      } else {
+        return 'Spreadsheet'
       }
     }
   },

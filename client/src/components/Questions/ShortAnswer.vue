@@ -56,9 +56,9 @@ export default {
       return this.contentProps
     },
     responsePlaceholder () {
-      if (this.content.type === "Text") {
+      if (this.content.type === 'Text') {
         return '回答 (テキスト)'
-      } else if (this.content.type === "Number") {
+      } else if (this.content.type === 'Number') {
         return '回答 (数値)'
       } else {
         return ''

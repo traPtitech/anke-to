@@ -136,6 +136,11 @@ summary {
   cursor: pointer;
 }
 
+a[disabled] {
+  cursor: default;
+  pointer-events: none;
+}
+
 .card {
   /* width: fit-content; */
   margin: 1rem 1.5rem;

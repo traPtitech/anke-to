@@ -51,7 +51,8 @@ export default new Router({
     {
       path: '/results/:id',
       name: 'Results',
-      component: Results
+      component: Results,
+      props: true
     },
     {
       path: '/responses/:id',
