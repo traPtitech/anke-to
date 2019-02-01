@@ -1,21 +1,39 @@
 <template>
   <div>
+    <questions :questionsProps="questionData" :title="String(information.title)"></questions>
     <pagination :range="range" :currentPage="currentPage" :getPageLink="getPageLink"></pagination>
   </div>
 </template>
 
 <script>
 
+// import common from '@/util/common'
+import Questions from '@/components/Questions'
 import Pagination from '@/components/Utils/Pagination'
 
 export default {
   name: 'Individual',
+  async created () {
+  },
   components: {
+    'questions': Questions,
     'pagination': Pagination
   },
   props: {
     results: {
       type: Array,
+      required: true
+    },
+    responseData: {
+      type: Object,
+      required: true
+    },
+    questionData: {
+      type: Array,
+      required: true
+    },
+    information: {
+      type: Object,
       required: true
     }
   },
@@ -55,7 +73,7 @@ export default {
       }
     }
   },
-  mounted () {
+  watch: {
   }
 }
 </script>

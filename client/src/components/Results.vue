@@ -18,7 +18,10 @@
         class="details-child is-fullheight"
         :name="currentTabComponent"
         :results="results"
+        :information="information"
         :questions="questions"
+        :questionData="questionData"
+        :responseData="responseData"
       ></component>
     </div>
 
@@ -48,7 +51,13 @@ export default {
       .then(() => {
         if (this.canViewResults) {
           this.getResults()
-          this.getQuestions()
+            .then(this.getQuestions)
+            .then(() => {
+              if (this.$route.hash === '#individual') {
+                this.setResponseData()
+                this.setResponsesToQuestions()
+              }
+            })
         }
       })
   },
@@ -61,11 +70,11 @@ export default {
     return {
       results: [],
       questions: [],
+      questionData: [],
+      responseData: {},
       information: {},
       hasResponded: false,
       detailTabs: [ 'Spreadsheet', 'Individual' ]
-      // selectedTab: 'Spreadsheet'
-      // selectedTab: 'Individual'
     }
   },
   methods: {
@@ -78,11 +87,13 @@ export default {
     },
     getQuestions () {
       this.questions = []
+      this.questionData = []
       return axios
         .get('/questionnaires/' + this.questionnaireId + '/questions')
         .then(res => {
           for (const question of res.data) {
             this.questions.push(question.body)
+            this.questionData.push(common.convertDataToQuestion(question))
           }
         })
     },
@@ -111,6 +122,20 @@ export default {
         ret.hash = "#individual"
       }
       return ret
+    },
+    setResponseData () {
+      this.responseData = this.results[ this.currentPage - 1 ]
+      let newBody = {}
+      this.responseData.response_body.forEach(data => {
+        newBody[ data.questionID ] = data
+      })
+      this.responseData.body = newBody
+    },
+    setResponsesToQuestions () {
+      const questions = Object.assign([], this.questionData)
+      questions.forEach((question, index) => {
+        this.$set(this.questionData, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
+      })
     }
   },
   computed: {
@@ -140,9 +165,22 @@ export default {
       } else {
         return 'Spreadsheet'
       }
+    },
+    currentPage () {
+      if (this.$route.hash === '#individual') {
+        return this.$route.query.page ? Number(this.$route.query.page) : 1
+      } else {
+        return undefined
+      }
     }
   },
-  mounted () {
+  watch: {
+    $route: function (newRoute) {
+      if (newRoute.hash === '#individual') {
+        this.setResponseData()
+        this.setResponsesToQuestions()
+      }
+    }
   }
 }
 </script>
