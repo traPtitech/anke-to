@@ -60,13 +60,13 @@
                 <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
                   <div>
                     <span class="has-text-weight-bold">{{ userList.summary }}</span>
-                    <a>
+                    <!-- <a>
                       <span
                         class="ti-pencil"
                         v-if="userList.editable"
                         @click="changeActiveModal(userList)"
                       ></span>
-                    </a>
+                    </a>-->
                   </div>
                   <p class="has-text-grey user-list">{{ userList.liststr }}</p>
                 </div>
