@@ -286,9 +286,13 @@ export default {
       this.isEditing = false
     },
     abortEditing () {
-      this.getInformation()
-        .then(this.getQuestions)
-        .then(this.disableEditing)
+      if (this.isNewQuestionnaire) {
+        router.push('/administrates')
+      } else {
+        this.getInformation()
+          .then(this.getQuestions)
+          .then(this.disableEditing)
+      }
     },
     setData (name, data) {
       switch (name) {
