@@ -123,7 +123,7 @@ export default {
         params: {id: this.$route.params.id}
       }
       if (tab === 'Individual') {
-        ret.hash = "#individual"
+        ret.hash = '#individual'
       }
       return ret
     },
@@ -180,7 +180,7 @@ export default {
     summaryProps () {
       let ret = {
         title: this.information.title,
-        titleLink: '/questionnaires/' + this.questionnaireId,
+        titleLink: '/questionnaires/' + this.questionnaireId
       }
       if (this.selectedTab === 'Individual') {
         ret.responseDetails = {

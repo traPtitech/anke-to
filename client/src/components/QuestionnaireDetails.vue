@@ -22,7 +22,7 @@
       </a>
     </div>
     <div :class="{'is-editing has-navbar-fixed-bottom' : isEditing}">
-      <information-summary :details="summaryProps"></information-summary>
+      <information-summary v-if="currentTabComponent!=='information-edit'" :details="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
         :traqId="traqId"
