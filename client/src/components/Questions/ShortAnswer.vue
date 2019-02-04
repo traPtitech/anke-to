@@ -3,11 +3,14 @@
     <!-- view or edit question -->
     <p
       class="has-underline placeholder"
-      v-if="editMode==='question' || (editMode!=='response' && !content.responseBody)"
+      v-if="editMode==='question' || (editMode!=='response' && typeof content.responseBody==='undefined')"
     >{{ responsePlaceholder }}</p>
 
     <!-- view response -->
-    <p class="has-underline" v-if="!editMode && content.responseBody">{{ content.responseBody }}</p>
+    <p
+      class="has-underline"
+      v-if="!editMode && typeof content.responseBody !=='undefined'"
+    >{{ content.responseBody }}</p>
 
     <!-- edit response -->
     <input

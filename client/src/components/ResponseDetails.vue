@@ -29,9 +29,7 @@
           :traqId="traqId"
           :editMode="isEditing ? 'response' : undefined"
           :questionsProps="questions"
-          :title="String(information.title)"
-          :titleLink="isEditing ? undefined : titleLink"
-          :responseIconClass="responseIconClass"
+          :inputErrors="inputErrors"
         ></questions>
       </div>
       <edit-nav-bar
@@ -210,6 +208,26 @@ export default {
         data.body.push(body)
       })
       return data
+    },
+    hasAnswered (question) {
+      switch (question.type) {
+        case 'Text':
+        case 'Number':
+          return typeof question.responseBody !== 'undefined' && question.responseBody !== ''
+        case 'Checkbox':
+          let hasSelectedOption = false
+          for (const option of Object.keys(question.isSelected)) {
+            if (question.isSelected[ option ]) {
+              hasSelectedOption = true
+            }
+          }
+          return hasSelectedOption
+        case 'MultipleChoice':
+        case 'LinearScale':
+          return typeof question.selected !== 'undefined' && question.selected !== ''
+        default:
+          return true
+      }
     }
   },
   computed: {
@@ -244,7 +262,11 @@ export default {
       }
     },
     submitOk () {
-      // 未実装
+      for (const error of Object.keys(this.inputErrors)) {
+        if (this.inputErrors[ error ].isError) {
+          return false
+        }
+      }
       return true
     },
     timeLimitExceeded () {
@@ -291,6 +313,16 @@ export default {
         description: this.information.description,
         timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
         responseIconClass: this.responseIconClass
+      }
+      return ret
+    },
+    inputErrors () {
+      let ret = {}
+      for (const question of this.questions) {
+        ret[ question.questionId ] = {
+          isError: question.isRequired && !this.hasAnswered(question),
+          message: 'この質問は回答必須です'
+        }
       }
       return ret
     }

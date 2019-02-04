@@ -18,11 +18,9 @@
           <div v-if="details.description" class="card-content">
             <pre>{{ details.description }}</pre>
           </div>
-          <div v-if="details.timeLimit" class="is-pulled-right is-inline-block wrapper">
-            <div class="wrapper editable">
-              <span class="label">回答期限 :</span>
-              <span class="time-limit">{{ details.timeLimit }}</span>
-            </div>
+          <div v-if="details.timeLimit" class="is-pulled-right wrapper editable time-limit">
+            <span class="label">回答期限 :</span>
+            <span class="time-limit">{{ details.timeLimit }}</span>
           </div>
           <div v-if="details.responseDetails" class="response-details">
             <div class="is-pulled-left is-inline-block wrapper editable">
@@ -95,7 +93,8 @@ export default {
   font-size: large;
   margin-right: 0.5rem;
 }
-.response-details {
+.response-details,
+.time-limit {
   margin: 1rem;
 }
 pre {

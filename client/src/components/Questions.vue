@@ -2,13 +2,6 @@
   <div class="columns">
     <article class="column is-11">
       <div class="card">
-        <!-- <header class="card-header">
-          <div id="title" class="card-header-title title">
-            <span v-if="responseIconClass" :class="responseIconClass" class="response-icon"></span>
-            <router-link v-if="titleLink" :to="titleLink">{{ title }}</router-link>
-            <p v-if="!titleLink">{{ title }}</p>
-          </div>
-        </header>-->
         <div class="card-content questions">
           <div v-for="(question, index) in questions" :key="index" class="question">
             <div class="question-body">
@@ -20,6 +13,7 @@
                 >必須</span>
               </p>
             </div>
+            <input-error-message v-if="inputErrors" :inputError="inputErrors[question.questionId]"></input-error-message>
             <component
               :editMode="editMode"
               :is="question.component"
@@ -41,6 +35,8 @@
 import MultipleChoice from '@/components/Questions/MultipleChoice'
 import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
+import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+
 // import common from '@/util/common'
 
 export default {
@@ -48,7 +44,8 @@ export default {
   components: {
     'multiple-choice': MultipleChoice,
     'linear-scale': LinearScale,
-    'short-answer': ShortAnswer
+    'short-answer': ShortAnswer,
+    'input-error-message': InputErrorMessage
   },
   props: {
     questionsProps: {
@@ -59,15 +56,8 @@ export default {
       type: String,
       required: false
     },
-    title: {
-      type: String,
-      required: true
-    },
-    titleLink: {
-      type: String,
-      required: false
-    },
-    responseIconClass: {
+    inputErrors: {
+      type: Object,
       required: false
     }
   },

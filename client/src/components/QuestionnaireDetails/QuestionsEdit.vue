@@ -3,11 +3,6 @@
     <div class="columns">
       <article class="column is-11">
         <div class="card">
-          <header class="card-header">
-            <div id="title" class="card-header-title title">
-              <div>{{ title }}</div>
-            </div>
-          </header>
           <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
           <transition-group name="list" tag="div" class="card-content questions">
             <div v-for="(question, index) in questions" :key="question.questionId" class="question">
@@ -165,7 +160,6 @@ export default {
           ret.scaleLabels = {left: '', right: ''}
           break
       }
-      console.log(ret)
       return ret
     },
     getNewQuestionId () {

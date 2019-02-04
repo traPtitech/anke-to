@@ -1,6 +1,6 @@
 <template>
   <div>
-    <questions :questionsProps="questionData" :title="String(information.title)"></questions>
+    <questions :questionsProps="questionData"></questions>
     <pagination :range="range" :currentPage="currentPage" :getPageLink="getPageLink"></pagination>
   </div>
 </template>

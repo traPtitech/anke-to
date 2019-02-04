@@ -40,7 +40,7 @@
                 </div>
                 <label class="checkbox is-pulled-right">
                   <input type="checkbox" v-model="noTimeLimit">
-                  なし
+                  期限なし
                 </label>
               </div>
             </div>
@@ -259,6 +259,10 @@ export default {
 }
 .editable.wrapper {
   display: flex;
+}
+.details .checkbox {
+  width: 6rem;
+  margin: 0.5rem;
 }
 .management-buttons {
   .button:not(:last-child) {
