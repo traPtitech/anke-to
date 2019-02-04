@@ -3,7 +3,7 @@
     <!-- view or edit question -->
     <p
       class="has-underline placeholder"
-      v-if="editMode==='question' || !content.responseBody"
+      v-if="editMode==='question' || (editMode!=='response' && !content.responseBody)"
     >{{ responsePlaceholder }}</p>
 
     <!-- view response -->

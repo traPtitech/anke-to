@@ -183,16 +183,6 @@ a[disabled] {
     padding-bottom: 100px;
   }
   .details-child {
-    pre {
-      white-space: pre-line;
-      font-size: inherit;
-      -webkit-font-smoothing: inherit;
-      font-family: inherit;
-      line-height: inherit;
-      background-color: inherit;
-      color: inherit;
-      padding: 0.625em;
-    }
     article.column {
       padding: 0;
     }

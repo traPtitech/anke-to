@@ -3,12 +3,12 @@ import moment from 'moment'
 
 export default {
   customDateStr: function(str) {
-    return str === 'NULL' ? '-' : moment(str).format('YYYY/MM/DD HH:mm')
+    return str === 'NULL' ? 'なし' : moment(str).format('YYYY/MM/DD HH:mm')
   },
 
   relativeDateStr: function(str) {
     return str === 'NULL'
-      ? '-'
+      ? 'なし'
       : moment(str)
           .locale('ja')
           .fromNow()

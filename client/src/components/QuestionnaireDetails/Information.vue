@@ -1,29 +1,6 @@
 <template>
   <div>
-    <div class="columns">
-      <article class="column is-11">
-        <div class="card">
-          <!-- タイトル、説明、回答期限 -->
-          <div>
-            <header class="card-header">
-              <div id="title" class="card-header-title title">
-                <div>{{ details.title }}</div>
-              </div>
-            </header>
-            <div class="card-content">
-              <pre>{{ details.description }}</pre>
-            </div>
-            <div class="is-pulled-right is-inline-block wrapper">
-              <div class="wrapper editable">
-                <span class="label">回答期限 :</span>
-                <span class="time-limit-str">{{ getTimeLimitStr(details.res_time_limit) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-    </div>
-
+    <!-- <information-summary :details="summaryProps"></information-summary> -->
     <div class="columns details">
       <article class="column is-6">
         <div class="card">
@@ -150,12 +127,7 @@ export default {
     }
   },
   methods: {
-    getDateStr (str) {
-      return common.customDateStr(str)
-    },
-    getTimeLimitStr (str) {
-      return this.noTimeLimit ? 'なし' : common.customDateStr(str)
-    },
+    getDateStr: common.customDateStr,
     createResponse () {
       router.push({
         name: 'NewResponseDetails',
@@ -225,9 +197,9 @@ export default {
     margin: auto 0.2rem;
     white-space: nowrap;
   }
-}
-.editable.wrapper {
-  display: flex;
+  &.wrapper {
+    display: flex;
+  }
 }
 .wrapper {
   .checkbox {
@@ -255,18 +227,18 @@ export default {
     border-radius: 1rem;
   }
 }
-#title {
-  .input {
-    font-size: 2rem;
-  }
-  .wrapper {
-    width: 100%;
-  }
-  .error-message {
-    font-size: 1rem;
-    margin: 0.5rem;
-  }
-}
+// #title {
+//   .input {
+//     font-size: 2rem;
+//   }
+//   .wrapper {
+//     width: 100%;
+//   }
+//   .error-message {
+//     font-size: 1rem;
+//     margin: 0.5rem;
+//   }
+// }
 .editorbuttons {
   margin: auto;
   .button {

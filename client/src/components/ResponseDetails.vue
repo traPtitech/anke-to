@@ -20,7 +20,11 @@
           <span class="ti-pencil"></span>
         </a>
       </div>
-      <div :class="{'is-editing' : isEditing}" class="is-fullheight details-child">
+      <div
+        :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
+        class="is-fullheight details-child"
+      >
+        <information-summary :details="summaryProps"></information-summary>
         <questions
           :traqId="traqId"
           :editMode="isEditing ? 'response' : undefined"
@@ -43,18 +47,19 @@
 
 <script>
 
-// import <componentname> from '<path to component file>'
 import axios from 'axios'
 import router from '@/router'
 import common from '@/util/common'
 import Questions from '@/components/Questions'
 import EditNavBar from '@/components/Utils/EditNavBar.vue'
+import InformationSummary from '@/components/InformationSummary'
 
 export default {
   name: 'ResponseDetails',
   components: {
     'questions': Questions,
-    'edit-nav-bar': EditNavBar
+    'edit-nav-bar': EditNavBar,
+    'information-summary': InformationSummary
   },
   async created () {
     if (this.isNewResponse) {
@@ -84,6 +89,7 @@ export default {
     }
   },
   methods: {
+    getTimeLimitStr: common.customDateStr,
     getInformation () {
       return axios
         .get('/questionnaires/' + this.questionnaireId)
@@ -268,12 +274,25 @@ export default {
       return '/questionnaires/' + this.questionnaireId
     },
     responseIconClass () {
+      if (this.isNewResponse) {
+        return undefined
+      }
       switch (this.responseData.submitted_at) {
         case 'NULL':
           return 'ti-save'
         default:
           return 'ti-check'
       }
+    },
+    summaryProps () {
+      const ret = {
+        title: this.information.title,
+        titleLink: this.titleLink,
+        description: this.information.description,
+        timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
+        responseIconClass: this.responseIconClass
+      }
+      return ret
     }
   },
   watch: {

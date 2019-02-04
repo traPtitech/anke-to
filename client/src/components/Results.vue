@@ -13,6 +13,7 @@
           </li>
         </ul>
       </div>
+      <information-summary :details="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
         class="details-child is-fullheight"
@@ -38,12 +39,14 @@ import axios from '@/bin/axios'
 import common from '@/util/common'
 import Individual from '@/components/Results/Individual'
 import Spreadsheet from '@/components/Results/Spreadsheet'
+import InformationSummary from '@/components/InformationSummary'
 
 export default {
   name: 'Results',
   components: {
     individual: Individual,
-    spreadsheet: Spreadsheet
+    spreadsheet: Spreadsheet,
+    'information-summary': InformationSummary
   },
   async created () {
     this.getInformation()
@@ -78,6 +81,7 @@ export default {
     }
   },
   methods: {
+    getDateStr: common.customDateStr,
     getResults () {
       return axios
         .get('/results/' + this.questionnaireId)
@@ -172,6 +176,19 @@ export default {
       } else {
         return undefined
       }
+    },
+    summaryProps () {
+      let ret = {
+        title: this.information.title,
+        titleLink: '/questionnaires/' + this.questionnaireId,
+      }
+      if (this.selectedTab === 'Individual') {
+        ret.responseDetails = {
+          time: this.getDateStr(this.responseData.submitted_at),
+          respondent: this.responseData.traqID
+        }
+      }
+      return ret
     }
   },
   watch: {

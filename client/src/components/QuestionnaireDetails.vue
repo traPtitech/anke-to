@@ -21,7 +21,8 @@
         <span class="ti-pencil"></span>
       </a>
     </div>
-    <div :class="{'is-editing' : isEditing, 'has-navbar-fixed-bottom': isEditing}">
+    <div :class="{'is-editing has-navbar-fixed-bottom' : isEditing}">
+      <information-summary :details="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
         :traqId="traqId"
@@ -50,6 +51,7 @@
 
 import moment from 'moment'
 import router from '@/router'
+import InformationSummary from '@/components/InformationSummary'
 import Information from '@/components/QuestionnaireDetails/Information'
 import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/Questions'
@@ -65,6 +67,7 @@ export default {
     this.getQuestions()
   },
   components: {
+    'information-summary': InformationSummary,
     'information': Information,
     'information-edit': InformationEdit,
     'questions': Questions,
@@ -97,6 +100,7 @@ export default {
   },
   methods: {
     alertNetworkError: common.alertNetworkError,
+    getDateStr: common.customDateStr,
     getInformation () {
       // サーバーにアンケートの情報をリクエストする
       if (this.isNewQuestionnaire) {
@@ -390,6 +394,16 @@ export default {
         questionnaireId: this.questionnaireId,
         noTimeLimit: this.noTimeLimit
       }
+    },
+    summaryProps () {
+      let ret = {
+        title: this.information.title
+      }
+      if (this.selectedTab === 'Information') {
+        ret.description = this.information.description
+        ret.timeLimit = this.getDateStr(this.information.res_time_limit)
+      }
+      return ret
     },
     newTimeLimit () {
       // 1週間後の23:59

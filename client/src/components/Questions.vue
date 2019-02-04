@@ -2,13 +2,13 @@
   <div class="columns">
     <article class="column is-11">
       <div class="card">
-        <header class="card-header">
+        <!-- <header class="card-header">
           <div id="title" class="card-header-title title">
             <span v-if="responseIconClass" :class="responseIconClass" class="response-icon"></span>
             <router-link v-if="titleLink" :to="titleLink">{{ title }}</router-link>
             <p v-if="!titleLink">{{ title }}</p>
           </div>
-        </header>
+        </header>-->
         <div class="card-content questions">
           <div v-for="(question, index) in questions" :key="index" class="question">
             <div class="question-body">
@@ -103,9 +103,5 @@ export default {
 }
 .required-question-icon::before {
   margin-right: 0.2rem;
-}
-.response-icon {
-  font-size: large;
-  margin-right: 0.5rem;
 }
 </style>
