@@ -32,7 +32,7 @@
         :informationProps="informationProps"
         :questionsProps="questions"
         :title="title"
-        :inputErrors="inputErrors"
+        :inputErrors="isEditing ? inputErrors: undefined"
         @set-data="setData"
         @set-question-content="setQuestionContent"
         @remove-question="removeQuestion"
