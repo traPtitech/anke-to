@@ -19,17 +19,21 @@
           traP
         </label>
         <div class="user-list-wrapper">
-          <span v-for="(user, index) in userTraqIdList" :key="index">
-            <!-- user: traP -->
-            <label v-if="!isUserTrap" class="checkbox">
-              <input type="checkbox" v-model="selectedUserList" :value="user.Name">
-              <span>{{ user.Name }}</span>
-            </label>
-
+          <!-- <span v-for="(user, index) in allUsersList" :key="index"> -->
+          <span v-for="(group, key) in allUsersList" :key="key">
+            <p>{{ key }}</p>
             <!-- not user: traP -->
-            <span v-if="isUserTrap" class="dummy-checkbox">
-              <span class="readonly-checkbox checked"></span>
-              {{ user.Name }}
+            <span v-for="(user, index) in group" :key="index">
+              <label v-if="!isUserTrap" class="checkbox">
+                <input type="checkbox" v-model="selectedUserList" :value="user">
+                <span>{{ user }}</span>
+              </label>
+
+              <!-- user: traP -->
+              <span v-if="isUserTrap" class="dummy-checkbox">
+                <span class="readonly-checkbox checked"></span>
+                {{ user }}
+              </span>
             </span>
           </span>
         </div>
@@ -42,16 +46,11 @@
 
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/util/common'
-import traQ from '@/util/traq'
 
 export default {
   name: 'UserListModal',
   created () {
     this.selectedUserList = this.userListProps
-    this.getUsersList()
-  },
-  beforeDestroy: function () {
-    this.traq.disconnect()
   },
   components: {
     'input-error-message': InputErrorMessage
@@ -67,25 +66,20 @@ export default {
     },
     traqId: {
       required: true
+    },
+    allUsersList: {
+      type: Object,
+      required: true
     }
   },
   data () {
     return {
       traq: null,
-      selectedUserList: [],
-      userTraqIdList: []
+      selectedUserList: []
+      // allUsersList: {}
     }
   },
   methods: {
-    getUsersList () {
-      this.traq = traQ('https://q.trapti.tech', true)
-      this.traq.listen('connect', () => {
-        this.traq.user.list(data => {
-          this.userTraqIdList = data
-          this.userTraqIdList.splice(0, 1)  // user: traP を取り除く
-        })
-      })
-    },
     disableModal () {
       this.$emit('disable-modal')
     },

@@ -78,6 +78,7 @@
                   :activeModal="activeModal"
                   :userListProps="details[activeModal.name]"
                   :traqId="traqId"
+                  :allUsersList="allUsersList"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
@@ -121,9 +122,17 @@
 import common from '@/util/common'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import UserListModal from '@/components/QuestionnaireDetails/UserListModal'
+import traQ from '@/util/traq'
 
 export default {
   name: 'InformationEdit',
+  created () {
+    this.traq = traQ('https://q.trapti.tech', true)
+    this.getAllUsersList()
+  },
+  beforeDestroy: function () {
+    this.traq.disconnect()
+  },
   components: {
     'input-error-message': InputErrorMessage,
     'user-list-modal': UserListModal
@@ -145,7 +154,8 @@ export default {
     return {
       responses: [],
       activeModal: {},
-      isModalActive: false
+      isModalActive: false,
+      allUsersList: {}
     }
   },
   methods: {
@@ -165,6 +175,30 @@ export default {
     setUserList (listName, newList) {
       this.details[ listName ] = newList
       this.setInformation(this.details)
+    },
+    getAllUsersList () {
+      this.traq.listen('connect', () => {
+        this.traq.user.list(data => {
+          data.splice(0, 1)  // user: traP を取り除く
+
+          // StudentNumberをキーとしてtraQIDの配列を持つオブジェクトtmpを作る
+          let tmp = {}
+          for (const user of data) {
+            if (typeof tmp[ user.StudentNumber ] !== 'undefined') {
+              tmp[ user.StudentNumber ].push(user.Name)
+            } else {
+              tmp[ user.StudentNumber ] = [ user.Name ]
+            }
+          }
+
+          // tmpのキーを学年順にソートして、学年の中でtraQIDをアルファベット順にソートしたものをallUsersListに保存
+          Object.keys(tmp).sort().forEach(
+            (key) => {
+              this.$set(this.allUsersList, key, tmp[ key ].sort(
+                (a, b) => {return a.toLowerCase().localeCompare(b.toLowerCase())}))
+            })
+        })
+      })
     }
   },
   computed: {
