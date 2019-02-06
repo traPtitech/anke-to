@@ -5,11 +5,11 @@
       <header class="modal-card-head">
         <p class="modal-card-title">{{ activeModal.summary }}</p>
         <span
-          class="ti-check modal-button"
+          class="ti-check icon-button round confirm"
           @click.prevent="confirmList"
           :class="{'disabled': !confirmOk}"
         ></span>
-        <span class="ti-close modal-button" @click.prevent="disableModal"></span>
+        <span class="ti-close icon-button round close" @click.prevent="disableModal"></span>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
@@ -19,9 +19,16 @@
           traP
         </label>
         <div class="user-list-wrapper">
-          <!-- <span v-for="(user, index) in allUsersList" :key="index"> -->
-          <span v-for="(group, key) in allUsersList" :key="key">
-            <p>{{ key }}</p>
+          <span v-for="(group, key) in visibleUsersList" :key="key">
+            <div class="has-text-weight-bold group-name">
+              {{ key }}
+              <span
+                v-if="!isUserTrap"
+                class="ti-check icon-button select-group"
+                @click.prevent="selectGroup(key)"
+              ></span>
+            </div>
+
             <!-- not user: traP -->
             <span v-for="(user, index) in group" :key="index">
               <label v-if="!isUserTrap" class="checkbox">
@@ -76,7 +83,6 @@ export default {
     return {
       traq: null,
       selectedUserList: []
-      // allUsersList: {}
     }
   },
   methods: {
@@ -88,6 +94,12 @@ export default {
         this.$emit('set-user-list', this.activeModal.name, this.selectedUserList)
         this.disableModal()
       }
+    },
+    selectGroup (groupName) {
+      this.selectedUserList =
+        this.selectedUserList
+          .concat(this.allUsersList[ groupName ]) // 該当するグループのユーザーを追加
+          .filter((user, index, array) => { return array.indexOf(user) === index }) // 重複除去
     }
   },
   computed: {
@@ -99,7 +111,7 @@ export default {
         if (newBool) {
           this.selectedUserList = [ 'traP' ]
         } else {
-          this.selectedUserList = [ this.traqId ]
+          this.selectedUserList = []
         }
       }
     },
@@ -113,6 +125,11 @@ export default {
     },
     confirmOk () {
       return common.noErrors(this.inputErrors)
+    },
+    visibleUsersList () {
+      let ret = Object.assign({}, this.allUsersList)
+      delete ret.traP
+      return ret
     }
   },
   mounted () {
@@ -122,20 +139,20 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-.modal-card-head {
-  .modal-button {
-    color: white;
-    font-weight: bolder;
-    width: 1.5rem;
-    height: 1.5rem;
-    padding: 0.25rem;
-    margin-left: 1rem;
+.icon-button {
+  color: white;
+  font-weight: bolder;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  margin-left: 1rem;
+  &.round {
     border-radius: 1rem;
-    &:hover {
-      cursor: pointer;
-    }
   }
-  .ti-check {
+  &:hover {
+    cursor: pointer;
+  }
+  &.confirm {
     background-color: rgb(208, 255, 137);
     &:hover {
       background-color: greenyellow;
@@ -145,12 +162,21 @@ export default {
       pointer-events: none;
     }
   }
-  .ti-close {
+  &.close {
     background-color: rgb(255, 160, 160);
     &:hover {
       background-color: red;
     }
   }
+  &.select-group {
+    background-color: rgb(162, 187, 154);
+    &:hover {
+      background-color: gray;
+    }
+  }
+}
+.group-name {
+  margin: 1.5rem 0 0.5rem 0;
 }
 .modal-card-body {
   .details.checkbox {

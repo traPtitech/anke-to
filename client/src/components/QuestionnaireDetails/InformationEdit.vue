@@ -179,23 +179,29 @@ export default {
     getAllUsersList () {
       this.traq.listen('connect', () => {
         this.traq.user.list(data => {
-          data.splice(0, 1)  // user: traP を取り除く
+          data.splice(0, 1) // user: traP を取り除く
 
           // StudentNumberをキーとしてtraQIDの配列を持つオブジェクトtmpを作る
           let tmp = {}
           for (const user of data) {
-            if (typeof tmp[ user.StudentNumber ] !== 'undefined') {
-              tmp[ user.StudentNumber ].push(user.Name)
-            } else {
-              tmp[ user.StudentNumber ] = [ user.Name ]
+            if (user.Status === 1) { // 除名された人は除く
+              if (typeof tmp[ user.StudentNumber ] !== 'undefined') {
+                tmp[ user.StudentNumber ].push(user.Name)
+              } else {
+                tmp[ user.StudentNumber ] = [ user.Name ]
+              }
             }
           }
+          // console.log(tmp)
+
+          this.$set(this.allUsersList, 'traP', [])
 
           // tmpのキーを学年順にソートして、学年の中でtraQIDをアルファベット順にソートしたものをallUsersListに保存
           Object.keys(tmp).sort().forEach(
             (key) => {
-              this.$set(this.allUsersList, key, tmp[ key ].sort(
-                (a, b) => {return a.toLowerCase().localeCompare(b.toLowerCase())}))
+              const sortedUsersList = tmp[ key ].sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
+              this.$set(this.allUsersList, key, sortedUsersList)
+              Array.prototype.push.apply(this.allUsersList.traP, sortedUsersList)
             })
         })
       })
@@ -265,7 +271,7 @@ export default {
   },
   watch: {
     traqId: function (newVal) {
-      // traqIdがundefinedから変わったらStringに変わった時に呼ばれる
+      // traqIdがundefinedから変わった時に呼ばれる
       if (newVal && this.isNewQuestionnaire) {
         this.details.administrators = [ this.traqId ]
       }
