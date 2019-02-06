@@ -85,14 +85,7 @@ export default {
       selectedTab: 'Information',
       showEditButton: false,
       noTimeLimit: true,
-      information: {
-        title: '',
-        description: '',
-        res_time_limit: 'NULL',
-        res_shared_to: 'public',
-        targets: [],
-        administrators: []
-      },
+      information: {},
       questions: [],
       newQuestionnaireId: undefined,
       removedQuestionIds: []
@@ -322,7 +315,8 @@ export default {
   computed: {
     administrates () {
       // 管理者かどうかを返す
-      return common.administrates(this.information.administrators, this.traqId)
+      // getInformation() が完了する前は false を返す
+      return this.information.administrators ? common.administrates(this.information.administrators, this.traqId) : false
     },
     questionnaireId () {
       if (this.isNewQuestionnaire) {
@@ -339,17 +333,14 @@ export default {
     },
     isEditing: {
       get: function () {
-        if (this.isNewQuestionnaire || this.$route.hash === '#edit') {
-          return true
-        }
-        return false
+        return this.isNewQuestionnaire || (this.$route.hash === '#edit' && this.administrates)
       },
       set: function (newBool) {
         // newBool : 閲覧 -> 編集
         // !newBool : 編集 -> 閲覧
         const newRoute = {
           name: 'QuestionnaireDetails',
-          params: {id: this.questionnaireId},
+          params: { id: this.questionnaireId },
           hash: newBool ? '#edit' : undefined
         }
         router.push(newRoute)

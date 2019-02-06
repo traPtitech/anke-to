@@ -39,12 +39,12 @@
               <div class="card-header-title subtitle">操作</div>
             </header>
             <div class="card-content management-buttons">
-              <button
+              <router-link
                 class="button"
-                @click.prevent="createResponse"
                 :class="{'is-disabled': timeLimitExceeded}"
                 :disabled="timeLimitExceeded"
-              >新しい回答を作成</button>
+                :to="{name: 'NewResponseDetails', params: {questionnaireId: this.questionnaireId}}"
+              >新しい回答を作成</router-link>
               <router-link
                 v-if="canViewResults"
                 :to="{ name: 'Results', params: { id: questionnaireId }}"
