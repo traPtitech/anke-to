@@ -440,6 +440,11 @@ export default {
         // 新しく回答期限を作ろうとしたとき
         this.information.res_time_limit = this.newTimeLimit
       }
+    },
+    information: function (newVal) {
+      if (newVal.res_time_limit === '') {
+        this.noTimeLimit = true
+      }
     }
   },
   mounted () {
