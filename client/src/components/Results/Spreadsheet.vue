@@ -1,11 +1,6 @@
 <template>
   <div class="wrapper">
-    <button
-      class="button"
-      v-on:click="downloadCSV"
-    >
-      CSV形式でダウンロード
-    </button>
+    <button class="button download-csv" v-on:click="downloadCSV">CSV形式でダウンロード</button>
     <div class="card">
       <table class="table is-striped">
         <thead>
@@ -17,23 +12,18 @@
               :class="{ active: sorted == index+1 || sorted == -1-index }"
             >
               {{ header }}
-              <span
-                class="arrow"
-                :class="sorted != index+1 ? 'asc' : 'dsc'"
-              >
-              </span></th>
+              <span class="arrow" :class="sorted != index+1 ? 'asc' : 'dsc'"></span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="(result, index) in results"
-            :key="index"
-          >
+          <tr v-for="(result, index) in results" :key="index">
             <td class="table-item-traqid">{{ result.traqID }}</td>
             <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
-            <td v-for="response in result.response_body">
-              {{getResponse(response)}}
-            </td>
+            <td
+              v-for="response in result.response_body"
+              :key="response.responseID"
+            >{{getResponse(response)}}</td>
           </tr>
         </tbody>
       </table>
@@ -42,7 +32,8 @@
 </template>
 
 <script>
-// import <componentname> from '<path to component file>'
+/* eslint-disable */
+
 import axios from '@/bin/axios'
 import common from '@/util/common'
 
@@ -59,17 +50,17 @@ export default {
       required: true
     }
   },
-  data() {
+  data () {
     return {
-      headers: ['traQID', '回答日時'],
+      headers: [ 'traQID', '回答日時' ],
       sorted: ''
     }
   },
   methods: {
-    getDateStr(str) {
+    getDateStr (str) {
       return common.customDateStr(str)
     },
-    getResponse(body) {
+    getResponse (body) {
       switch (body.question_type) {
         case 'MultipleChoice':
         case 'Checkbox':
@@ -86,7 +77,7 @@ export default {
           return body.response
       }
     },
-    downloadCSV() {
+    downloadCSV () {
       let csv = '\ufeff'
       this.headers.concat(this.questions).forEach(header => {
         if (csv != '\ufeff') {
@@ -102,7 +93,7 @@ export default {
         })
         csv += '\n'
       })
-      const blob = new Blob([csv], { type: 'text/csv' })
+      const blob = new Blob([ csv ], { type: 'text/csv' })
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = 'Result.csv'
@@ -110,7 +101,7 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    sort(index) {
+    sort (index) {
       let param = ''
       if (this.sorted != index) {
         param += '-'
@@ -136,11 +127,11 @@ export default {
     }
   },
   computed: {
-    questionnaireId() {
+    questionnaireId () {
       return this.$route.params.id
     }
   },
-  mounted() {}
+  mounted () { }
 }
 </script>
 
@@ -176,5 +167,9 @@ th.active {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 4px solid black;
+}
+
+.download-csv {
+  margin: 0 1.5rem;
 }
 </style>

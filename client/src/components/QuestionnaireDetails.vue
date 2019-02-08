@@ -21,7 +21,10 @@
         <span class="ti-pencil"></span>
       </a>
     </div>
-    <div :class="{'is-editing has-navbar-fixed-bottom' : isEditing}">
+    <div
+      :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
+      class="details-child is-fullheight"
+    >
       <information-summary v-if="currentTabComponent!=='information-edit'" :details="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"

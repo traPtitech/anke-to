@@ -1,36 +1,38 @@
 <template>
-  <div class="wrapper">
+  <div class="card-wrapper is-fullheight">
     <div class="card">
       <header class="card-header">
         <div class="card-header-title subtitle">自分の回答</div>
       </header>
-      <table class="table is-striped">
-        <thead>
-          <tr>
-            <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(response, index) in responses" :key="index">
-            <td class="table-item-title">
-              <router-link
-                :to="'/questionnaires/' + response.questionnaireID"
-              >{{ response.questionnaire_title }}</router-link>
-            </td>
-            <td class="table-item-date">{{ getDateStr(response.res_time_limit) }}</td>
-            <td
-              class="table-item-date"
-            >{{ response.submitted_at == 'NULL' ? '未提出' : getRelativeDateStr(response.submitted_at) }}</td>
-            <td class="table-item-date">{{ getRelativeDateStr(response.modified_at) }}</td>
-            <td>
-              <router-link :to="'/responses/' + response.responseID" target="_blank">
-                <span class="ti-new-window"></span>
-                <br>Open
-              </router-link>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="card-content">
+        <table class="table is-striped">
+          <thead>
+            <tr>
+              <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(response, index) in responses" :key="index">
+              <td class="table-item-title">
+                <router-link
+                  :to="'/questionnaires/' + response.questionnaireID"
+                >{{ response.questionnaire_title }}</router-link>
+              </td>
+              <td class="table-item-date">{{ getDateStr(response.res_time_limit) }}</td>
+              <td
+                class="table-item-date"
+              >{{ response.submitted_at == 'NULL' ? '未提出' : getRelativeDateStr(response.submitted_at) }}</td>
+              <td class="table-item-date">{{ getRelativeDateStr(response.modified_at) }}</td>
+              <td>
+                <router-link :to="'/responses/' + response.responseID" target="_blank">
+                  <span class="ti-new-window"></span>
+                  <br>Open
+                </router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
