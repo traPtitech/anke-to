@@ -157,6 +157,10 @@ a[disabled] {
   padding: 1rem;
 }
 
+.has-navbar-fixed-bottom {
+  padding-bottom: 100px;
+}
+
 .details {
   .tabs {
     margin-bottom: 0;
@@ -178,9 +182,6 @@ a[disabled] {
   }
   .is-fullheight {
     min-height: fit-content;
-  }
-  .has-navbar-fixed-bottom {
-    padding-bottom: 100px;
   }
   .details-child {
     article.column {

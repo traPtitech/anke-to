@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper is-fullheight">
+  <div class="wrapper is-fullheight has-navbar-fixed-bottom">
     <div class="dropdowns">
       <div class="dropdown" :class="{ 'is-active': DropdownIsActive.sortOrder }">
         <div class="dropdown-trigger">
@@ -83,18 +83,22 @@
         </table>
       </div>
     </div>
+    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink"></pagination>
   </div>
 </template>
 
 <script>
 import axios from '@/bin/axios'
+import router from '@/router'
 import Table from '@/components/Utils/Table.vue'
+import Pagination from '@/components/Utils/Pagination'
 import common from '@/util/common'
 
 export default {
   name: 'Explorer',
   components: {
-    'customtable': Table
+    'customtable': Table,
+    'pagination': Pagination
   },
   async created () {
     this.getQuestionnaires()
@@ -108,7 +112,6 @@ export default {
     return {
       questionnaires: [],
       headers: [ '', '回答期限', '更新日時', '作成日時', '結果' ],
-      sortOrder: '-modified_at',
       sortOrders: [
         {
           str: '最近更新された',
@@ -135,7 +138,6 @@ export default {
           opt: 'created_at'
         }
       ],
-      targetedOption: false,
       targetedOptions: [
         {
           str: '全て',
@@ -153,6 +155,37 @@ export default {
     }
   },
   computed: {
+    pageNumber: {
+      get () {
+        return this.$route.query.page ? Number(this.$route.query.page) : 1
+      },
+      set (newVal) {
+        router.push({ name: 'Explorer', query: { nontargeted: String(this.targetedOption), page: String(newVal), sort: this.sortOrder } })
+      }
+    },
+    sortOrder: {
+      get () {
+        return this.$route.query.sort ? this.$route.query.sort : '-modified_at'
+      },
+      set (newVal) {
+        router.push({ name: 'Explorer', query: { nontargeted: String(this.targetedOption), page: String(this.pageNumber), sort: newVal } })
+      }
+    },
+    targetedOption: {
+      get () {
+        // return typeof this.$route.query.nontargeted !== 'undefined' && this.$route.query.nontargeted === 'true'
+        return this.$route.query.nontargeted === 'true'
+      },
+      set (newVal) {
+        router.push({ name: 'Explorer', query: { nontargeted: String(newVal), page: String(this.pageNumber), sort: this.sortOrder } })
+      }
+    },
+    defaultPageLink () {
+      return {
+        name: 'Explorer',
+        query: { nontargeted: this.targetedOption, sort: this.sortOrder }
+      }
+    }
   },
   methods: {
     getDateStr (str) {
@@ -162,8 +195,9 @@ export default {
       return common.relativeDateStr(str)
     },
     getQuestionnaires () {
+      this.questionnaires = []
       axios
-        .get('/questionnaires?sort=' + this.sortOrder + '&nontargeted=' + this.targetedOption)
+        .get('/questionnaires?sort=' + this.sortOrder + '&nontargeted=' + this.targetedOption + '&page=' + this.pageNumber)
         .then(response => (this.questionnaires = response.data))
         .catch(error => console.log(error))
     },
@@ -176,6 +210,11 @@ export default {
       this.getQuestionnaires()
     }
 
+  },
+  watch: {
+    $route: function (newRoute) {
+      this.getQuestionnaires()
+    }
   }
 }
 </script>

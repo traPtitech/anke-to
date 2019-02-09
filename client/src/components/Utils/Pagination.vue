@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar is-fixed-bottom pagination is-rounded is-centered">
     <ul class="pagination-list">
-      <li>
+      <li v-if="range">
         <router-link
           class="pagination-previous"
           :disabled="disableFirstButton"
@@ -19,7 +19,7 @@
         >{{ pageNum }}</router-link>
         <span v-if="!pageNum" class="pagination-link" disabled></span>
       </li>
-      <li>
+      <li v-if="range">
         <router-link
           class="pagination-next"
           :disabled="disableLastButton"
@@ -43,16 +43,20 @@ export default {
   props: {
     range: {
       type: Object,
-      required: true
+      required: false
     },
     currentPage: {
       type: Number,
       required: true
     },
-    getPageLink: {
-      type: Function,
+    defaultPageLink: {
+      type: Object,
       required: true
     }
+    // getPageLink: {
+    //   type: Function,
+    //   required: true
+    // }
   },
   data () {
     return {
@@ -60,12 +64,30 @@ export default {
     }
   },
   methods: {
+    getPageLink (pageName) {
+      let ret = Object.assign({}, this.defaultPageLink)
+      ret.query = typeof this.defaultPageLink.query === 'undefined' ? {} : Object.assign({}, this.defaultPageLink.query)
+      if (this.range && pageName === 'first') {
+        ret.query.page = this.range.first
+      } else if (this.range && pageName === 'last') {
+        ret.query.page = this.range.last
+      } else {
+        ret.query.page = pageName
+      }
+      return ret
+    }
   },
   computed: {
     pages () {
       let ret = []
       for (let i = this.currentPage - this.paginationWidth; i <= this.currentPage + this.paginationWidth; i++) {
-        if (i >= this.range.first && i <= this.range.last) {
+        let min = 1
+        let max = this.currentPage + this.paginationWidth
+        if (this.range) {
+          min = this.range.first
+          max = this.range.last
+        }
+        if (i >= min && i <= max) {
           ret.push(i)
         } else {
           ret.push(undefined)

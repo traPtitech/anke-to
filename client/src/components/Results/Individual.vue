@@ -1,13 +1,12 @@
 <template>
-  <div>
+  <div class="has-navbar-fixed-bottom">
     <questions :questionsProps="questionData"></questions>
-    <pagination :range="range" :currentPage="currentPage" :getPageLink="getPageLink"></pagination>
+    <pagination :range="range" :currentPage="currentPage" :defaultPageLink="defaultPageLink"></pagination>
   </div>
 </template>
 
 <script>
 
-// import common from '@/util/common'
 import Questions from '@/components/Questions'
 import Pagination from '@/components/Utils/Pagination'
 
@@ -42,25 +41,6 @@ export default {
     }
   },
   methods: {
-    getPageLink (pageName) {
-      let ret = {
-        name: 'Results',
-        params: {id: this.$route.params.id},
-        hash: '#individual'
-      }
-      switch (pageName) {
-        case 'first':
-          ret.query = {page: this.range.first}
-          break
-        case 'last':
-          ret.query = {page: this.range.last}
-          break
-        default:
-          ret.query = {page: pageName}
-          break
-      }
-      return ret
-    }
   },
   computed: {
     currentPage () {
@@ -70,6 +50,13 @@ export default {
       return {
         first: 1,
         last: this.results.length
+      }
+    },
+    defaultPageLink () {
+      return {
+        name: 'Results',
+        params: { id: this.$route.params.id },
+        hash: '#individual'
       }
     }
   },
