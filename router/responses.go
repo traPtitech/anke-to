@@ -55,7 +55,7 @@ func GetMyResponses(c echo.Context) error {
 
 	if err := model.DB.Select(&responsesinfo,
 		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL`,
+		WHERE user_traqid = ? AND deleted_at IS NULL ORDER BY modified_at DESC`,
 		model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -79,7 +79,7 @@ func GetMyResponsesByID(c echo.Context) error {
 
 	if err := model.DB.Select(&responsesinfo,
 		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ?`,
+		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ? ORDER BY modified_at DESC`,
 		model.GetUserID(c), questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

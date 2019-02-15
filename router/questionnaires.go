@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -264,6 +265,11 @@ func GetMyQuestionnaire(c echo.Context) error {
 			Respondents:    respondents,
 		})
 	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ModifiedAt > ret[j].ModifiedAt
+	})
+
 	return c.JSON(http.StatusOK, ret)
 }
 

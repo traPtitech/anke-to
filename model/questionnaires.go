@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -112,6 +113,10 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 	if len(ret) == 0 {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ModifiedAt > ret[j].ModifiedAt
+	})
 
 	return ret, nil
 }
