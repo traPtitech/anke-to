@@ -137,8 +137,10 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 			`SELECT body from response
 			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 			responseID, body.QuestionID); err != nil {
-			c.Logger().Error(err)
-			return ResponseBody{}, echo.NewHTTPError(http.StatusInternalServerError)
+			if err != sql.ErrNoRows {
+				c.Logger().Error(err)
+				return ResponseBody{}, echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
 		body.Response = response
 	}

@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -37,16 +38,6 @@ type QuestionnairesInfo struct {
 func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	// query parametar
 	sort := c.QueryParam("sort")
-	page := c.QueryParam("page")
-
-	if page == "" {
-		page = "1"
-	}
-	num, err := strconv.Atoi(page)
-	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusBadRequest)
-	}
 
 	var list = map[string]string{
 		"":             "",
@@ -61,17 +52,18 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	allquestionnaires := []Questionnaires{}
 
 	if err := DB.Select(&allquestionnaires,
-		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]+" lIMIT 20 OFFSET "+strconv.Itoa(20*(num-1))); err != nil {
+		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return allquestionnaires, nil
 }
 
-func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesInfo, error) {
+// 2つ目の戻り値はページ数の最大
+func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesInfo, int, error) {
 	allquestionnaires, err := GetAllQuestionnaires(c)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	userID := GetUserID(c)
@@ -82,10 +74,10 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
 		userID); err != nil {
 		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	ret := []QuestionnairesInfo{}
+	questionnaires := []QuestionnairesInfo{}
 	for _, v := range allquestionnaires {
 		var targeted = false
 		for _, w := range targetedQuestionnaireID {
@@ -97,7 +89,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 			continue
 		}
 
-		ret = append(ret,
+		questionnaires = append(questionnaires,
 			QuestionnairesInfo{
 				ID:           v.ID,
 				Title:        v.Title,
@@ -109,11 +101,40 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 				IsTargeted:   targeted})
 	}
 
-	if len(ret) == 0 {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
+	if len(questionnaires) == 0 {
+		return nil, 0, echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	return ret, nil
+	page_max := len(questionnaires)/20 + 1
+
+	page := c.QueryParam("page")
+	if page == "" {
+		page = "1"
+	}
+	page_num, err := strconv.Atoi(page)
+	if err != nil {
+		c.Logger().Error(err)
+		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if page_num > page_max {
+		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	sort.Slice(questionnaires, func(i, j int) bool {
+		return questionnaires[i].ModifiedAt > questionnaires[j].ModifiedAt
+	})
+
+	ret := []QuestionnairesInfo{}
+	for i := 0; i < 20; i++ {
+		index := (page_num-1)*20 + i
+		if index >= len(questionnaires) {
+			break
+		}
+		ret = append(ret, questionnaires[index])
+	}
+
+	return ret, page_max, nil
 }
 
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {

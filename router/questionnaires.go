@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -12,19 +13,21 @@ import (
 )
 
 func GetQuestionnaires(c echo.Context) error {
+	var questionnaires []model.QuestionnairesInfo
+	var pageMax int
+	var err error
 	if c.QueryParam("nontargeted") == "true" {
-		questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
-		if err != nil {
-			return err
-		}
-		return c.JSON(http.StatusOK, questionnaires)
+		questionnaires, pageMax, err = model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
 	} else {
-		questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.All))
-		if err != nil {
-			return err
-		}
-		return c.JSON(http.StatusOK, questionnaires)
+		questionnaires, pageMax, err = model.GetQuestionnaires(c, model.TargetType(model.All))
 	}
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"page_max":       pageMax,
+		"questionnaires": questionnaires,
+	})
 }
 
 func GetQuestionnaire(c echo.Context) error {
@@ -264,11 +267,16 @@ func GetMyQuestionnaire(c echo.Context) error {
 			Respondents:    respondents,
 		})
 	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ModifiedAt > ret[j].ModifiedAt
+	})
+
 	return c.JSON(http.StatusOK, ret)
 }
 
 func GetTargetedQuestionnaire(c echo.Context) error {
-	questionnaires, err := model.GetQuestionnaires(c, model.TargetType(model.Targeted))
+	questionnaires, _, err := model.GetQuestionnaires(c, model.TargetType(model.Targeted))
 	if err != nil {
 		return err
 	}
