@@ -83,7 +83,7 @@
         </table>
       </div>
     </div>
-    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink"></pagination>
+    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink" :range="range"></pagination>
   </div>
 </template>
 
@@ -151,6 +151,10 @@ export default {
       DropdownIsActive: {
         sortOrder: false,
         targetedOption: false
+      },
+      range: {
+        first: 1,
+        last: 1
       }
     }
   },
@@ -198,7 +202,10 @@ export default {
       this.questionnaires = []
       axios
         .get('/questionnaires?sort=' + this.sortOrder + '&nontargeted=' + this.targetedOption + '&page=' + this.pageNumber)
-        .then(response => (this.questionnaires = response.data))
+        .then(response => {
+          this.questionnaires = response.data.questionnaires
+          this.$set(this.range, 'last', response.data.page_max)
+        })
         .catch(error => console.log(error))
     },
     changeSortOrder (sortOrder) {

@@ -53,10 +53,6 @@ export default {
       type: Object,
       required: true
     }
-    // getPageLink: {
-    //   type: Function,
-    //   required: true
-    // }
   },
   data () {
     return {
@@ -110,7 +106,8 @@ export default {
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .pagination {
-  margin: 0.5rem 0;
+  // margin: 0.5rem 0 0 0;
+  padding: 0.75rem 0;
 }
 .pagination-next,
 .pagination-previous {
