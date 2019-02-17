@@ -1,8 +1,6 @@
 <template>
   <div>
-    <div v-if="timeLimitExceeded" class="message is-danger">
-      <p class="message-body error-message">回答期限が過ぎています</p>
-    </div>
+    <top-bar-message :message="message"></top-bar-message>
 
     <div v-if="information.res_time_limit && !timeLimitExceeded" class="is-fullheight details">
       <div class="tabs is-centered">
@@ -45,15 +43,18 @@ import axios from 'axios'
 import router from '@/router'
 import common from '@/util/common'
 import Questions from '@/components/Questions'
-import EditNavBar from '@/components/Utils/EditNavBar.vue'
+import EditNavBar from '@/components/Utils/EditNavBar'
+import TopBarMessage from '@/components/Utils/TopBarMessage'
 import InformationSummary from '@/components/InformationSummary'
+
 
 export default {
   name: 'ResponseDetails',
   components: {
     'questions': Questions,
     'edit-nav-bar': EditNavBar,
-    'information-summary': InformationSummary
+    'information-summary': InformationSummary,
+    'top-bar-message': TopBarMessage
   },
   async created () {
     if (this.isNewResponse) {
@@ -79,10 +80,14 @@ export default {
     return {
       questions: [],
       information: {},
-      responseData: {}
+      responseData: {},
+      message: {
+        showMessage: false
+      }
     }
   },
   methods: {
+    alertNetworkError: common.alertNetworkError,
     getTimeLimitStr: common.customDateStr,
     getInformation () {
       return axios
@@ -129,10 +134,15 @@ export default {
           .post('/responses', data)
           .then(resp => {
             const responseId = resp.data.responseID
+            this.showMessage()
             router.push({
               name: 'ResponseDetails',
               params: { id: responseId }
             })
+          })
+          .catch(error => {
+            console.log(error)
+            this.alertNetworkError()
           })
       } else {
         return axios
@@ -140,7 +150,12 @@ export default {
           .then(this.getResponseData)
           .then(this.setResponsesToQuestions)
           .then(() => {
+            this.showMessage()
             this.isEditing = false
+          })
+          .catch(error => {
+            console.log(error)
+            this.alertNetworkError()
           })
       }
     },
@@ -148,12 +163,15 @@ export default {
       // 回答の送信
       let data = this.createResponseData()
       data.submitted_at = new Date().toLocaleString('ja-GB')
+      this.setMessage('回答を送信しました', 'green')
       this.sendResponse(data)
+
     },
     saveResponse () {
       // 回答の保存
       let data = this.createResponseData()
       data.submitted_at = 'NULL'
+      this.setMessage('回答を保存しました', 'green')
       this.sendResponse(data)
     },
     disableEditing () {
@@ -224,6 +242,13 @@ export default {
         default:
           return true
       }
+    },
+    setMessage (body, color) {
+      this.$set(this.message, 'color', color)
+      this.$set(this.message, 'body', body)
+    },
+    showMessage () {
+      this.$set(this.message, 'showMessage', true)
     }
   },
   computed: {
@@ -321,6 +346,13 @@ export default {
         }
       }
       return ret
+    },
+    message () {
+      return {
+        body: '回答期限が過ぎています',
+        color: 'red',
+        showMessage: this.timeLimitExceeded
+      }
     }
   },
   watch: {

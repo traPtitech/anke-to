@@ -1,5 +1,6 @@
 <template>
   <div class="details is-fullheight">
+    <top-bar-message :message="message"></top-bar-message>
     <div class="tabs is-centered">
       <ul>
         <li
@@ -61,7 +62,8 @@ import Questions from '@/components/Questions'
 import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 import axios from '@/bin/axios'
 import common from '@/util/common'
-import EditNavBar from '@/components/Utils/EditNavBar.vue'
+import EditNavBar from '@/components/Utils/EditNavBar'
+import TopBarMessage from '@/components/Utils/TopBarMessage';
 
 export default {
   name: 'QuestionnaireDetails',
@@ -75,7 +77,8 @@ export default {
     'information-edit': InformationEdit,
     'questions': Questions,
     'questions-edit': QuestionsEdit,
-    'edit-nav-bar': EditNavBar
+    'edit-nav-bar': EditNavBar,
+    'top-bar-message': TopBarMessage
   },
   props: {
     traqId: {
@@ -91,7 +94,10 @@ export default {
       information: {},
       questions: [],
       newQuestionnaireId: undefined,
-      removedQuestionIds: []
+      removedQuestionIds: [],
+      message: {
+        showMessage: false
+      }
     }
   },
   methods: {
@@ -149,6 +155,8 @@ export default {
       }
 
       if (this.isNewQuestionnaire) {
+        // アンケートの新規作成
+
         axios.post('/questionnaires', informationData)
           .then(resp => {
             // 返ってきたquestionnaireIDを保存
@@ -160,15 +168,18 @@ export default {
           })
           .then(() => {
             // 作成したアンケートの個別ページに遷移
+            this.showMessage('アンケートを作成しました', 'green')
             router.push('/questionnaires/' + this.newQuestionnaireId)
           })
           .catch(error => {
             // エラーが起きた場合は、送信済みのInformationを削除する
-            console.log(error)
             axios.delete('/questionnaires/' + this.newQuestionnaireId)
+            // this.showMessage('通信エラー', 'red')
             this.alertNetworkError()
           })
       } else {
+        // 既存のアンケートの編集
+
         axios.patch('/questionnaires/' + this.questionnaireId, informationData)
           .then(() => {
             // 質問を送信
@@ -182,9 +193,12 @@ export default {
           })
           .then(this.getInformation) // 情報をアップデート
           .then(this.getQuestions) // 質問をアップデート
-          .then(this.disableEditing) // 編集を終了
+          .then(() => {
+            this.showMessage('アンケートを編集しました', 'green')
+            this.disableEditing()
+          }) // 編集を終了
           .catch(error => {
-            console.log(error)
+            // this.showMessage('通信エラー', 'red')
             this.alertNetworkError()
           })
       }
@@ -234,6 +248,9 @@ export default {
           .then(() => {
             router.push('/administrates')
             // アンケートを削除したら、Administratesページに戻る
+          })
+          .catch(error => {
+            this.alertNetworkError()
           })
       }
     },
@@ -285,9 +302,9 @@ export default {
       if (this.isNewQuestionnaire) {
         router.push('/administrates')
       } else {
+        this.disableEditing()
         this.getInformation()
           .then(this.getQuestions)
-          .then(this.disableEditing)
       }
     },
     setData (name, data) {
@@ -313,6 +330,13 @@ export default {
         this.removedQuestionIds.push(id)
       }
       this.questions.splice(index, 1)
+    },
+    showMessage (body, color) {
+      this.message = {
+        showMessage: true,
+        color: color,
+        body: body
+      }
     }
   },
   computed: {
