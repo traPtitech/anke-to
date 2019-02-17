@@ -161,6 +161,9 @@ a[disabled] {
   padding-bottom: 100px;
 }
 
+.is-editing {
+  background-color: #c2c2c2;
+}
 .details {
   .tabs {
     margin-bottom: 0;
@@ -169,9 +172,6 @@ a[disabled] {
   }
   .tabs:first-child {
     margin-top: 1rem;
-  }
-  .is-editing {
-    background-color: #c2c2c2;
   }
   #edit-button {
     border: #dbdbdb solid 1px;
@@ -189,9 +189,6 @@ a[disabled] {
     }
     .columns {
       margin-bottom: 0;
-    }
-    .columns:first-child {
-      display: flex;
     }
     .card {
       max-width: 100%;

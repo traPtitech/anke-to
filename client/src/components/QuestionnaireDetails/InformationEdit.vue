@@ -1,7 +1,7 @@
 <template>
   <div>
     <form>
-      <div class="columns">
+      <div class="columns is-flex">
         <article class="column is-11">
           <div class="card">
             <!-- タイトル、説明、回答期限 -->

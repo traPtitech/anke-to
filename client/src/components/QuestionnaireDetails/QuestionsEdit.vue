@@ -1,79 +1,77 @@
 <template>
-  <div>
-    <div class="columns">
-      <article class="column is-11">
-        <div class="card">
-          <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
-          <transition-group name="list" tag="div" class="card-content questions">
-            <div v-for="(question, index) in questions" :key="question.questionId" class="question">
-              <div class="question-body columns">
-                <div class="column left-bar">
-                  <div class="sort-handle">
-                    <span
-                      class="ti-angle-up icon"
-                      @click="swapOrder(questions, index, index-1)"
-                      :class="{disabled: isFirstQuestion(index)}"
-                    ></span>
-                    <span
-                      class="ti-angle-down icon"
-                      @click="swapOrder(questions, index, index+1)"
-                      :class="{disabled: isLastQuestion(index)}"
-                    ></span>
-                  </div>
-                  <div class="delete-button">
-                    <span class="ti-trash icon is-medium" @click="removeQuestion(index)"></span>
-                  </div>
+  <div class="columns is-editing">
+    <article class="column is-11">
+      <div class="card">
+        <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
+        <transition-group name="list" tag="div" class="card-content questions">
+          <div v-for="(question, index) in questions" :key="question.questionId" class="question">
+            <div class="question-body columns is-mobile">
+              <div class="column left-bar">
+                <div class="sort-handle">
+                  <span
+                    class="ti-angle-up icon"
+                    @click="swapOrder(questions, index, index-1)"
+                    :class="{disabled: isFirstQuestion(index)}"
+                  ></span>
+                  <span
+                    class="ti-angle-down icon"
+                    @click="swapOrder(questions, index, index+1)"
+                    :class="{disabled: isLastQuestion(index)}"
+                  ></span>
                 </div>
-                <div class="column question is-editable">
-                  <div class="columns is-inline-block-mobile">
-                    <div class="column">
-                      <input
-                        type="text"
-                        class="subtitle input has-underline is-editable"
-                        placeholder="質問文"
-                        v-model="question.questionBody"
-                      >
-                    </div>
-                    <div class="column is-2 required-question-checkbox is-pulled-right">
-                      <label class="checkbox">
-                        必須
-                        <input type="checkbox" v-model="question.isRequired">
-                      </label>
-                    </div>
-                  </div>
-                  <component
-                    :editMode="'question'"
-                    :is="question.component"
-                    :contentProps="question"
-                    :questionIndex="index"
-                    class="response-body"
-                    @set-question-content="setQuestionContent"
-                  ></component>
+                <div class="delete-button">
+                  <span class="ti-trash icon is-medium" @click="removeQuestion(index)"></span>
                 </div>
               </div>
-              <hr>
+              <div class="column question is-editable">
+                <div class="columns is-inline-block-mobile">
+                  <div class="column">
+                    <input
+                      type="text"
+                      class="subtitle input has-underline is-editable"
+                      placeholder="質問文"
+                      v-model="question.questionBody"
+                    >
+                  </div>
+                  <div class="column is-2 required-question-checkbox is-pulled-right">
+                    <label class="checkbox">
+                      必須
+                      <input type="checkbox" v-model="question.isRequired">
+                    </label>
+                  </div>
+                </div>
+                <component
+                  :editMode="'question'"
+                  :is="question.component"
+                  :contentProps="question"
+                  :questionIndex="index"
+                  class="response-body"
+                  @set-question-content="setQuestionContent"
+                ></component>
+              </div>
             </div>
-          </transition-group>
-          <div class="add-question">
-            <div class="add-question-button button" @click="toggleNewQuestionDropdown">
-              <span>新しい質問を追加</span>
-              <span
-                class="icon is-small"
-                :class=" newQuestionDropdownIsActive ? 'ti-angle-down' : 'ti-angle-right'"
-              ></span>
-            </div>
-            <div v-show="newQuestionDropdownIsActive" class="question-type-buttons">
-              <button
-                v-for="(questionType, key) in questionTypes"
-                :key="key"
-                class="button"
-                @click="insertQuestion(questionType)"
-              >{{ questionType.label }}</button>
-            </div>
+            <hr>
+          </div>
+        </transition-group>
+        <div class="add-question">
+          <div class="add-question-button button" @click="toggleNewQuestionDropdown">
+            <span>新しい質問を追加</span>
+            <span
+              class="icon is-small"
+              :class=" newQuestionDropdownIsActive ? 'ti-angle-down' : 'ti-angle-right'"
+            ></span>
+          </div>
+          <div v-show="newQuestionDropdownIsActive" class="question-type-buttons">
+            <button
+              v-for="(questionType, key) in questionTypes"
+              :key="key"
+              class="button"
+              @click="insertQuestion(questionType)"
+            >{{ questionType.label }}</button>
           </div>
         </div>
-      </article>
-    </div>
+      </div>
+    </article>
   </div>
 </template>
 
@@ -149,15 +147,15 @@ export default {
       }
       switch (questionType.type) {
         case 'Checkbox':
-          ret.options = [ {label: '', id: 0} ]
+          ret.options = [ { label: '', id: 0 } ]
           ret.isSelected = [ false ]
           break
         case 'MultipleChoice':
-          ret.options = [ {label: '', id: 0} ]
+          ret.options = [ { label: '', id: 0 } ]
           break
         case 'LinearScale':
-          ret.scaleRange = {left: 1, right: 5}
-          ret.scaleLabels = {left: '', right: ''}
+          ret.scaleRange = { left: 1, right: 5 }
+          ret.scaleLabels = { left: '', right: '' }
           break
       }
       return ret
@@ -187,8 +185,10 @@ export default {
 .card-content {
   padding: 1rem 0 0 0;
 }
-.question-body > .column {
-  padding: 0.5rem;
+.question-body {
+  .column {
+    padding: 0.5rem;
+  }
 }
 .question.is-editable {
   border-left: solid;

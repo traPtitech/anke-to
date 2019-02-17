@@ -4,11 +4,7 @@
       <p class="message-body error-message">回答期限が過ぎています</p>
     </div>
 
-    <div
-      v-if="information.res_time_limit && !timeLimitExceeded"
-      class="is-fullheight details"
-      :class="{'has-navbar-fixed-bottom': isEditing}"
-    >
+    <div v-if="information.res_time_limit && !timeLimitExceeded" class="is-fullheight details">
       <div class="tabs is-centered">
         <ul></ul>
         <a
@@ -135,7 +131,7 @@ export default {
             const responseId = resp.data.responseID
             router.push({
               name: 'ResponseDetails',
-              params: {id: responseId}
+              params: { id: responseId }
             })
           })
       } else {
@@ -165,7 +161,7 @@ export default {
         // 新しい回答の場合は、アンケートの詳細画面に戻る
         router.push({
           name: 'QuestionnaireDetails',
-          params: {id: this.questionnaireId}
+          params: { id: this.questionnaireId }
         })
       } else {
         this.isEditing = false
@@ -255,7 +251,7 @@ export default {
         // !newBool : 編集 -> 閲覧
         const newRoute = {
           name: 'ResponseDetails',
-          params: {id: this.responseId},
+          params: { id: this.responseId },
           hash: newBool ? '#edit' : undefined
         }
         router.push(newRoute)
