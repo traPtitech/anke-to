@@ -131,12 +131,14 @@ export default {
     createResponse () {
       router.push({
         name: 'NewResponseDetails',
-        params: {questionnaireId: this.questionnaireId}
+        params: { questionnaireId: this.questionnaireId }
       })
     },
     deleteResponse (responseId, index) {
-      axios.delete('/responses/' + responseId, {method: 'delete', withCredentials: true})
-      this.responses.splice(index, 1)
+      if (window.confirm('この回答を削除しますか？')) {
+        axios.delete('/responses/' + responseId, { method: 'delete', withCredentials: true })
+        this.responses.splice(index, 1)
+      }
     }
   },
   computed: {

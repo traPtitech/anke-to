@@ -240,18 +240,20 @@ export default {
         })
     },
     deleteQuestionnaire () {
-      if (this.isNewQuestionnaire) {
-        router.push('/administrates')
-      } else {
-        axios
-          .delete('/questionnaires/' + this.questionnaireId)
-          .then(() => {
-            router.push('/administrates')
-            // アンケートを削除したら、Administratesページに戻る
-          })
-          .catch(error => {
-            this.alertNetworkError()
-          })
+      if (window.confirm('アンケートを削除しますか？')) {
+        if (this.isNewQuestionnaire) {
+          router.push('/administrates')
+        } else {
+          axios
+            .delete('/questionnaires/' + this.questionnaireId)
+            .then(() => {
+              router.push('/administrates')
+              // アンケートを削除したら、Administratesページに戻る
+            })
+            .catch(error => {
+              this.alertNetworkError()
+            })
+        }
       }
     },
     createQuestionData (index) {
@@ -324,12 +326,14 @@ export default {
       this.questions[ index ][ label ] = value
     },
     removeQuestion (index) {
-      const id = this.questions[ index ].questionId
-      if (id > 0) {
-        // サーバーに存在する質問を削除した場合はリストに追加
-        this.removedQuestionIds.push(id)
+      if (window.confirm('この質問を削除しますか？')) {
+        const id = this.questions[ index ].questionId
+        if (id > 0) {
+          // サーバーに存在する質問を削除した場合はリストに追加
+          this.removedQuestionIds.push(id)
+        }
+        this.questions.splice(index, 1)
       }
-      this.questions.splice(index, 1)
     },
     showMessage (body, color) {
       this.message = {
