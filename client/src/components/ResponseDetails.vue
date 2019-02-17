@@ -172,7 +172,6 @@ export default {
       data.submitted_at = new Date().toLocaleString('ja-GB')
       this.setMessage('回答を送信しました', 'green')
       this.sendResponse(data)
-
     },
     saveResponse () {
       // 回答の保存

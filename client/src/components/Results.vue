@@ -168,7 +168,6 @@ export default {
     },
     selectedTab () {
       return this.$route.query.tab && this.$route.query.tab === 'individual' ? 'Individual' : 'Spreadsheet'
-
     },
     currentPage () {
       if (this.$route.query.tab === 'individual') {

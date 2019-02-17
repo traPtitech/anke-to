@@ -63,7 +63,7 @@ import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 import axios from '@/bin/axios'
 import common from '@/util/common'
 import EditNavBar from '@/components/Utils/EditNavBar'
-import TopBarMessage from '@/components/Utils/TopBarMessage';
+import TopBarMessage from '@/components/Utils/TopBarMessage'
 
 export default {
   name: 'QuestionnaireDetails',
@@ -175,6 +175,7 @@ export default {
             // エラーが起きた場合は、送信済みのInformationを削除する
             axios.delete('/questionnaires/' + this.newQuestionnaireId)
             // this.showMessage('通信エラー', 'red')
+            console.log(error)
             this.alertNetworkError()
           })
       } else {
@@ -199,6 +200,7 @@ export default {
           }) // 編集を終了
           .catch(error => {
             // this.showMessage('通信エラー', 'red')
+            console.log(error)
             this.alertNetworkError()
           })
       }
@@ -251,6 +253,7 @@ export default {
               // アンケートを削除したら、Administratesページに戻る
             })
             .catch(error => {
+              console.log(error)
               this.alertNetworkError()
             })
         }

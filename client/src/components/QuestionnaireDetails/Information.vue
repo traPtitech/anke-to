@@ -45,6 +45,23 @@
                 :disabled="timeLimitExceeded"
                 :to="{name: 'NewResponseDetails', params: {questionnaireId: this.questionnaireId}}"
               >新しい回答を作成</router-link>
+              <div class="new-response-link-panel">
+                <input
+                  id="new-response-link"
+                  class="input"
+                  type="text"
+                  :value="newResponseLink"
+                  ref="link"
+                  @click="$refs.link.select()"
+                  readonly
+                >
+                <span class="button" @click="copyNewResponseLink">
+                  <span class="ti-clipboard"></span>
+                </span>
+              </div>
+              <transition name="fade">
+                <p class="copy-message" v-if="copyMessage.showMessage">{{ copyMessage.message }}</p>
+              </transition>
               <router-link
                 v-if="canViewResults"
                 :to="{ name: 'Results', params: { id: questionnaireId }}"
@@ -93,7 +110,6 @@
 
 <script>
 
-// import <componentname> from '<path to component file>'
 import axios from '@/bin/axios'
 import router from '@/router'
 import common from '@/util/common'
@@ -123,7 +139,10 @@ export default {
       responses: [],
       activeModal: {},
       isModalActive: false,
-      newQuestionnaire: false
+      newQuestionnaire: false,
+      copyMessage: {
+        showMessage: false
+      }
     }
   },
   methods: {
@@ -138,6 +157,21 @@ export default {
       if (window.confirm('この回答を削除しますか？')) {
         axios.delete('/responses/' + responseId, { method: 'delete', withCredentials: true })
         this.responses.splice(index, 1)
+      }
+    },
+    copyNewResponseLink () {
+      let link = document.querySelector('#new-response-link')
+      link.select()
+      if (document.execCommand('copy')) {
+        this.copyMessage = {
+          showMessage: true,
+          message: '回答ページへのリンクをコピーしました'
+        }
+      } else {
+        this.copyMessage = {
+          showMessage: true,
+          message: 'コピーに失敗しました'
+        }
       }
     }
   },
@@ -175,6 +209,9 @@ export default {
     timeLimitExceeded () {
       // 回答期限を過ぎていた場合はtrueを返す
       return new Date(this.details.res_time_limit).getTime() < new Date().getTime()
+    },
+    newResponseLink () {
+      return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId
     }
   },
   watch: {
@@ -186,6 +223,7 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
 .card-header-title.is-editing {
   padding: 0;
 }
@@ -210,13 +248,48 @@ export default {
   }
 }
 .management-buttons {
-  .button:not(:last-child) {
-    margin-bottom: 0.7rem;
+  .button:not(:first-child) {
+    margin-top: 0.7rem;
   }
   .button {
     max-width: fit-content;
     display: block;
+    &:hover {
+      background-color: $base-pink;
+    }
   }
+  .new-response-link-panel {
+    display: flex;
+    input {
+      width: -webkit-fill-available;
+      max-width: 20rem;
+      margin: 0;
+      display: inherit;
+      border-radius: 4px 0 0 4px;
+      border-color: $base-gray;
+    }
+    .button {
+      min-width: fit-content;
+      margin: 0;
+      display: inline-block;
+      border-radius: 0 4px 4px 0;
+      border-color: $base-gray;
+      &:hover {
+        background-color: $base-pink;
+      }
+    }
+  }
+}
+.copy-message {
+  font-size: smaller;
+  margin: 0.3rem;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
 .modal-card-head {
   .ti-check {
