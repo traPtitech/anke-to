@@ -341,12 +341,17 @@ export default {
         color: color,
         body: body
       }
+    },
+    resetMessage () {
+      this.message = {
+        showMessage: false
+      }
     }
   },
   computed: {
     selectedTab: {
       get () {
-        return this.$route.query.tab === 'questions' ? 'Questions' : 'Information'
+        return this.$route.query.tab && this.$route.query.tab === 'questions' ? 'Questions' : 'Information'
       },
       set (newTab) {
         router.push({
@@ -416,11 +421,13 @@ export default {
       return [
         {
           label: '送信',
+          class: 'send-button',
           atClick: 'submit-questionnaire',
           disabled: !this.submitOk
         },
         {
           label: 'キャンセル',
+          class: 'cancel-button',
           atClick: 'abort-editing',
           disabled: false
         }
@@ -469,6 +476,7 @@ export default {
         this.getInformation()
         this.getQuestions()
         this.newQuestionnaireId = undefined
+        this.resetMessage()
       }
     },
     noTimeLimit: function (newBool, oldBool) {

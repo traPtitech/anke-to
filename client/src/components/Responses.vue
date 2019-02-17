@@ -93,12 +93,6 @@ td {
   padding-right: 1.5rem;
   padding-top: 1.5rem;
 }
-.dropdown-content:hover {
-  background-color: lightgray;
-}
-.dropdown-content.is-selected {
-  background-color: darkgray;
-}
 .button p {
   margin-right: 0.5em;
 }

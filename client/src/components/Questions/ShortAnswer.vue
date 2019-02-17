@@ -75,10 +75,12 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
+
 .placeholder {
-  color: lightgrey;
+  color: $base-brown;
   &.has-underline {
-    border-bottom: lightgrey dotted 0.5px;
+    border-bottom: $base-brown dotted 0.5px;
   }
 }
 </style>

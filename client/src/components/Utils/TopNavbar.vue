@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="navbar has-background-white-bis" role="navigation" aria-label="main navigation">
+    <nav class="navbar" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
         <a
           role="button"
@@ -17,7 +17,7 @@
             <p class="title is-3">anke-to</p>
           </router-link>
         </div>
-        <div class="subtitle pull-right">
+        <div class="subtitle pull-right user">
           <img
             class="user-icon"
             v-if="traqId"
@@ -47,7 +47,11 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import "@/css/variables.scss";
+.navbar {
+  background-color: $base-gray;
+}
 .title {
   margin-bottom: 0;
 }
@@ -62,6 +66,9 @@ export default {
 }
 .navbar-burger {
   margin-left: 0;
+}
+.user {
+  height: fit-content;
 }
 .user-icon {
   width: 36px;

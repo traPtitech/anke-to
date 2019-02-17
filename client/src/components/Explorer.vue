@@ -226,7 +226,9 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import "@/css/variables.scss";
+
 td {
   vertical-align: middle;
   font-size: 0.9em;
@@ -245,10 +247,10 @@ td {
   padding-top: 1.5rem;
 }
 .dropdown-content:hover {
-  background-color: lightgray;
+  background-color: $base-pink;
 }
 .dropdown-content.is-selected {
-  background-color: darkgray;
+  background-color: $base-brown;
 }
 .button p {
   margin-right: 0.5em;

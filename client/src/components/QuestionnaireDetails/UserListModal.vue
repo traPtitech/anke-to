@@ -139,6 +139,8 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
+
 .icon-button {
   color: white;
   font-weight: bolder;
@@ -153,9 +155,9 @@ export default {
     cursor: pointer;
   }
   &.confirm {
-    background-color: rgb(208, 255, 137);
+    background-color: $base-bluegray;
     &:hover {
-      background-color: greenyellow;
+      background-color: $var-indigo;
     }
     &.disabled {
       background-color: lightgray;
@@ -163,15 +165,15 @@ export default {
     }
   }
   &.close {
-    background-color: rgb(255, 160, 160);
+    background-color: $base-brown;
     &:hover {
-      background-color: red;
+      background-color: $var-red;
     }
   }
   &.select-group {
-    background-color: rgb(162, 187, 154);
+    background-color: $base-gray;
     &:hover {
-      background-color: gray;
+      background-color: $base-darkbrown;
     }
   }
 }

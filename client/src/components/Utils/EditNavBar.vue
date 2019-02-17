@@ -5,6 +5,7 @@
         v-for="editButton in editButtons"
         :key="editButton.label"
         class="button is-medium"
+        :class="editButton.class"
         :disabled="editButton.disabled"
         @click.prevent="atClick(editButton.atClick)"
       >{{ editButton.label }}</button>
@@ -44,12 +45,16 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
 .editor-buttons {
   margin: auto;
   .button {
     margin: 1rem;
     width: 8rem;
     max-width: 100%;
+    &:hover {
+      border-color: $base-pink;
+    }
   }
   @media screen and (max-width: 768px) {
     .button {
@@ -58,6 +63,6 @@ export default {
   }
 }
 .navbar.is-fixed-bottom {
-  background-color: gray;
+  background-color: $var-indigo;
 }
 </style>

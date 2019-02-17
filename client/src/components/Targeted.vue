@@ -102,6 +102,8 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
+
 .content {
   margin-left: 1.5rem;
   p {
@@ -127,7 +129,7 @@ export default {
 article.post {
   padding: 1rem;
   /* padding-bottom: 0; */
-  border-bottom: 1px solid #e6eaee;
+  border-bottom: 1px solid $base-lightbrown;
 }
 .columns {
   padding-top: 0;

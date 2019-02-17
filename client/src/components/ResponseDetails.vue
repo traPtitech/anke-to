@@ -47,7 +47,6 @@ import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'
 import InformationSummary from '@/components/InformationSummary'
 
-
 export default {
   name: 'ResponseDetails',
   components: {
@@ -94,6 +93,14 @@ export default {
         .get('/questionnaires/' + this.questionnaireId)
         .then(res => {
           this.information = res.data
+          if (this.timeLimitExceeded) {
+            this.message =
+              {
+                body: '回答期限が過ぎています',
+                color: 'red',
+                showMessage: true
+              }
+          }
         })
     },
     getResponseData () {
@@ -249,6 +256,11 @@ export default {
     },
     showMessage () {
       this.$set(this.message, 'showMessage', true)
+    },
+    resetMessage () {
+      this.message = {
+        showMessage: false
+      }
     }
   },
   computed: {
@@ -298,16 +310,19 @@ export default {
       return [
         {
           label: '送信',
+          class: 'send-button',
           atClick: 'submit-response',
           disabled: !this.submitOk
         },
         {
           label: '保存',
+          class: 'save-button',
           atClick: 'save-response',
           disabled: false
         },
         {
           label: 'キャンセル',
+          class: 'cancel-button',
           atClick: 'disable-editing',
           disabled: false
         }
@@ -346,18 +361,12 @@ export default {
         }
       }
       return ret
-    },
-    message () {
-      return {
-        body: '回答期限が過ぎています',
-        color: 'red',
-        showMessage: this.timeLimitExceeded
-      }
     }
   },
   watch: {
     $route: function (newRoute, oldRoute) {
       if (newRoute.params.id !== oldRoute.params.id) {
+        this.resetMessage()
         this.getResponseData()
           .then(this.getQuestionnaireData)
           .then(this.getQuestions)

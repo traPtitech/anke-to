@@ -1,5 +1,5 @@
 <template>
-  <div class="submenu column is-2 has-background-light is-fullheight">
+  <div class="submenu column is-2 is-fullheight">
     <aside class="nav menu">
       <ul class="menu-list">
         <li v-for="(menuItem, index) in menuItems" :key="index" @click="$emit('close-side-menu')">
@@ -55,12 +55,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/css/variables.scss";
+
 .submenu {
   min-width: fit-content;
+  background-color: $base-lightbrown;
 }
 .menu-list {
   hr {
-    border-style: outset;
+    // border-style: outset;
+    // border-top-color: $base-brown;
+    border: $base-darkbrown solid 2px;
     margin: 0.3rem 0;
   }
   .button {
@@ -71,18 +76,21 @@ export default {
   position: relative;
   display: inline-block;
   text-decoration: none;
-}
-.menu-list a::after {
-  position: absolute;
-  bottom: 3.5px;
-  left: 0.4em;
-  content: "";
-  width: 100%;
-  height: 2px;
-  background: #333;
-  transform: scale(0, 1);
-  transform-origin: right top;
-  transition: transform 0.3s;
+  &:hover {
+    background-color: inherit;
+  }
+  &::after {
+    position: absolute;
+    bottom: 3.5px;
+    left: 0.4em;
+    content: "";
+    width: 100%;
+    height: 2px;
+    background: $base-brown;
+    transform: scale(0, 1);
+    transform-origin: right top;
+    transition: transform 0.3s;
+  }
 }
 .menu-list :hover::after {
   transform-origin: left top;

@@ -229,23 +229,10 @@ export default {
     border-radius: 1rem;
   }
 }
-// #title {
-//   .input {
-//     font-size: 2rem;
-//   }
-//   .wrapper {
-//     width: 100%;
-//   }
-//   .error-message {
-//     font-size: 1rem;
-//     margin: 0.5rem;
-//   }
-// }
 .editorbuttons {
   margin: auto;
   .button {
     margin: 0 1rem 2rem 1rem;
-    // margin-bottom: 1rem;
     width: 8rem;
     max-width: 100%;
   }

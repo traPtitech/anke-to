@@ -35,8 +35,17 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+.message {
+  margin: 0;
+}
 .message-body {
   font-size: 1rem;
-  margin: 1rem;
+  // margin: 1rem 0 1rem auto;
+  margin: 1rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  width: fit-content;
+  // border-radius: 4px;
+  border-style: solid;
+  border-width: 0 0 0 4px;
 }
 </style>
