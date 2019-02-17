@@ -56,7 +56,7 @@ export default {
       return {
         name: 'Results',
         params: { id: this.$route.params.id },
-        hash: '#individual'
+        query: { tab: 'individual' }
       }
     }
   },

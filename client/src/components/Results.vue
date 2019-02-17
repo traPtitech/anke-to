@@ -56,7 +56,7 @@ export default {
           this.getResults()
             .then(this.getQuestions)
             .then(() => {
-              if (this.$route.hash === '#individual') {
+              if (this.$route.query.tab === 'individual') {
                 this.setResponseData()
                 this.setResponsesToQuestions()
               }
@@ -120,10 +120,13 @@ export default {
     getTabLink (tab) {
       let ret = {
         name: 'Results',
-        params: {id: this.$route.params.id}
+        params: { id: this.$route.params.id },
+        query: {}
       }
       if (tab === 'Individual') {
-        ret.hash = '#individual'
+        ret.query.tab = 'individual'
+      } else {
+        ret.query.tab = 'spreadsheet'
       }
       return ret
     },
@@ -164,14 +167,11 @@ export default {
       }
     },
     selectedTab () {
-      if (this.$route.hash === '#individual') {
-        return 'Individual'
-      } else {
-        return 'Spreadsheet'
-      }
+      return this.$route.query.tab && this.$route.query.tab === 'individual' ? 'Individual' : 'Spreadsheet'
+
     },
     currentPage () {
-      if (this.$route.hash === '#individual') {
+      if (this.$route.query.tab === 'individual') {
         return this.$route.query.page ? Number(this.$route.query.page) : 1
       } else {
         return undefined
@@ -193,7 +193,7 @@ export default {
   },
   watch: {
     $route: function (newRoute) {
-      if (newRoute.hash === '#individual') {
+      if (newRoute.query.tab === 'individual') {
         this.setResponseData()
         this.setResponsesToQuestions()
       }

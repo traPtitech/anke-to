@@ -88,7 +88,7 @@ export default {
   data () {
     return {
       detailTabs: [ 'Information', 'Questions' ],
-      selectedTab: 'Information',
+      // selectedTab: 'Information',
       showEditButton: false,
       noTimeLimit: true,
       information: {},
@@ -344,6 +344,19 @@ export default {
     }
   },
   computed: {
+    selectedTab: {
+      get () {
+        return this.$route.query.tab === 'questions' ? 'Questions' : 'Information'
+      },
+      set (newTab) {
+        router.push({
+          name: 'QuestionnaireDetails',
+          params: { questionnaireId: this.questionnaireId },
+          query: { tab: newTab.toLowerCase() },
+          hash: this.$route.hash
+        })
+      }
+    },
     administrates () {
       // 管理者かどうかを返す
       // getInformation() が完了する前は false を返す
@@ -372,6 +385,7 @@ export default {
         const newRoute = {
           name: 'QuestionnaireDetails',
           params: { id: this.questionnaireId },
+          query: this.$route.query,
           hash: newBool ? '#edit' : undefined
         }
         router.push(newRoute)
