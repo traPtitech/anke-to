@@ -265,7 +265,11 @@ export default {
         return this.details.res_time_limit.slice(0, 16)
       },
       set: function (str) {
-        this.details.res_time_limit = str
+        if (str === '') {
+          this.$emit('set-data', 'noTimeLimit', true)
+        } else {
+          this.details.res_time_limit = str
+        }
       }
     }
   },

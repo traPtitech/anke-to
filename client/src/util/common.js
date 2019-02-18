@@ -3,7 +3,11 @@ import moment from 'moment'
 
 export default {
   customDateStr: function(str) {
-    return str === 'NULL' ? 'なし' : moment(str).format('YYYY/MM/DD HH:mm')
+    if (str === 'NULL' || str === '') {
+      return 'なし'
+    } else {
+      return moment(str).format('YYYY/MM/DD HH:mm')
+    }
   },
 
   relativeDateStr: function(str) {
