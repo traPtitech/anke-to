@@ -34,3 +34,8 @@ func EstablishConnection() (*sqlx.DB, error) {
 
 	return sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&loc=Japan&charset=utf8mb4", user, pass, host, dbname))
 }
+
+func SetTimeZone() error {
+	_, err := DB.Exec("set time_zone = '+09:00'")
+	return err
+}

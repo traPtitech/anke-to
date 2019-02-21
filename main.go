@@ -16,6 +16,10 @@ func main() {
 	}
 	model.DB = _db
 
+	if err := model.SetTimeZone(); err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
@@ -30,7 +34,7 @@ func main() {
 	e.Static("/", "client/dist")
 	e.Static("/static", "client/dist/static")
 	e.File("*", "client/dist/index.html")
-    
+
 	// Routes
 	e.GET("/api/questionnaires", router.GetQuestionnaires)
 	e.POST("/api/questionnaires", router.PostQuestionnaire)
