@@ -2,7 +2,6 @@ package model
 
 import (
 	"net/http"
-	"sort"
 	"strconv"
 	"time"
 
@@ -120,10 +119,6 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 	if page_num > page_max {
 		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
 	}
-
-	sort.Slice(questionnaires, func(i, j int) bool {
-		return questionnaires[i].ModifiedAt > questionnaires[j].ModifiedAt
-	})
 
 	ret := []QuestionnairesInfo{}
 	for i := 0; i < 20; i++ {
