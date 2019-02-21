@@ -16,10 +16,6 @@ func main() {
 	}
 	model.DB = _db
 
-	if err := model.SetTimeZone(); err != nil {
-		panic(err)
-	}
-
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
