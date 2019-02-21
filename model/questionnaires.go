@@ -51,7 +51,7 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	// アンケート一覧の配列
 	allquestionnaires := []Questionnaires{}
 
-	if err := DB.Select(&allquestionnaires,
+	if err := db.Select(&allquestionnaires,
 		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 
 	// 自分またはtraPが含まれているアンケートのID
 	targetedQuestionnaireID := []int{}
-	if err := DB.Select(&targetedQuestionnaireID,
+	if err := db.Select(&targetedQuestionnaireID,
 		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
 		userID); err != nil {
 		c.Logger().Error(err)
@@ -139,7 +139,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {
 	questionnaire := Questionnaires{}
-	if err := DB.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
+	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
 		if err == sql.ErrNoRows {
 			return Questionnaires{}, echo.NewHTTPError(http.StatusNotFound)
@@ -178,7 +178,7 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 		Title        string         `db:"title"`
 		ResTimeLimit mysql.NullTime `db:"res_time_limit"`
 	}{}
-	if err := DB.Get(&res,
+	if err := db.Get(&res,
 		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
 		questionnaireID); err != nil {
 		if err == sql.ErrNoRows {
@@ -189,4 +189,86 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 		}
 	}
 	return res.Title, NullTimeToString(res.ResTimeLimit), nil
+}
+
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string) (int, error) {
+	var result sql.Result
+
+	if resTimeLimit == "" || resTimeLimit == "NULL" {
+		resTimeLimit = "NULL"
+		var err error
+		result, err = db.Exec(
+			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?)`,
+			title, description, resSharedTo, time.Now(), time.Now())
+		if err != nil {
+			c.Logger().Error(err)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		var err error
+		result, err = db.Exec(
+			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			title, description, resTimeLimit, resSharedTo, time.Now(), time.Now())
+		if err != nil {
+			c.Logger().Error(err)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.Logger().Error(err)
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return int(lastID), nil
+}
+
+func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID int) error {
+	if resTimeLimit == "" || resTimeLimit == "NULL" {
+		resTimeLimit = "NULL"
+		if _, err := db.Exec(
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			title, description, resSharedTo, time.Now(), questionnaireID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		if _, err := db.Exec(
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			title, description, resTimeLimit, resSharedTo, time.Now(), questionnaireID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return nil
+}
+
+func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+	if _, err := db.Exec(
+		"UPDATE questionnaires SET deleted_at = ? WHERE id = ?",
+		time.Now(), questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
+}
+
+func GetResShared(c echo.Context, questionnaireID int) (string, error) {
+	resSharedTo := ""
+	if err := db.Get(&resSharedTo,
+		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return "", echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return resSharedTo, nil
 }

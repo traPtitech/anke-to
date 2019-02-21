@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo"
@@ -10,16 +11,15 @@ import (
 )
 
 func GetQuestions(c echo.Context) error {
-	questionnaireID := c.Param("id")
-	// 質問一覧の配列
-	allquestions := []model.Questions{}
-
-	// アンケートidの一致する質問を取る
-	if err := model.DB.Select(&allquestions,
-		"SELECT * FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
-		questionnaireID); err != nil {
+	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return err
+	}
+
+	allquestions, err := model.GetQuestions(c, questionnaireID)
+	if err != nil {
+		return err
 	}
 
 	if len(allquestions) == 0 {
@@ -45,20 +45,15 @@ func GetQuestions(c echo.Context) error {
 	for _, v := range allquestions {
 		options := []string{}
 		scalelabel := model.ScaleLabels{}
-
+		var err error
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			if err := model.DB.Select(
-				&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
-				v.ID); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
+			options, err = model.GetOptions(c, v.ID)
 		case "LinearScale":
-			if err := model.DB.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?", v.ID); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
+			scalelabel, err = model.GetScaleLabels(c, v.ID)
+		}
+		if err != nil {
+			return err
 		}
 
 		ret = append(ret,
@@ -88,7 +83,7 @@ func PostQuestion(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		PageNum         int      `json:"page_num"`
 		Body            string   `json:"body"`
-		IsRequrired     bool     `json:"is_required"`
+		IsRequired      bool     `json:"is_required"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
 		ScaleLabelLeft  string   `json:"scale_label_left"`
@@ -101,17 +96,9 @@ func PostQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	result, err := model.DB.Exec(
-		`INSERT INTO question (questionnaire_id, page_num, question_num, type, body, is_required, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, time.Now())
+	lastID, err := model.InsertQuestion(
+		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	lastID, err2 := result.LastInsertId()
-	if err2 != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -119,19 +106,19 @@ func PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if _, err := model.DB.Exec(
-				"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
-				lastID, i+1, v); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
+			if err := model.InsertOption(c, lastID, i+1, v); err != nil {
+				return err
 			}
 		}
 	case "LinearScale":
-		if _, err := model.DB.Exec(
-			"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
-			lastID, req.ScaleLabelLeft, req.ScaleLabelRight, req.ScaleMin, req.ScaleMax); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		if err := model.InsertScaleLabels(c, lastID,
+			model.ScaleLabels{
+				ScaleLabelLeft:  req.ScaleLabelLeft,
+				ScaleLabelRight: req.ScaleLabelRight,
+				ScaleMax:        req.ScaleMax,
+				ScaleMin:        req.ScaleMin,
+			}); err != nil {
+			return err
 		}
 	}
 
@@ -142,7 +129,7 @@ func PostQuestion(c echo.Context) error {
 		"question_num":      req.QuestionNum,
 		"page_num":          req.PageNum,
 		"body":              req.Body,
-		"is_required":       req.IsRequrired,
+		"is_required":       req.IsRequired,
 		"options":           req.Options,
 		"scale_label_right": req.ScaleLabelRight,
 		"scale_label_left":  req.ScaleLabelLeft,
@@ -152,7 +139,10 @@ func PostQuestion(c echo.Context) error {
 }
 
 func EditQuestion(c echo.Context) error {
-	questionID := c.Param("id")
+	questionID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
 
 	req := struct {
 		QuestionnaireID int      `json:"questionnaireID"`
@@ -160,7 +150,7 @@ func EditQuestion(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		PageNum         int      `json:"page_num"`
 		Body            string   `json:"body"`
-		IsRequrired     bool     `json:"is_required"`
+		IsRequired      bool     `json:"is_required"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
 		ScaleLabelLeft  string   `json:"scale_label_left"`
@@ -173,39 +163,27 @@ func EditQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := model.DB.Exec(
-		"UPDATE question SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
-		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequrired, questionID); err != nil {
+	if err := model.UpdateQuestion(
+		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
+		req.IsRequired, questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		for i, v := range req.Options {
-			if _, err := model.DB.Exec(
-				`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
-				ON DUPLICATE KEY UPDATE option_num = ?, body = ?`,
-				questionID, i+1, v, i+1, v); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		}
-		if _, err := model.DB.Exec(
-			"DELETE FROM options WHERE question_id= ? AND option_num > ?",
-			questionID, len(req.Options)); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		if err := model.UpdateOptions(c, req.Options, questionID); err != nil {
+			return err
 		}
 	case "LinearScale":
-		if _, err := model.DB.Exec(
-			`INSERT INTO scale_labels (question_id, scale_label_right, scale_label_left, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)
-			ON DUPLICATE KEY UPDATE scale_label_right = ?, scale_label_left = ?, scale_min = ?, scale_max = ?`,
-			questionID,
-			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax,
-			req.ScaleLabelRight, req.ScaleLabelLeft, req.ScaleMin, req.ScaleMax); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		if err := model.UpdateScaleLabels(c, questionID,
+			model.ScaleLabels{
+				ScaleLabelLeft:  req.ScaleLabelLeft,
+				ScaleLabelRight: req.ScaleLabelRight,
+				ScaleMax:        req.ScaleMax,
+				ScaleMin:        req.ScaleMin,
+			}); err != nil {
+			return err
 		}
 	}
 
@@ -213,25 +191,21 @@ func EditQuestion(c echo.Context) error {
 }
 
 func DeleteQuestion(c echo.Context) error {
-	questionID := c.Param("id")
-
-	if _, err := model.DB.Exec(
-		"UPDATE question SET deleted_at = ? WHERE id = ?", time.Now(), questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	questionID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := model.DB.Exec(
-		"DELETE FROM options WHERE question_id= ?",
-		questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.DeleteQuestion(c, questionID); err != nil {
+		return err
 	}
-	if _, err := model.DB.Exec(
-		"DELETE FROM options WHERE question_id= ?",
-		questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+
+	if err := model.DeleteOptions(c, questionID); err != nil {
+		return err
+	}
+
+	if err := model.DeleteScaleLabels(c, questionID); err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
