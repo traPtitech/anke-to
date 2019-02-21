@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"database/sql"
 	"github.com/labstack/echo"
 
 	"git.trapti.tech/SysAd/anke-to/model"
@@ -74,48 +73,21 @@ func PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	var result sql.Result
-
-	// アンケートの追加
-	if req.ResTimeLimit == "" || req.ResTimeLimit == "NULL" {
-		req.ResTimeLimit = "NULL"
-		var err error
-		result, err = model.DB.Exec(
-			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
-			VALUES (?, ?, ?, ?, ?)`,
-			req.Title, req.Description, req.ResSharedTo, time.Now(), time.Now())
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	} else {
-		var err error
-		result, err = model.DB.Exec(
-			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
-			VALUES (?, ?, ?, ?, ?, ?)`,
-			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, time.Now(), time.Now())
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	lastID, err := result.LastInsertId()
+	lastID, err := model.InsertQuestionnaire(c, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	if err := model.InsertTargets(c, int(lastID), req.Targets); err != nil {
 		return err
 	}
 
-	if err := model.InsertAdministrators(c, int(lastID), req.Administrators); err != nil {
+	if err := model.InsertTargets(c, lastID, req.Targets); err != nil {
+		return err
+	}
+
+	if err := model.InsertAdministrators(c, lastID, req.Administrators); err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"questionnaireID": int(lastID),
+		"questionnaireID": lastID,
 		"title":           req.Title,
 		"description":     req.Description,
 		"res_time_limit":  req.ResTimeLimit,
@@ -153,24 +125,9 @@ func EditQuestionnaire(c echo.Context) error {
 		req.ResSharedTo = "administrators"
 	}
 
-	// アップデートする
-	if req.ResTimeLimit == "" || req.ResTimeLimit == "NULL" {
-		req.ResTimeLimit = "NULL"
-		if _, err := model.DB.Exec(
-			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL,
-			res_shared_to = ?, modified_at = ? WHERE id = ?`,
-			req.Title, req.Description, req.ResSharedTo, time.Now(), questionnaireID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	} else {
-		if _, err := model.DB.Exec(
-			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?,
-			res_shared_to = ?, modified_at = ? WHERE id = ?`,
-			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, time.Now(), questionnaireID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := model.UpdateQuestionnaire(
+		c, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
+		return err
 	}
 
 	if err := model.DeleteTargets(c, questionnaireID); err != nil {
@@ -199,10 +156,8 @@ func DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := model.DB.Exec(
-		"UPDATE questionnaires SET deleted_at = ? WHERE id = ?", time.Now(), questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.DeleteQuestionnaire(c, questionnaireID); err != nil {
+		return err
 	}
 
 	if err := model.DeleteTargets(c, questionnaireID); err != nil {
@@ -280,39 +235,10 @@ func GetMyQuestionnaire(c echo.Context) error {
 }
 
 func GetTargetedQuestionnaire(c echo.Context) error {
-	questionnaires, _, err := model.GetQuestionnaires(c, model.TargetType(model.Targeted))
+	ret, err := model.GetTargettedQuestionnaires(c)
 	if err != nil {
 		return err
 	}
 
-	type QuestionnairesInfo struct {
-		ID           int    `json:"questionnaireID"`
-		Title        string `json:"title"`
-		Description  string `json:"description"`
-		ResTimeLimit string `json:"res_time_limit"`
-		ResSharedTo  string `json:"res_shared_to"`
-		CreatedAt    string `json:"created_at"`
-		ModifiedAt   string `json:"modified_at"`
-		RespondedAt  string `json:"responded_at"`
-	}
-	questionnairesInfo := []QuestionnairesInfo{}
-
-	for _, q := range questionnaires {
-		respondedAt, err := model.RespondedAt(c, q.ID)
-		if err != nil {
-			return err
-		}
-		questionnairesInfo = append(questionnairesInfo,
-			QuestionnairesInfo{
-				ID:           q.ID,
-				Title:        q.Title,
-				Description:  q.Description,
-				ResTimeLimit: q.ResTimeLimit,
-				ResSharedTo:  q.ResSharedTo,
-				CreatedAt:    q.CreatedAt,
-				ModifiedAt:   q.ModifiedAt,
-				RespondedAt:  respondedAt,
-			})
-	}
-	return c.JSON(http.StatusOK, questionnairesInfo)
+	return c.JSON(http.StatusOK, ret)
 }

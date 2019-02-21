@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"database/sql"
-	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 
 	"git.trapti.tech/SysAd/anke-to/model"
@@ -51,14 +49,9 @@ func PostResponse(c echo.Context) error {
 }
 
 func GetMyResponses(c echo.Context) error {
-	responsesinfo := []model.ResponseInfo{}
-
-	if err := model.DB.Select(&responsesinfo,
-		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL ORDER BY modified_at DESC`,
-		model.GetUserID(c)); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	responsesinfo, err := model.GetMyResponses(c)
+	if err != nil {
+		return err
 	}
 
 	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
@@ -75,14 +68,10 @@ func GetMyResponsesByID(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	responsesinfo := []model.ResponseInfo{}
 
-	if err := model.DB.Select(&responsesinfo,
-		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ? ORDER BY modified_at DESC`,
-		model.GetUserID(c), questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	responsesinfo, err := model.GetMyResponsesByID(c, questionnaireID)
+	if err != nil {
+		return err
 	}
 
 	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
@@ -100,16 +89,9 @@ func GetResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	resSharedTo := ""
-	if err := model.DB.Get(&resSharedTo,
-		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	resSharedTo, err := model.GetResShared(c, questionnaireID)
+	if err != nil {
+		return err
 	}
 
 	switch resSharedTo {
@@ -135,40 +117,10 @@ func GetResponsesByID(c echo.Context) error {
 		}
 	}
 
-	responsesinfo := []struct {
-		ResponseID  int            `db:"response_id"`
-		UserID      string         `db:"user_traqid"`
-		ModifiedAt  time.Time      `db:"modified_at"`
-		SubmittedAt mysql.NullTime `db:"submitted_at"`
-	}{}
-
-	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
-			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
-
 	sortQuery := c.QueryParam("sort")
-	sortNum := 0
-	switch sortQuery {
-	case "traqid":
-		sql += ` ORDER BY user_traqid`
-	case "-traqid":
-		sql += ` ORDER BY user_traqid DESC`
-	case "submitted_at":
-		sql += ` ORDER BY submitted_at`
-	case "-submitted_at":
-		sql += ` ORDER BY submitted_at DESC`
-	case "":
-	default:
-		sortNum, err = strconv.Atoi(sortQuery)
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
-	}
-
-	if err := model.DB.Select(&responsesinfo, sql,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	responsesinfo, sortNum, err := model.GetSortedResponses(c, questionnaireID, sortQuery)
+	if err != nil {
+		return err
 	}
 
 	type ResponsesInfo struct {
@@ -226,22 +178,9 @@ func GetResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	respondentInfo := struct {
-		QuestionnaireID int            `db:"questionnaire_id"`
-		ModifiedAt      mysql.NullTime `db:"modified_at"`
-		SubmittedAt     mysql.NullTime `db:"submitted_at"`
-	}{}
-
-	if err := model.DB.Get(&respondentInfo,
-		`SELECT questionnaire_id, modified_at, submitted_at from respondents
-		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
-		responseID, model.GetUserID(c)); err != nil {
-		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	respondentInfo, err := model.GetRespondentByID(c, responseID)
+	if err != nil {
+		return nil
 	}
 
 	responses := struct {
@@ -285,31 +224,13 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
-		req.SubmittedAt = "NULL"
-		if _, err := model.DB.Exec(
-			`UPDATE respondents
-			SET questionnaire_id = ?, submitted_at = NULL, modified_at = ? WHERE response_id = ?`,
-			req.ID, time.Now(), responseID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	} else {
-		if _, err := model.DB.Exec(
-			`UPDATE respondents
-			SET questionnaire_id = ?, submitted_at = ?, modified_at = ? WHERE response_id = ?`,
-			req.ID, req.SubmittedAt, time.Now(), responseID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := model.UpdateRespondents(c, req.ID, responseID, req.SubmittedAt); err != nil {
+		return err
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if _, err := model.DB.Exec(
-		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
-		time.Now(), responseID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.DeleteResponse(c, responseID); err != nil {
+		return err
 	}
 
 	for _, body := range req.Body {
@@ -336,18 +257,8 @@ func DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := model.DB.Exec(
-		`UPDATE respondents SET deleted_at = ? WHERE response_id = ? AND user_traqid = ?`,
-		time.Now(), responseID, model.GetUserID(c)); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	if _, err := model.DB.Exec(
-		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
-		time.Now(), responseID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.DeleteMyResponse(c, responseID); err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)

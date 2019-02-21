@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"database/sql"
@@ -38,19 +39,32 @@ type MyResponse struct {
 	ModifiedAt      string `json:"modified_at"`
 }
 
+type UserResponse struct {
+	ResponseID  int            `db:"response_id"`
+	UserID      string         `db:"user_traqid"`
+	ModifiedAt  time.Time      `db:"modified_at"`
+	SubmittedAt mysql.NullTime `db:"submitted_at"`
+}
+
+type ResponseID struct {
+	QuestionnaireID int            `db:"questionnaire_id"`
+	ModifiedAt      mysql.NullTime `db:"modified_at"`
+	SubmittedAt     mysql.NullTime `db:"submitted_at"`
+}
+
 func InsertRespondents(c echo.Context, req Responses) (int, error) {
 	var result sql.Result
 	var err error
 	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
 		req.SubmittedAt = "NULL"
-		if result, err = DB.Exec(
+		if result, err = db.Exec(
 			`INSERT INTO respondents (questionnaire_id, user_traqid, modified_at) VALUES (?, ?, ?)`,
 			req.ID, GetUserID(c), time.Now()); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
-		if result, err = DB.Exec(
+		if result, err = db.Exec(
 			`INSERT INTO respondents
 				(questionnaire_id, user_traqid, submitted_at, modified_at) VALUES (?, ?, ?, ?)`,
 			req.ID, GetUserID(c), req.SubmittedAt, time.Now()); err != nil {
@@ -67,7 +81,7 @@ func InsertRespondents(c echo.Context, req Responses) (int, error) {
 }
 
 func InsertResponse(c echo.Context, responseID int, req Responses, body ResponseBody, data string) error {
-	if _, err := DB.Exec(
+	if _, err := db.Exec(
 		`INSERT INTO response (response_id, question_id, body, modified_at) VALUES (?, ?, ?, ?)`,
 		responseID, body.QuestionID, data, time.Now()); err != nil {
 		c.Logger().Error(err)
@@ -78,13 +92,39 @@ func InsertResponse(c echo.Context, responseID int, req Responses, body Response
 
 func GetRespondents(c echo.Context, questionnaireID int) ([]string, error) {
 	respondents := []string{}
-	if err := DB.Select(&respondents,
+	if err := db.Select(&respondents,
 		"SELECT user_traqid FROM respondents WHERE questionnaire_id = ? AND deleted_at IS NULL",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return respondents, nil
+}
+
+func GetMyResponses(c echo.Context) ([]ResponseInfo, error) {
+	responsesinfo := []ResponseInfo{}
+
+	if err := db.Select(&responsesinfo,
+		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
+		WHERE user_traqid = ? AND deleted_at IS NULL ORDER BY modified_at DESC`,
+		GetUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return []ResponseInfo{}, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return responsesinfo, nil
+}
+
+func GetMyResponsesByID(c echo.Context, questionnaireID int) ([]ResponseInfo, error) {
+	responsesinfo := []ResponseInfo{}
+
+	if err := db.Select(&responsesinfo,
+		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
+		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ? ORDER BY modified_at DESC`,
+		GetUserID(c), questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return []ResponseInfo{}, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return responsesinfo, nil
 }
 
 func GetResponsesInfo(c echo.Context, responsesinfo []ResponseInfo) ([]MyResponse, error) {
@@ -119,7 +159,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 	switch questionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		option := []string{}
-		if err := DB.Select(&option,
+		if err := db.Select(&option,
 			`SELECT body from response
 			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 			responseID, body.QuestionID); err != nil {
@@ -136,7 +176,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 		}
 	default:
 		var response string
-		if err := DB.Get(&response,
+		if err := db.Get(&response,
 			`SELECT body from response
 			WHERE response_id = ? AND question_id = ? AND deleted_at IS NULL`,
 			responseID, body.QuestionID); err != nil {
@@ -152,7 +192,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 
 func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
 	respondedAt := sql.NullString{}
-	if err := DB.Get(&respondedAt,
+	if err := db.Get(&respondedAt,
 		`SELECT MAX(submitted_at) FROM respondents
 		WHERE user_traqid = ? AND questionnaire_id = ? AND deleted_at IS NULL`,
 		GetUserID(c), questionnaireID); err != nil {
@@ -160,4 +200,101 @@ func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
 		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return NullStringConvert(respondedAt), nil
+}
+
+func GetSortedResponses(c echo.Context, questionnaireID int, sortQuery string) ([]UserResponse, int, error) {
+	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
+			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
+
+	sortNum := 0
+	switch sortQuery {
+	case "traqid":
+		sql += ` ORDER BY user_traqid`
+	case "-traqid":
+		sql += ` ORDER BY user_traqid DESC`
+	case "submitted_at":
+		sql += ` ORDER BY submitted_at`
+	case "-submitted_at":
+		sql += ` ORDER BY submitted_at DESC`
+	case "":
+	default:
+		var err error
+		sortNum, err = strconv.Atoi(sortQuery)
+		if err != nil {
+			c.Logger().Error(err)
+			return []UserResponse{}, 0, echo.NewHTTPError(http.StatusBadRequest)
+		}
+	}
+
+	responsesinfo := []UserResponse{}
+	if err := db.Select(&responsesinfo, sql,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return []UserResponse{}, 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return responsesinfo, sortNum, nil
+}
+
+func GetRespondentByID(c echo.Context, responseID int) (ResponseID, error) {
+	respondentInfo := ResponseID{}
+	if err := db.Get(&respondentInfo,
+		`SELECT questionnaire_id, modified_at, submitted_at from respondents
+		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
+		responseID, GetUserID(c)); err != nil {
+		if err != sql.ErrNoRows {
+			c.Logger().Error(err)
+			return ResponseID{}, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return respondentInfo, nil
+}
+
+func UpdateRespondents(c echo.Context, questionnaireID int, responseID int, submittedAt string) error {
+	if submittedAt == "" || submittedAt == "NULL" {
+		submittedAt = "NULL"
+		if _, err := db.Exec(
+			`UPDATE respondents
+			SET questionnaire_id = ?, submitted_at = NULL, modified_at = ? WHERE response_id = ?`,
+			questionnaireID, time.Now(), responseID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		if _, err := db.Exec(
+			`UPDATE respondents
+			SET questionnaire_id = ?, submitted_at = ?, modified_at = ? WHERE response_id = ?`,
+			questionnaireID, submittedAt, time.Now(), responseID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return nil
+
+}
+
+func DeleteResponse(c echo.Context, responseID int) error {
+	if _, err := db.Exec(
+		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
+		time.Now(), responseID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
+}
+
+func DeleteMyResponse(c echo.Context, responseID int) error {
+	if _, err := db.Exec(
+		`UPDATE respondents SET deleted_at = ? WHERE response_id = ? AND user_traqid = ?`,
+		time.Now(), responseID, GetUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if _, err := db.Exec(
+		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
+		time.Now(), responseID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
 }

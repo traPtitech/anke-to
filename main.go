@@ -10,11 +10,10 @@ import (
 
 func main() {
 
-	_db, err := model.EstablishConnection()
+	err := model.EstablishConnection()
 	if err != nil {
 		panic(err)
 	}
-	model.DB = _db
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{

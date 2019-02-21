@@ -7,11 +7,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var (
-	DB *sqlx.DB
-)
+var db *sqlx.DB
 
-func EstablishConnection() (*sqlx.DB, error) {
+func EstablishConnection() error {
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -32,5 +30,7 @@ func EstablishConnection() (*sqlx.DB, error) {
 		dbname = "anke-to"
 	}
 
-	return sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
+	_db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
+	db = _db
+	return err
 }

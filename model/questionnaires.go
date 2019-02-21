@@ -33,6 +33,17 @@ type QuestionnairesInfo struct {
 	IsTargeted   bool   `json:"is_targeted"`
 }
 
+type TargettedQuestionnaires struct {
+	ID           int    `json:"questionnaireID"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	ResTimeLimit string `json:"res_time_limit"`
+	ResSharedTo  string `json:"res_shared_to"`
+	CreatedAt    string `json:"created_at"`
+	ModifiedAt   string `json:"modified_at"`
+	RespondedAt  string `json:"responded_at"`
+}
+
 // エラーが起きれば(nil, err)
 // 起こらなければ(allquestions, nil)を返す
 func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
@@ -51,7 +62,7 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	// アンケート一覧の配列
 	allquestionnaires := []Questionnaires{}
 
-	if err := DB.Select(&allquestionnaires,
+	if err := db.Select(&allquestionnaires,
 		"SELECT * FROM questionnaires WHERE deleted_at IS NULL "+list[sort]); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -66,15 +77,9 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 		return nil, 0, err
 	}
 
-	userID := GetUserID(c)
-
-	// 自分またはtraPが含まれているアンケートのID
-	targetedQuestionnaireID := []int{}
-	if err := DB.Select(&targetedQuestionnaireID,
-		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
-		userID); err != nil {
-		c.Logger().Error(err)
-		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
+	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
+	if err != nil {
+		return []QuestionnairesInfo{}, 0, err
 	}
 
 	questionnaires := []QuestionnairesInfo{}
@@ -85,7 +90,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 				targeted = true
 			}
 		}
-		if (targettype == TargetType(Targeted) && !targeted) || (targettype == TargetType(Nontargeted) && targeted) {
+		if targettype == TargetType(Nontargeted) && targeted {
 			continue
 		}
 
@@ -121,10 +126,6 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	sort.Slice(questionnaires, func(i, j int) bool {
-		return questionnaires[i].ModifiedAt > questionnaires[j].ModifiedAt
-	})
-
 	ret := []QuestionnairesInfo{}
 	for i := 0; i < 20; i++ {
 		index := (page_num-1)*20 + i
@@ -139,7 +140,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {
 	questionnaire := Questionnaires{}
-	if err := DB.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
+	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
 		if err == sql.ErrNoRows {
 			return Questionnaires{}, echo.NewHTTPError(http.StatusNotFound)
@@ -178,7 +179,7 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 		Title        string         `db:"title"`
 		ResTimeLimit mysql.NullTime `db:"res_time_limit"`
 	}{}
-	if err := DB.Get(&res,
+	if err := db.Get(&res,
 		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
 		questionnaireID); err != nil {
 		if err == sql.ErrNoRows {
@@ -189,4 +190,136 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 		}
 	}
 	return res.Title, NullTimeToString(res.ResTimeLimit), nil
+}
+
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string) (int, error) {
+	var result sql.Result
+
+	if resTimeLimit == "" || resTimeLimit == "NULL" {
+		resTimeLimit = "NULL"
+		var err error
+		result, err = db.Exec(
+			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?)`,
+			title, description, resSharedTo, time.Now(), time.Now())
+		if err != nil {
+			c.Logger().Error(err)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		var err error
+		result, err = db.Exec(
+			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			title, description, resTimeLimit, resSharedTo, time.Now(), time.Now())
+		if err != nil {
+			c.Logger().Error(err)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.Logger().Error(err)
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return int(lastID), nil
+}
+
+func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID int) error {
+	if resTimeLimit == "" || resTimeLimit == "NULL" {
+		resTimeLimit = "NULL"
+		if _, err := db.Exec(
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			title, description, resSharedTo, time.Now(), questionnaireID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	} else {
+		if _, err := db.Exec(
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			title, description, resTimeLimit, resSharedTo, time.Now(), questionnaireID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return nil
+}
+
+func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+	if _, err := db.Exec(
+		"UPDATE questionnaires SET deleted_at = ? WHERE id = ?",
+		time.Now(), questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
+}
+
+func GetResShared(c echo.Context, questionnaireID int) (string, error) {
+	resSharedTo := ""
+	if err := db.Get(&resSharedTo,
+		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		if err == sql.ErrNoRows {
+			return "", echo.NewHTTPError(http.StatusNotFound)
+		} else {
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return resSharedTo, nil
+}
+
+func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, error) {
+	allquestionnaires, err := GetAllQuestionnaires(c)
+	if err != nil {
+		return nil, err
+	}
+
+	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []TargettedQuestionnaires{}
+	for _, v := range allquestionnaires {
+		var targeted = false
+		for _, w := range targetedQuestionnaireID {
+			if w == v.ID {
+				targeted = true
+			}
+		}
+		if !targeted {
+			continue
+		}
+		respondedAt, err := RespondedAt(c, v.ID)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret,
+			TargettedQuestionnaires{
+				ID:           v.ID,
+				Title:        v.Title,
+				Description:  v.Description,
+				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
+				ResSharedTo:  v.ResSharedTo,
+				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
+				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
+				RespondedAt:  respondedAt,
+			})
+	}
+
+	if len(ret) == 0 {
+		return nil, echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ModifiedAt > ret[j].ModifiedAt
+	})
+
+	return ret, nil
 }

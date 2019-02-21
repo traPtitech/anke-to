@@ -28,11 +28,66 @@ type QuestionIDType struct {
 
 func GetQuestionsType(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
 	ret := []QuestionIDType{}
-	if err := DB.Select(&ret,
+	if err := db.Select(&ret,
 		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL`,
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return ret, nil
+}
+
+func GetQuestions(c echo.Context, questionnaireID int) ([]Questions, error) {
+	allquestions := []Questions{}
+
+	// アンケートidの一致する質問を取る
+	if err := db.Select(&allquestions,
+		"SELECT * FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return []Questions{}, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return allquestions, nil
+}
+
+func InsertQuestion(
+	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
+	body string, isRequired bool) (int, error) {
+	result, err := db.Exec(
+		`INSERT INTO question (questionnaire_id, page_num, question_num, type, body, is_required, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		questionnaireID, pageNum, questionNum, questionType, body, isRequired, time.Now())
+	if err != nil {
+		c.Logger().Error(err)
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.Logger().Error(err)
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return int(lastID), nil
+}
+
+func UpdateQuestion(
+	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
+	body string, isRequired bool, questionID int) error {
+	if _, err := db.Exec(
+		"UPDATE question SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
+		questionnaireID, pageNum, questionNum, questionType, body, isRequired, questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
+}
+
+func DeleteQuestion(c echo.Context, questionID int) error {
+	if _, err := db.Exec(
+		"UPDATE question SET deleted_at = ? WHERE id = ?",
+		time.Now(), questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
 }
