@@ -181,10 +181,10 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 	if err := DB.Get(&res,
 		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
 		questionnaireID); err != nil {
-		c.Logger().Error(err)
 		if err == sql.ErrNoRows {
-			return "", "", echo.NewHTTPError(http.StatusNotFound)
+			return "", "", nil
 		} else {
+			c.Logger().Error(err)
 			return "", "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}

@@ -92,6 +92,9 @@ func GetResponsesInfo(c echo.Context, responsesinfo []ResponseInfo) ([]MyRespons
 
 	for _, response := range responsesinfo {
 		title, resTimeLimit, err := GetTitleAndLimit(c, response.QuestionnaireID)
+		if title == "" {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
