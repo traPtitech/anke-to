@@ -44,3 +44,15 @@ func DeleteTargets(c echo.Context, questionnaireID int) error {
 	}
 	return nil
 }
+
+// 自分またはtraPが含まれているアンケートのID
+func GetTargettedQuestionnaireID(c echo.Context) ([]int, error) {
+	targetedQuestionnaireID := []int{}
+	if err := db.Select(&targetedQuestionnaireID,
+		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
+		GetUserID(c)); err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return targetedQuestionnaireID, nil
+}

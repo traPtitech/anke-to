@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -30,6 +31,17 @@ type QuestionnairesInfo struct {
 	CreatedAt    string `json:"created_at"`
 	ModifiedAt   string `json:"modified_at"`
 	IsTargeted   bool   `json:"is_targeted"`
+}
+
+type TargettedQuestionnaires struct {
+	ID           int    `json:"questionnaireID"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	ResTimeLimit string `json:"res_time_limit"`
+	ResSharedTo  string `json:"res_shared_to"`
+	CreatedAt    string `json:"created_at"`
+	ModifiedAt   string `json:"modified_at"`
+	RespondedAt  string `json:"responded_at"`
 }
 
 // エラーが起きれば(nil, err)
@@ -65,15 +77,9 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 		return nil, 0, err
 	}
 
-	userID := GetUserID(c)
-
-	// 自分またはtraPが含まれているアンケートのID
-	targetedQuestionnaireID := []int{}
-	if err := db.Select(&targetedQuestionnaireID,
-		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
-		userID); err != nil {
-		c.Logger().Error(err)
-		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
+	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
+	if err != nil {
+		return []QuestionnairesInfo{}, 0, err
 	}
 
 	questionnaires := []QuestionnairesInfo{}
@@ -84,7 +90,7 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 				targeted = true
 			}
 		}
-		if (targettype == TargetType(Targeted) && !targeted) || (targettype == TargetType(Nontargeted) && targeted) {
+		if targettype == TargetType(Nontargeted) && targeted {
 			continue
 		}
 
@@ -266,4 +272,54 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 		}
 	}
 	return resSharedTo, nil
+}
+
+func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, error) {
+	allquestionnaires, err := GetAllQuestionnaires(c)
+	if err != nil {
+		return nil, err
+	}
+
+	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []TargettedQuestionnaires{}
+	for _, v := range allquestionnaires {
+		var targeted = false
+		for _, w := range targetedQuestionnaireID {
+			if w == v.ID {
+				targeted = true
+			}
+		}
+		if !targeted {
+			continue
+		}
+		respondedAt, err := RespondedAt(c, v.ID)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret,
+			TargettedQuestionnaires{
+				ID:           v.ID,
+				Title:        v.Title,
+				Description:  v.Description,
+				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
+				ResSharedTo:  v.ResSharedTo,
+				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
+				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
+				RespondedAt:  respondedAt,
+			})
+	}
+
+	if len(ret) == 0 {
+		return nil, echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ModifiedAt > ret[j].ModifiedAt
+	})
+
+	return ret, nil
 }

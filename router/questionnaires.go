@@ -235,39 +235,10 @@ func GetMyQuestionnaire(c echo.Context) error {
 }
 
 func GetTargetedQuestionnaire(c echo.Context) error {
-	questionnaires, _, err := model.GetQuestionnaires(c, model.TargetType(model.Targeted))
+	ret, err := model.GetTargettedQuestionnaires(c)
 	if err != nil {
 		return err
 	}
 
-	type QuestionnairesInfo struct {
-		ID           int    `json:"questionnaireID"`
-		Title        string `json:"title"`
-		Description  string `json:"description"`
-		ResTimeLimit string `json:"res_time_limit"`
-		ResSharedTo  string `json:"res_shared_to"`
-		CreatedAt    string `json:"created_at"`
-		ModifiedAt   string `json:"modified_at"`
-		RespondedAt  string `json:"responded_at"`
-	}
-	questionnairesInfo := []QuestionnairesInfo{}
-
-	for _, q := range questionnaires {
-		respondedAt, err := model.RespondedAt(c, q.ID)
-		if err != nil {
-			return err
-		}
-		questionnairesInfo = append(questionnairesInfo,
-			QuestionnairesInfo{
-				ID:           q.ID,
-				Title:        q.Title,
-				Description:  q.Description,
-				ResTimeLimit: q.ResTimeLimit,
-				ResSharedTo:  q.ResSharedTo,
-				CreatedAt:    q.CreatedAt,
-				ModifiedAt:   q.ModifiedAt,
-				RespondedAt:  respondedAt,
-			})
-	}
-	return c.JSON(http.StatusOK, questionnairesInfo)
+	return c.JSON(http.StatusOK, ret)
 }
