@@ -289,18 +289,16 @@ func EditResponse(c echo.Context) error {
 		req.SubmittedAt = "NULL"
 		if _, err := model.DB.Exec(
 			`UPDATE respondents
-			SET questionnaire_id = ?, submitted_at = NULL, modified_at = CURRENT_TIMESTAMP
-			WHERE response_id = ?`,
-			req.ID, responseID); err != nil {
+			SET questionnaire_id = ?, submitted_at = NULL, modified_at = ? WHERE response_id = ?`,
+			req.ID, time.Now(), responseID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		if _, err := model.DB.Exec(
 			`UPDATE respondents
-			SET questionnaire_id = ?, submitted_at = ?, modified_at = CURRENT_TIMESTAMP
-			WHERE response_id = ?`,
-			req.ID, req.SubmittedAt, responseID); err != nil {
+			SET questionnaire_id = ?, submitted_at = ?, modified_at = ? WHERE response_id = ?`,
+			req.ID, req.SubmittedAt, time.Now(), responseID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -308,8 +306,8 @@ func EditResponse(c echo.Context) error {
 
 	//全消し&追加(レコード数爆発しそう)
 	if _, err := model.DB.Exec(
-		`UPDATE response SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
-		responseID); err != nil {
+		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
+		time.Now(), responseID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -339,16 +337,15 @@ func DeleteResponse(c echo.Context) error {
 	}
 
 	if _, err := model.DB.Exec(
-		`UPDATE respondents SET deleted_at = CURRENT_TIMESTAMP
-		WHERE response_id = ? AND user_traqid = ?`,
-		responseID, model.GetUserID(c)); err != nil {
+		`UPDATE respondents SET deleted_at = ? WHERE response_id = ? AND user_traqid = ?`,
+		time.Now(), responseID, model.GetUserID(c)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	if _, err := model.DB.Exec(
-		`UPDATE response SET deleted_at = CURRENT_TIMESTAMP WHERE response_id = ?`,
-		responseID); err != nil {
+		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
+		time.Now(), responseID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

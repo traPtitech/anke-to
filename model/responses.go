@@ -44,16 +44,16 @@ func InsertRespondents(c echo.Context, req Responses) (int, error) {
 	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
 		req.SubmittedAt = "NULL"
 		if result, err = DB.Exec(
-			`INSERT INTO respondents (questionnaire_id, user_traqid) VALUES (?, ?)`,
-			req.ID, GetUserID(c)); err != nil {
+			`INSERT INTO respondents (questionnaire_id, user_traqid, modified_at) VALUES (?, ?, ?)`,
+			req.ID, GetUserID(c), time.Now()); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		if result, err = DB.Exec(
 			`INSERT INTO respondents
-				(questionnaire_id, user_traqid, submitted_at) VALUES (?, ?, ?)`,
-			req.ID, GetUserID(c), req.SubmittedAt); err != nil {
+				(questionnaire_id, user_traqid, submitted_at, modified_at) VALUES (?, ?, ?, ?)`,
+			req.ID, GetUserID(c), req.SubmittedAt, time.Now()); err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -68,8 +68,8 @@ func InsertRespondents(c echo.Context, req Responses) (int, error) {
 
 func InsertResponse(c echo.Context, responseID int, req Responses, body ResponseBody, data string) error {
 	if _, err := DB.Exec(
-		`INSERT INTO response (response_id, question_id, body) VALUES (?, ?, ?)`,
-		responseID, body.QuestionID, data); err != nil {
+		`INSERT INTO response (response_id, question_id, body, modified_at) VALUES (?, ?, ?, ?)`,
+		responseID, body.QuestionID, data, time.Now()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

@@ -81,8 +81,9 @@ func PostQuestionnaire(c echo.Context) error {
 		req.ResTimeLimit = "NULL"
 		var err error
 		result, err = model.DB.Exec(
-			"INSERT INTO questionnaires (title, description, res_shared_to) VALUES (?, ?, ?)",
-			req.Title, req.Description, req.ResSharedTo)
+			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?)`,
+			req.Title, req.Description, req.ResSharedTo, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -90,8 +91,9 @@ func PostQuestionnaire(c echo.Context) error {
 	} else {
 		var err error
 		result, err = model.DB.Exec(
-			"INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to) VALUES (?, ?, ?, ?)",
-			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -155,15 +157,17 @@ func EditQuestionnaire(c echo.Context) error {
 	if req.ResTimeLimit == "" || req.ResTimeLimit == "NULL" {
 		req.ResTimeLimit = "NULL"
 		if _, err := model.DB.Exec(
-			"UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
-			req.Title, req.Description, req.ResSharedTo, questionnaireID); err != nil {
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			req.Title, req.Description, req.ResSharedTo, time.Now(), questionnaireID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		if _, err := model.DB.Exec(
-			"UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?, res_shared_to = ?, modified_at = CURRENT_TIMESTAMP WHERE id = ?",
-			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?,
+			res_shared_to = ?, modified_at = ? WHERE id = ?`,
+			req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, time.Now(), questionnaireID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -196,7 +200,7 @@ func DeleteQuestionnaire(c echo.Context) error {
 	}
 
 	if _, err := model.DB.Exec(
-		"UPDATE questionnaires SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", questionnaireID); err != nil {
+		"UPDATE questionnaires SET deleted_at = ? WHERE id = ?", time.Now(), questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
