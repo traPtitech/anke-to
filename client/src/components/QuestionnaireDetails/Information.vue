@@ -112,7 +112,7 @@
 
 import axios from '@/bin/axios'
 import router from '@/router'
-import common from '@/util/common'
+import common from '@/bin/common'
 
 export default {
   name: 'Information',
@@ -165,7 +165,7 @@ export default {
       if (document.execCommand('copy')) {
         this.copyMessage = {
           showMessage: true,
-          message: '回答ページへのリンクをコピーしました'
+          message: 'リンクをコピーしました'
         }
       } else {
         this.copyMessage = {

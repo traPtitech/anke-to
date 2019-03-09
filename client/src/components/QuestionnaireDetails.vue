@@ -61,7 +61,7 @@ import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
 import Questions from '@/components/Questions'
 import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
 import axios from '@/bin/axios'
-import common from '@/util/common'
+import common from '@/bin/common'
 import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'
 

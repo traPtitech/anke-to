@@ -35,7 +35,7 @@
 /* eslint-disable */
 
 import axios from '@/bin/axios'
-import common from '@/util/common'
+import common from '@/bin/common'
 
 export default {
   name: 'Spreadsheet',

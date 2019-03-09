@@ -40,7 +40,7 @@
 <script>
 import axios from '@/bin/axios'
 import Table from '@/components/Utils/Table.vue'
-import common from '@/util/common'
+import common from '@/bin/common'
 
 export default {
   name: 'Responses',

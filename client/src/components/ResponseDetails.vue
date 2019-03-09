@@ -41,7 +41,7 @@
 
 import axios from 'axios'
 import router from '@/router'
-import common from '@/util/common'
+import common from '@/bin/common'
 import Questions from '@/components/Questions'
 import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'

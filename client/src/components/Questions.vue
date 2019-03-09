@@ -37,7 +37,7 @@ import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 
-// import common from '@/util/common'
+// import common from '@/bin/common'
 
 export default {
   name: 'Questions',

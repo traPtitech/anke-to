@@ -52,7 +52,7 @@
 <script>
 
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
-import common from '@/util/common'
+import common from '@/bin/common'
 
 export default {
   name: 'UserListModal',
