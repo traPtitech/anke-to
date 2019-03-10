@@ -78,7 +78,8 @@
                   :activeModal="activeModal"
                   :userListProps="details[activeModal.name]"
                   :traqId="traqId"
-                  :allUsersList="allUsersList"
+                  :users="users"
+                  :groupTypes="groupTypes"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
@@ -122,16 +123,12 @@ import common from '@/bin/common'
 import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import UserListModal from '@/components/QuestionnaireDetails/UserListModal'
-import traQ from '@/util/traq'
 
 export default {
   name: 'InformationEdit',
   created () {
-    this.traq = traQ('https://q.trapti.tech', true)
-    this.getAllUsersList()
-  },
-  beforeDestroy: function () {
-    this.traq.disconnect()
+    this.getUsers()
+      .then(this.getGroupTypes)
   },
   components: {
     'input-error-message': InputErrorMessage,
@@ -155,7 +152,8 @@ export default {
       responses: [],
       activeModal: {},
       isModalActive: false,
-      allUsersList: {}
+      users: {},
+      groupTypes: {}
     }
   },
   methods: {
@@ -176,35 +174,43 @@ export default {
       this.details[ listName ] = newList
       this.setInformation(this.details)
     },
-    getAllUsersList () {
-      this.traq.listen('connect', () => {
-        this.traq.user.list(data => {
-          data.splice(0, 1) // user: traP を取り除く
-
-          // StudentNumberをキーとしてtraQIDの配列を持つオブジェクトtmpを作る
-          let tmp = {}
-          for (const user of data) {
-            if (user.Status === 1) { // 除名された人は除く
-              if (typeof tmp[ user.StudentNumber ] !== 'undefined') {
-                tmp[ user.StudentNumber ].push(user.Name)
-              } else {
-                tmp[ user.StudentNumber ] = [ user.Name ]
-              }
-            }
-          }
-          // console.log(tmp)
-
-          this.$set(this.allUsersList, 'traP', [])
-
-          // tmpのキーを学年順にソートして、学年の中でtraQIDをアルファベット順にソートしたものをallUsersListに保存
-          Object.keys(tmp).sort().forEach(
-            (key) => {
-              const sortedUsersList = tmp[ key ].sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
-              this.$set(this.allUsersList, key, sortedUsersList)
-              Array.prototype.push.apply(this.allUsersList.traP, sortedUsersList)
-            })
+    getUsers () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/users')
+        .then(res => {
+          res.data.forEach(user => {
+            this.users[ user.userId ] = user
+          })
         })
-      })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    getGroupTypes () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/groups')
+        .then(res => {
+          let tmp = {}
+          res.data.forEach(group => {
+            if (typeof tmp[ group.type ] === 'undefined') {
+              tmp[ group.type ] = {}
+            }
+            // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
+            group.activeMembers =
+              group.members.filter(userId => this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
+                .map(userId => this.users[ userId ].name)
+                .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
+            tmp[ group.type ][ group.name ] = group
+          })
+
+          // typeごとに、group名をソートしたものをgroupTypesに入れる
+          Object.keys(tmp).forEach(type => {
+            this.$set(this.groupTypes, type, {})
+            Object.keys(tmp[ type ]).sort().forEach(group => {
+              this.$set(this.groupTypes[ type ], tmp[ type ][ group ].name, tmp[ type ][ group ])
+            })
+          })
+        })
     }
   },
   computed: {

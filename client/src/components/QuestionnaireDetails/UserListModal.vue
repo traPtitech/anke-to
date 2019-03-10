@@ -19,27 +19,27 @@
           traP
         </label>
         <div class="user-list-wrapper">
-          <span v-for="(group, key) in visibleUsersList" :key="key">
+          <span v-for="(group, key) in groupTypes[selectedGroupType]" :key="key">
             <div class="has-text-weight-bold group-name">
               {{ key }}
               <span
                 v-if="!isUserTrap"
                 class="ti-check icon-button select-group"
-                @click.prevent="selectGroup(key)"
+                @click.prevent="selectGroup(selectedGroupType, key)"
               ></span>
             </div>
 
             <!-- not user: traP -->
-            <span v-for="(user, index) in group" :key="index">
+            <span v-for="(traqId, index) in group.activeMembers" :key="index">
               <label v-if="!isUserTrap" class="checkbox">
-                <input type="checkbox" v-model="selectedUserList" :value="user">
-                <span>{{ user }}</span>
+                <input type="checkbox" v-model="selectedUsersList" :value="traqId">
+                <span>{{ traqId }}</span>
               </label>
 
               <!-- user: traP -->
               <span v-if="isUserTrap" class="dummy-checkbox">
                 <span class="readonly-checkbox checked"></span>
-                {{ user }}
+                <span>{{ traqId }}</span>
               </span>
             </span>
           </span>
@@ -57,7 +57,7 @@ import common from '@/bin/common'
 export default {
   name: 'UserListModal',
   created () {
-    this.selectedUserList = this.userListProps
+    this.selectedUsersList = this.userListProps
   },
   components: {
     'input-error-message': InputErrorMessage
@@ -74,7 +74,11 @@ export default {
     traqId: {
       required: true
     },
-    allUsersList: {
+    users: {
+      type: Object,
+      required: true
+    },
+    groupTypes: {
       type: Object,
       required: true
     }
@@ -82,7 +86,8 @@ export default {
   data () {
     return {
       traq: null,
-      selectedUserList: []
+      selectedUsersList: [],
+      selectedGroupType: 'grade'
     }
   },
   methods: {
@@ -91,34 +96,34 @@ export default {
     },
     confirmList () {
       if (this.confirmOk) {
-        this.$emit('set-user-list', this.activeModal.name, this.selectedUserList)
+        this.$emit('set-user-list', this.activeModal.name, this.selectedUsersList)
         this.disableModal()
       }
     },
-    selectGroup (groupName) {
-      this.selectedUserList =
-        this.selectedUserList
-          .concat(this.allUsersList[ groupName ]) // 該当するグループのユーザーを追加
+    selectGroup (type, group) {
+      this.selectedUsersList =
+        this.selectedUsersList
+          .concat(this.groupTypes[ type ][ group ].activeMembers) // 該当するグループのユーザーを追加
           .filter((user, index, array) => { return array.indexOf(user) === index }) // 重複除去
     }
   },
   computed: {
     isUserTrap: {
       get () {
-        return this.selectedUserList.length === 1 && this.selectedUserList[ 0 ] === 'traP'
+        return this.selectedUsersList.length === 1 && this.selectedUsersList[ 0 ] === 'traP'
       },
       set (newBool) {
         if (newBool) {
-          this.selectedUserList = [ 'traP' ]
+          this.selectedUsersList = [ 'traP' ]
         } else {
-          this.selectedUserList = []
+          this.selectedUsersList = []
         }
       }
     },
     inputErrors () {
       return {
         noAdministrator: {
-          isError: this.activeModal.name === 'administrators' && this.selectedUserList.length === 0,
+          isError: this.activeModal.name === 'administrators' && this.selectedUsersList.length === 0,
           message: '管理者がいません'
         }
       }
