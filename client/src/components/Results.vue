@@ -13,7 +13,7 @@
           </li>
         </ul>
       </div>
-      <information-summary :details="summaryProps"></information-summary>
+      <information-summary :information="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
         class="details-child is-fullheight"
@@ -36,7 +36,7 @@
 
 // import <componentname> from '<path to component file>'
 import axios from '@/bin/axios'
-import common from '@/util/common'
+import common from '@/bin/common'
 import Individual from '@/components/Results/Individual'
 import Spreadsheet from '@/components/Results/Spreadsheet'
 import InformationSummary from '@/components/InformationSummary'

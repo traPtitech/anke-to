@@ -84,7 +84,7 @@
 <script>
 
 // import <componentname> from '<path to component file>'
-import question from '@/util/question.js'
+import question from '@/bin/question.js'
 
 export default {
   name: 'LinearScale',

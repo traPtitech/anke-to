@@ -7,28 +7,31 @@
           <header class="card-header">
             <div id="title" class="card-header-title title">
               <span
-                v-if="details.responseIconClass"
-                :class="details.responseIconClass"
+                v-if="information.responseIconClass"
+                :class="information.responseIconClass"
                 class="response-icon"
               ></span>
-              <router-link v-if="details.titleLink" :to="details.titleLink">{{ details.title }}</router-link>
-              <p v-if="!details.titleLink">{{ details.title }}</p>
+              <router-link
+                v-if="information.titleLink"
+                :to="information.titleLink"
+              >{{ information.title }}</router-link>
+              <p v-if="!information.titleLink">{{ information.title }}</p>
             </div>
           </header>
-          <div v-if="details.description" class="card-content">
-            <pre>{{ details.description }}</pre>
+          <div v-if="information.description" class="card-content">
+            <pre>{{ information.description }}</pre>
           </div>
-          <div v-if="details.timeLimit" class="is-pulled-right wrapper editable time-limit">
+          <div v-if="information.timeLimit" class="is-pulled-right wrapper editable time-limit">
             <span class="label">回答期限 :</span>
-            <span class="time-limit">{{ details.timeLimit }}</span>
+            <span class="time-limit">{{ information.timeLimit }}</span>
           </div>
-          <div v-if="details.responseDetails" class="response-details">
+          <div v-if="information.responseDetails" class="response-details">
             <div class="is-pulled-left is-inline-block wrapper editable">
-              <span class="respondent subtitle is-5">{{ details.responseDetails.respondent }}</span>
+              <span class="respondent subtitle is-5">{{ information.responseDetails.respondent }}</span>
             </div>
             <div class="is-pulled-right is-flex editable">
               <span class="label">回答日時 :</span>
-              <span class="time-limit">{{ details.responseDetails.time }}</span>
+              <span class="time-limit">{{ information.responseDetails.time }}</span>
             </div>
           </div>
         </div>
@@ -46,7 +49,7 @@ export default {
   components: {
   },
   props: {
-    details: {
+    information: {
       type: Object,
       required: true
     }

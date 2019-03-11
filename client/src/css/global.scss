@@ -2,9 +2,7 @@
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  // text-align: center;
   color: $var-indigo;
-  // background-color: $base-gray;
 }
 
 .columns {
@@ -17,7 +15,6 @@
 }
 
 .is-fullheight {
-  // height: 100%;
   min-height: -webkit-fill-available;
 }
 
@@ -150,6 +147,12 @@ a[disabled] {
   background-color: $base-lightbrown;
   color: $base-darkbrown;
   border-radius: 1rem;
+}
+
+// user name lists
+.highlight-name {
+  font-weight: bold;
+  background-color: $var-yellow;
 }
 
 // readonly buttons

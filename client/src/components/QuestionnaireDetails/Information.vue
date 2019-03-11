@@ -11,15 +11,19 @@
             </header>
             <div class="card-content">
               <div class="has-text-weight-bold">
-                <div>更新日時 : {{ getDateStr(details.modified_at) }}</div>
-                <div>作成日時 : {{ getDateStr(details.created_at) }}</div>
+                <div>更新日時 : {{ getDateStr(information.modified_at) }}</div>
+                <div>作成日時 : {{ getDateStr(information.created_at) }}</div>
               </div>
 
               <!-- user lists -->
               <details v-for="(userList, key) in userLists" :key="key">
-                <summary>{{ userList.summary }}</summary>
-
-                <p class="has-text-grey">{{ userList.liststr }}</p>
+                <summary>{{ userList.summary }} ({{ userList.list.length }})</summary>
+                <p class="has-text-grey user-list">
+                  <span v-for="(user, index) in userList.list" :key="index">
+                    <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
+                    <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                  </span>
+                </p>
               </details>
 
               <div class="wrapper editable">
@@ -112,7 +116,7 @@
 
 import axios from '@/bin/axios'
 import router from '@/router'
-import common from '@/util/common'
+import common from '@/bin/common'
 
 export default {
   name: 'Information',
@@ -165,7 +169,7 @@ export default {
       if (document.execCommand('copy')) {
         this.copyMessage = {
           showMessage: true,
-          message: '回答ページへのリンクをコピーしました'
+          message: 'リンクをコピーしました'
         }
       } else {
         this.copyMessage = {
@@ -176,8 +180,8 @@ export default {
     }
   },
   computed: {
-    details () {
-      return this.informationProps.details
+    information () {
+      return this.informationProps.information
     },
     administrates () {
       return this.informationProps.administrates
@@ -193,10 +197,10 @@ export default {
     },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す
-      return common.canViewResults(this.details, this.administrates, this.responses.length > 0)
+      return common.canViewResults(this.information, this.administrates, this.responses.length > 0)
     },
     userLists () {
-      return common.getUserLists(this.details)
+      return common.getUserLists(this.information)
     },
     resSharedToLabel () {
       const labels = {
@@ -204,11 +208,11 @@ export default {
         respondents: '回答済みの人',
         administrators: '管理者のみ'
       }
-      return labels[ this.details.res_shared_to ]
+      return labels[ this.information.res_shared_to ]
     },
     timeLimitExceeded () {
       // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.details.res_time_limit).getTime() < new Date().getTime()
+      return new Date(this.information.res_time_limit).getTime() < new Date().getTime()
     },
     newResponseLink () {
       return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId

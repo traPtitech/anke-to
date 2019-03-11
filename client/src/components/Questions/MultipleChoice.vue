@@ -70,8 +70,8 @@
 <script>
 
 // import <componentname> from '<path to component file>'
-import common from '@/util/common'
-import question from '@/util/question'
+import common from '@/bin/common'
+import question from '@/bin/question'
 
 export default {
   name: 'MultipleChoice',

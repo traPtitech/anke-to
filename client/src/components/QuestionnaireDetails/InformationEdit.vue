@@ -10,8 +10,8 @@
                 <div id="title" class="card-header-title title is-editing">
                   <div class="wrapper">
                     <textarea
-                      :value="details.title"
-                      @input="$set(details, 'title', $event.target.value)"
+                      :value="information.title"
+                      @input="$set(information, 'title', $event.target.value)"
                       class="input"
                       placeholder="タイトル"
                     ></textarea>
@@ -22,7 +22,7 @@
               <div class="card-content">
                 <textarea
                   id="description"
-                  v-model="details.description"
+                  v-model="information.description"
                   class="textarea"
                   rows="5"
                   placeholder="説明"
@@ -59,7 +59,9 @@
               <div class="card-content">
                 <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
                   <div>
-                    <span class="has-text-weight-bold">{{ userList.summary }}</span>
+                    <span
+                      class="has-text-weight-bold"
+                    >{{ userList.summary }} ({{ userList.list.length }})</span>
                     <a>
                       <span
                         class="ti-pencil"
@@ -68,7 +70,12 @@
                       ></span>
                     </a>
                   </div>
-                  <p class="has-text-grey user-list">{{ userList.liststr }}</p>
+                  <p class="has-text-grey user-list">
+                    <span v-for="(user, index) in userList.list" :key="index">
+                      <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
+                      <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                    </span>
+                  </p>
                 </div>
 
                 <!-- modal -->
@@ -76,9 +83,11 @@
                   v-if="isModalActive"
                   :class="{'is-active': isModalActive}"
                   :activeModal="activeModal"
-                  :userListProps="details[activeModal.name]"
+                  :userListProps="information[activeModal.name]"
                   :traqId="traqId"
-                  :allUsersList="allUsersList"
+                  :users="users"
+                  :groupTypes="groupTypes"
+                  :information="information"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
@@ -118,20 +127,16 @@
 
 <script>
 
-// import <componentname> from '<path to component file>'
-import common from '@/util/common'
+import common from '@/bin/common'
+import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import UserListModal from '@/components/QuestionnaireDetails/UserListModal'
-import traQ from '@/util/traq'
 
 export default {
   name: 'InformationEdit',
   created () {
-    this.traq = traQ('https://q.trapti.tech', true)
-    this.getAllUsersList()
-  },
-  beforeDestroy: function () {
-    this.traq.disconnect()
+    this.getUsers()
+      .then(this.getGroupTypes)
   },
   components: {
     'input-error-message': InputErrorMessage,
@@ -155,7 +160,9 @@ export default {
       responses: [],
       activeModal: {},
       isModalActive: false,
-      allUsersList: {}
+      users: {},
+      groupTypes: {}
+      // usersIsSelected: {}
     }
   },
   methods: {
@@ -173,43 +180,53 @@ export default {
       this.isModalActive = false
     },
     setUserList (listName, newList) {
-      this.details[ listName ] = newList
-      this.setInformation(this.details)
+      this.information[ listName ] = newList
+      this.setInformation(this.information)
     },
-    getAllUsersList () {
-      this.traq.listen('connect', () => {
-        this.traq.user.list(data => {
-          data.splice(0, 1) // user: traP を取り除く
-
-          // StudentNumberをキーとしてtraQIDの配列を持つオブジェクトtmpを作る
-          let tmp = {}
-          for (const user of data) {
-            if (user.Status === 1) { // 除名された人は除く
-              if (typeof tmp[ user.StudentNumber ] !== 'undefined') {
-                tmp[ user.StudentNumber ].push(user.Name)
-              } else {
-                tmp[ user.StudentNumber ] = [ user.Name ]
-              }
+    getUsers () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/users')
+        .then(res => {
+          res.data.forEach(user => {
+            if (user.accountStatus === 1) {
+              this.users[ user.userId ] = user
             }
-          }
-          // console.log(tmp)
-
-          this.$set(this.allUsersList, 'traP', [])
-
-          // tmpのキーを学年順にソートして、学年の中でtraQIDをアルファベット順にソートしたものをallUsersListに保存
-          Object.keys(tmp).sort().forEach(
-            (key) => {
-              const sortedUsersList = tmp[ key ].sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
-              this.$set(this.allUsersList, key, sortedUsersList)
-              Array.prototype.push.apply(this.allUsersList.traP, sortedUsersList)
-            })
+          })
         })
-      })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    getGroupTypes () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/groups')
+        .then(res => {
+          let tmp = {}
+          res.data.forEach(group => {
+            if (typeof tmp[ group.type ] === 'undefined') {
+              tmp[ group.type ] = []
+            }
+            // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
+            group.activeMembers =
+              group.members.filter(userId => typeof this.users[ userId ] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
+                .map(userId => this.users[ userId ].name)
+                .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
+            tmp[ group.type ].push(group)
+          })
+
+          // typeごとに、group名をソートしたものをgroupTypesに入れる
+          Object.keys(tmp).forEach(type => {
+            this.$set(this.groupTypes, type, {})
+            tmp[ type ]
+              .sort((a, b) => { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) })
+          })
+          this.groupTypes = tmp
+        })
     }
   },
   computed: {
-    details () {
-      return this.informationProps.details
+    information () {
+      return this.informationProps.information
     },
     administrates () {
       return this.informationProps.administrates
@@ -232,11 +249,11 @@ export default {
       return this.$route.params.id === 'new'
     },
     userLists () {
-      return common.getUserLists(this.details)
+      return common.getUserLists(this.information)
     },
     resSharedToStr: {
       get: function () {
-        switch (this.details.res_shared_to) {
+        switch (this.information.res_shared_to) {
           case 'public': return '全体'
           case 'administrators': return '管理者のみ'
           case 'respondents': return '回答済みの人'
@@ -245,15 +262,15 @@ export default {
       set: function (str) {
         switch (str) {
           case '全体': {
-            this.details.res_shared_to = 'public'
+            this.information.res_shared_to = 'public'
             break
           }
           case '管理者のみ': {
-            this.details.res_shared_to = 'administrators'
+            this.information.res_shared_to = 'administrators'
             break
           }
           case '回答済みの人': {
-            this.details.res_shared_to = 'respondents'
+            this.information.res_shared_to = 'respondents'
             break
           }
         }
@@ -261,14 +278,14 @@ export default {
     },
     resTimeLimitEditStr: {
       get: function () {
-        if (!this.details.res_time_limit || this.details.res_time_limit === 'NULL') return ''
-        return this.details.res_time_limit.slice(0, 16)
+        if (!this.information.res_time_limit || this.information.res_time_limit === 'NULL') return ''
+        return this.information.res_time_limit.slice(0, 16)
       },
       set: function (str) {
         if (str === '') {
           this.$emit('set-data', 'noTimeLimit', true)
         } else {
-          this.details.res_time_limit = str
+          this.information.res_time_limit = str
         }
       }
     }
@@ -277,7 +294,7 @@ export default {
     traqId: function (newVal) {
       // traqIdがundefinedから変わった時に呼ばれる
       if (newVal && this.isNewQuestionnaire) {
-        this.details.administrators = [ this.traqId ]
+        this.information.administrators = [ this.traqId ]
       }
     }
   },
