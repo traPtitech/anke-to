@@ -149,6 +149,12 @@ a[disabled] {
   border-radius: 1rem;
 }
 
+// user name lists
+.highlight-name {
+  font-weight: bold;
+  background-color: $var-yellow;
+}
+
 // readonly buttons
 .readonly-checkbox,
 .readonly-radiobutton {

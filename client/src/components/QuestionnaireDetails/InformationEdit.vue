@@ -59,7 +59,9 @@
               <div class="card-content">
                 <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
                   <div>
-                    <span class="has-text-weight-bold">{{ userList.summary }}</span>
+                    <span
+                      class="has-text-weight-bold"
+                    >{{ userList.summary }} ({{ userList.list.length }})</span>
                     <a>
                       <span
                         class="ti-pencil"
@@ -68,7 +70,12 @@
                       ></span>
                     </a>
                   </div>
-                  <p class="has-text-grey user-list">{{ userList.liststr }}</p>
+                  <p class="has-text-grey user-list">
+                    <span v-for="(user, index) in userList.list" :key="index">
+                      <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
+                      <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                    </span>
+                  </p>
                 </div>
 
                 <!-- modal -->

@@ -17,9 +17,13 @@
 
               <!-- user lists -->
               <details v-for="(userList, key) in userLists" :key="key">
-                <summary>{{ userList.summary }}</summary>
-
-                <p class="has-text-grey">{{ userList.liststr }}</p>
+                <summary>{{ userList.summary }} ({{ userList.list.length }})</summary>
+                <p class="has-text-grey user-list">
+                  <span v-for="(user, index) in userList.list" :key="index">
+                    <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
+                    <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                  </span>
+                </p>
               </details>
 
               <div class="wrapper editable">
