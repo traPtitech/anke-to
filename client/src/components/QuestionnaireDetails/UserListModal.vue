@@ -3,7 +3,7 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">{{ activeModal.summary }}</p>
+        <p class="modal-card-title">{{ activeModal.summary }} ({{ numberOfSelectedUsers }})</p>
         <span
           class="ti-check icon-button round confirm"
           @click.prevent="confirmList"
@@ -19,27 +19,32 @@
           traP
         </label>
         <div class="user-list-wrapper">
-          <span v-for="(group, key) in groupTypes[selectedGroupType]" :key="key">
+          <span v-for="(group, index) in groupTypes[selectedGroupType]" :key="index">
             <div class="has-text-weight-bold group-name">
-              {{ key }}
+              {{ group.name }}
               <span
-                v-if="!isUserTrap"
+                v-if="!isUserTrap && group.activeMembers.length>0"
                 class="ti-check icon-button select-group"
-                @click.prevent="selectGroup(selectedGroupType, key)"
+                @click.prevent="selectAllInGroup(selectedGroupType, index)"
+              ></span>
+              <span
+                v-if="!isUserTrap && group.activeMembers.length>0"
+                class="ti-close icon-button select-group"
+                @click.prevent="removeAllInGroup(selectedGroupType, index)"
               ></span>
             </div>
 
             <!-- not user: traP -->
-            <span v-for="(traqId, index) in group.activeMembers" :key="index">
-              <label v-if="!isUserTrap" class="checkbox">
-                <input type="checkbox" v-model="selectedUsersList" :value="traqId">
-                <span>{{ traqId }}</span>
+            <span v-for="(userName, index) in group.activeMembers" :key="index">
+              <label v-if="!isUserTrap && userName!==traqId" class="checkbox">
+                <input type="checkbox" v-model="usersIsSelected[userName]">
+                <span>{{ userName }}</span>
               </label>
 
               <!-- user: traP -->
-              <span v-if="isUserTrap" class="dummy-checkbox">
+              <span v-if="isUserTrap || userName===traqId" class="dummy-checkbox">
                 <span class="readonly-checkbox checked"></span>
-                <span>{{ traqId }}</span>
+                <span>{{ userName }}</span>
               </span>
             </span>
           </span>
@@ -54,10 +59,13 @@
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/bin/common'
 
+// selectedUsersList を消す
+// user: traPの処理
+
 export default {
   name: 'UserListModal',
   created () {
-    this.selectedUsersList = this.userListProps
+    this.setUsersIsSelected(this.users)
   },
   components: {
     'input-error-message': InputErrorMessage
@@ -81,13 +89,17 @@ export default {
     groupTypes: {
       type: Object,
       required: true
+    },
+    information: {
+      type: Object,
+      required: true
     }
   },
   data () {
     return {
       traq: null,
-      selectedUsersList: [],
-      selectedGroupType: 'grade'
+      selectedGroupType: 'grade',
+      usersIsSelected: {}
     }
   },
   methods: {
@@ -96,34 +108,71 @@ export default {
     },
     confirmList () {
       if (this.confirmOk) {
-        this.$emit('set-user-list', this.activeModal.name, this.selectedUsersList)
+        let selectedUsersList = []
+        Object.keys(this.usersIsSelected).forEach(userName => {
+          if (this.usersIsSelected[ userName ]) {
+            selectedUsersList.push(userName)
+          }
+        })
+        this.$emit('set-user-list', this.activeModal.name, selectedUsersList)
         this.disableModal()
       }
     },
-    selectGroup (type, group) {
-      this.selectedUsersList =
-        this.selectedUsersList
-          .concat(this.groupTypes[ type ][ group ].activeMembers) // 該当するグループのユーザーを追加
-          .filter((user, index, array) => { return array.indexOf(user) === index }) // 重複除去
+    selectAllInGroup (type, index) {
+      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
+        this.usersIsSelected[ userName ] = true
+      })
+    },
+    removeAllInGroup (type, index) {
+      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
+        this.usersIsSelected[ userName ] = false
+      })
+    },
+    setUsersIsSelected (users) {
+      let tmp = {}
+      if (Object.keys(users).length > 0 && this.information.administrators && this.information.targets) {
+        Object.keys(users).forEach(userId => {
+          tmp[ users[ userId ].name ] = false
+        })
+        this.information[ this.activeModal.name ].forEach(userName => {
+          tmp[ userName ] = true
+        })
+      }
+      this.usersIsSelected = tmp
     }
   },
   computed: {
     isUserTrap: {
       get () {
-        return this.selectedUsersList.length === 1 && this.selectedUsersList[ 0 ] === 'traP'
+        return this.usersIsSelected.traP === true
       },
       set (newBool) {
         if (newBool) {
-          this.selectedUsersList = [ 'traP' ]
+          Object.keys(this.usersIsSelected).forEach(userName => {
+            this.usersIsSelected[ userName ] = false
+          })
         } else {
-          this.selectedUsersList = []
+          this.usersIsSelected[ this.traqId ] = true
         }
+        this.usersIsSelected.traP = newBool
       }
+    },
+    numberOfSelectedUsers () {
+      if (this.isUserTrap) {
+        return Object.keys(this.users).length
+      }
+      let count = 0
+      Object.keys(this.usersIsSelected).forEach(userName => {
+        if (this.usersIsSelected[ userName ]) {
+          count++
+        }
+      })
+      return count
     },
     inputErrors () {
       return {
         noAdministrator: {
-          isError: this.activeModal.name === 'administrators' && this.selectedUsersList.length === 0,
+          isError: this.activeModal.name === 'administrators' && this.numberOfSelectedUsers === 0,
           message: '管理者がいません'
         }
       }
@@ -136,6 +185,8 @@ export default {
       delete ret.traP
       return ret
     }
+  },
+  watch: {
   },
   mounted () {
   }

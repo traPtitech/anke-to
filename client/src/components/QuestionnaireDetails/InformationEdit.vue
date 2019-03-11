@@ -80,6 +80,7 @@
                   :traqId="traqId"
                   :users="users"
                   :groupTypes="groupTypes"
+                  :information="details"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
@@ -154,6 +155,7 @@ export default {
       isModalActive: false,
       users: {},
       groupTypes: {}
+      // usersIsSelected: {}
     }
   },
   methods: {
@@ -179,7 +181,9 @@ export default {
         .get('https://q.trap.jp/api/1.0/users')
         .then(res => {
           res.data.forEach(user => {
-            this.users[ user.userId ] = user
+            if (user.accountStatus === 1) {
+              this.users[ user.userId ] = user
+            }
           })
         })
         .catch(err => {
@@ -193,23 +197,23 @@ export default {
           let tmp = {}
           res.data.forEach(group => {
             if (typeof tmp[ group.type ] === 'undefined') {
-              tmp[ group.type ] = {}
+              tmp[ group.type ] = []
             }
             // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
             group.activeMembers =
-              group.members.filter(userId => this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
+              group.members.filter(userId => typeof this.users[userId] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
                 .map(userId => this.users[ userId ].name)
                 .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
-            tmp[ group.type ][ group.name ] = group
+            tmp[ group.type ].push(group)
           })
 
           // typeごとに、group名をソートしたものをgroupTypesに入れる
           Object.keys(tmp).forEach(type => {
             this.$set(this.groupTypes, type, {})
-            Object.keys(tmp[ type ]).sort().forEach(group => {
-              this.$set(this.groupTypes[ type ], tmp[ type ][ group ].name, tmp[ type ][ group ])
-            })
+            tmp[ type ]
+              .sort((a, b) => { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) })
           })
+          this.groupTypes = tmp
         })
     }
   },
