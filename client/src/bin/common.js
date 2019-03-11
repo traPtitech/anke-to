@@ -150,16 +150,6 @@ export default {
       (information.res_shared_to === 'respondents' && hasResponded)
     )
   },
-  toListString(list) {
-    let ret = ''
-    if (list.length > 0) {
-      for (let i = 0; i < list.length - 1; i++) {
-        ret += list[i] + ', '
-      }
-      ret += list[list.length - 1]
-    }
-    return ret
-  },
   getUserLists(details) {
     if (details.targets && details.respondents && details.administrators) {
       return {
@@ -167,14 +157,12 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: details.targets,
-          liststr: this.toListString(details.targets),
           editable: true
         },
         administrators: {
           name: 'administrators',
           summary: '管理者',
           list: details.administrators,
-          liststr: this.toListString(details.administrators),
           editable: true
         },
         respondents: {
@@ -184,12 +172,6 @@ export default {
             // 重複除去
             return array.indexOf(user) === index
           }),
-          liststr: this.toListString(
-            details.respondents.filter((user, index, array) => {
-              // 重複除去
-              return array.indexOf(user) === index
-            })
-          ),
           editable: false
         }
       }

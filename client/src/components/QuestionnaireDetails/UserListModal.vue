@@ -13,11 +13,31 @@
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
+        <!-- error message -->
         <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
+
+        <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">
           <input type="checkbox" v-model="isUserTrap">
           traP
         </label>
+
+        <!-- select type tab -->
+        <div class="tabs is-centered">
+          <ul>
+            <li
+              class="tab"
+              :class="{ 'is-active': selectedGroupType===tab }"
+              v-for="(tab, index) in tabs"
+              :key="index"
+              @click="selectedGroupType = tab"
+            >
+              <a>{{ tab }}</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- list -->
         <div class="user-list-wrapper">
           <span v-for="(group, index) in groupTypes[selectedGroupType]" :key="index">
             <div class="has-text-weight-bold group-name">
@@ -66,6 +86,7 @@ export default {
   name: 'UserListModal',
   created () {
     this.setUsersIsSelected(this.users)
+    this.selectedTab = Object.keys(this.groupTypes)[ 0 ]
   },
   components: {
     'input-error-message': InputErrorMessage
@@ -184,6 +205,9 @@ export default {
       let ret = Object.assign({}, this.allUsersList)
       delete ret.traP
       return ret
+    },
+    tabs () {
+      return Object.keys(this.groupTypes)
     }
   },
   watch: {
