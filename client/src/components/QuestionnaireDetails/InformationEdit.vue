@@ -10,8 +10,8 @@
                 <div id="title" class="card-header-title title is-editing">
                   <div class="wrapper">
                     <textarea
-                      :value="details.title"
-                      @input="$set(details, 'title', $event.target.value)"
+                      :value="information.title"
+                      @input="$set(information, 'title', $event.target.value)"
                       class="input"
                       placeholder="タイトル"
                     ></textarea>
@@ -22,7 +22,7 @@
               <div class="card-content">
                 <textarea
                   id="description"
-                  v-model="details.description"
+                  v-model="information.description"
                   class="textarea"
                   rows="5"
                   placeholder="説明"
@@ -76,11 +76,11 @@
                   v-if="isModalActive"
                   :class="{'is-active': isModalActive}"
                   :activeModal="activeModal"
-                  :userListProps="details[activeModal.name]"
+                  :userListProps="information[activeModal.name]"
                   :traqId="traqId"
                   :users="users"
                   :groupTypes="groupTypes"
-                  :information="details"
+                  :information="information"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
@@ -173,8 +173,8 @@ export default {
       this.isModalActive = false
     },
     setUserList (listName, newList) {
-      this.details[ listName ] = newList
-      this.setInformation(this.details)
+      this.information[ listName ] = newList
+      this.setInformation(this.information)
     },
     getUsers () {
       return axios
@@ -201,7 +201,7 @@ export default {
             }
             // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
             group.activeMembers =
-              group.members.filter(userId => typeof this.users[userId] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
+              group.members.filter(userId => typeof this.users[ userId ] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
                 .map(userId => this.users[ userId ].name)
                 .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
             tmp[ group.type ].push(group)
@@ -218,8 +218,8 @@ export default {
     }
   },
   computed: {
-    details () {
-      return this.informationProps.details
+    information () {
+      return this.informationProps.information
     },
     administrates () {
       return this.informationProps.administrates
@@ -242,11 +242,11 @@ export default {
       return this.$route.params.id === 'new'
     },
     userLists () {
-      return common.getUserLists(this.details)
+      return common.getUserLists(this.information)
     },
     resSharedToStr: {
       get: function () {
-        switch (this.details.res_shared_to) {
+        switch (this.information.res_shared_to) {
           case 'public': return '全体'
           case 'administrators': return '管理者のみ'
           case 'respondents': return '回答済みの人'
@@ -255,15 +255,15 @@ export default {
       set: function (str) {
         switch (str) {
           case '全体': {
-            this.details.res_shared_to = 'public'
+            this.information.res_shared_to = 'public'
             break
           }
           case '管理者のみ': {
-            this.details.res_shared_to = 'administrators'
+            this.information.res_shared_to = 'administrators'
             break
           }
           case '回答済みの人': {
-            this.details.res_shared_to = 'respondents'
+            this.information.res_shared_to = 'respondents'
             break
           }
         }
@@ -271,14 +271,14 @@ export default {
     },
     resTimeLimitEditStr: {
       get: function () {
-        if (!this.details.res_time_limit || this.details.res_time_limit === 'NULL') return ''
-        return this.details.res_time_limit.slice(0, 16)
+        if (!this.information.res_time_limit || this.information.res_time_limit === 'NULL') return ''
+        return this.information.res_time_limit.slice(0, 16)
       },
       set: function (str) {
         if (str === '') {
           this.$emit('set-data', 'noTimeLimit', true)
         } else {
-          this.details.res_time_limit = str
+          this.information.res_time_limit = str
         }
       }
     }
@@ -287,7 +287,7 @@ export default {
     traqId: function (newVal) {
       // traqIdがundefinedから変わった時に呼ばれる
       if (newVal && this.isNewQuestionnaire) {
-        this.details.administrators = [ this.traqId ]
+        this.information.administrators = [ this.traqId ]
       }
     }
   },

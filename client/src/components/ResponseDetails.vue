@@ -18,7 +18,7 @@
         :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
         class="is-fullheight details-child"
       >
-        <information-summary :details="summaryProps"></information-summary>
+        <information-summary :information="summaryProps"></information-summary>
         <questions
           :traqId="traqId"
           :editMode="isEditing ? 'response' : undefined"

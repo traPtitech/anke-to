@@ -11,8 +11,8 @@
             </header>
             <div class="card-content">
               <div class="has-text-weight-bold">
-                <div>更新日時 : {{ getDateStr(details.modified_at) }}</div>
-                <div>作成日時 : {{ getDateStr(details.created_at) }}</div>
+                <div>更新日時 : {{ getDateStr(information.modified_at) }}</div>
+                <div>作成日時 : {{ getDateStr(information.created_at) }}</div>
               </div>
 
               <!-- user lists -->
@@ -176,8 +176,8 @@ export default {
     }
   },
   computed: {
-    details () {
-      return this.informationProps.details
+    information () {
+      return this.informationProps.information
     },
     administrates () {
       return this.informationProps.administrates
@@ -193,10 +193,10 @@ export default {
     },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す
-      return common.canViewResults(this.details, this.administrates, this.responses.length > 0)
+      return common.canViewResults(this.information, this.administrates, this.responses.length > 0)
     },
     userLists () {
-      return common.getUserLists(this.details)
+      return common.getUserLists(this.information)
     },
     resSharedToLabel () {
       const labels = {
@@ -204,11 +204,11 @@ export default {
         respondents: '回答済みの人',
         administrators: '管理者のみ'
       }
-      return labels[ this.details.res_shared_to ]
+      return labels[ this.information.res_shared_to ]
     },
     timeLimitExceeded () {
       // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.details.res_time_limit).getTime() < new Date().getTime()
+      return new Date(this.information.res_time_limit).getTime() < new Date().getTime()
     },
     newResponseLink () {
       return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId

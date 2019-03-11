@@ -26,7 +26,10 @@
       :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
       class="details-child is-fullheight"
     >
-      <information-summary v-if="currentTabComponent!=='information-edit'" :details="summaryProps"></information-summary>
+      <information-summary
+        v-if="currentTabComponent!=='information-edit'"
+        :information="summaryProps"
+      ></information-summary>
       <component
         :is="currentTabComponent"
         :traqId="traqId"
@@ -438,7 +441,7 @@ export default {
     },
     informationProps () {
       return {
-        details: this.information,
+        information: this.information,
         administrates: this.administrates,
         deleteQuestionnaire: this.deleteQuestionnaire,
         questionnaireId: this.questionnaireId,

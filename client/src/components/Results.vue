@@ -13,7 +13,7 @@
           </li>
         </ul>
       </div>
-      <information-summary :details="summaryProps"></information-summary>
+      <information-summary :information="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
         class="details-child is-fullheight"
