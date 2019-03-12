@@ -183,6 +183,7 @@ export default {
       }
       if (this.selectedTab === 'Individual') {
         ret.responseDetails = {
+          timeLabel: '回答日時',
           time: this.getDateStr(this.responseData.submitted_at),
           respondent: this.responseData.traqID
         }

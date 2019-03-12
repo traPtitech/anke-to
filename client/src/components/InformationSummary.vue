@@ -18,19 +18,22 @@
               <p v-if="!information.titleLink">{{ information.title }}</p>
             </div>
           </header>
+
           <div v-if="information.description" class="card-content">
             <pre>{{ information.description }}</pre>
           </div>
+
           <div v-if="information.timeLimit" class="is-pulled-right wrapper editable time-limit">
             <span class="label">回答期限 :</span>
             <span class="time-limit">{{ information.timeLimit }}</span>
           </div>
+
           <div v-if="information.responseDetails" class="response-details">
             <div class="is-pulled-left is-inline-block wrapper editable">
               <span class="respondent subtitle is-5">{{ information.responseDetails.respondent }}</span>
             </div>
             <div class="is-pulled-right is-flex editable">
-              <span class="label">回答日時 :</span>
+              <span class="label">{{ information.responseDetails.timeLabel + ': ' }}</span>
               <span class="time-limit">{{ information.responseDetails.time }}</span>
             </div>
           </div>

@@ -2,14 +2,17 @@
   <div>
     <top-bar-message :message="message"></top-bar-message>
 
-    <div v-if="information.res_time_limit && !timeLimitExceeded" class="is-fullheight details">
+    <div
+      v-if="!isEditing || (information.res_time_limit && !timeLimitExceeded)"
+      class="is-fullheight details"
+    >
       <div class="tabs is-centered">
         <ul></ul>
         <a
           id="edit-button"
           :class="{'is-editing': isEditing}"
           @click.prevent="isEditing = !isEditing"
-          v-if="!isNewResponse"
+          v-if="!isNewResponse && information.res_time_limit && !timeLimitExceeded"
         >
           <span class="ti-pencil"></span>
         </a>
@@ -87,13 +90,13 @@ export default {
   },
   methods: {
     alertNetworkError: common.alertNetworkError,
-    getTimeLimitStr: common.customDateStr,
+    getDateStr: common.customDateStr,
     getInformation () {
       return axios
         .get('/questionnaires/' + this.questionnaireId)
         .then(res => {
           this.information = res.data
-          if (this.timeLimitExceeded) {
+          if (this.timeLimitExceeded && this.isEditing) {
             this.message =
               {
                 body: '回答期限が過ぎています',
@@ -346,8 +349,13 @@ export default {
         title: this.information.title,
         titleLink: this.titleLink,
         description: this.information.description,
-        timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
-        responseIconClass: this.responseIconClass
+        // timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
+        responseIconClass: this.responseIconClass,
+        responseDetails: {
+          timeLabel: '更新日時',
+          time: this.getDateStr(this.responseData.modified_at),
+          respondent: this.traqId
+        }
       }
       return ret
     },
