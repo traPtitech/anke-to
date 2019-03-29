@@ -157,13 +157,13 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: details.targets,
-          editable: true
+          editable: false
         },
         administrators: {
           name: 'administrators',
           summary: '管理者',
           list: details.administrators,
-          editable: true
+          editable: false
         },
         respondents: {
           name: 'respondents',
