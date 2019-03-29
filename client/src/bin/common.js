@@ -79,13 +79,21 @@ export default {
 
   setResponseToQuestion(questionData, responseData) {
     // サーバーから送られてきた回答1つ分のデータを、指定されたquestionに入れる
+    const toNumber = function(str) {
+      if (typeof str === 'undefined' || str === '') {
+        return ''
+      } else {
+        return Number(str)
+      }
+    }
+
     let question = Object.assign({}, questionData)
     switch (question.type) {
       case 'Text':
         question.responseBody = responseData.response
         break
       case 'Number':
-        question.responseBody = Number(responseData.response)
+        question.responseBody = toNumber(responseData.response)
         break
       case 'Checkbox':
         question.isSelected = {}
@@ -97,7 +105,7 @@ export default {
         question.selected = responseData.option_response[0]
         break
       case 'LinearScale':
-        question.selected = Number(responseData.response)
+        question.selected = toNumber(responseData.response)
         break
       default:
         break
