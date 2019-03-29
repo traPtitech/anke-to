@@ -57,6 +57,17 @@
                 <div class="card-header-title subtitle">情報</div>
               </header>
               <div class="card-content">
+                <div class="wrapper editable">
+                  <span class="label">結果の公開範囲:</span>
+                  <span class="select">
+                    <select v-model="resSharedToStr">
+                      <option>全体</option>
+                      <option>回答済みの人</option>
+                      <option>管理者のみ</option>
+                    </select>
+                  </span>
+                </div>
+
                 <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
                   <div>
                     <span
@@ -91,17 +102,6 @@
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
                 ></user-list-modal>
-
-                <div class="wrapper editable">
-                  <span class="label">結果の公開範囲:</span>
-                  <span class="select">
-                    <select v-model="resSharedToStr">
-                      <option>全体</option>
-                      <option>回答済みの人</option>
-                      <option>管理者のみ</option>
-                    </select>
-                  </span>
-                </div>
               </div>
             </div>
           </div>
@@ -314,7 +314,7 @@ export default {
     height: fit-content;
     top: 0;
     bottom: 0;
-    margin: auto 0.2rem;
+    margin: auto 0.2rem auto 0;
     white-space: nowrap;
   }
 }
@@ -355,6 +355,6 @@ export default {
   }
 }
 .user-list-wrapper {
-  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
 }
 </style>

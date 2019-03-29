@@ -2,6 +2,9 @@
   <div>
     <div v-if="canViewResults" class="details is-fullheight">
       <div class="tabs is-centered">
+        <router-link :to="summaryProps.titleLink" id="return-button">
+          <span class="ti-arrow-left"></span>
+        </router-link>
         <ul>
           <li
             class="tab"

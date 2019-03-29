@@ -36,6 +36,10 @@ export default {
       pageNum: data.page_num
     }
     switch (data.question_type) {
+      case 'Text':
+      case 'Number':
+        question.responseBody = ''
+        break
       case 'Checkbox':
         question.options = []
         question.isSelected = {}
@@ -55,6 +59,7 @@ export default {
             label: option
           })
         })
+        question.selected = ''
         break
       case 'LinearScale':
         question.scaleLabels = {
@@ -65,6 +70,7 @@ export default {
           left: data.scale_min,
           right: data.scale_max
         }
+        question.response = ''
       default:
         break
     }
@@ -73,13 +79,21 @@ export default {
 
   setResponseToQuestion(questionData, responseData) {
     // サーバーから送られてきた回答1つ分のデータを、指定されたquestionに入れる
+    const toNumber = function(str) {
+      if (typeof str === 'undefined' || str === '') {
+        return ''
+      } else {
+        return Number(str)
+      }
+    }
+
     let question = Object.assign({}, questionData)
     switch (question.type) {
       case 'Text':
         question.responseBody = responseData.response
         break
       case 'Number':
-        question.responseBody = Number(responseData.response)
+        question.responseBody = toNumber(responseData.response)
         break
       case 'Checkbox':
         question.isSelected = {}
@@ -91,7 +105,7 @@ export default {
         question.selected = responseData.option_response[0]
         break
       case 'LinearScale':
-        question.selected = Number(responseData.response)
+        question.selected = toNumber(responseData.response)
         break
       default:
         break
@@ -157,13 +171,15 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: details.targets,
-          editable: false
+          editable: false,
+          show: true
         },
         administrators: {
           name: 'administrators',
           summary: '管理者',
           list: details.administrators,
-          editable: false
+          editable: false,
+          show: true
         },
         respondents: {
           name: 'respondents',
@@ -172,7 +188,8 @@ export default {
             // 重複除去
             return array.indexOf(user) === index
           }),
-          editable: false
+          editable: false,
+          show: true
         }
       }
     }

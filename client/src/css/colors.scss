@@ -48,14 +48,17 @@ summary {
     border-bottom-color: $var-indigo;
   }
 }
-#edit-button {
-  border: $var-indigo solid 1px;
+#edit-button,
+#return-button {
   &.is-editing {
     color: $base-gray;
     &:hover {
       color: $base-brown;
     }
   }
+}
+#edit-button {
+  border: $var-indigo solid 1px;
 }
 
 // editing background
