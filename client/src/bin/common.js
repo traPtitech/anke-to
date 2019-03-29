@@ -171,13 +171,15 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: details.targets,
-          editable: true
+          editable: true,
+          show: true
         },
         administrators: {
           name: 'administrators',
           summary: '管理者',
           list: details.administrators,
-          editable: true
+          editable: true,
+          show: true
         },
         respondents: {
           name: 'respondents',
@@ -186,7 +188,8 @@ export default {
             // 重複除去
             return array.indexOf(user) === index
           }),
-          editable: false
+          editable: false,
+          show: true
         }
       }
     }

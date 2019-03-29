@@ -7,6 +7,9 @@
       class="is-fullheight details"
     >
       <div class="tabs is-centered">
+        <router-link :to="titleLink" id="return-button">
+          <span class="ti-arrow-left"></span>
+        </router-link>
         <ul></ul>
         <a
           id="edit-button"

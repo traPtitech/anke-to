@@ -10,25 +10,30 @@
               <div class="card-header-title subtitle">情報</div>
             </header>
             <div class="card-content">
-              <div class="has-text-weight-bold">
-                <div>更新日時 : {{ getDateStr(information.modified_at) }}</div>
-                <div>作成日時 : {{ getDateStr(information.created_at) }}</div>
-              </div>
-
-              <!-- user lists -->
-              <details v-for="(userList, key) in userLists" :key="key">
-                <summary>{{ userList.summary }} ({{ userList.list.length }})</summary>
-                <p class="has-text-grey user-list">
-                  <span v-for="(user, index) in userList.list" :key="index">
-                    <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
-                    <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
-                  </span>
-                </p>
-              </details>
-
               <div class="wrapper editable">
                 <span class="label">結果の公開範囲:</span>
                 <span>{{ resSharedToLabel }}</span>
+              </div>
+
+              <!-- user lists -->
+              <div class="user-lists">
+                <div v-for="(userList, key) in userLists" :key="key">
+                  <div class="label" @click.prevent="toggleListVisibility(userList.name)">
+                    <span :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"></span>
+                    <span>{{ userList.summary }} ({{ userList.list.length }})</span>
+                  </div>
+                  <p class="has-text-grey user-list" v-if="userList.show">
+                    <span v-for="(user, index) in userList.list" :key="index">
+                      <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
+                      <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="has-text-weight-bold">
+                <div>更新日時 : {{ getDateStr(information.modified_at) }}</div>
+                <div>作成日時 : {{ getDateStr(information.created_at) }}</div>
               </div>
             </div>
           </div>
@@ -128,6 +133,7 @@ export default {
       .then(res => {
         this.responses = res.data
       })
+    this.userLists = common.getUserLists(this.information)
   },
   props: {
     informationProps: {
@@ -146,7 +152,8 @@ export default {
       newQuestionnaire: false,
       copyMessage: {
         showMessage: false
-      }
+      },
+      userLists: {}
     }
   },
   methods: {
@@ -177,6 +184,9 @@ export default {
           message: 'コピーに失敗しました'
         }
       }
+    },
+    toggleListVisibility (listName) {
+      this.userLists[ listName ].show = !this.userLists[ listName ].show
     }
   },
   computed: {
@@ -199,9 +209,9 @@ export default {
       // 結果をみる権限があるかどうかを返す
       return common.canViewResults(this.information, this.administrates, this.responses.length > 0)
     },
-    userLists () {
-      return common.getUserLists(this.information)
-    },
+    // getUserLists () {
+    //   return common.getUserLists(this.information)
+    // },
     resSharedToLabel () {
       const labels = {
         public: '全体',
@@ -219,6 +229,9 @@ export default {
     }
   },
   watch: {
+    information: function (newVal) {
+      this.userLists = common.getUserLists(this.information)
+    }
   },
   mounted () {
   }
@@ -312,6 +325,17 @@ export default {
     margin: 0 1rem 2rem 1rem;
     width: 8rem;
     max-width: 100%;
+  }
+}
+.user-lists {
+  margin: 0.5rem;
+  .label {
+    margin: 0.5rem 0 0.1rem 0;
+    display: flex;
+    span {
+      margin: auto 0.1rem;
+    }
+    cursor: pointer;
   }
 }
 </style>
