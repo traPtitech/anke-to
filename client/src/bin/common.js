@@ -36,6 +36,10 @@ export default {
       pageNum: data.page_num
     }
     switch (data.question_type) {
+      case 'Text':
+      case 'Number':
+        question.responseBody = ''
+        break
       case 'Checkbox':
         question.options = []
         question.isSelected = {}
@@ -55,6 +59,7 @@ export default {
             label: option
           })
         })
+        question.selected = ''
         break
       case 'LinearScale':
         question.scaleLabels = {
@@ -65,6 +70,7 @@ export default {
           left: data.scale_min,
           right: data.scale_max
         }
+        question.response = ''
       default:
         break
     }

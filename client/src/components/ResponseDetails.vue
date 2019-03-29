@@ -220,11 +220,11 @@ export default {
             break
           case 'Text':
           case 'Number':
-            body.option_response = [ '' ]
+            body.option_response = []
             body.response = String(question.responseBody)
             break
           case 'LinearScale':
-            body.option_response = [ '' ]
+            body.option_response = []
             body.response = String(question.selected)
             break
         }
