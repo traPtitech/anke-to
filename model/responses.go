@@ -93,7 +93,7 @@ func InsertResponse(c echo.Context, responseID int, req Responses, body Response
 func GetRespondents(c echo.Context, questionnaireID int) ([]string, error) {
 	respondents := []string{}
 	if err := db.Select(&respondents,
-		"SELECT user_traqid FROM respondents WHERE questionnaire_id = ? AND deleted_at IS NULL",
+		"SELECT user_traqid FROM respondents WHERE questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
