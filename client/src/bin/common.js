@@ -70,7 +70,7 @@ export default {
           left: data.scale_min,
           right: data.scale_max
         }
-        question.response = ''
+        question.selected = ''
       default:
         break
     }

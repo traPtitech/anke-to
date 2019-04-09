@@ -26,8 +26,12 @@ summary {
 .menu-list a {
   color: $point-black;
 }
-.navbar-burger:hover {
-  background-color: $var-indigo;
+.navbar-burger {
+  color: $var-indigo;
+  &:hover {
+    color: $base-brown;
+    background-color: $var-indigo;
+  }
 }
 
 // tabs

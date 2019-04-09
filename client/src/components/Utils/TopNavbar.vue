@@ -4,7 +4,7 @@
       <div class="navbar-brand">
         <a
           role="button"
-          class="navbar-burger"
+          class="navbar-burger is-flex"
           @click="$emit('toggle-side-menu')"
           :class="{'is-active' : isSideMenuActive}"
         >
@@ -12,9 +12,9 @@
           <span></span>
           <span></span>
         </a>
-        <div @click="$emit('close-side-menu')">
+        <div @click="$emit('close-side-menu')" class="is-flex">
           <router-link class="navbar-item" to="/targeted">
-            <p class="title is-3">anke-to</p>
+            <img class="title" src="/static/img/logo.png">
           </router-link>
         </div>
         <div class="subtitle pull-right user">
