@@ -159,12 +159,34 @@ func GetResponsesByID(c echo.Context) error {
 	// 昇順
 	if sortNum > 0 {
 		sort.Slice(responses, func(i, j int) bool {
+			if responses[i].Body[sortNum-1].QuestionType == "Number" {
+				numi, err := strconv.Atoi(responses[i].Body[sortNum-1].Response)
+				if err != nil {
+					return true
+				}
+				numj, err := strconv.Atoi(responses[j].Body[sortNum-1].Response)
+				if err != nil {
+					return true
+				}
+				return numi < numj
+			}
 			return responses[i].Body[sortNum-1].Response < responses[j].Body[sortNum-1].Response
 		})
 	}
 	// 降順
 	if sortNum < 0 {
 		sort.Slice(responses, func(i, j int) bool {
+			if responses[i].Body[-sortNum-1].QuestionType == "Number" {
+				numi, err := strconv.Atoi(responses[i].Body[-sortNum-1].Response)
+				if err != nil {
+					return true
+				}
+				numj, err := strconv.Atoi(responses[j].Body[-sortNum-1].Response)
+				if err != nil {
+					return true
+				}
+				return numi > numj
+			}
 			return responses[i].Body[-sortNum-1].Response > responses[j].Body[-sortNum-1].Response
 		})
 	}
