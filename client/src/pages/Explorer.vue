@@ -1,13 +1,19 @@
 <template>
   <div class="wrapper is-fullheight has-navbar-fixed-bottom">
     <div class="dropdowns">
-      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.sortOrder }">
+      <div
+        class="dropdown"
+        :class="{ 'is-active': DropdownIsActive.sortOrder }"
+      >
         <div class="dropdown-trigger">
           <button
             class="button"
             aria-haspopup="true"
             aria-controls="dropdown-menu"
-            @click="DropdownIsActive.targetedOption = false; DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder"
+            @click="
+              DropdownIsActive.targetedOption = false;
+              DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder;
+            "
           >
             <p>並び替え</p>
             <span class="ti-angle-down"></span>
@@ -18,20 +24,29 @@
             class="dropdown-content"
             v-for="(order, index) in sortOrders"
             :key="index"
-            :class="{'is-selected' : order.opt===sortOrder}"
-            @click="changeSortOrder(order.opt); DropdownIsActive.sortOrder = false"
+            :class="{ 'is-selected': order.opt === sortOrder }"
+            @click="
+              changeSortOrder(order.opt);
+              DropdownIsActive.sortOrder = false;
+            "
           >
             <p class="dropdown-item">{{ order.str }}</p>
           </div>
         </div>
       </div>
-      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.targetedOption }">
+      <div
+        class="dropdown"
+        :class="{ 'is-active': DropdownIsActive.targetedOption }"
+      >
         <div class="dropdown-trigger">
           <button
             class="button"
             aria-haspopup="true"
             aria-controls="dropdown-menu"
-            @click="DropdownIsActive.sortOrder = false; DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption"
+            @click="
+              DropdownIsActive.sortOrder = false;
+              DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption;
+            "
           >
             <p>フィルター</p>
             <span class="ti-angle-down"></span>
@@ -42,8 +57,11 @@
             class="dropdown-content"
             v-for="(option, index) in targetedOptions"
             :key="index"
-            :class="{'is-selected' : option.opt===targetedOption}"
-            @click="changetargetedOption(option.opt); DropdownIsActive.targetedOption = false"
+            :class="{ 'is-selected': option.opt === targetedOption }"
+            @click="
+              changetargetedOption(option.opt);
+              DropdownIsActive.targetedOption = false;
+            "
           >
             <p class="dropdown-item">{{ option.str }}</p>
           </div>
@@ -52,14 +70,19 @@
     </div>
     <div
       class="card-wrapper is-fullheight"
-      @click="DropdownIsActive.sortOrder = false; DropdownIsActive.targetedOption = false"
+      @click="
+        DropdownIsActive.sortOrder = false;
+        DropdownIsActive.targetedOption = false;
+      "
     >
       <div class="card">
         <!-- <button class="button" v-on:click="changeSortOrder('-title')">Button</button> -->
         <table class="table is-striped">
           <thead>
             <tr>
-              <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
+              <th v-for="(header, index) in headers" :key="index">
+                {{ header }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -67,15 +90,25 @@
               <td class="table-item-title">
                 <router-link
                   :to="'/questionnaires/' + questionnaire.questionnaireID"
-                >{{ questionnaire.title }}</router-link>
+                  >{{ questionnaire.title }}</router-link
+                >
               </td>
-              <td class="table-item-date">{{ getDateStr(questionnaire.res_time_limit) }}</td>
-              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.modified_at) }}</td>
-              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.created_at) }}</td>
+              <td class="table-item-date">
+                {{ getDateStr(questionnaire.res_time_limit) }}
+              </td>
+              <td class="table-item-date">
+                {{ getRelativeDateStr(questionnaire.modified_at) }}
+              </td>
+              <td class="table-item-date">
+                {{ getRelativeDateStr(questionnaire.created_at) }}
+              </td>
               <td>
-                <router-link :to="'/results/' + questionnaire.questionnaireID" target="_blank">
+                <router-link
+                  :to="'/results/' + questionnaire.questionnaireID"
+                  target="_blank"
+                >
                   <span class="ti-new-window"></span>
-                  <br>Open
+                  <br />Open
                 </router-link>
               </td>
             </tr>
@@ -83,7 +116,11 @@
         </table>
       </div>
     </div>
-    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink" :range="range"></pagination>
+    <pagination
+      :currentPage="pageNumber"
+      :defaultPageLink="defaultPageLink"
+      :range="range"
+    ></pagination>
   </div>
 </template>
 
@@ -227,8 +264,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
-
 td {
   vertical-align: middle;
   font-size: 0.9em;

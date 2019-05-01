@@ -2,10 +2,14 @@
   <div class="submenu column is-2 is-fullheight">
     <aside class="nav menu">
       <ul class="menu-list">
-        <li v-for="(menuItem, index) in menuItems" :key="index" @click="$emit('close-side-menu')">
+        <li
+          v-for="(menuItem, index) in menuItems"
+          :key="index"
+          @click="$emit('close-side-menu')"
+        >
           <router-link :to="menuItem.url">{{ menuItem.name }}</router-link>
         </li>
-        <hr>
+        <hr />
         <li @click.prevent="createQuestionnaire">
           <a>New Questionnaire</a>
         </li>
@@ -55,8 +59,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
-
 .submenu {
   min-width: fit-content;
   background-color: $base-lightbrown;
