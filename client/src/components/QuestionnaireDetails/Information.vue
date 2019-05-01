@@ -18,14 +18,30 @@
               <!-- user lists -->
               <div class="user-lists">
                 <div v-for="(userList, key) in userLists" :key="key">
-                  <div class="label" @click.prevent="toggleListVisibility(userList.name)">
-                    <span :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"></span>
-                    <span>{{ userList.summary }} ({{ userList.list.length }})</span>
+                  <div
+                    class="label"
+                    @click.prevent="toggleListVisibility(userList.name)"
+                  >
+                    <span
+                      :class="
+                        userList.show ? 'ti-angle-down' : 'ti-angle-right'
+                      "
+                    ></span>
+                    <span
+                      >{{ userList.summary }} ({{ userList.list.length }})</span
+                    >
                   </div>
                   <p class="has-text-grey user-list" v-if="userList.show">
                     <span v-for="(user, index) in userList.list" :key="index">
-                      <span :class="{'highlight-name': user==='traP' || user===traqId}">{{ user }}</span>
-                      <span>{{ (index===userList.list.length-1 ? "" : ", ") }}</span>
+                      <span
+                        :class="{
+                          'highlight-name': user === 'traP' || user === traqId
+                        }"
+                        >{{ user }}</span
+                      >
+                      <span>{{
+                        index === userList.list.length - 1 ? "" : ", "
+                      }}</span>
                     </span>
                   </p>
                 </div>
@@ -50,10 +66,15 @@
             <div class="card-content management-buttons">
               <router-link
                 class="button"
-                :class="{'is-disabled': timeLimitExceeded}"
+                :class="{ 'is-disabled': timeLimitExceeded }"
                 :disabled="timeLimitExceeded"
-                :to="{name: 'NewResponseDetails', params: {questionnaireId: this.questionnaireId}}"
-              >新しい回答を作成</router-link>
+                :to="{
+                  name: 'NewResponseDetails',
+                  params: { questionnaireId: this.questionnaireId }
+                }"
+                ><span class="ti-check-box"></span>
+                回答する
+              </router-link>
               <div class="new-response-link-panel">
                 <input
                   id="new-response-link"
@@ -63,26 +84,35 @@
                   ref="link"
                   @click="$refs.link.select()"
                   readonly
-                >
+                />
                 <span class="button" @click="copyNewResponseLink">
                   <span class="ti-clipboard"></span>
                 </span>
               </div>
               <transition name="fade">
-                <p class="copy-message" v-if="copyMessage.showMessage">{{ copyMessage.message }}</p>
+                <p class="copy-message" v-if="copyMessage.showMessage">
+                  {{ copyMessage.message }}
+                </p>
               </transition>
               <router-link
                 v-if="canViewResults"
-                :to="{ name: 'Results', params: { id: questionnaireId }}"
+                :to="{ name: 'Results', params: { id: questionnaireId } }"
                 class="button"
-              >結果を見る</router-link>
-              <div v-if="!canViewResults" class="button is-disabled">結果を見る</div>
+                ><span class="ti-bar-chart"></span>
+                結果を見る
+              </router-link>
+              <div v-if="!canViewResults" class="button is-disabled">
+                結果を見る
+              </div>
               <button
                 class="button"
                 @click.prevent="deleteQuestionnaire"
-                :class="{'is-disabled' : !administrates}"
+                :class="{ 'is-disabled': !administrates }"
                 :disabled="!administrates"
-              >アンケートを削除</button>
+              >
+                <span class="ti-trash"></span>
+                アンケートを削除
+              </button>
             </div>
           </div>
         </div>
@@ -93,14 +123,21 @@
               <div class="card-header-title subtitle">自分の回答</div>
             </header>
             <div class="card-content">
-              <ul>
-                <li v-for="(response, index) in responses" :key="index">
+              <ul class="response-list">
+                <li
+                  v-for="(response, index) in responses"
+                  :key="index"
+                  class="response-list-item"
+                >
                   <span
-                    :class="{'ti-save': response.submitted_at==='NULL', 'ti-check': response.submitted_at!=='NULL'}"
+                    :class="{
+                      'ti-save': response.submitted_at === 'NULL',
+                      'ti-check': response.submitted_at !== 'NULL'
+                    }"
                   ></span>
-                  <router-link
-                    :to="'/responses/' + response.responseID"
-                  >{{ getDateStr(response.modified_at) }}</router-link>
+                  <router-link :to="'/responses/' + response.responseID">{{
+                    getDateStr(response.modified_at)
+                  }}</router-link>
                   <a>
                     <span
                       class="ti-trash is-pulled-right"
@@ -296,6 +333,9 @@ export default {
       }
     }
   }
+}
+.response-list-item:hover {
+  background: $base-gray;
 }
 .copy-message {
   font-size: smaller;

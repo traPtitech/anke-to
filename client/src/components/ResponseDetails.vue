@@ -13,15 +13,17 @@
         <ul></ul>
         <a
           id="edit-button"
-          :class="{'is-editing': isEditing}"
+          :class="{ 'is-editing': isEditing }"
           @click.prevent="isEditing = !isEditing"
-          v-if="!isNewResponse && information.res_time_limit && !timeLimitExceeded"
+          v-if="
+            !isNewResponse && information.res_time_limit && !timeLimitExceeded
+          "
         >
-          <span class="ti-pencil"></span>
+          <span class="ti-check-box"></span>
         </a>
       </div>
       <div
-        :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
+        :class="{ 'is-editing has-navbar-fixed-bottom': isEditing }"
         class="is-fullheight details-child"
       >
         <information-summary :information="summaryProps"></information-summary>

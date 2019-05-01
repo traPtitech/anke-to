@@ -4,9 +4,9 @@
       <div class="navbar-brand">
         <a
           role="button"
-          class="navbar-burger is-flex"
+          class="navbar-burger"
           @click="$emit('toggle-side-menu')"
-          :class="{'is-active' : isSideMenuActive}"
+          :class="{ 'is-active': isSideMenuActive }"
         >
           <span></span>
           <span></span>
@@ -14,16 +14,15 @@
         </a>
         <div @click="$emit('close-side-menu')" class="is-flex">
           <router-link class="navbar-item" to="/targeted">
-            <img class="title" src="/static/img/logo.png">
+            <img class="title" src="/static/img/logo.png" />
           </router-link>
         </div>
         <div class="subtitle pull-right user">
           <img
             class="user-icon"
             v-if="traqId"
-            v-bind:src="'https://q.trapti.tech/static/icon/' + traqId + '/64.png'"
-          >
-          <p class="user-name">{{traqId}}</p>
+            v-bind:src="'https://q.trap.jp/api/1.0/public/icon/' + traqId"
+          />
         </div>
       </div>
     </nav>
@@ -56,7 +55,6 @@ export default {
   margin-bottom: 0;
 }
 .subtitle {
-  min-width: 100px;
   position: absolute;
   top: 0;
   bottom: 0;
