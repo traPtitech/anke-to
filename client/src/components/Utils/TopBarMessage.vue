@@ -1,11 +1,16 @@
 <template>
-  <div
-    v-if="message.showMessage"
-    class="message"
-    :class="{'is-danger': message.color==='red', 'is-success': message.color==='green'}"
-  >
-    <p class="message-body">{{ message.body }}</p>
-  </div>
+  <transition name="fade">
+    <div
+      v-if="message.showMessage"
+      class="message"
+      :class="{
+        'is-danger': message.color === 'red',
+        'is-success': message.color === 'green'
+      }"
+    >
+      <p class="message-body">{{ message.body }}</p>
+    </div>
+  </transition>
 </template>
 
 <script>

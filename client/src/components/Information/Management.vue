@@ -87,15 +87,22 @@ export default {
       let link = document.querySelector('#new-response-link')
       link.select()
       if (document.execCommand('copy')) {
-        this.copyMessage = {
-          showMessage: true,
-          message: 'リンクをコピーしました'
-        }
+        this.showCopyMessage('リンクをコピーしました！')
       } else {
-        this.copyMessage = {
-          showMessage: true,
-          message: 'コピーに失敗しました'
-        }
+        this.showCopyMessage('コピーに失敗しました')
+      }
+    },
+    async showCopyMessage (message) {
+      this.copyMessage = {
+        showMessage: true,
+        message: message
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      this.resetCopyMessage()
+    },
+    resetCopyMessage () {
+      this.copyMessage = {
+        showMessage: false
       }
     }
   },

@@ -323,12 +323,15 @@ export default {
         this.questions.splice(index, 1)
       }
     },
-    showMessage (body, color) {
+    async showMessage (body, color) {
+      console.log(body)
       this.message = {
         showMessage: true,
         color: color,
         body: body
       }
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      this.resetMessage()
     },
     resetMessage () {
       this.message = {
@@ -463,7 +466,7 @@ export default {
         this.getInformation()
         this.getQuestions()
         this.newQuestionnaireId = undefined
-        this.resetMessage()
+        if (oldRoute.params.id !== 'new') this.resetMessage()
       }
     },
     noTimeLimit: function (newBool, oldBool) {
