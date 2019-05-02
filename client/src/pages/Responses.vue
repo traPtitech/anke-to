@@ -8,7 +8,9 @@
         <table class="table is-striped">
           <thead>
             <tr>
-              <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
+              <th v-for="(header, index) in headers" :key="index">
+                {{ header }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -16,17 +18,29 @@
               <td class="table-item-title">
                 <router-link
                   :to="'/questionnaires/' + response.questionnaireID"
-                >{{ response.questionnaire_title }}</router-link>
+                  >{{ response.questionnaire_title }}</router-link
+                >
               </td>
-              <td class="table-item-date">{{ getDateStr(response.res_time_limit) }}</td>
-              <td
-                class="table-item-date"
-              >{{ response.submitted_at == 'NULL' ? '未提出' : getRelativeDateStr(response.submitted_at) }}</td>
-              <td class="table-item-date">{{ getRelativeDateStr(response.modified_at) }}</td>
+              <td class="table-item-date">
+                {{ getDateStr(response.res_time_limit) }}
+              </td>
+              <td class="table-item-date">
+                {{
+                  response.submitted_at == "NULL"
+                    ? "未提出"
+                    : getRelativeDateStr(response.submitted_at)
+                }}
+              </td>
+              <td class="table-item-date">
+                {{ getRelativeDateStr(response.modified_at) }}
+              </td>
               <td>
-                <router-link :to="'/responses/' + response.responseID" target="_blank">
+                <router-link
+                  :to="'/responses/' + response.responseID"
+                  target="_blank"
+                >
                   <span class="ti-new-window"></span>
-                  <br>Open
+                  <br />Open
                 </router-link>
               </td>
             </tr>
@@ -66,7 +80,7 @@ export default {
   computed: {},
   methods: {
     getDateStr (str) {
-      return common.customDateStr(str)
+      return common.getDateStr(str)
     },
     getRelativeDateStr (str) {
       return common.relativeDateStr(str)

@@ -128,9 +128,11 @@
                 <div class="card-header-title subtitle">操作</div>
               </header>
               <div class="card-content management-buttons">
-                <button class="button" @click.prevent="deleteQuestionnaire">
-                  <span class="ti-trash"></span>アンケートを削除
-                </button>
+                <management-button
+                  :questionnaireId="questionnaireId"
+                  type="deleteQuestionnaire"
+                >
+                </management-button>
               </div>
             </div>
           </div>
@@ -146,16 +148,18 @@ import common from '@/bin/common'
 import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import UserListModal from '@/components/Information/UserListModal'
+import ManagementButton from '@/components/Information/ManagementButton'
 
 export default {
   name: 'InformationEdit',
   created () {
-    this.getUsers()
-      .then(this.getGroupTypes)
+    // this.getUsers()
+    // .then(this.getGroupTypes)
   },
   components: {
     'input-error-message': InputErrorMessage,
-    'user-list-modal': UserListModal
+    'user-list-modal': UserListModal,
+    'management-button': ManagementButton
   },
   props: {
     informationProps: {
@@ -182,7 +186,7 @@ export default {
   },
   methods: {
     getDateStr (str) {
-      return common.customDateStr(str)
+      return common.getDateStr(str)
     },
     setInformation (information) {
       this.$emit('set-data', 'information', information)
@@ -245,9 +249,6 @@ export default {
     },
     administrates () {
       return this.informationProps.administrates
-    },
-    deleteQuestionnaire () {
-      return this.informationProps.deleteQuestionnaire
     },
     questionnaireId () {
       return this.informationProps.questionnaireId

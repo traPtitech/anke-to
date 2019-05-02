@@ -105,7 +105,7 @@ export default {
   },
   methods: {
     alertNetworkError: common.alertNetworkError,
-    getDateStr: common.customDateStr,
+    getDateStr: common.getDateStr,
     getInformation () {
       // サーバーにアンケートの情報をリクエストする
       if (this.isNewQuestionnaire) {
@@ -243,24 +243,6 @@ export default {
             return this.deleteRemovedQuestions(index + 1)
           }
         })
-    },
-    deleteQuestionnaire () {
-      if (window.confirm('アンケートを削除しますか？')) {
-        if (this.isNewQuestionnaire) {
-          router.push('/administrates')
-        } else {
-          axios
-            .delete('/questionnaires/' + this.questionnaireId)
-            .then(() => {
-              router.push('/administrates')
-              // アンケートを削除したら、Administratesページに戻る
-            })
-            .catch(error => {
-              console.log(error)
-              this.alertNetworkError()
-            })
-        }
-      }
     },
     createQuestionData (index) {
       // 与えられた質問1つ分のデータをサーバーに送るフォーマットのquestionDataにして返す
@@ -443,7 +425,6 @@ export default {
       return {
         information: this.information,
         administrates: this.administrates,
-        deleteQuestionnaire: this.deleteQuestionnaire,
         questionnaireId: this.questionnaireId,
         noTimeLimit: this.noTimeLimit
       }
