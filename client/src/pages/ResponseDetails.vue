@@ -95,7 +95,7 @@ export default {
   },
   methods: {
     alertNetworkError: common.alertNetworkError,
-    getDateStr: common.customDateStr,
+    getDateStr: common.getDateStr,
     getInformation () {
       return axios
         .get('/questionnaires/' + this.questionnaireId)

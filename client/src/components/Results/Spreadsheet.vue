@@ -1,6 +1,8 @@
 <template>
   <div class="wrapper">
-    <button class="button download-csv" v-on:click="downloadCSV">CSV形式でダウンロード</button>
+    <button class="button download-csv" v-on:click="downloadCSV">
+      CSV形式でダウンロード
+    </button>
     <div class="card">
       <table class="table is-striped">
         <thead>
@@ -8,22 +10,29 @@
             <th
               v-for="(header, index) in headers.concat(questions)"
               :key="index"
-              @click="sort(index+1)"
-              :class="{ active: sorted == index+1 || sorted == -1-index }"
+              @click="sort(index + 1)"
+              :class="{ active: sorted == index + 1 || sorted == -1 - index }"
             >
               {{ header }}
-              <span class="arrow" :class="sorted != index+1 ? 'asc' : 'dsc'"></span>
+              <span
+                class="arrow"
+                :class="sorted != index + 1 ? 'asc' : 'dsc'"
+              ></span>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(result, index) in results" :key="index">
             <td class="table-item-traqid">{{ result.traqID }}</td>
-            <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
+            <td class="table-item-time">
+              {{ getDateStr(result.submitted_at) }}
+            </td>
             <td
               v-for="response in result.response_body"
               :key="response.responseID"
-            >{{getResponse(response)}}</td>
+            >
+              {{ getResponse(response) }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -58,7 +67,7 @@ export default {
   },
   methods: {
     getDateStr (str) {
-      return common.customDateStr(str)
+      return common.getDateStr(str)
     },
     getResponse (body) {
       switch (body.question_type) {

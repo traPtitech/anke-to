@@ -87,7 +87,7 @@ export default {
     }
   },
   methods: {
-    getDateStr: common.customDateStr,
+    getDateStr: common.getDateStr,
     getResults () {
       return axios
         .get('/results/' + this.questionnaireId)

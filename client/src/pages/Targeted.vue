@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     getDateStr (str) {
-      return common.customDateStr(str)
+      return common.getDateStr(str)
     },
     getRelativeDateStr (str) {
       return common.relativeDateStr(str)
