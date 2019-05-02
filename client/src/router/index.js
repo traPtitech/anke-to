@@ -71,5 +71,13 @@ export default new Router({
       name: 'NotFound',
       component: NotFound
     }
-  ]
+  ],
+  scrollBehavior (to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      // ページ遷移の時ページスクロールをトップに
+      return { x: 0, y: 0 }
+    }
+  }
 })
