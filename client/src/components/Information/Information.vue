@@ -33,7 +33,11 @@
 
         <div class="card">
           <!-- 自分の回答一覧 -->
-          <my-responses :questionnaireId="questionnaireId"> </my-responses>
+          <my-responses
+            :questionnaireId="questionnaireId"
+            @set-has-responded="setHasResponded"
+          >
+          </my-responses>
         </div>
       </article>
     </div>
@@ -70,7 +74,7 @@ export default {
   },
   data () {
     return {
-      responses: [],
+      hasResponded: false,
       activeModal: {},
       isModalActive: false,
       newQuestionnaire: false,
@@ -83,6 +87,9 @@ export default {
         name: 'NewResponseDetails',
         params: { questionnaireId: this.questionnaireId }
       })
+    },
+    setHasResponded (bool) {
+      this.hasResponded = bool
     }
   },
   computed: {
@@ -100,7 +107,7 @@ export default {
     },
     canViewResults () {
       // 結果をみる権限があるかどうかを返す
-      return common.canViewResults(this.information, this.administrates, this.responses.length > 0)
+      return common.canViewResults(this.information, this.administrates, this.hasResponded)
     }
   },
   watch: {

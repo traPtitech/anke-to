@@ -78,6 +78,14 @@ export default {
   computed: {
   },
   watch: {
+    responses: function (newArr) {
+      // 回答を送信済みかどうかを調べて Information に送信
+      let hasResponded = false
+      newArr.forEach(response => {
+        if (response.submitted_at !== 'NULL') hasResponded = true
+      })
+      this.$emit('set-has-responded', hasResponded)
+    }
   },
   mounted () {
   }
