@@ -50,10 +50,10 @@
 import axios from 'axios'
 import router from '@/router'
 import common from '@/bin/common'
-import Questions from '@/components/Questions'
+import Questions from '@/components/Questions/Questions'
 import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'
-import InformationSummary from '@/components/InformationSummary'
+import InformationSummary from '@/components/Information/InformationSummary'
 
 export default {
   name: 'ResponseDetails',

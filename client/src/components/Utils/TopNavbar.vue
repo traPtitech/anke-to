@@ -47,7 +47,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
 .navbar {
   background-color: $base-gray;
 }

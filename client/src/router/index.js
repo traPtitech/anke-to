@@ -1,13 +1,13 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Targeted from '@/components/Targeted'
-import Administrates from '@/components/Administrates'
-import Responses from '@/components/Responses'
-import Explorer from '@/components/Explorer'
-import QuestionnaireDetails from '@/components/QuestionnaireDetails'
-import Results from '@/components/Results'
-import ResponseDetails from '@/components/ResponseDetails'
-import NotFound from '@/components/Utils/NotFound'
+import Targeted from '@/pages/Targeted'
+import Administrates from '@/pages/Administrates'
+import Responses from '@/pages/Responses'
+import Explorer from '@/pages/Explorer'
+import QuestionnaireDetails from '@/pages/QuestionnaireDetails'
+import Results from '@/pages/Results'
+import ResponseDetails from '@/pages/ResponseDetails'
+import NotFound from '@/pages/NotFound'
 
 Vue.use(Router)
 

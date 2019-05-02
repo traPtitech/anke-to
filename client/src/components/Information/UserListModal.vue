@@ -3,22 +3,29 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">{{ activeModal.summary }} ({{ numberOfSelectedUsers }})</p>
+        <p class="modal-card-title">
+          {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
+        </p>
         <span
           class="ti-check icon-button round confirm"
           @click.prevent="confirmList"
-          :class="{'disabled': !confirmOk}"
+          :class="{ disabled: !confirmOk }"
         ></span>
-        <span class="ti-close icon-button round close" @click.prevent="disableModal"></span>
+        <span
+          class="ti-close icon-button round close"
+          @click.prevent="disableModal"
+        ></span>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
         <!-- error message -->
-        <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
+        <input-error-message
+          :inputError="inputErrors.noAdministrator"
+        ></input-error-message>
 
         <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">
-          <input type="checkbox" v-model="isUserTrap">
+          <input type="checkbox" v-model="isUserTrap" />
           traP
         </label>
 
@@ -27,7 +34,7 @@
           <ul>
             <li
               class="tab"
-              :class="{ 'is-active': selectedGroupType===tab }"
+              :class="{ 'is-active': selectedGroupType === tab }"
               v-for="(tab, index) in tabs"
               :key="index"
               @click="selectedGroupType = tab"
@@ -39,16 +46,19 @@
 
         <!-- list -->
         <div class="user-list-wrapper">
-          <span v-for="(group, index) in groupTypes[selectedGroupType]" :key="index">
+          <span
+            v-for="(group, index) in groupTypes[selectedGroupType]"
+            :key="index"
+          >
             <div class="has-text-weight-bold group-name">
               {{ group.name }}
               <span
-                v-if="!isUserTrap && group.activeMembers.length>0"
+                v-if="!isUserTrap && group.activeMembers.length > 0"
                 class="ti-check icon-button select-group"
                 @click.prevent="selectAllInGroup(selectedGroupType, index)"
               ></span>
               <span
-                v-if="!isUserTrap && group.activeMembers.length>0"
+                v-if="!isUserTrap && group.activeMembers.length > 0"
                 class="ti-close icon-button select-group"
                 @click.prevent="removeAllInGroup(selectedGroupType, index)"
               ></span>
@@ -56,13 +66,16 @@
 
             <!-- not user: traP -->
             <span v-for="(userName, index) in group.activeMembers" :key="index">
-              <label v-if="!isUserTrap && userName!==traqId" class="checkbox">
-                <input type="checkbox" v-model="usersIsSelected[userName]">
+              <label v-if="!isUserTrap && userName !== traqId" class="checkbox">
+                <input type="checkbox" v-model="usersIsSelected[userName]" />
                 <span>{{ userName }}</span>
               </label>
 
               <!-- user: traP -->
-              <span v-if="isUserTrap || userName===traqId" class="dummy-checkbox">
+              <span
+                v-if="isUserTrap || userName === traqId"
+                class="dummy-checkbox"
+              >
                 <span class="readonly-checkbox checked"></span>
                 <span>{{ userName }}</span>
               </span>
@@ -219,8 +232,6 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
-
 .icon-button {
   color: white;
   font-weight: bolder;

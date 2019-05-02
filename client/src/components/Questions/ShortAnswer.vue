@@ -3,30 +3,38 @@
     <!-- view or edit question -->
     <p
       class="has-underline placeholder"
-      v-if="editMode==='question' || (editMode!=='response' && typeof content.responseBody==='undefined')"
-    >{{ responsePlaceholder }}</p>
+      v-if="
+        editMode === 'question' ||
+          (editMode !== 'response' &&
+            typeof content.responseBody === 'undefined')
+      "
+    >
+      {{ responsePlaceholder }}
+    </p>
 
     <!-- view response -->
     <p
       class="has-underline"
-      v-if="!editMode && typeof content.responseBody !=='undefined'"
-    >{{ content.responseBody }}</p>
+      v-if="!editMode && typeof content.responseBody !== 'undefined'"
+    >
+      {{ content.responseBody }}
+    </p>
 
     <!-- edit response -->
     <input
       type="text"
       class="input has-underline"
-      v-if="editMode==='response' && content.type==='Text'"
+      v-if="editMode === 'response' && content.type === 'Text'"
       placeholder="回答"
       v-model="content.responseBody"
-    >
+    />
     <input
       type="number"
       class="input has-underline"
-      v-if="editMode==='response' && content.type==='Number'"
+      v-if="editMode === 'response' && content.type === 'Number'"
       placeholder="0"
       v-model.number="content.responseBody"
-    >
+    />
   </div>
 </template>
 
@@ -75,8 +83,6 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
-
 .placeholder {
   color: $base-brown;
   &.has-underline {

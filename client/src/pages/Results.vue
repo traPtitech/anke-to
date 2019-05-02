@@ -8,7 +8,7 @@
         <ul>
           <li
             class="tab"
-            :class="{ 'is-active': selectedTab===tab }"
+            :class="{ 'is-active': selectedTab === tab }"
             v-for="(tab, index) in detailTabs"
             :key="index"
           >
@@ -29,7 +29,10 @@
       ></component>
     </div>
 
-    <div v-if="this.information.administrators && !canViewResults" class="message is-danger">
+    <div
+      v-if="this.information.administrators && !canViewResults"
+      class="message is-danger"
+    >
       <p class="message-body error-message">結果を閲覧する権限がありません</p>
     </div>
   </div>
@@ -42,7 +45,7 @@ import axios from '@/bin/axios'
 import common from '@/bin/common'
 import Individual from '@/components/Results/Individual'
 import Spreadsheet from '@/components/Results/Spreadsheet'
-import InformationSummary from '@/components/InformationSummary'
+import InformationSummary from '@/components/Information/InformationSummary'
 
 export default {
   name: 'Results',

@@ -8,7 +8,9 @@
         :class="editButton.class"
         :disabled="editButton.disabled"
         @click.prevent="atClick(editButton.atClick)"
-      >{{ editButton.label }}</button>
+      >
+        {{ editButton.label }}
+      </button>
     </div>
   </nav>
 </template>
@@ -45,7 +47,6 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-@import "@/css/variables.scss";
 .editor-buttons {
   margin: auto;
   .button {

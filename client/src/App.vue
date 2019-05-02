@@ -60,7 +60,6 @@ export default {
 <style lang="scss">
 @import "../node_modules/bulma/bulma.sass";
 @import url("../static/css/themify-icons.css");
-@import "@/css/variables.scss";
-@import "@/css/global.scss";
-@import "@/css/colors.scss";
+@import "@/style/global.scss";
+@import "@/style/colors.scss";
 </style>
