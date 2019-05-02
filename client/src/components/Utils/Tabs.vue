@@ -4,7 +4,7 @@
       <ul>
         <li
           class="tab"
-          :class="{ 'is-active': selectedTab===tab }"
+          :class="{ 'is-active': selectedTab === tab }"
           v-for="(tab, index) in tabs"
           :key="index"
           @click="selectedTab = tab"
@@ -20,8 +20,8 @@
 <script>
 
 // import <componentname> from '<path to component file>'
-import Information from '@/components/QuestionnaireDetails/Information'
-import Questions from '@/components/Questions'
+import Information from '@/components/Information/Information'
+import Questions from '@/components/Questions/Questions'
 
 export default {
   name: 'Tabs',

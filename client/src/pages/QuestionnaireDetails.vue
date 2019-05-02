@@ -5,7 +5,7 @@
       <ul>
         <li
           class="tab"
-          :class="{ 'is-active': selectedTab===tab }"
+          :class="{ 'is-active': selectedTab === tab }"
           v-for="(tab, index) in detailTabs"
           :key="index"
           @click="selectedTab = tab"
@@ -16,18 +16,18 @@
       <a
         @click="isEditing = !isEditing"
         id="edit-button"
-        :class="{'is-editing': isEditing}"
+        :class="{ 'is-editing': isEditing }"
         v-if="showEditButton"
       >
         <span class="ti-pencil"></span>
       </a>
     </div>
     <div
-      :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
+      :class="{ 'is-editing has-navbar-fixed-bottom': isEditing }"
       class="details-child is-fullheight"
     >
       <information-summary
-        v-if="currentTabComponent!=='information-edit'"
+        v-if="currentTabComponent !== 'information-edit'"
         :information="summaryProps"
       ></information-summary>
       <component
@@ -39,7 +39,7 @@
         :informationProps="informationProps"
         :questionsProps="questions"
         :title="title"
-        :inputErrors="isEditing ? inputErrors: undefined"
+        :inputErrors="isEditing ? inputErrors : undefined"
         @set-data="setData"
         @set-question-content="setQuestionContent"
         @remove-question="removeQuestion"
@@ -58,11 +58,11 @@
 
 import moment from 'moment'
 import router from '@/router'
-import InformationSummary from '@/components/InformationSummary'
-import Information from '@/components/QuestionnaireDetails/Information'
-import InformationEdit from '@/components/QuestionnaireDetails/InformationEdit'
-import Questions from '@/components/Questions'
-import QuestionsEdit from '@/components/QuestionnaireDetails/QuestionsEdit'
+import InformationSummary from '@/components/Information/InformationSummary'
+import Information from '@/components/Information/Information'
+import InformationEdit from '@/components/Information/InformationEdit'
+import Questions from '@/components/Questions/Questions'
+import QuestionsEdit from '@/components/Questions/QuestionsEdit'
 import axios from '@/bin/axios'
 import common from '@/bin/common'
 import EditNavBar from '@/components/Utils/EditNavBar'

@@ -13,15 +13,17 @@
         <ul></ul>
         <a
           id="edit-button"
-          :class="{'is-editing': isEditing}"
+          :class="{ 'is-editing': isEditing }"
           @click.prevent="isEditing = !isEditing"
-          v-if="!isNewResponse && information.res_time_limit && !timeLimitExceeded"
+          v-if="
+            !isNewResponse && information.res_time_limit && !timeLimitExceeded
+          "
         >
           <span class="ti-pencil"></span>
         </a>
       </div>
       <div
-        :class="{'is-editing has-navbar-fixed-bottom' : isEditing}"
+        :class="{ 'is-editing has-navbar-fixed-bottom': isEditing }"
         class="is-fullheight details-child"
       >
         <information-summary :information="summaryProps"></information-summary>
@@ -48,10 +50,10 @@
 import axios from 'axios'
 import router from '@/router'
 import common from '@/bin/common'
-import Questions from '@/components/Questions'
+import Questions from '@/components/Questions/Questions'
 import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'
-import InformationSummary from '@/components/InformationSummary'
+import InformationSummary from '@/components/Information/InformationSummary'
 
 export default {
   name: 'ResponseDetails',

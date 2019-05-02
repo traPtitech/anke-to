@@ -1,13 +1,17 @@
 <template>
   <div class="has-navbar-fixed-bottom">
     <questions :questionsProps="questionData"></questions>
-    <pagination :range="range" :currentPage="currentPage" :defaultPageLink="defaultPageLink"></pagination>
+    <pagination
+      :range="range"
+      :currentPage="currentPage"
+      :defaultPageLink="defaultPageLink"
+    ></pagination>
   </div>
 </template>
 
 <script>
 
-import Questions from '@/components/Questions'
+import Questions from '@/components/Questions/Questions'
 import Pagination from '@/components/Utils/Pagination'
 
 export default {

@@ -130,7 +130,7 @@
 import common from '@/bin/common'
 import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
-import UserListModal from '@/components/QuestionnaireDetails/UserListModal'
+import UserListModal from '@/components/Information/UserListModal'
 
 export default {
   name: 'InformationEdit',
