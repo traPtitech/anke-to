@@ -29,7 +29,7 @@ type QuestionIDType struct {
 func GetQuestionsType(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
 	ret := []QuestionIDType{}
 	if err := db.Select(&ret,
-		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL`,
+		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num`,
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
