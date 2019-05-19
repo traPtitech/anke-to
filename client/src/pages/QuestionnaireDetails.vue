@@ -44,12 +44,19 @@
         @set-question-content="setQuestionContent"
         @remove-question="removeQuestion"
       ></component>
-      <edit-nav-bar
-        v-if="isEditing"
-        :editButtons="editButtons"
-        @submit-questionnaire="submitQuestionnaire"
-        @abort-editing="abortEditing"
-      ></edit-nav-bar>
+      <edit-nav-bar v-if="isEditing">
+        <button
+          class="button is-medium send-button"
+          @click="submitQuestionnaire"
+          :disabled="!this.submitOk"
+        >
+          <span class="ti-check"></span>
+          <span> 送信 </span>
+        </button>
+        <button class="button is-medium cancel-button" @click="abortEditing">
+          <span class="ti-close"></span>
+        </button>
+      </edit-nav-bar>
     </div>
   </div>
 </template>
@@ -289,6 +296,9 @@ export default {
       this.isEditing = false
     },
     abortEditing () {
+      // TODO: 変更したかどうかを検出
+      // const alertMessage = this.isNewQuestionnaire ? 'アンケートを破棄します。よろしいですか？' : '変更を破棄します。よろしいですか？'
+      // if (window.confirm(alertMessage)) {
       if (this.isNewQuestionnaire) {
         router.push('/administrates')
       } else {
@@ -296,6 +306,7 @@ export default {
         this.getInformation()
           .then(this.getQuestions)
       }
+      // }
     },
     setData (name, data) {
       switch (name) {

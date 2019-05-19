@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar is-fixed-bottom is-flex">
     <div class="editor-buttons">
-      <button
+      <!-- <button
         v-for="editButton in editButtons"
         :key="editButton.label"
         class="button is-medium"
@@ -10,7 +10,8 @@
         @click.prevent="atClick(editButton.atClick)"
       >
         {{ editButton.label }}
-      </button>
+      </button> -->
+      <slot></slot>
     </div>
   </nav>
 </template>
@@ -24,10 +25,10 @@ export default {
   components: {
   },
   props: {
-    editButtons: {
-      type: Array,
-      required: true
-    }
+    // editButtons: {
+    //   type: Array,
+    //   required: true
+    // }
   },
   data () {
     return {
@@ -48,18 +49,51 @@ export default {
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .editor-buttons {
-  margin: auto;
+  // width: -webkit-fill-available;
+  display: inline-flex;
+  margin: 0 0 0 auto;
   .button {
-    margin: 1rem;
-    width: 8rem;
-    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: auto;
+    border-width: 3px 0;
+    span,
+    span:before {
+      line-height: normal;
+      font-weight: bold;
+      vertical-align: sub;
+    }
+    &.save-button {
+      width: 4rem;
+      background-color: $button-background-color-gray;
+      border-color: $button-border-color-gray;
+    }
+    &.cancel-button {
+      width: 4rem;
+      background-color: $button-background-color-red;
+      border-color: $button-border-color-red;
+    }
+    &.send-button {
+      background-color: $button-background-color-green;
+      border-color: $button-border-color-green;
+      min-width: 10rem;
+      [class^="ti-"] {
+        margin: auto 0.3em;
+      }
+    }
+    &[disabled] {
+      background-color: #c5c5c5;
+      border-color: #999999;
+      color: #999999;
+    }
     &:hover {
       border-color: $base-pink;
     }
   }
   @media screen and (max-width: 768px) {
+    width: -webkit-fill-available;
     .button {
-      width: fit-content;
+      width: -webkit-fill-available;
     }
   }
 }
