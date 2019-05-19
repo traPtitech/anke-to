@@ -85,7 +85,10 @@ export default {
   methods: {
     copyNewResponseLink () {
       let link = document.querySelector('#new-response-link')
-      link.select()
+      // link.select()
+      let range = document.createRange()
+      range.selectNode(link)
+      window.getSelection().addRange(range)
       if (document.execCommand('copy')) {
         this.showCopyMessage('リンクをコピーしました！')
       } else {

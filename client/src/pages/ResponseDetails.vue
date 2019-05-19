@@ -34,13 +34,22 @@
           :inputErrors="inputErrors"
         ></questions>
       </div>
-      <edit-nav-bar
-        v-if="isEditing"
-        :editButtons="editButtons"
-        @submit-response="submitResponse"
-        @save-response="saveResponse"
-        @disable-editing="disableEditing"
-      ></edit-nav-bar>
+      <edit-nav-bar v-if="isEditing">
+        <button
+          class="button is-medium send-button"
+          @click="submitResponse"
+          :disabled="!submitOk"
+        >
+          <span class="ti-check"></span>
+          <span> 送信 </span>
+        </button>
+        <button class="button is-medium save-button" @click="saveResponse">
+          <span class="ti-save"></span>
+        </button>
+        <button class="button is-medium cancel-button" @click="abortEditing">
+          <span class="ti-close"></span>
+        </button>
+      </edit-nav-bar>
     </div>
   </div>
 </template>
@@ -185,10 +194,13 @@ export default {
       // 回答の保存
       let data = this.createResponseData()
       data.submitted_at = 'NULL'
-      this.setMessage('回答を保存しました', 'green')
+      this.setMessage('回答を保存しました (まだ未送信です)', 'green')
       this.sendResponse(data)
     },
-    disableEditing () {
+    abortEditing () {
+      // TODO: 変更したかどうかを検出
+      // const alertMessage = this.isNewResponse ? '回答を破棄します。よろしいですか？' : '変更を破棄します。よろしいですか？'
+      // if (window.confirm(alertMessage)) {
       if (this.isNewResponse) {
         // 新しい回答の場合は、アンケートの詳細画面に戻る
         router.push({
@@ -197,7 +209,12 @@ export default {
         })
       } else {
         this.isEditing = false
+        this.getResponseData()
+          .then(this.getQuestionnaireData)
+          .then(this.getQuestions)
+          .then(this.setResponsesToQuestions)
       }
+      // }
     },
     createResponseData () {
       // サーバーに送るフォーマットのresponseDataを作成する

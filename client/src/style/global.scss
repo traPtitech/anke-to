@@ -1,5 +1,7 @@
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  * {
+    font-family: 'Avenir', Helvetica, Arial, YuGothic, 游ゴシック体, Yu Gothic, 游ゴシック, Hiragino Sans, ヒラギノ角ゴシック, メイリオ, Meiryo, ＭＳ\Ｐゴシック, themify, sans-serif;
+  }
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: $var-indigo;
@@ -18,9 +20,15 @@
   min-height: -webkit-fill-available;
 }
 
-.button.is-disabled {
+.button{
+  color: inherit;
+}
+
+.button.is-disabled,
+.button[disabled] {
   background-color: white;
   border-color: #dbdbdb;
+  color: darkgray;
   -webkit-box-shadow: none;
   box-shadow: none;
   opacity: 0.5;
@@ -108,9 +116,6 @@ a[disabled] {
   .checkbox {
     width: 4rem;
     margin: 0.5rem;
-  }
-  .is-fullheight {
-    min-height: fit-content;
   }
   .details-child {
     article.column {

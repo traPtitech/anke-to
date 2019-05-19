@@ -59,7 +59,7 @@ export default {
 
 <style lang="scss">
 @import "../node_modules/bulma/bulma.sass";
-@import url("../static/css/themify-icons.css");
 @import "@/style/global.scss";
 @import "@/style/colors.scss";
+@import url("../static/css/themify-icons.css");
 </style>
