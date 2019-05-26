@@ -17,11 +17,17 @@ startup: |
   npm install
   npm run build
 
-branch:
-  master:
-  client:
-    expose: 1111
-
 http_proxy: 1323
 
 internal: hard
+
+branch:
+  master:
+  client:
+  swagger:
+    type: static
+    startup: null
+    entrypoint: "cat"
+    work_dir: "./docs/swagger"
+    use_mariadb: false
+    http_proxy: null
