@@ -35,7 +35,7 @@
   pointer-events: none; // ポインター操作を無効化
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 480px) {
   // mobile
   .sidemenu {
     height: fit-content;

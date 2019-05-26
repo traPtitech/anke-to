@@ -419,22 +419,6 @@ export default {
     title () {
       return this.information.title
     },
-    editButtons () {
-      return [
-        {
-          label: '送信',
-          class: 'send-button',
-          atClick: 'submit-questionnaire',
-          disabled: !this.submitOk
-        },
-        {
-          label: 'キャンセル',
-          class: 'cancel-button',
-          atClick: 'abort-editing',
-          disabled: false
-        }
-      ]
-    },
     informationProps () {
       return {
         information: this.information,
