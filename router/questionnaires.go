@@ -11,24 +11,21 @@ import (
 	"git.trapti.tech/SysAd/anke-to/model"
 )
 
+// GetQuestionnaires GET /questionnaires
 func GetQuestionnaires(c echo.Context) error {
-	var questionnaires []model.QuestionnairesInfo
-	var pageMax int
-	var err error
-	if c.QueryParam("nontargeted") == "true" {
-		questionnaires, pageMax, err = model.GetQuestionnaires(c, model.TargetType(model.Nontargeted))
-	} else {
-		questionnaires, pageMax, err = model.GetQuestionnaires(c, model.TargetType(model.All))
-	}
+
+	questionnaires, pageMax, err := model.GetQuestionnaires(c, c.QueryParam("nontargeted") == "true")
 	if err != nil {
 		return err
 	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"page_max":       pageMax,
 		"questionnaires": questionnaires,
 	})
 }
 
+// GetQuestionnaire GET /questionnaires/:id
 func GetQuestionnaire(c echo.Context) error {
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -55,9 +52,9 @@ func GetQuestionnaire(c echo.Context) error {
 	})
 }
 
+// PostQuestionnaire POST /questionnaires
 func PostQuestionnaire(c echo.Context) error {
 
-	// リクエストで投げられるJSONのスキーマ
 	req := struct {
 		Title          string   `json:"title"`
 		Description    string   `json:"description"`
@@ -100,6 +97,7 @@ func PostQuestionnaire(c echo.Context) error {
 	})
 }
 
+// EditQuestionnaire PATCH /questonnaires/:id
 func EditQuestionnaire(c echo.Context) error {
 
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
@@ -149,6 +147,7 @@ func EditQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// DeleteQuestionnaire DELETE /questonnaires/:id
 func DeleteQuestionnaire(c echo.Context) error {
 
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
@@ -171,7 +170,9 @@ func DeleteQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// GetMyQuestionnaire GET /users/me/administrates
 func GetMyQuestionnaire(c echo.Context) error {
+	// 自分が管理者になっているアンケート一覧
 	questionnaireIDs, err := model.GetAdminQuestionnaires(c, model.GetUserID(c))
 	if err != nil {
 		return nil
@@ -234,6 +235,7 @@ func GetMyQuestionnaire(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+// GetTargetedQuestionnaire GET /users/me/targeted
 func GetTargetedQuestionnaire(c echo.Context) error {
 	ret, err := model.GetTargettedQuestionnaires(c)
 	if err != nil {

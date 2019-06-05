@@ -45,7 +45,7 @@ type TargettedQuestionnaires struct {
 }
 
 // エラーが起きれば(nil, err)
-// 起こらなければ(allquestions, nil)を返す
+// 起こらなければ(allquestionnaires, nil)を返す
 func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	// query parametar
 	sort := c.QueryParam("sort")
@@ -70,8 +70,11 @@ func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
 	return allquestionnaires, nil
 }
 
-// 2つ目の戻り値はページ数の最大
-func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesInfo, int, error) {
+/*
+アンケートの一覧
+2つ目の戻り値はページ数の最大
+*/
+func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, int, error) {
 	allquestionnaires, err := GetAllQuestionnaires(c)
 	if err != nil {
 		return nil, 0, err
@@ -83,26 +86,28 @@ func GetQuestionnaires(c echo.Context, targettype TargetType) ([]QuestionnairesI
 	}
 
 	questionnaires := []QuestionnairesInfo{}
-	for _, v := range allquestionnaires {
+	for _, q := range allquestionnaires {
 		var targeted = false
-		for _, w := range targetedQuestionnaireID {
-			if w == v.ID {
+		for _, id := range targetedQuestionnaireID {
+			if id == q.ID {
 				targeted = true
 			}
 		}
-		if targettype == TargetType(Nontargeted) && targeted {
+
+		// 今見ているquestionnairesがtargetであり、targetでないものを返す場合はcontinue
+		if nontargeted && targeted {
 			continue
 		}
 
 		questionnaires = append(questionnaires,
 			QuestionnairesInfo{
-				ID:           v.ID,
-				Title:        v.Title,
-				Description:  v.Description,
-				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
-				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
-				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
+				ID:           q.ID,
+				Title:        q.Title,
+				Description:  q.Description,
+				ResTimeLimit: NullTimeToString(q.ResTimeLimit),
+				ResSharedTo:  q.ResSharedTo,
+				CreatedAt:    q.CreatedAt.Format(time.RFC3339),
+				ModifiedAt:   q.ModifiedAt.Format(time.RFC3339),
 				IsTargeted:   targeted})
 	}
 
@@ -275,11 +280,13 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 }
 
 func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, error) {
+	// 全てのアンケート
 	allquestionnaires, err := GetAllQuestionnaires(c)
 	if err != nil {
 		return nil, err
 	}
 
+	// 自分がtargetになっているアンケート
 	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
 	if err != nil {
 		return nil, err
@@ -313,10 +320,12 @@ func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, erro
 			})
 	}
 
+	// アンケートが1つも無い場合
 	if len(ret) == 0 {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
+	// 更新日時が新しい順に
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].ModifiedAt > ret[j].ModifiedAt
 	})

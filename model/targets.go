@@ -6,14 +6,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-type TargetType int
-
-const (
-	Targeted = iota
-	Nontargeted
-	All
-)
-
 func GetTargets(c echo.Context, questionnaireID int) ([]string, error) {
 	targets := []string{}
 	if err := db.Select(&targets, "SELECT user_traqid FROM targets WHERE questionnaire_id = ?", questionnaireID); err != nil {
