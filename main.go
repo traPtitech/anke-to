@@ -30,31 +30,7 @@ func main() {
 	e.Static("/static", "client/dist/static")
 	e.File("*", "client/dist/index.html")
 
-	// Routes
-	e.GET("/api/questionnaires", router.GetQuestionnaires)
-	e.POST("/api/questionnaires", router.PostQuestionnaire)
-	e.GET("/api/questionnaires/:id", router.GetQuestionnaire)
-	e.PATCH("/api/questionnaires/:id", router.EditQuestionnaire)
-	e.DELETE("/api/questionnaires/:id", router.DeleteQuestionnaire)
-	e.GET("/api/questionnaires/:id/questions", router.GetQuestions)
-
-	e.POST("/api/questions", router.PostQuestion)
-	e.PATCH("/api/questions/:id", router.EditQuestion)
-	e.DELETE("/api/questions/:id", router.DeleteQuestion)
-
-	e.POST("/api/responses", router.PostResponse)
-	e.GET("/api/responses/:id", router.GetResponse)
-	e.PATCH("/api/responses/:id", router.EditResponse)
-	e.DELETE("/api/responses/:id", router.DeleteResponse)
-
-	//e.GET("/api/users", )
-	e.GET("/api/users/me", router.GetUsersMe)
-	e.GET("/api/users/me/responses", router.GetMyResponses)
-	e.GET("/api/users/me/responses/:questionnaireID", router.GetMyResponsesByID)
-	e.GET("/api/users/me/targeted", router.GetTargetedQuestionnaire)
-	e.GET("/api/users/me/administrates", router.GetMyQuestionnaire)
-
-	e.GET("/api/results/:questionnaireID", router.GetResponsesByID)
+	router.SetRouting(e)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
