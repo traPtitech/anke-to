@@ -11,6 +11,7 @@ import (
 	"git.trapti.tech/SysAd/anke-to/model"
 )
 
+// PostResponse POST /responses
 func PostResponse(c echo.Context) error {
 
 	req := model.Responses{}
@@ -48,6 +49,7 @@ func PostResponse(c echo.Context) error {
 	})
 }
 
+// GetMyResponses GET /users/me/responses
 func GetMyResponses(c echo.Context) error {
 	responsesinfo, err := model.GetMyResponses(c)
 	if err != nil {
@@ -62,6 +64,7 @@ func GetMyResponses(c echo.Context) error {
 	return c.JSON(http.StatusOK, myresponses)
 }
 
+// GetMyResponsesByID GET /users/me/responses/:questionnaireID
 func GetMyResponsesByID(c echo.Context) error {
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
@@ -82,6 +85,7 @@ func GetMyResponsesByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, myresponses)
 }
 
+// GetResponsesByID GET /results/:questionnaireID
 func GetResponsesByID(c echo.Context) error {
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
@@ -194,6 +198,7 @@ func GetResponsesByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses)
 }
 
+// GetResponse GET /responses
 func GetResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -234,6 +239,7 @@ func GetResponse(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses)
 }
 
+// EditResponse PATCH /responses/:id
 func EditResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -273,6 +279,7 @@ func EditResponse(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// DeleteResponse DELETE /responses/:id
 func DeleteResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

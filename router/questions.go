@@ -10,6 +10,7 @@ import (
 	"git.trapti.tech/SysAd/anke-to/model"
 )
 
+// GetQuestions GET /questions
 func GetQuestions(c echo.Context) error {
 	questionnaireID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -76,6 +77,7 @@ func GetQuestions(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+// PostQuestion POST /questions
 func PostQuestion(c echo.Context) error {
 	req := struct {
 		QuestionnaireID int      `json:"questionnaireID"`
@@ -138,6 +140,7 @@ func PostQuestion(c echo.Context) error {
 	})
 }
 
+// EditQuestion PATCH /questions/:id
 func EditQuestion(c echo.Context) error {
 	questionID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -190,6 +193,7 @@ func EditQuestion(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// DeleteQuestion DELETE /questions/:id
 func DeleteQuestion(c echo.Context) error {
 	questionID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
