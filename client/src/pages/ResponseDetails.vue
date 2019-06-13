@@ -330,28 +330,6 @@ export default {
       // 回答期限を過ぎていた場合はtrueを返す
       return this.information.res_time_limit && new Date(this.information.res_time_limit).getTime() < new Date().getTime()
     },
-    editButtons () {
-      return [
-        {
-          label: '送信',
-          class: 'send-button',
-          atClick: 'submit-response',
-          disabled: !this.submitOk
-        },
-        {
-          label: '保存',
-          class: 'save-button',
-          atClick: 'save-response',
-          disabled: false
-        },
-        {
-          label: 'キャンセル',
-          class: 'cancel-button',
-          atClick: 'disable-editing',
-          disabled: false
-        }
-      ]
-    },
     titleLink () {
       return '/questionnaires/' + this.questionnaireId
     },
