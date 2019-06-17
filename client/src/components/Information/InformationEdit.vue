@@ -18,9 +18,7 @@
                   </div>
                 </div>
               </header>
-              <input-error-message
-                :inputError="inputErrors.noTitle"
-              ></input-error-message>
+              <input-error-message :inputError="inputErrors.noTitle"></input-error-message>
               <div class="card-content">
                 <textarea
                   id="description"
@@ -38,10 +36,10 @@
                     type="datetime-local"
                     v-model="resTimeLimitEditStr"
                     :disabled="noTimeLimit"
-                  />
+                  >
                 </div>
                 <label class="checkbox is-pulled-right">
-                  <input type="checkbox" v-model="noTimeLimit" />
+                  <input type="checkbox" v-model="noTimeLimit">
                   期限なし
                 </label>
               </div>
@@ -70,15 +68,11 @@
                   </span>
                 </div>
 
-                <div
-                  v-for="(userList, key) in userLists"
-                  :key="key"
-                  class="user-list-wrapper"
-                >
+                <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
                   <div>
-                    <span class="has-text-weight-bold"
-                      >{{ userList.summary }} ({{ userList.list.length }})</span
-                    >
+                    <span
+                      class="has-text-weight-bold"
+                    >{{ userList.summary }} ({{ userList.list.length }})</span>
                     <a>
                       <span
                         class="ti-pencil"
@@ -91,13 +85,14 @@
                     <span v-for="(user, index) in userList.list" :key="index">
                       <span
                         :class="{
-                          'highlight-name': user === 'traP' || user === traqId
+                          'highlight-name': user === 'traP' || user === getMyTraqId
                         }"
-                        >{{ user }}</span
-                      >
-                      <span>{{
+                      >{{ user }}</span>
+                      <span>
+                        {{
                         index === userList.list.length - 1 ? "" : ", "
-                      }}</span>
+                        }}
+                      </span>
                     </span>
                   </p>
                 </div>
@@ -108,7 +103,6 @@
                   :class="{ 'is-active': isModalActive }"
                   :activeModal="activeModal"
                   :userListProps="information[activeModal.name]"
-                  :traqId="traqId"
                   :users="users"
                   :groupTypes="groupTypes"
                   :information="information"
@@ -128,11 +122,7 @@
                 <div class="card-header-title subtitle">操作</div>
               </header>
               <div class="card-content management-buttons">
-                <management-button
-                  :questionnaireId="questionnaireId"
-                  type="deleteQuestionnaire"
-                >
-                </management-button>
+                <management-button :questionnaireId="questionnaireId" type="deleteQuestionnaire"></management-button>
               </div>
             </div>
           </div>
@@ -168,9 +158,6 @@ export default {
     },
     inputErrors: {
       type: Object,
-      required: true
-    },
-    traqId: {
       required: true
     }
   },
@@ -307,12 +294,6 @@ export default {
     }
   },
   watch: {
-    traqId: function (newVal) {
-      // traqIdがundefinedから変わった時に呼ばれる
-      if (newVal && this.isNewQuestionnaire) {
-        this.information.administrators = [ this.traqId ]
-      }
-    }
   },
   mounted () {
   }

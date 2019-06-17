@@ -4,27 +4,22 @@
       @toggle-side-menu="toggleSideMenu"
       @close-side-menu="closeSideMenu"
       :isSideMenuActive="isSideMenuActive"
-      :traqId="traqId"
     ></top-navbar>
     <div class="columns is-fullheight">
-      <side-menu class="fixed-sidemenu desktop" :traqId="traqId"></side-menu>
-      <side-menu
-        class="sidemenu"
-        v-show="isSideMenuActive"
-        :traqId="traqId"
-        @close-side-menu="closeSideMenu"
-      ></side-menu>
+      <side-menu class="fixed-sidemenu desktop"></side-menu>
+      <side-menu class="sidemenu" v-show="isSideMenuActive" @close-side-menu="closeSideMenu"></side-menu>
       <div class="column app-main" @click="closeSideMenu">
-        <router-view :traqId="traqId"></router-view>
+        <router-view></router-view>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from '@/bin/axios'
 import TopNavbar from './components/Utils/TopNavbar.vue'
 import SideMenu from './components/Utils/SideMenu.vue'
+import { mapGetters } from 'vuex'
+
 export default {
   name: 'App',
   components: {
@@ -32,8 +27,9 @@ export default {
     'side-menu': SideMenu
   },
   async created () {
-    const resp = await axios.get('/users/me')
-    this.user = resp.data
+    if (this.getMe === null) {
+      await this.$store.dispatch('whoAmI')
+    }
   },
   data () {
     return {
@@ -42,9 +38,7 @@ export default {
     }
   },
   computed: {
-    traqId () {
-      return this.user.traqID
-    }
+    ...mapGetters([ 'getMe' ])
   },
   methods: {
     toggleSideMenu () {

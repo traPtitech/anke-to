@@ -5,30 +5,24 @@
     </header>
     <div class="card-content">
       <div class="is-flex res-shared-to">
-        <span class="label">結果: </span>
+        <span class="label">結果:</span>
         <span>{{ resSharedToLabel }}</span>
       </div>
 
       <!-- user lists -->
       <div class="user-lists">
         <div v-for="(userList, key) in userLists" :key="key">
-          <div
-            class="label"
-            @click.prevent="toggleListVisibility(userList.name)"
-          >
-            <span
-              :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"
-            ></span>
+          <div class="label" @click.prevent="toggleListVisibility(userList.name)">
+            <span :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"></span>
             <span>{{ userList.summary }} ({{ userList.list.length }})</span>
           </div>
           <p class="has-text-grey user-list" v-if="userList.show">
             <span v-for="(user, index) in userList.list" :key="index">
               <span
                 :class="{
-                  'highlight-name': user === 'traP' || user === traqId
+                  'highlight-name': user === 'traP' || user === getMyTraqId
                 }"
-                >{{ user }}</span
-              >
+              >{{ user }}</span>
               <span>{{ index === userList.list.length - 1 ? "" : ", " }}</span>
             </span>
           </p>
@@ -45,15 +39,13 @@
 
 <script>
 import common from '@/bin/common'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'About',
   components: {
   },
   props: {
-    traqId: {
-      type: String
-    },
     res_shared_to: {
       type: String
     },
@@ -109,6 +101,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
     resSharedToLabel () {
       const labels = {
         public: '全体に公開',

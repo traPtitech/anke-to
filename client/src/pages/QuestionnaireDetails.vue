@@ -32,7 +32,6 @@
       ></information-summary>
       <component
         :is="currentTabComponent"
-        :traqId="traqId"
         class="details-child is-fullheight"
         :name="currentTabComponent"
         :editMode="isEditing ? 'question' : undefined"
@@ -51,7 +50,7 @@
           :disabled="!this.submitOk"
         >
           <span class="ti-check"></span>
-          <span> 送信 </span>
+          <span>送信</span>
         </button>
         <button class="button is-medium cancel-button" @click="abortEditing">
           <span class="ti-close"></span>
@@ -64,14 +63,15 @@
 <script>
 
 import moment from 'moment'
+import { mapGetters } from 'vuex'
 import router from '@/router'
+import common from '@/bin/common'
+import axios from '@/bin/axios'
 import InformationSummary from '@/components/Information/InformationSummary'
 import Information from '@/components/Information/Information'
 import InformationEdit from '@/components/Information/InformationEdit'
 import Questions from '@/components/Questions/Questions'
 import QuestionsEdit from '@/components/Questions/QuestionsEdit'
-import axios from '@/bin/axios'
-import common from '@/bin/common'
 import EditNavBar from '@/components/Utils/EditNavBar'
 import TopBarMessage from '@/components/Utils/TopBarMessage'
 
@@ -91,9 +91,6 @@ export default {
     'top-bar-message': TopBarMessage
   },
   props: {
-    traqId: {
-      required: true
-    }
   },
   data () {
     return {
@@ -122,7 +119,7 @@ export default {
           res_shared_to: 'public',
           res_time_limit: this.newTimeLimit,
           respondents: [],
-          administrators: [ this.traqId ],
+          administrators: [ this.getMyTraqId ],
           targets: [ 'traP' ]
         }
       } else {
@@ -351,6 +348,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
     selectedTab: {
       get () {
         return this.$route.query.tab && this.$route.query.tab === 'questions' ? 'Questions' : 'Information'
@@ -367,7 +365,7 @@ export default {
     administrates () {
       // 管理者かどうかを返す
       // getInformation() が完了する前は false を返す
-      return this.information.administrators ? common.administrates(this.information.administrators, this.traqId) : false
+      return this.information.administrators ? common.administrates(this.information.administrators, this.getMyTraqId) : false
     },
     questionnaireId () {
       if (this.isNewQuestionnaire) {

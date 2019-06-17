@@ -2,16 +2,10 @@
   <div class="wrapper">
     <div class="list card content">
       <header class="card-header">
-        <div class="card-header-title subtitle">
-          回答対象になっているアンケート
-        </div>
+        <div class="card-header-title subtitle">回答対象になっているアンケート</div>
       </header>
       <div class="card-content">
-        <article
-          class="post"
-          v-for="(questionnaire, index) in questionnaires"
-          :key="index"
-        >
+        <article class="post" v-for="(questionnaire, index) in questionnaires" :key="index">
           <div>
             <div class="questionnaire-title">
               <span
@@ -24,19 +18,18 @@
               <span class="subtitle">
                 <router-link
                   :to="'/questionnaires/' + questionnaire.questionnaireID"
-                  >{{ questionnaire.title }}</router-link
-                >
+                >{{ questionnaire.title }}</router-link>
               </span>
             </div>
             <p>{{ questionnaire.description }}</p>
             <div class="media">
               <div class="media-content has-text-weight-bold columns">
-                <div class="content column res-time-limit">
-                  回答期限: {{ getDateStr(questionnaire.res_time_limit) }}
-                </div>
-                <div class="content column modified-at">
-                  更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}
-                </div>
+                <div
+                  class="content column res-time-limit"
+                >回答期限: {{ getDateStr(questionnaire.res_time_limit) }}</div>
+                <div
+                  class="content column modified-at"
+                >更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}</div>
               </div>
             </div>
           </div>
@@ -63,9 +56,6 @@ export default {
       })
   },
   props: {
-    traqId: {
-      required: true
-    }
   },
   data () {
     return {

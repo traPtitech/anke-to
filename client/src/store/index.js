@@ -31,7 +31,7 @@ const store = new Vuex.Store({
       return axios
         .get('/users/me')
         .then(res => {
-          commit('setMyTraqId', res.data.traqID)
+          commit('setMe', { traqId: res.data.traqID })
         })
         .catch(err => {
           console.log(err)

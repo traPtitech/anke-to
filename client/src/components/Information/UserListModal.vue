@@ -3,29 +3,22 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">
-          {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
-        </p>
+        <p class="modal-card-title">{{ activeModal.summary }} ({{ numberOfSelectedUsers }})</p>
         <span
           class="ti-check icon-button round confirm"
           @click.prevent="confirmList"
           :class="{ disabled: !confirmOk }"
         ></span>
-        <span
-          class="ti-close icon-button round close"
-          @click.prevent="disableModal"
-        ></span>
+        <span class="ti-close icon-button round close" @click.prevent="disableModal"></span>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
         <!-- error message -->
-        <input-error-message
-          :inputError="inputErrors.noAdministrator"
-        ></input-error-message>
+        <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
 
         <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">
-          <input type="checkbox" v-model="isUserTrap" />
+          <input type="checkbox" v-model="isUserTrap">
           traP
         </label>
 
@@ -46,10 +39,7 @@
 
         <!-- list -->
         <div class="user-list-wrapper">
-          <span
-            v-for="(group, index) in groupTypes[selectedGroupType]"
-            :key="index"
-          >
+          <span v-for="(group, index) in groupTypes[selectedGroupType]" :key="index">
             <div class="has-text-weight-bold group-name">
               {{ group.name }}
               <span
@@ -66,16 +56,13 @@
 
             <!-- not user: traP -->
             <span v-for="(userName, index) in group.activeMembers" :key="index">
-              <label v-if="!isUserTrap && userName !== traqId" class="checkbox">
-                <input type="checkbox" v-model="usersIsSelected[userName]" />
+              <label v-if="!isUserTrap && userName !== getMyTraqId" class="checkbox">
+                <input type="checkbox" v-model="usersIsSelected[userName]">
                 <span>{{ userName }}</span>
               </label>
 
               <!-- user: traP -->
-              <span
-                v-if="isUserTrap || userName === traqId"
-                class="dummy-checkbox"
-              >
+              <span v-if="isUserTrap || userName === getMyTraqId" class="dummy-checkbox">
                 <span class="readonly-checkbox checked"></span>
                 <span>{{ userName }}</span>
               </span>
@@ -91,6 +78,7 @@
 
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/bin/common'
+import { mapGetters } from 'vuex'
 
 // selectedUsersList を消す
 // user: traPの処理
@@ -112,9 +100,6 @@ export default {
     userListProps: {
       type: Array,
       required: false
-    },
-    traqId: {
-      required: true
     },
     users: {
       type: Object,
@@ -176,6 +161,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
     isUserTrap: {
       get () {
         return this.usersIsSelected.traP === true
@@ -186,7 +172,7 @@ export default {
             this.usersIsSelected[ userName ] = false
           })
         } else {
-          this.usersIsSelected[ this.traqId ] = true
+          this.usersIsSelected[ this.getMyTraqId ] = true
         }
         this.usersIsSelected.traP = newBool
       }

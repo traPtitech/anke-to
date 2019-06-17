@@ -29,10 +29,7 @@
       ></component>
     </div>
 
-    <div
-      v-if="this.information.administrators && !canViewResults"
-      class="message is-danger"
-    >
+    <div v-if="this.information.administrators && !canViewResults" class="message is-danger">
       <p class="message-body error-message">結果を閲覧する権限がありません</p>
     </div>
   </div>
@@ -40,7 +37,7 @@
 
 <script>
 
-// import <componentname> from '<path to component file>'
+import { mapGetters } from 'vuex'
 import axios from '@/bin/axios'
 import common from '@/bin/common'
 import Individual from '@/components/Results/Individual'
@@ -71,9 +68,6 @@ export default {
       })
   },
   props: {
-    traqId: {
-      required: true
-    }
   },
   data () {
     return {
@@ -152,6 +146,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
     questionnaireId () {
       return this.$route.params.id
     },
@@ -159,7 +154,7 @@ export default {
       if (!this.information.administrators) {
         return undefined
       }
-      return common.administrates(this.information.administrators, this.traqId)
+      return common.administrates(this.information.administrators, this.getMyTraqId)
     },
     canViewResults () {
       return common.canViewResults(this.information, this.administrates, this.hasResponded)

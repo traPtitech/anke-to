@@ -7,7 +7,6 @@
         <about
           class="card"
           v-bind="{
-            traqId: traqId,
             res_shared_to: information.res_shared_to,
             administrators: userLists.administrators,
             respondents: userLists.respondents,
@@ -33,11 +32,7 @@
 
         <div class="card">
           <!-- 自分の回答一覧 -->
-          <my-responses
-            :questionnaireId="questionnaireId"
-            @set-has-responded="setHasResponded"
-          >
-          </my-responses>
+          <my-responses :questionnaireId="questionnaireId" @set-has-responded="setHasResponded"></my-responses>
         </div>
       </article>
     </div>
@@ -66,9 +61,6 @@ export default {
   props: {
     informationProps: {
       type: Object,
-      required: true
-    },
-    traqId: {
       required: true
     }
   },

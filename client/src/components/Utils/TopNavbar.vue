@@ -14,34 +14,37 @@
         </a>
         <div @click="$emit('close-side-menu')" class="is-flex">
           <router-link class="navbar-item" to="/targeted">
-            <img class="title" src="/static/img/logo.png" />
+            <img class="title" src="/static/img/logo.png">
           </router-link>
         </div>
         <div class="subtitle pull-right user">
           <img
             class="user-icon"
-            v-if="traqId"
-            v-bind:src="'https://q.trap.jp/api/1.0/public/icon/' + traqId"
-          />
+            v-if="getMe !== null"
+            v-bind:src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
+          >
         </div>
       </div>
     </nav>
   </div>
 </template>
 <script>
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'TopNavbar',
+  created () {
+  },
   props: {
     isSideMenuActive: {
       type: Boolean,
       required: true
-    },
-    traqId: {
-      required: false
     }
   },
   methods: {
+  },
+  computed: {
+    ...mapGetters([ 'getMe', 'getMyTraqId' ])
   }
 }
 </script>

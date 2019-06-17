@@ -13,9 +13,6 @@ Vue.use(Router)
 
 export default new Router({
   mode: 'history',
-  props: {
-    traqId: String
-  },
   routes: [
     {
       path: '/',
@@ -24,8 +21,7 @@ export default new Router({
     {
       path: '/targeted',
       name: 'Targeted',
-      component: Targeted,
-      props: { traqId: String(this.traqId) }
+      component: Targeted
     },
     {
       path: '/administrates',

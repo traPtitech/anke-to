@@ -28,20 +28,15 @@
       >
         <information-summary :information="summaryProps"></information-summary>
         <questions
-          :traqId="traqId"
           :editMode="isEditing ? 'response' : undefined"
           :questionsProps="questions"
           :inputErrors="inputErrors"
         ></questions>
       </div>
       <edit-nav-bar v-if="isEditing">
-        <button
-          class="button is-medium send-button"
-          @click="submitResponse"
-          :disabled="!submitOk"
-        >
+        <button class="button is-medium send-button" @click="submitResponse" :disabled="!submitOk">
           <span class="ti-check"></span>
-          <span> 送信 </span>
+          <span>送信</span>
         </button>
         <button class="button is-medium save-button" @click="saveResponse">
           <span class="ti-save"></span>
@@ -57,6 +52,7 @@
 <script>
 
 import axios from 'axios'
+import { mapGetters } from 'vuex'
 import router from '@/router'
 import common from '@/bin/common'
 import Questions from '@/components/Questions/Questions'
@@ -84,9 +80,6 @@ export default {
     }
   },
   props: {
-    traqId: {
-      required: true
-    },
     isNewResponse: {
       type: Boolean,
       required: false
@@ -288,6 +281,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
     responseId () {
       return this.isNewResponse ? undefined : Number(this.$route.params.id)
     },
@@ -354,7 +348,7 @@ export default {
         responseDetails: {
           timeLabel: '更新日時',
           time: this.getDateStr(this.responseData.modified_at),
-          respondent: this.traqId
+          respondent: this.getMyTraqId
         }
       }
       return ret

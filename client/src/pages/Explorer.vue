@@ -1,10 +1,7 @@
 <template>
   <div class="wrapper is-fullheight has-navbar-fixed-bottom">
     <div class="dropdowns">
-      <div
-        class="dropdown"
-        :class="{ 'is-active': DropdownIsActive.sortOrder }"
-      >
+      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.sortOrder }">
         <div class="dropdown-trigger">
           <button
             class="button"
@@ -34,10 +31,7 @@
           </div>
         </div>
       </div>
-      <div
-        class="dropdown"
-        :class="{ 'is-active': DropdownIsActive.targetedOption }"
-      >
+      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.targetedOption }">
         <div class="dropdown-trigger">
           <button
             class="button"
@@ -80,9 +74,7 @@
         <table class="table is-striped">
           <thead>
             <tr>
-              <th v-for="(header, index) in headers" :key="index">
-                {{ header }}
-              </th>
+              <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
             </tr>
           </thead>
           <tbody>
@@ -90,25 +82,15 @@
               <td class="table-item-title">
                 <router-link
                   :to="'/questionnaires/' + questionnaire.questionnaireID"
-                  >{{ questionnaire.title }}</router-link
-                >
+                >{{ questionnaire.title }}</router-link>
               </td>
-              <td class="table-item-date">
-                {{ getDateStr(questionnaire.res_time_limit) }}
-              </td>
-              <td class="table-item-date">
-                {{ getRelativeDateStr(questionnaire.modified_at) }}
-              </td>
-              <td class="table-item-date">
-                {{ getRelativeDateStr(questionnaire.created_at) }}
-              </td>
+              <td class="table-item-date">{{ getDateStr(questionnaire.res_time_limit) }}</td>
+              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.modified_at) }}</td>
+              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.created_at) }}</td>
               <td>
-                <router-link
-                  :to="'/results/' + questionnaire.questionnaireID"
-                  target="_blank"
-                >
+                <router-link :to="'/results/' + questionnaire.questionnaireID" target="_blank">
                   <span class="ti-new-window"></span>
-                  <br />Open
+                  <br>Open
                 </router-link>
               </td>
             </tr>
@@ -116,11 +98,7 @@
         </table>
       </div>
     </div>
-    <pagination
-      :currentPage="pageNumber"
-      :defaultPageLink="defaultPageLink"
-      :range="range"
-    ></pagination>
+    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink" :range="range"></pagination>
   </div>
 </template>
 
@@ -141,9 +119,6 @@ export default {
     this.getQuestionnaires()
   },
   props: {
-    traqId: {
-      required: true
-    }
   },
   data () {
     return {
