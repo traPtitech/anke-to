@@ -35,7 +35,7 @@
           <tbody>
             <tr v-for="(result, index) in results" :key="index">
               <td class="table-item-traqid">{{ result.traqId }}</td>
-              <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
+              <td class="table-item-time">{{ result.submittedAt }}</td>
               <td
                 v-for="response in result.responseBody"
                 :key="response.responseId"
@@ -68,8 +68,6 @@
 
 <script>
 
-import common from '@/bin/common'
-
 export default {
   name: 'Spreadsheet',
   components: {},
@@ -96,9 +94,6 @@ export default {
     }
   },
   methods: {
-    getDateStr (str) {
-      return common.getDateStr(str)
-    },
     getResponse (body) {
       switch (body.question_type) {
         case 'MultipleChoice':
