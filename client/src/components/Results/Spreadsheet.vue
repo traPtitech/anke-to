@@ -1,40 +1,73 @@
 <template>
   <div class="wrapper">
-    <button class="button download-csv" v-on:click="downloadCSV">CSV形式でダウンロード</button>
     <div class="card">
-      <table class="table is-striped">
-        <thead>
-          <tr>
-            <th
-              v-for="(header, index) in headers.concat(questions)"
-              :key="index"
-              @click="sort(index + 1)"
-              :class="{ active: sorted == index + 1 || sorted == -1 - index }"
-            >
-              {{ header }}
-              <span class="arrow" :class="sorted != index + 1 ? 'asc' : 'dsc'"></span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(result, index) in results" :key="index">
-            <td class="table-item-traqid">{{ result.traqID }}</td>
-            <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
-            <td
-              v-for="response in result.response_body"
-              :key="response.responseID"
-            >{{ getResponse(response) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="tabs">
+        <ul>
+          <li
+            class="tab"
+            v-for="tab in tableFormTabs"
+            :key="tab"
+            :class="{'is-active': tableForm===tab }"
+          >
+            <a @click="tableForm = tab">{{ tab }}</a>
+          </li>
+        </ul>
+        <button class="button download" v-on:click="downloadTable" v-if="canDownload">
+          <span class="ti-download"></span>
+        </button>
+      </div>
+      <div class="scroll-view">
+        <!-- table view -->
+        <table class="table is-striped" v-show="tableForm==='view'">
+          <thead>
+            <tr>
+              <th
+                v-for="(header, index) in headerLabels.concat(questions)"
+                :key="index"
+                @click="sort(index + 1)"
+                :class="{ active: sorted == index + 1 || sorted == -1 - index }"
+              >
+                {{ header }}
+                <span class="arrow" :class="sorted !==index + 1 ? 'asc' : 'dsc'"></span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(result, index) in results" :key="index">
+              <td class="table-item-traqid">{{ result.traqId }}</td>
+              <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
+              <td
+                v-for="response in result.responseBody"
+                :key="response.responseId"
+              >{{ getResponse(response) }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- markdown view -->
+        <textarea
+          v-show="tableForm==='markdown'"
+          class="textarea"
+          :value="markdownTable"
+          :rows="results.length + 3"
+          readonly
+        ></textarea>
+
+        <!-- csv view -->
+        <textarea
+          v-show="tableForm==='csv'"
+          class="textarea"
+          :value="csvTable"
+          :rows="results.length + 2"
+          readonly
+        ></textarea>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-/* eslint-disable */
 
-import axios from '@/bin/axios'
 import common from '@/bin/common'
 
 export default {
@@ -52,8 +85,14 @@ export default {
   },
   data () {
     return {
-      headers: [ 'traQID', '回答日時' ],
-      sorted: ''
+      headers: [
+        { name: 'traqId', label: 'traQID' },
+        { name: 'submittedAt', label: '回答日時' }
+      ],
+      sorted: '',
+      downloadLabel: 'CSV形式でダウンロード',
+      tableForm: 'view', // 'view', 'markdown', 'csv'
+      tableFormTabs: [ 'view', 'markdown', 'csv' ]
     }
   },
   methods: {
@@ -67,7 +106,7 @@ export default {
         case 'Dropdown':
           let ret = ''
           body.option_response.forEach(response => {
-            if (ret != '') {
+            if (ret !== '') {
               ret += ', '
             }
             ret += response
@@ -77,58 +116,118 @@ export default {
           return body.response
       }
     },
-    downloadCSV () {
-      let csv = '\ufeff'
-      this.headers.concat(this.questions).forEach(header => {
-        if (csv != '\ufeff') {
-          csv += ','
-        }
-        csv += '"' + header + '"'
-      })
-      csv += '\n'
-      this.results.forEach(result => {
-        csv += result.traqID + ',' + this.getDateStr(result.submitted_at)
-        result.response_body.forEach(response => {
-          csv += ',' + '"' + this.getResponse(response) + '"'
-        })
-        csv += '\n'
-      })
-      const blob = new Blob([ csv ], { type: 'text/csv' })
+    downloadTable () {
+      if (!this.canDownload) return
+      let form = {}
+      switch (this.tableForm) {
+        case 'markdown':
+          form = { type: 'text/markdown', ext: '.md', data: this.markdownTable }
+          break
+        case 'csv':
+          form = { type: 'text/csv', ext: '.csv', data: this.csvTable }
+          break
+      }
+      const blob = new Blob([ form.data ], { type: form.type })
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
-      link.download = 'Result.csv'
+      link.download = 'Result' + form.ext
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
     },
     sort (index) {
-      let param = ''
-      if (this.sorted != index) {
-        param += '-'
+      let query = ''
+      if (this.sorted !== index) {
+        query += '-'
         this.sorted = index
       } else {
         this.sorted = -index
       }
       switch (index) {
         case 1:
-          param += 'traqid'
+          query += 'traqid'
           break
         case 2:
-          param += 'submitted_at'
+          query += 'submitted_at'
           break
         default:
-          param += index - 2
+          query += index - 2
       }
-      axios
-        .get('/results/' + this.questionnaireId + '?sort=' + param)
-        .then(res => {
-          this.$emit('set-results', res.data)
-        })
+      this.$emit('get-results', '?sort=' + query)
+    },
+    arrayToMarkdown (arr) {
+      // 配列を受け取ると、その配列1行分のmarkdownを返す
+      let ret = '|'
+      arr.forEach(val => {
+        ret += ' ' + val + ' |'
+      })
+      ret += '\n'
+      return ret
     }
   },
   computed: {
     questionnaireId () {
       return this.$route.params.id
+    },
+    headerLabels () {
+      let ret = []
+      this.headers.forEach(header => {
+        ret.push(header.label)
+      })
+      return ret
+    },
+    markdownTable () {
+      // results の表を markdown 形式にしたものを返す
+      let ret = ''
+
+      // 項目の行
+      ret += this.arrayToMarkdown(this.headerLabels.concat(this.questions))
+
+      // 2行目
+      ret += '|'
+      for (let i = 0; i < this.results.length + this.headers.length; i++) {
+        ret += ' - |'
+      }
+      ret += '\n'
+
+      // 各回答の行
+      for (let i = 0; i < this.results.length; i++) {
+        let arr = []
+        const result = this.results[ i ]
+        this.headers.forEach(header => {
+          arr.push(result[ header.name ])
+        })
+        result.responseBody.forEach(body => {
+          arr.push(this.getResponse(body))
+        })
+
+        ret += this.arrayToMarkdown(arr)
+      }
+
+      ret = ret.slice(0, -1) // 末尾の改行を削除
+
+      return ret
+    },
+    csvTable () {
+      let csv = '\ufeff'
+      this.headerLabels.concat(this.questions).forEach(header => {
+        if (csv !== '\ufeff') {
+          csv += ','
+        }
+        csv += '"' + header + '"'
+      })
+      csv += '\n'
+      this.results.forEach(result => {
+        csv += result.traqId + ',' + result.submittedAt
+        result.responseBody.forEach(response => {
+          csv += ',' + '"' + this.getResponse(response) + '"'
+        })
+        csv += '\n'
+      })
+      return csv
+    },
+    canDownload () {
+      return this.tableForm === 'markdown' || this.tableForm === 'csv'
     }
   },
   mounted () { }
@@ -169,7 +268,15 @@ th.active {
   border-top: 4px solid black;
 }
 
-.download-csv {
-  margin: 0 1.5rem;
+.download {
+  margin: auto 0.5rem;
+}
+
+.card {
+  overflow-x: unset;
+}
+
+.scroll-view {
+  overflow-x: auto;
 }
 </style>

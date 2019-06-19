@@ -26,7 +26,7 @@
         :questions="questions"
         :questionData="questionData"
         :responseData="responseData"
-        @set-results="setResults"
+        @get-results="getResults"
       ></component>
     </div>
 
@@ -57,7 +57,7 @@ export default {
       .then(this.getMyResponses)
       .then(() => {
         if (this.canViewResults) {
-          this.getResults()
+          this.getResults('')
             .then(this.getQuestions)
             .then(() => {
               if (this.$route.query.tab === 'individual') {
@@ -83,11 +83,20 @@ export default {
   },
   methods: {
     getDateStr: common.getDateStr,
-    getResults () {
+    async getResults (query) {
       return axios
-        .get('/results/' + this.questionnaireId)
+        .get('/results/' + this.questionnaireId + query)
         .then(res => {
-          this.results = res.data
+          this.results = []
+          res.data.forEach(data => {
+            this.results.push({
+              modifiedAt: this.getDateStr(data.modified_at),
+              responseId: data.responseID,
+              responseBody: data.response_body,
+              submittedAt: this.getDateStr(data.submitted_at),
+              traqId: data.traqID
+            })
+          })
         })
     },
     getQuestions () {
@@ -134,7 +143,7 @@ export default {
     setResponseData () {
       this.responseData = this.results[ this.currentPage - 1 ]
       let newBody = {}
-      this.responseData.response_body.forEach(data => {
+      this.responseData.responseBody.forEach(data => {
         newBody[ data.questionID ] = data
       })
       this.responseData.body = newBody
@@ -189,8 +198,8 @@ export default {
       if (this.selectedTab === 'Individual') {
         ret.responseDetails = {
           timeLabel: '回答日時',
-          time: this.getDateStr(this.responseData.submitted_at),
-          respondent: this.responseData.traqID
+          time: this.responseData.submittedAt,
+          respondent: this.responseData.traqId
         }
       }
       return ret

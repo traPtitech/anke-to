@@ -22,6 +22,7 @@
 
 .button{
   color: inherit;
+  display: block;
 }
 
 .button.is-disabled,
@@ -100,19 +101,30 @@ a[disabled] {
   padding: 1rem;
 }
 
+.tabs {
+  margin-bottom: 0;
+  margin-right: 0.5rem;
+  margin-left: 0.5rem;
+}
+.tabs:first-child {
+  margin-top: 1rem;
+}
+.tab{
+  &.is-active{
+    a{
+      border-bottom-width: 4px;
+    }
+  }
+  a{
+    margin-bottom: -0.15em;
+  }
+}
+
 .has-navbar-fixed-bottom {
   padding-bottom: 100px;
 }
 
 .details {
-  .tabs {
-    margin-bottom: 0;
-    margin-right: 0.5rem;
-    margin-left: 0.5rem;
-  }
-  .tabs:first-child {
-    margin-top: 1rem;
-  }
   .checkbox {
     width: 4rem;
     margin: 0.5rem;
