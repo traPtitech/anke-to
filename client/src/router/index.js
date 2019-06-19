@@ -41,26 +41,23 @@ export default new Router({
     {
       path: '/questionnaires/:id',
       name: 'QuestionnaireDetails',
-      component: QuestionnaireDetails,
-      props: true
+      component: QuestionnaireDetails
     },
     {
       path: '/results/:id',
       name: 'Results',
-      component: Results,
-      props: true
+      component: Results
     },
     {
       path: '/responses/:id',
       name: 'ResponseDetails',
-      component: ResponseDetails,
-      props: true
+      component: ResponseDetails
     },
     {
       path: '/responses/new/:questionnaireId',
       name: 'NewResponseDetails',
       component: ResponseDetails,
-      props: { default: true, isNewResponse: true }
+      props: { isNewResponse: true }
     },
     {
       path: '*',
@@ -68,7 +65,7 @@ export default new Router({
       component: NotFound
     }
   ],
-  scrollBehavior (to, from, savedPosition) {
+  scrollBehavior (savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {
