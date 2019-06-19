@@ -1,8 +1,6 @@
 <template>
   <div class="wrapper">
-    <button class="button download-csv" v-on:click="downloadCSV">
-      CSV形式でダウンロード
-    </button>
+    <button class="button download-csv" v-on:click="downloadCSV">CSV形式でダウンロード</button>
     <div class="card">
       <table class="table is-striped">
         <thead>
@@ -14,25 +12,18 @@
               :class="{ active: sorted == index + 1 || sorted == -1 - index }"
             >
               {{ header }}
-              <span
-                class="arrow"
-                :class="sorted != index + 1 ? 'asc' : 'dsc'"
-              ></span>
+              <span class="arrow" :class="sorted != index + 1 ? 'asc' : 'dsc'"></span>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(result, index) in results" :key="index">
             <td class="table-item-traqid">{{ result.traqID }}</td>
-            <td class="table-item-time">
-              {{ getDateStr(result.submitted_at) }}
-            </td>
+            <td class="table-item-time">{{ getDateStr(result.submitted_at) }}</td>
             <td
               v-for="response in result.response_body"
               :key="response.responseID"
-            >
-              {{ getResponse(response) }}
-            </td>
+            >{{ getResponse(response) }}</td>
           </tr>
         </tbody>
       </table>
@@ -131,7 +122,7 @@ export default {
       axios
         .get('/results/' + this.questionnaireId + '?sort=' + param)
         .then(res => {
-          this.results = res.data
+          this.$emit('set-results', res.data)
         })
     }
   },

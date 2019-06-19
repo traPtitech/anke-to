@@ -26,6 +26,7 @@
         :questions="questions"
         :questionData="questionData"
         :responseData="responseData"
+        @set-results="setResults"
       ></component>
     </div>
 
@@ -143,6 +144,9 @@ export default {
       questions.forEach((question, index) => {
         this.$set(this.questionData, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
       })
+    },
+    setResults (results) {
+      this.results = results
     }
   },
   computed: {
