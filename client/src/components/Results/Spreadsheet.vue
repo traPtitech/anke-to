@@ -279,4 +279,8 @@ th.active {
 .scroll-view {
   overflow-x: auto;
 }
+
+.button {
+  display: block;
+}
 </style>
