@@ -260,6 +260,9 @@ export default {
           case 'public': return '全体'
           case 'administrators': return '管理者のみ'
           case 'respondents': return '回答済みの人'
+          default:
+            console.error('unexpected res_shared_to')
+            return null
         }
       },
       set: function (str) {

@@ -178,6 +178,9 @@ export default {
           return 'spreadsheet'
         case 'Individual':
           return 'individual'
+        default:
+          console.error('unexpected selectedTab')
+          return ''
       }
     },
     selectedTab () {
