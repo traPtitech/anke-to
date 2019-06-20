@@ -13,7 +13,7 @@ startup: |
   cd $REPO
   dep ensure
   go build
-  cd client
+  cd anke-to_ui
   npm install
   npm run build
 
@@ -27,7 +27,7 @@ branch:
   swagger:
     type: static
     startup: null
-    entrypoint: "cat"
-    work_dir: "./docs/swagger"
+    entrypoint: 'cat'
+    work_dir: './docs/swagger'
     use_mariadb: false
     http_proxy: null
