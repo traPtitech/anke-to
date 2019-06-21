@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
@@ -80,6 +81,21 @@ func PostQuestionnaire(c echo.Context) error {
 	}
 
 	if err := model.InsertAdministrators(c, lastID, req.Administrators); err != nil {
+		return err
+	}
+
+	time_limit := "なし"
+	if req.ResTimeLimit != "NULL" {
+		time_limit = req.ResTimeLimit
+	}
+
+	if err := model.PostMessage(c,
+		"### 新しいアンケートが作成されました\n"+
+			"#### タイトル\n"+req.Title+"\n"+
+			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
+			"#### 説明\n"+req.Description+"\n"+
+			"#### 回答期限\n"+time_limit+"\n"+
+			"http://anke-to.sysad.trap.show/responses/new/"+strconv.Itoa(lastID)); err != nil {
 		return err
 	}
 
