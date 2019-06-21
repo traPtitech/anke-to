@@ -398,20 +398,21 @@ export default {
     },
     currentTabComponent () {
       switch (this.selectedTab) {
-        case 'Information': {
+        case 'Information':
           if (this.isEditing) {
             return 'information-edit'
           } else {
             return 'information'
           }
-        }
-        case 'Questions': {
+        case 'Questions':
           if (this.isEditing) {
             return 'questions-edit'
           } else {
             return 'questions'
           }
-        }
+        default:
+          console.error('unexpected selectedTab')
+          return null
       }
     },
     title () {
