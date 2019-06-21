@@ -43,11 +43,13 @@
 
 <script>
 import axios from '@/bin/axios'
+import Table from '@/components/Utils/Table.vue'
 import common from '@/bin/common'
 
 export default {
   name: 'Responses',
   components: {
+    customtable: Table
   },
   async created () {
     axios.get('/users/me/responses').then(resp => {

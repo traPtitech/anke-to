@@ -8,13 +8,17 @@
           (editMode !== 'response' &&
             typeof content.responseBody === 'undefined')
       "
-    >{{ responsePlaceholder }}</p>
+    >
+      {{ responsePlaceholder }}
+    </p>
 
     <!-- view response -->
     <p
       class="has-underline"
       v-if="!editMode && typeof content.responseBody !== 'undefined'"
-    >{{ content.responseBody }}</p>
+    >
+      {{ content.responseBody }}
+    </p>
 
     <!-- edit response -->
     <input
@@ -23,14 +27,14 @@
       v-if="editMode === 'response' && content.type === 'Text'"
       placeholder="回答"
       v-model="content.responseBody"
-    >
+    />
     <input
       type="number"
       class="input has-underline"
       v-if="editMode === 'response' && content.type === 'Number'"
       placeholder="0"
       v-model.number="content.responseBody"
-    >
+    />
   </div>
 </template>
 

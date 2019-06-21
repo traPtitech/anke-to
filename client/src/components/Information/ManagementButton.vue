@@ -7,7 +7,9 @@
       :to="routeData"
     >
       <span :class="iconClass"></span>
-      <span v-if="size === 'normal'">{{ buttonLabel }}</span>
+      <span v-if="size === 'normal'">
+        {{ buttonLabel }}
+      </span>
     </router-link>
     <button
       v-if="type === 'deleteQuestionnaire'"
@@ -17,7 +19,9 @@
       @click.prevent="deleteQuestionnaire"
     >
       <span :class="iconClass"></span>
-      <span v-if="size === 'normal'">{{ buttonLabel }}</span>
+      <span v-if="size === 'normal'">
+        {{ buttonLabel }}
+      </span>
     </button>
   </div>
 </template>
@@ -108,7 +112,6 @@ export default {
           }
         default:
           console.error('no Route Data')
-          return null
       }
     }
   },

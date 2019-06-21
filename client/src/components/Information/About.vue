@@ -50,19 +50,19 @@ export default {
       type: String
     },
     administrators: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      validator: this.listValidator,
+      default: this.defaultListObj
     },
     respondents: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      validator: this.listValidator,
+      default: this.defaultListObj
     },
     targets: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      validator: this.listValidator,
+      default: this.defaultListObj
     },
     modified_at: {
       type: String

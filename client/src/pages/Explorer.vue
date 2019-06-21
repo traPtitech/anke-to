@@ -105,12 +105,14 @@
 <script>
 import axios from '@/bin/axios'
 import router from '@/router'
+import Table from '@/components/Utils/Table.vue'
 import Pagination from '@/components/Utils/Pagination'
 import common from '@/bin/common'
 
 export default {
   name: 'Explorer',
   components: {
+    'customtable': Table,
     'pagination': Pagination
   },
   async created () {

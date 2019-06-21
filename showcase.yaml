@@ -27,7 +27,7 @@ branch:
   swagger:
     type: static
     startup: null
-    entrypoint: 'cat'
-    work_dir: './docs/swagger'
+    entrypoint: "cat"
+    work_dir: "./docs/swagger"
     use_mariadb: false
     http_proxy: null
