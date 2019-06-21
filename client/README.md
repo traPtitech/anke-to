@@ -1,4 +1,4 @@
-# anke-to_ui
+# anke-to UI
 
 ## Project setup
 ```
