@@ -26,8 +26,8 @@ func main() {
 	e.Use(middleware.Recover())
 	
 	// Static Files
-	e.File("/app.js", "./client/dist/app.js")
-	e.File("/favicon.ico", "./client/dist/favicon.ico")
+	e.File("/app.js", "client/dist/app.js")
+	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.Static("/fonts", "client/dist/fonts")
 	e.Static("/img", "client/dist/img")
 	e.File("*", "client/dist/index.html")
