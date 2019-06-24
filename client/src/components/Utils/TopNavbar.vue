@@ -14,7 +14,7 @@
         </a>
         <div @click="$emit('close-side-menu')" class="is-flex">
           <router-link class="navbar-item" to="/targeted">
-            <img class="title" src="/static/img/logo.png">
+            <img class="title" src="@/static/img/logo.png">
           </router-link>
         </div>
         <div class="subtitle pull-right user">

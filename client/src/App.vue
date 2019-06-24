@@ -55,5 +55,5 @@ export default {
 @import "../node_modules/bulma/bulma.sass";
 @import "@/style/global.scss";
 @import "@/style/colors.scss";
-@import url("../static/css/themify-icons.css");
+@import "static/css/themify-icons.css";
 </style>

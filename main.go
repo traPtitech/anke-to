@@ -24,12 +24,14 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
+	
 	// Static Files
-	e.Static("/", "client/dist")
-	e.Static("/static", "client/dist/static")
+	e.File("/app.js", "client/dist/app.js")
+	e.File("/favicon.ico", "client/dist/favicon.ico")
+	e.Static("/fonts", "client/dist/fonts")
+	e.Static("/img", "client/dist/img")
 	e.File("*", "client/dist/index.html")
-
+	
 	router.SetRouting(e)
 
 	// Start server
