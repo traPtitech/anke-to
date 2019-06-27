@@ -43,5 +43,5 @@ func PostMessage(c echo.Context, message string) error {
 
 	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, response)
 
-	return c.NoContent(http.StatusNoContent)
+	return nil
 }
