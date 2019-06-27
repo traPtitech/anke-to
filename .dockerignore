@@ -1,0 +1,7 @@
+/vendor/
+.gitignore
+docker-compose.yml
+Dockerfile
+anke-to
+showcase.yaml
+/client/
