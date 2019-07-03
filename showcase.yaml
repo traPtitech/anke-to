@@ -19,12 +19,11 @@ startup: |
 
 http_proxy: 1323
 
-internal: hard
+internal: soft
 
 branch:
   master:
   client:
-    internal: soft
   swagger:
     type: static
     startup: null
