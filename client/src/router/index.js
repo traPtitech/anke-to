@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import store from '@/store'
 import Router from 'vue-router'
 import Targeted from '@/pages/Targeted'
 import Administrates from '@/pages/Administrates'
@@ -11,7 +12,7 @@ import NotFound from '@/pages/NotFound'
 
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
   mode: 'history',
   routes: [
     {
@@ -74,3 +75,20 @@ export default new Router({
     }
   }
 })
+
+router.beforeEach(async (to, _, next) => {
+  // traQにログイン済みかどうか調べる
+  if (!store.state.me) {
+    await store.dispatch('whoAmI')
+  }
+
+  if (!store.state.me) {
+    // 未ログインの場合、traQのログインページに飛ばす
+    const traQLoginURL = 'https://q.trap.jp/login?redirect=' + location.href
+    location.href = traQLoginURL
+  }
+
+  next()
+})
+
+export default router

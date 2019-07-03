@@ -24,6 +24,7 @@ internal: hard
 branch:
   master:
   client:
+    internal: soft
   swagger:
     type: static
     startup: null
