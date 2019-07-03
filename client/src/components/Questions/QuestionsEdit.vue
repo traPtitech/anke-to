@@ -224,9 +224,6 @@ export default {
     margin-right: 0.3rem;
     margin-left: 0.3rem;
   }
-  .is-small {
-    font-size: 0.9rem;
-  }
 }
 .question-type-buttons {
   background: whitesmoke;

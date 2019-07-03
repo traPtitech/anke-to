@@ -68,33 +68,26 @@
                   </span>
                 </div>
 
-                <div v-for="(userList, key) in userLists" :key="key" class="user-list-wrapper">
-                  <div>
-                    <span
-                      class="has-text-weight-bold"
-                    >{{ userList.summary }} ({{ userList.list.length }})</span>
-                    <a>
-                      <span
-                        class="ti-pencil"
-                        v-if="userList.editable"
-                        @click="changeActiveModal(userList)"
-                      ></span>
-                    </a>
+                <!-- 対象者・管理者の選択 (/api/users が実装されてから) -->
+                <!-- <user-list :userList="userLists.targets" class="user-list-wrapper"></user-list>
+                <user-list :userList="userLists.administrators" class="user-list-wrapper"></user-list>-->
+
+                <!-- 対象者は traP or なし から選べるようにしておく (↑が実装されるまで) -->
+                <div class="user-list-wrapper">
+                  <span class="has-text-weight-bold">{{ userLists.targets.summary }}</span>
+                  <span
+                    class="is-small targets-description"
+                  >(トップページに表示してほしいアンケートは、対象者を traP にしてください)</span>
+                  <div class="user-list">
+                    <label>
+                      <input type="radio" v-model="targetedList" :value="['traP']">
+                      traP
+                    </label>
+                    <label>
+                      <input type="radio" v-model="targetedList" :value="[]">
+                      なし
+                    </label>
                   </div>
-                  <p class="has-text-grey user-list">
-                    <span v-for="(user, index) in userList.list" :key="index">
-                      <span
-                        :class="{
-                          'highlight-name': user === 'traP' || user === getMyTraqId
-                        }"
-                      >{{ user }}</span>
-                      <span>
-                        {{
-                        index === userList.list.length - 1 ? "" : ", "
-                        }}
-                      </span>
-                    </span>
-                  </p>
                 </div>
 
                 <!-- modal -->
@@ -137,6 +130,7 @@
 import common from '@/bin/common'
 import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+import UserList from '@/components/Information/UserList'
 import UserListModal from '@/components/Information/UserListModal'
 import ManagementButton from '@/components/Information/ManagementButton'
 
@@ -148,6 +142,7 @@ export default {
   },
   components: {
     'input-error-message': InputErrorMessage,
+    'user-list': UserList,
     'user-list-modal': UserListModal,
     'management-button': ManagementButton
   },
@@ -175,8 +170,8 @@ export default {
     getDateStr (str) {
       return common.getDateStr(str)
     },
-    setInformation (information) {
-      this.$emit('set-data', 'information', information)
+    setInformation (newInformation) {
+      this.$emit('set-data', 'information', newInformation)
     },
     changeActiveModal (obj) {
       this.activeModal = obj
@@ -186,8 +181,9 @@ export default {
       this.isModalActive = false
     },
     setUserList (listName, newList) {
-      this.information[ listName ] = newList
-      this.setInformation(this.information)
+      let newInformation = this.information
+      newInformation[ listName ] = newList
+      this.setInformation(newInformation)
     },
     getUsers () {
       return axios
@@ -252,7 +248,7 @@ export default {
       return this.$route.params.id === 'new'
     },
     userLists () {
-      return common.getUserLists(this.information)
+      return common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
     },
     resSharedToStr: {
       get: function () {
@@ -294,6 +290,14 @@ export default {
           this.information.res_time_limit = str
         }
       }
+    },
+    targetedList: {
+      get () {
+        return this.information.targets
+      },
+      set (newVal) {
+        this.setUserList('targets', newVal)
+      }
     }
   },
   watch: {
@@ -321,9 +325,11 @@ export default {
 .editable.wrapper {
   display: flex;
 }
-.details .checkbox {
-  width: 6rem;
-  margin: 0.5rem;
+.details {
+  .checkbox {
+    width: 6rem;
+    margin: 0.5rem;
+  }
 }
 .management-buttons {
   .button:not(:last-child) {
@@ -333,9 +339,6 @@ export default {
     max-width: fit-content;
     display: block;
   }
-}
-.user-list {
-  margin: 0 0.5rem;
 }
 #title {
   .input {
@@ -356,5 +359,15 @@ export default {
 }
 .user-list-wrapper {
   margin-top: 0.5rem;
+}
+.user-list {
+  margin: 0.2rem 0.5rem;
+  label {
+    margin: auto 0.2rem;
+  }
+}
+.targets-description {
+  color: gray;
+  margin: auto 0.5rem;
 }
 </style>
