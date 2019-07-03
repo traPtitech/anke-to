@@ -21,9 +21,19 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	if err != nil {
+		return err
+	}
+
+	// 回答期限を過ぎた回答は許可しない
+	if limit != "NULL" && limit < time.Now().Format(time.RFC3339) {
+		return echo.NewHTTPError(http.StatusMethodNotAllowed)
+	}
+
 	responseID, err := model.InsertRespondents(c, req)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	for _, body := range req.Body {
@@ -250,6 +260,16 @@ func EditResponse(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	if err != nil {
+		return err
+	}
+
+	// 回答期限を過ぎた回答は許可しない
+	if limit != "NULL" && limit < time.Now().Format(time.RFC3339) {
+		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
 	if err := model.UpdateRespondents(c, req.ID, responseID, req.SubmittedAt); err != nil {
