@@ -179,6 +179,24 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaires, 
 	return questionnaire, targets, administrators, respondents, nil
 }
 
+func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
+	res := struct {
+		Title        string         `db:"title"`
+		ResTimeLimit mysql.NullTime `db:"res_time_limit"`
+	}{}
+	if err := db.Get(&res,
+		"SELECT res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
+		questionnaireID); err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		} else {
+			c.Logger().Error(err)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	return NullTimeToString(res.ResTimeLimit), nil
+}
+
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
 		Title        string         `db:"title"`
