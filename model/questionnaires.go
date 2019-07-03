@@ -307,6 +307,12 @@ func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, erro
 		if err != nil {
 			return nil, err
 		}
+
+		// アンケートの期限がNULLでなく期限を過ぎていたら次へ
+		if v.ResTimeLimit.Valid && time.Now().After(v.ResTimeLimit.Time) {
+			continue
+		}
+
 		ret = append(ret,
 			TargettedQuestionnaires{
 				ID:           v.ID,
@@ -325,9 +331,17 @@ func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, erro
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	// 更新日時が新しい順に
+	// 回答期限が近い順に
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].ModifiedAt > ret[j].ModifiedAt
+		if ret[i].ResTimeLimit == "NULL" && ret[j].ResTimeLimit == "NULL" {
+			return ret[i].ModifiedAt > ret[j].ModifiedAt
+		} else if ret[i].ResTimeLimit == "NULL" {
+			return false
+		} else if ret[j].ResTimeLimit == "NULL" {
+			return true
+		} else {
+			return ret[i].ResTimeLimit < ret[j].ResTimeLimit
+		}
 	})
 
 	return ret, nil
