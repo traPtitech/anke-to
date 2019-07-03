@@ -31,7 +31,10 @@ const store = new Vuex.Store({
       return axios
         .get('/users/me')
         .then(res => {
-          commit('setMe', { traqId: res.data.traqID })
+          if (res.data.traqID !== '-') {
+            // traQにログイン済みの場合
+            commit('setMe', { traqId: res.data.traqID })
+          }
         })
         .catch(err => {
           console.log(err)

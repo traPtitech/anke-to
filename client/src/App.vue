@@ -18,7 +18,6 @@
 <script>
 import TopNavbar from './components/Utils/TopNavbar.vue'
 import SideMenu from './components/Utils/SideMenu.vue'
-import { mapGetters } from 'vuex'
 
 export default {
   name: 'App',
@@ -27,9 +26,6 @@ export default {
     'side-menu': SideMenu
   },
   async created () {
-    if (this.getMe === null) {
-      await this.$store.dispatch('whoAmI')
-    }
   },
   data () {
     return {
@@ -38,7 +34,6 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([ 'getMe' ])
   },
   methods: {
     toggleSideMenu () {
