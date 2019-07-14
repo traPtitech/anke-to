@@ -4,8 +4,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
-	"git.trapti.tech/SysAd/anke-to/model"
-	"git.trapti.tech/SysAd/anke-to/router"
+	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/router"
 )
 
 func main() {

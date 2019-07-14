@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 
-	"git.trapti.tech/SysAd/anke-to/model"
+	"github.com/traPtitech/anke-to/model"
 )
 
 // PostResponse POST /responses
