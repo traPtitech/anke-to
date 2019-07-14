@@ -2,9 +2,8 @@
 FROM golang:1.12.5-alpine as build
 RUN apk add --update --no-cache ca-certificates git
 
-WORKDIR /git.trap.jp/SysAd/
 # githubへの移行後
-# WORKDIR /go/src/github.com/traPtitech/anke-to
+WORKDIR /go/src/github.com/traPtitech/anke-to
 
 RUN apk add --update --no-cache git \
   &&  go get -u github.com/golang/dep/cmd/dep
