@@ -1,7 +1,7 @@
 FROM golang:1.12.5-alpine as build-step
 RUN apk add --update --no-cache ca-certificates git
 
-WORKDIR /go/src/git.trapti.tech/SysAd/anke-to
+WORKDIR /go/src/github.com/traPtitech/anke-to
 
 RUN apk add --update --no-cache git \
   &&  go get -u github.com/golang/dep/cmd/dep \

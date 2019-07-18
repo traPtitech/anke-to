@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   anke-to:
@@ -11,9 +11,9 @@ services:
       MARIADB_HOSTNAME: mysql
       MARIADB_DATABASE: anke-to
     ports:
-      - '1323:1323'
+      - "1323:1323"
     volumes:
-      - '../:/go/src/git.trapti.tech/SysAd/anke-to'
+      - "../:/go/src/github.com/traPtitech/anke-to"
     depends_on:
       - mysql
 
@@ -25,8 +25,8 @@ services:
       MYSQL_DATABASE: anke-to
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     volumes:
-      - './init.sql:/docker-entrypoint-initdb.d/init.sql'
+      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
     expose:
-      - '3306'
+      - "3306"
     ports:
-      - '3306:3306'
+      - "3306:3306"

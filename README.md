@@ -5,15 +5,16 @@
 ## 開発
 https://wiki.trapti.tech/SysAd/docs/anke-to/development
 ### サーバーサイド
-Dockerが必要です
+Docker, Goが必要です
 ```
-docker-compose -f development/docker-compose.yaml up --build
+make dev
 ```
 
 ### クライアントサイド
 Node.js が必要です
 ```
 cd client
+npm install
 npm run serve
 ```
 
