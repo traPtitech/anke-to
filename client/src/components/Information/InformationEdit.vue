@@ -9,12 +9,12 @@
               <header class="card-header">
                 <div id="title" class="card-header-title title is-editing">
                   <div class="wrapper">
-                    <textarea
+                    <input
                       :value="information.title"
                       @input="$set(information, 'title', $event.target.value)"
                       class="input"
                       placeholder="タイトル"
-                    ></textarea>
+                    />
                   </div>
                 </div>
               </header>
