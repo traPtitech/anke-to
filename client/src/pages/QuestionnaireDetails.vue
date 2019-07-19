@@ -63,7 +63,7 @@
 <script>
 
 import moment from 'moment'
-import {mapGetters} from 'vuex'
+import { mapGetters } from 'vuex'
 import router from '@/router'
 import common from '@/bin/common'
 import axios from '@/bin/axios'
@@ -155,7 +155,7 @@ export default {
       const informationData = {
         title: this.information.title,
         description: this.information.description,
-        res_time_limit: this.noTimeLimit ? 'NULL' : moment(this.information.res_time_limit, "YYYY-MM-DDTHH:mm").format('YYYY/MM/DD HH:mm'),
+        res_time_limit: this.noTimeLimit ? 'NULL' : moment(this.information.res_time_limit, 'YYYY-MM-DDTHH:mm').format('YYYY/MM/DD HH:mm'),
         res_shared_to: this.information.res_shared_to,
         targets: this.information.targets,
         administrators: this.information.administrators
