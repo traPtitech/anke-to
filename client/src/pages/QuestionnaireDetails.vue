@@ -62,20 +62,20 @@
 
 <script>
 
-    import moment from 'moment'
-    import {mapGetters} from 'vuex'
-    import router from '@/router'
-    import common from '@/bin/common'
-    import axios from '@/bin/axios'
-    import InformationSummary from '@/components/Information/InformationSummary'
-    import Information from '@/components/Information/Information'
-    import InformationEdit from '@/components/Information/InformationEdit'
-    import Questions from '@/components/Questions/Questions'
-    import QuestionsEdit from '@/components/Questions/QuestionsEdit'
-    import EditNavBar from '@/components/Utils/EditNavBar'
-    import TopBarMessage from '@/components/Utils/TopBarMessage'
+import moment from 'moment'
+import {mapGetters} from 'vuex'
+import router from '@/router'
+import common from '@/bin/common'
+import axios from '@/bin/axios'
+import InformationSummary from '@/components/Information/InformationSummary'
+import Information from '@/components/Information/Information'
+import InformationEdit from '@/components/Information/InformationEdit'
+import Questions from '@/components/Questions/Questions'
+import QuestionsEdit from '@/components/Questions/QuestionsEdit'
+import EditNavBar from '@/components/Utils/EditNavBar'
+import TopBarMessage from '@/components/Utils/TopBarMessage'
 
-    export default {
+export default {
   name: 'QuestionnaireDetails',
   async created () {
     this.getInformation()
