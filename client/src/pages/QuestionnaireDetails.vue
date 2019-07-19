@@ -62,20 +62,20 @@
 
 <script>
 
-import moment from 'moment'
-import { mapGetters } from 'vuex'
-import router from '@/router'
-import common from '@/bin/common'
-import axios from '@/bin/axios'
-import InformationSummary from '@/components/Information/InformationSummary'
-import Information from '@/components/Information/Information'
-import InformationEdit from '@/components/Information/InformationEdit'
-import Questions from '@/components/Questions/Questions'
-import QuestionsEdit from '@/components/Questions/QuestionsEdit'
-import EditNavBar from '@/components/Utils/EditNavBar'
-import TopBarMessage from '@/components/Utils/TopBarMessage'
+    import moment from 'moment'
+    import {mapGetters} from 'vuex'
+    import router from '@/router'
+    import common from '@/bin/common'
+    import axios from '@/bin/axios'
+    import InformationSummary from '@/components/Information/InformationSummary'
+    import Information from '@/components/Information/Information'
+    import InformationEdit from '@/components/Information/InformationEdit'
+    import Questions from '@/components/Questions/Questions'
+    import QuestionsEdit from '@/components/Questions/QuestionsEdit'
+    import EditNavBar from '@/components/Utils/EditNavBar'
+    import TopBarMessage from '@/components/Utils/TopBarMessage'
 
-export default {
+    export default {
   name: 'QuestionnaireDetails',
   async created () {
     this.getInformation()
@@ -155,7 +155,7 @@ export default {
       const informationData = {
         title: this.information.title,
         description: this.information.description,
-        res_time_limit: this.noTimeLimit ? 'NULL' : new Date(this.information.res_time_limit).toLocaleString('ja-GB'),
+        res_time_limit: this.noTimeLimit ? 'NULL' : moment(this.information.res_time_limit, "YYYY-MM-DDTHH:mm").format('YYYY/MM/DD HH:mm'),
         res_shared_to: this.information.res_shared_to,
         targets: this.information.targets,
         administrators: this.information.administrators
