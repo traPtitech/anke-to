@@ -1,12 +1,29 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo"
+
+	"github.com/traPtitech/anke-to/model"
 )
+
+func UserAuthenticate() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// トークンを持たないユーザはアクセスできない
+			if model.GetUserID(c) == "-" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
+			} else {
+				return next(c)
+			}
+		}
+	}
+}
 
 func SetRouting(e *echo.Echo) {
 
-	api := e.Group("/api")
+	api := e.Group("/api", UserAuthenticate())
 	{
 		apiQuestionnnaires := api.Group("/questionnaires")
 		{
