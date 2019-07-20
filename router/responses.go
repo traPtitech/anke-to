@@ -168,35 +168,39 @@ func GetResponsesByID(c echo.Context) error {
 	// 昇順ソート
 	if sortNum > 0 {
 		sort.Slice(returnInfo, func(i, j int) bool {
-			if returnInfo[i].Body[sortNum-1].QuestionType == "Number" {
-				numi, err := strconv.Atoi(returnInfo[i].Body[sortNum-1].Response)
+			bodyI := returnInfo[i].Body[sortNum-1]
+			bodyJ := returnInfo[j].Body[sortNum-1]
+			if bodyI.QuestionType == "Number" {
+				numi, err := strconv.Atoi(bodyI.Response)
 				if err != nil {
 					return true
 				}
-				numj, err := strconv.Atoi(returnInfo[j].Body[sortNum-1].Response)
+				numj, err := strconv.Atoi(bodyJ.Response)
 				if err != nil {
 					return true
 				}
 				return numi < numj
 			}
-			return returnInfo[i].Body[sortNum-1].Response < returnInfo[j].Body[sortNum-1].Response
+			return bodyI.Response < bodyJ.Response
 		})
 	}
 	// 降順ソート
 	if sortNum < 0 {
 		sort.Slice(returnInfo, func(i, j int) bool {
-			if returnInfo[i].Body[-sortNum-1].QuestionType == "Number" {
-				numi, err := strconv.Atoi(returnInfo[i].Body[-sortNum-1].Response)
+			bodyI := returnInfo[i].Body[-sortNum-1]
+			bodyJ := returnInfo[j].Body[-sortNum-1]
+			if bodyI.QuestionType == "Number" {
+				numi, err := strconv.Atoi(bodyI.Response)
 				if err != nil {
 					return true
 				}
-				numj, err := strconv.Atoi(returnInfo[j].Body[-sortNum-1].Response)
+				numj, err := strconv.Atoi(bodyJ.Response)
 				if err != nil {
 					return true
 				}
 				return numi > numj
 			}
-			return returnInfo[i].Body[-sortNum-1].Response > returnInfo[j].Body[-sortNum-1].Response
+			return bodyI.Response > bodyJ.Response
 		})
 	}
 
