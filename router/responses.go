@@ -126,16 +126,11 @@ func GetResponsesByID(c echo.Context) error {
 		return err
 	}
 
-	type QIDandResponse struct {
-		QuestionID int
-		Response   string
-	}
 	// 各回答者のアンケートIDと回答
-	resMap := map[int][]QIDandResponse{}
-
+	resMap := map[int][]model.QIDandResponse{}
 	for _, resp := range responses {
 		resMap[resp.ResponseID] = append(resMap[resp.ResponseID],
-			QIDandResponse{
+			model.QIDandResponse{
 				QuestionID: resp.QuestionID,
 				Response:   resp.Body,
 			})
@@ -158,34 +153,7 @@ func GetResponsesByID(c echo.Context) error {
 	returnInfo := []ReturnInfo{}
 
 	for _, respondent := range respondents {
-		bodyList := []model.ResponseBody{}
-		for _, qType := range questionTypeList {
-			response := ""
-			optionResponse := []string{}
-			for _, respInfo := range resMap[respondent.ResponseID] {
-				// 質問IDが一致したら追加
-				if qType.ID == respInfo.QuestionID {
-					switch qType.Type {
-					case "MultipleChoice", "Checkbox", "Dropdown":
-						if response != "" {
-							response += ","
-						}
-						response += respInfo.Response
-						optionResponse = append(optionResponse, respInfo.Response)
-					default:
-						response += respInfo.Response
-					}
-				}
-			}
-			// 回答内容の配列に追加
-			bodyList = append(bodyList,
-				model.ResponseBody{
-					QuestionID:     qType.ID,
-					QuestionType:   qType.Type,
-					Response:       response,
-					OptionResponse: optionResponse,
-				})
-		}
+		bodyList := model.GetResponseBodyList(c, questionTypeList, resMap[respondent.ResponseID])
 		// 回答の配列に追加
 		returnInfo = append(returnInfo,
 			ReturnInfo{

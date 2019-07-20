@@ -356,3 +356,41 @@ func GetSortedRespondents(c echo.Context, questionnaireID int, sortQuery string)
 	}
 	return responsesinfo, sortNum, nil
 }
+
+type QIDandResponse struct {
+	QuestionID int
+	Response   string
+}
+
+func GetResponseBodyList(c echo.Context, questionTypeList []QuestionIDType, responses []QIDandResponse) []ResponseBody {
+	bodyList := []ResponseBody{}
+
+	for _, qType := range questionTypeList {
+		response := ""
+		optionResponse := []string{}
+		for _, respInfo := range responses {
+			// 質問IDが一致したら追加
+			if qType.ID == respInfo.QuestionID {
+				switch qType.Type {
+				case "MultipleChoice", "Checkbox", "Dropdown":
+					if response != "" {
+						response += ","
+					}
+					response += respInfo.Response
+					optionResponse = append(optionResponse, respInfo.Response)
+				default:
+					response += respInfo.Response
+				}
+			}
+		}
+		// 回答内容の配列に追加
+		bodyList = append(bodyList,
+			ResponseBody{
+				QuestionID:     qType.ID,
+				QuestionType:   qType.Type,
+				Response:       response,
+				OptionResponse: optionResponse,
+			})
+	}
+	return bodyList
+}
