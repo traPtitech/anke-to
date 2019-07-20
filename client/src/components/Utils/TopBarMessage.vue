@@ -2,11 +2,11 @@
   <transition name="fade">
     <div
       v-if="message.showMessage"
-      class="message"
       :class="{
         'is-danger': message.color === 'red',
         'is-success': message.color === 'green'
       }"
+      class="message"
     >
       <p class="message-body">{{ message.body }}</p>
     </div>
@@ -14,27 +14,21 @@
 </template>
 
 <script>
-
 export default {
-  name: 'top-bar-message',
-  components: {
-  },
+  name: 'TopBarMessage',
+  components: {},
   props: {
     message: {
       type: Object,
       required: true
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
-  methods: {
-  },
-  computed: {
-  },
-  mounted () {
-  }
+  computed: {},
+  mounted() {},
+  methods: {}
 }
 </script>
 

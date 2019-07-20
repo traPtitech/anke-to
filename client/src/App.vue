@@ -7,8 +7,12 @@
     ></top-navbar>
     <div class="columns is-fullheight">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
-      <side-menu class="sidemenu" v-show="isSideMenuActive" @close-side-menu="closeSideMenu"></side-menu>
-      <div class="column app-main" @click="closeSideMenu">
+      <side-menu
+        v-show="isSideMenuActive"
+        @close-side-menu="closeSideMenu"
+        class="sidemenu"
+      ></side-menu>
+      <div @click="closeSideMenu" class="column app-main">
         <router-view></router-view>
       </div>
     </div>
@@ -25,21 +29,19 @@ export default {
     'top-navbar': TopNavbar,
     'side-menu': SideMenu
   },
-  async created () {
-  },
-  data () {
+  data() {
     return {
       isSideMenuActive: false,
       user: {}
     }
   },
-  computed: {
-  },
+  computed: {},
+  async created() {},
   methods: {
-    toggleSideMenu () {
+    toggleSideMenu() {
       this.isSideMenuActive = !this.isSideMenuActive
     },
-    closeSideMenu () {
+    closeSideMenu() {
       this.isSideMenuActive = false
     }
   }
@@ -47,8 +49,8 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../node_modules/bulma/bulma.sass";
-@import "@/style/global.scss";
-@import "@/style/colors.scss";
-@import "static/css/themify-icons.css";
+@import '../node_modules/bulma/bulma.sass';
+@import '@/style/global.scss';
+@import '@/style/colors.scss';
+@import 'static/css/themify-icons.css';
 </style>

@@ -5,7 +5,6 @@
       <article class="column is-6">
         <!-- 情報 -->
         <about
-          class="card"
           v-bind="{
             res_shared_to: information.res_shared_to,
             administrators: userLists.administrators,
@@ -14,6 +13,7 @@
             modified_at: information.modified_at,
             created_at: information.created_at
           }"
+          class="card"
         ></about>
       </article>
 
@@ -32,7 +32,10 @@
 
         <div class="card">
           <!-- 自分の回答一覧 -->
-          <my-responses :questionnaireId="questionnaireId" @set-has-responded="setHasResponded"></my-responses>
+          <my-responses
+            :questionnaireId="questionnaireId"
+            @set-has-responded="setHasResponded"
+          ></my-responses>
         </div>
       </article>
     </div>
@@ -40,7 +43,6 @@
 </template>
 
 <script>
-
 // import axios from '@/bin/axios'
 import router from '@/router'
 import common from '@/bin/common'
@@ -55,16 +57,13 @@ export default {
     management: Management,
     'my-responses': MyResponses
   },
-  created () {
-    this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
-  },
   props: {
     informationProps: {
       type: Object,
       required: true
     }
   },
-  data () {
+  data() {
     return {
       hasResponded: false,
       activeModal: {},
@@ -73,41 +72,55 @@ export default {
       userLists: {}
     }
   },
+  computed: {
+    information() {
+      return this.informationProps.information
+    },
+    administrates() {
+      return this.informationProps.administrates
+    },
+    questionnaireId() {
+      return this.informationProps.questionnaireId
+    },
+    noTimeLimit() {
+      return this.informationProps.noTimeLimit
+    },
+    canViewResults() {
+      // 結果をみる権限があるかどうかを返す
+      return common.canViewResults(
+        this.information,
+        this.administrates,
+        this.hasResponded
+      )
+    }
+  },
+  watch: {
+    information() {
+      this.userLists = common.getUserLists(
+        this.information.targets,
+        this.information.respondents,
+        this.information.administrators
+      )
+    }
+  },
+  created() {
+    this.userLists = common.getUserLists(
+      this.information.targets,
+      this.information.respondents,
+      this.information.administrators
+    )
+  },
+  mounted() {},
   methods: {
-    createResponse () {
+    createResponse() {
       router.push({
         name: 'NewResponseDetails',
         params: { questionnaireId: this.questionnaireId }
       })
     },
-    setHasResponded (bool) {
+    setHasResponded(bool) {
       this.hasResponded = bool
     }
-  },
-  computed: {
-    information () {
-      return this.informationProps.information
-    },
-    administrates () {
-      return this.informationProps.administrates
-    },
-    questionnaireId () {
-      return this.informationProps.questionnaireId
-    },
-    noTimeLimit () {
-      return this.informationProps.noTimeLimit
-    },
-    canViewResults () {
-      // 結果をみる権限があるかどうかを返す
-      return common.canViewResults(this.information, this.administrates, this.hasResponded)
-    }
-  },
-  watch: {
-    information: function (newVal) {
-      this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
-    }
-  },
-  mounted () {
   }
 }
 </script>

@@ -10,17 +10,14 @@
 </template>
 
 <script>
-
 import Questions from '@/components/Questions/Questions'
 import Pagination from '@/components/Utils/Pagination'
 
 export default {
   name: 'Individual',
-  async created () {
-  },
   components: {
-    'questions': Questions,
-    'pagination': Pagination
+    questions: Questions,
+    pagination: Pagination
   },
   props: {
     results: {
@@ -40,23 +37,22 @@ export default {
       required: true
     }
   },
-  data () {
-    return {
-    }
-  },
-  methods: {
+  data() {
+    return {}
   },
   computed: {
-    currentPage () {
-      return this.$route.query.page ? Number(this.$route.query.page) : this.range.first
+    currentPage() {
+      return this.$route.query.page
+        ? Number(this.$route.query.page)
+        : this.range.first
     },
-    range () {
+    range() {
       return {
         first: 1,
         last: this.results.length
       }
     },
-    defaultPageLink () {
+    defaultPageLink() {
       return {
         name: 'Results',
         params: { id: this.$route.params.id },
@@ -64,11 +60,11 @@ export default {
       }
     }
   },
-  watch: {
-  }
+  watch: {},
+  async created() {},
+  methods: {}
 }
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

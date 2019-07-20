@@ -25,8 +25,8 @@
           >
           <a>
             <span
-              class="ti-trash is-pulled-right"
               @click="deleteResponse(response.responseID, index)"
+              class="ti-trash is-pulled-right"
             ></span>
           </a>
         </li>
@@ -40,45 +40,22 @@ import common from '@/bin/common'
 
 export default {
   name: 'MyResponses',
-  components: {
-  },
-  async created () {
-    await axios
-      .get('/users/me/responses/' + this.questionnaireId)
-      .then(res => {
-        this.responses = res.data
-      })
-  },
+  components: {},
   props: {
     questionnaireId: {
-      type: Number
+      type: Number,
+      default: undefined
     }
   },
-  data () {
+  data() {
     return {
       responses: [],
       processing: {}
     }
   },
-  methods: {
-    getDateStr: common.getDateStr,
-    async deleteResponse (responseId, index) {
-      if (this.processing[ responseId ]) return
-      if (window.confirm('この回答を削除しますか？')) {
-        this.processing[ responseId ] = true
-        await axios
-          .delete('/responses/' + responseId, { method: 'delete', withCredentials: true })
-          .then(() => {
-            this.responses.splice(index, 1)
-            this.processing[ responseId ] = false
-          })
-      }
-    }
-  },
-  computed: {
-  },
+  computed: {},
   watch: {
-    responses: function (newArr) {
+    responses: function(newArr) {
       // 回答を送信済みかどうかを調べて Information に送信
       let hasResponded = false
       newArr.forEach(response => {
@@ -87,7 +64,29 @@ export default {
       this.$emit('set-has-responded', hasResponded)
     }
   },
-  mounted () {
+  async created() {
+    await axios.get('/users/me/responses/' + this.questionnaireId).then(res => {
+      this.responses = res.data
+    })
+  },
+  mounted() {},
+  methods: {
+    getDateStr: common.getDateStr,
+    async deleteResponse(responseId, index) {
+      if (this.processing[responseId]) return
+      if (window.confirm('この回答を削除しますか？')) {
+        this.processing[responseId] = true
+        await axios
+          .delete('/responses/' + responseId, {
+            method: 'delete',
+            withCredentials: true
+          })
+          .then(() => {
+            this.responses.splice(index, 1)
+            this.processing[responseId] = false
+          })
+      }
+    }
   }
 }
 </script>

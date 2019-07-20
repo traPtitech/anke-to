@@ -10,24 +10,24 @@ const store = new Vuex.Store({
     me: null
   },
   getters: {
-    getMe (state) {
+    getMe(state) {
       return state.me
     },
-    getMyTraqId (state) {
+    getMyTraqId(state) {
       return state.me !== null ? state.me.traqId : ''
     }
   },
   mutations: {
-    setMe (state, me) {
+    setMe(state, me) {
       state.me = me
     },
-    setMyTraqId (state, traqId) {
+    setMyTraqId(state, traqId) {
       if (!state.me) state.me = {}
       state.me.traqId = traqId
     }
   },
   actions: {
-    whoAmI ({ commit }) {
+    whoAmI({ commit }) {
       return axios
         .get('/users/me')
         .then(res => {
