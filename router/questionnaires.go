@@ -89,13 +89,9 @@ func PostQuestionnaire(c echo.Context) error {
 		time_limit = req.ResTimeLimit
 	}
 
-	targets_mention_text := ""
-	if len(req.Targets) == 0 {
-		targets_mention_text = "なし"
-	} else {
-		for _, target := range req.Targets {
-			targets_mention_text += "@" + target + " "
-		}
+	targets_mention_text := "なし"
+	if len(req.Targets) != 0 {
+		targets_mention_text = "@" + strings.Join(req.Targets, " @")
 	}
 
 	if err := model.PostMessage(c,
