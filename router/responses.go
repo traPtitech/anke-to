@@ -108,104 +108,131 @@ func GetResponsesByID(c echo.Context) error {
 		return err
 	}
 
-	switch resSharedTo {
-	case "administrators":
-		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		if !AmAdmin {
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-	case "respondents":
-		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		RespondedAt, err := model.RespondedAt(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		if !AmAdmin && RespondedAt == "NULL" {
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
+	// アンケートの回答を確認する権限が無ければエラーを返す
+	if err := model.CheckResponseConfirmable(c, resSharedTo, questionnaireID); err != nil {
+		return err
 	}
 
 	sortQuery := c.QueryParam("sort")
-	responsesinfo, sortNum, err := model.GetSortedResponses(c, questionnaireID, sortQuery)
+	// sortされた回答者の情報
+	respondents, sortNum, err := model.GetSortedRespondents(c, questionnaireID, sortQuery)
 	if err != nil {
 		return err
 	}
 
-	type ResponsesInfo struct {
+	// 必要な回答を一気に持ってくる
+	responses, err := model.GetResponsesByID(questionnaireID)
+	if err != nil {
+		return err
+	}
+
+	type QIDandResponse struct {
+		QuestionID int
+		Response   string
+	}
+	// 各回答者のアンケートIDと回答
+	resMap := map[int][]QIDandResponse{}
+
+	for _, resp := range responses {
+		resMap[resp.ResponseID] = append(resMap[resp.ResponseID],
+			QIDandResponse{
+				QuestionID: resp.QuestionID,
+				Response:   resp.Body,
+			})
+	}
+
+	// 質問IDと種類を取ってくる
+	questionTypeList, err := model.GetQuestionsType(c, questionnaireID)
+	if err != nil {
+		return err
+	}
+
+	// 返す構造体
+	type ReturnInfo struct {
 		ResponseID  int                  `json:"responseID"`
 		UserID      string               `json:"traqID"`
 		SubmittedAt string               `json:"submitted_at"`
 		ModifiedAt  string               `json:"modified_at"`
 		Body        []model.ResponseBody `json:"response_body"`
 	}
-	responses := []ResponsesInfo{}
+	returnInfo := []ReturnInfo{}
 
-	questionTypeList, err := model.GetQuestionsType(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	for _, response := range responsesinfo {
+	for _, respondent := range respondents {
 		bodyList := []model.ResponseBody{}
-		for _, questionType := range questionTypeList {
-			body, err := model.GetResponseBody(c, response.ResponseID, questionType.ID, questionType.Type)
-			if err != nil {
-				return err
+		for _, qType := range questionTypeList {
+			response := ""
+			optionResponse := []string{}
+			for _, respInfo := range resMap[respondent.ResponseID] {
+				// 質問IDが一致したら追加
+				if qType.ID == respInfo.QuestionID {
+					switch qType.Type {
+					case "MultipleChoice", "Checkbox", "Dropdown":
+						if response != "" {
+							response += ","
+						}
+						response += respInfo.Response
+						optionResponse = append(optionResponse, respInfo.Response)
+					default:
+						response += respInfo.Response
+					}
+				}
 			}
-			bodyList = append(bodyList, body)
+			// 回答内容の配列に追加
+			bodyList = append(bodyList,
+				model.ResponseBody{
+					QuestionID:     qType.ID,
+					QuestionType:   qType.Type,
+					Response:       response,
+					OptionResponse: optionResponse,
+				})
 		}
-		responses = append(responses,
-			ResponsesInfo{
-				ResponseID:  response.ResponseID,
-				UserID:      response.UserID,
-				SubmittedAt: model.NullTimeToString(response.SubmittedAt),
-				ModifiedAt:  response.ModifiedAt.Format(time.RFC3339),
+		// 回答の配列に追加
+		returnInfo = append(returnInfo,
+			ReturnInfo{
+				ResponseID:  respondent.ResponseID,
+				UserID:      respondent.UserID,
+				SubmittedAt: model.NullTimeToString(respondent.SubmittedAt),
+				ModifiedAt:  respondent.ModifiedAt.Format(time.RFC3339),
 				Body:        bodyList,
 			})
 	}
 
-	// 昇順
+	// 昇順ソート
 	if sortNum > 0 {
-		sort.Slice(responses, func(i, j int) bool {
-			if responses[i].Body[sortNum-1].QuestionType == "Number" {
-				numi, err := strconv.Atoi(responses[i].Body[sortNum-1].Response)
+		sort.Slice(returnInfo, func(i, j int) bool {
+			if returnInfo[i].Body[sortNum-1].QuestionType == "Number" {
+				numi, err := strconv.Atoi(returnInfo[i].Body[sortNum-1].Response)
 				if err != nil {
 					return true
 				}
-				numj, err := strconv.Atoi(responses[j].Body[sortNum-1].Response)
+				numj, err := strconv.Atoi(returnInfo[j].Body[sortNum-1].Response)
 				if err != nil {
 					return true
 				}
 				return numi < numj
 			}
-			return responses[i].Body[sortNum-1].Response < responses[j].Body[sortNum-1].Response
+			return returnInfo[i].Body[sortNum-1].Response < returnInfo[j].Body[sortNum-1].Response
 		})
 	}
-	// 降順
+	// 降順ソート
 	if sortNum < 0 {
-		sort.Slice(responses, func(i, j int) bool {
-			if responses[i].Body[-sortNum-1].QuestionType == "Number" {
-				numi, err := strconv.Atoi(responses[i].Body[-sortNum-1].Response)
+		sort.Slice(returnInfo, func(i, j int) bool {
+			if returnInfo[i].Body[-sortNum-1].QuestionType == "Number" {
+				numi, err := strconv.Atoi(returnInfo[i].Body[-sortNum-1].Response)
 				if err != nil {
 					return true
 				}
-				numj, err := strconv.Atoi(responses[j].Body[-sortNum-1].Response)
+				numj, err := strconv.Atoi(returnInfo[j].Body[-sortNum-1].Response)
 				if err != nil {
 					return true
 				}
 				return numi > numj
 			}
-			return responses[i].Body[-sortNum-1].Response > responses[j].Body[-sortNum-1].Response
+			return returnInfo[i].Body[-sortNum-1].Response > returnInfo[j].Body[-sortNum-1].Response
 		})
 	}
 
-	return c.JSON(http.StatusOK, responses)
+	return c.JSON(http.StatusOK, returnInfo)
 }
 
 // GetResponse GET /responses
