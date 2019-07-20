@@ -202,39 +202,6 @@ func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
 	return NullStringConvert(respondedAt), nil
 }
 
-func GetSortedResponses(c echo.Context, questionnaireID int, sortQuery string) ([]UserResponse, int, error) {
-	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
-			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
-
-	sortNum := 0
-	switch sortQuery {
-	case "traqid":
-		sql += ` ORDER BY user_traqid`
-	case "-traqid":
-		sql += ` ORDER BY user_traqid DESC`
-	case "submitted_at":
-		sql += ` ORDER BY submitted_at`
-	case "-submitted_at":
-		sql += ` ORDER BY submitted_at DESC`
-	case "":
-	default:
-		var err error
-		sortNum, err = strconv.Atoi(sortQuery)
-		if err != nil {
-			c.Logger().Error(err)
-			return []UserResponse{}, 0, echo.NewHTTPError(http.StatusBadRequest)
-		}
-	}
-
-	responsesinfo := []UserResponse{}
-	if err := db.Select(&responsesinfo, sql,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return []UserResponse{}, 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return responsesinfo, sortNum, nil
-}
-
 func GetRespondentByID(c echo.Context, responseID int) (ResponseID, error) {
 	respondentInfo := ResponseID{}
 	if err := db.Get(&respondentInfo,
@@ -297,4 +264,133 @@ func DeleteMyResponse(c echo.Context, responseID int) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
+}
+
+// アンケートの回答を確認できるか
+func CheckResponseConfirmable(c echo.Context, resSharedTo string, questionnaireID int) error {
+	switch resSharedTo {
+	case "administrators":
+		AmAdmin, err := CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	case "respondents":
+		AmAdmin, err := CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		RespondedAt, err := RespondedAt(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin && RespondedAt == "NULL" {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	}
+	return nil
+}
+
+type ResponseAndBody struct {
+	ResponseID  int            `db:"response_id"`
+	UserID      string         `db:"user_traqid"`
+	ModifiedAt  time.Time      `db:"modified_at"`
+	SubmittedAt mysql.NullTime `db:"submitted_at"`
+	QuestionID  int            `db:"question_id"`
+	Body        string         `db:"body"`
+}
+
+func GetResponsesByID(questionnaireID int) ([]ResponseAndBody, error) {
+	responses := []ResponseAndBody{}
+	if err := db.Select(&responses,
+		`SELECT respondents.response_id AS response_id,
+		user_traqid, 
+		respondents.modified_at AS modified_at,
+		respondents.submitted_at AS submitted_at,
+		response.question_id,
+		response.body
+		FROM respondents
+		RIGHT OUTER JOIN response
+		ON respondents.response_id = response.response_id
+		WHERE respondents.questionnaire_id = ?
+		AND respondents.deleted_at IS NULL
+		AND response.deleted_at IS NULL
+		AND respondents.submitted_at IS NOT NULL`, questionnaireID); err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return responses, nil
+}
+
+// sortされた回答者の情報を返す
+func GetSortedRespondents(c echo.Context, questionnaireID int, sortQuery string) ([]UserResponse, int, error) {
+	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
+			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
+
+	sortNum := 0
+	switch sortQuery {
+	case "traqid":
+		sql += ` ORDER BY user_traqid`
+	case "-traqid":
+		sql += ` ORDER BY user_traqid DESC`
+	case "submitted_at":
+		sql += ` ORDER BY submitted_at`
+	case "-submitted_at":
+		sql += ` ORDER BY submitted_at DESC`
+	case "":
+	default:
+		var err error
+		sortNum, err = strconv.Atoi(sortQuery)
+		if err != nil {
+			c.Logger().Error(err)
+			return []UserResponse{}, 0, echo.NewHTTPError(http.StatusBadRequest)
+		}
+	}
+
+	responsesinfo := []UserResponse{}
+	if err := db.Select(&responsesinfo, sql,
+		questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return []UserResponse{}, 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return responsesinfo, sortNum, nil
+}
+
+type QIDandResponse struct {
+	QuestionID int
+	Response   string
+}
+
+func GetResponseBodyList(c echo.Context, questionTypeList []QuestionIDType, responses []QIDandResponse) []ResponseBody {
+	bodyList := []ResponseBody{}
+
+	for _, qType := range questionTypeList {
+		response := ""
+		optionResponse := []string{}
+		for _, respInfo := range responses {
+			// 質問IDが一致したら追加
+			if qType.ID == respInfo.QuestionID {
+				switch qType.Type {
+				case "MultipleChoice", "Checkbox", "Dropdown":
+					if response != "" {
+						response += ","
+					}
+					response += respInfo.Response
+					optionResponse = append(optionResponse, respInfo.Response)
+				default:
+					response += respInfo.Response
+				}
+			}
+		}
+		// 回答内容の配列に追加
+		bodyList = append(bodyList,
+			ResponseBody{
+				QuestionID:     qType.ID,
+				QuestionType:   qType.Type,
+				Response:       response,
+				OptionResponse: optionResponse,
+			})
+	}
+	return bodyList
 }
