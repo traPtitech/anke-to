@@ -250,11 +250,20 @@ func DeleteResponse(c echo.Context, responseID int) error {
 }
 
 func DeleteMyResponse(c echo.Context, responseID int) error {
-	if _, err := db.Exec(
-		`UPDATE respondents SET deleted_at = ? WHERE response_id = ? AND user_traqid = ?`,
-		time.Now(), responseID, GetUserID(c)); err != nil {
+	requestUser := GetUserID(c)
+
+	res, err := db.Exec(
+		`UPDATE respondents resp SET deleted_at = ? WHERE response_id = ? AND ( user_traqid = ? OR 
+		EXISTS( SELECT * FROM administrators admin WHERE admin.questionnaire_id = resp.questionnaire_id AND admin.user_traqid = ? ))`,
+		time.Now(), responseID, requestUser, requestUser)
+
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if count, _ := res.RowsAffected(); count == 0 {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	if _, err := db.Exec(
