@@ -7,20 +7,20 @@
           {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
         </p>
         <span
-          @click.prevent="confirmList"
           :class="{ disabled: !confirmOk }"
           class="ti-check icon-button round confirm"
+          @click.prevent="confirmList"
         ></span>
         <span
-          @click.prevent="disableModal"
           class="ti-close icon-button round close"
+          @click.prevent="disableModal"
         ></span>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
         <!-- error message -->
         <input-error-message
-          :inputError="inputErrors.noAdministrator"
+          :input-error="inputErrors.noAdministrator"
         ></input-error-message>
 
         <!-- user traP -->
@@ -33,11 +33,11 @@
         <div class="tabs is-centered">
           <ul>
             <li
-              :class="{ 'is-active': selectedGroupType === tab }"
               v-for="(tab, index) in tabs"
               :key="index"
-              @click="selectedGroupType = tab"
+              :class="{ 'is-active': selectedGroupType === tab }"
               class="tab"
+              @click="selectedGroupType = tab"
             >
               <a>{{ tab }}</a>
             </li>
@@ -54,13 +54,13 @@
               {{ group.name }}
               <span
                 v-if="!isUserTrap && group.activeMembers.length > 0"
-                @click.prevent="selectAllInGroup(selectedGroupType, index)"
                 class="ti-check icon-button select-group"
+                @click.prevent="selectAllInGroup(selectedGroupType, index)"
               ></span>
               <span
                 v-if="!isUserTrap && group.activeMembers.length > 0"
-                @click.prevent="removeAllInGroup(selectedGroupType, index)"
                 class="ti-close icon-button select-group"
+                @click.prevent="removeAllInGroup(selectedGroupType, index)"
               ></span>
             </div>
 

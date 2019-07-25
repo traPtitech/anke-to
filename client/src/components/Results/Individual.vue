@@ -1,10 +1,10 @@
 <template>
   <div class="has-navbar-fixed-bottom">
-    <questions :questionsProps="questionData"></questions>
+    <questions :questions-props="questionData"></questions>
     <pagination
       :range="range"
-      :currentPage="currentPage"
-      :defaultPageLink="defaultPageLink"
+      :current-page="currentPage"
+      :default-page-link="defaultPageLink"
     ></pagination>
   </div>
 </template>

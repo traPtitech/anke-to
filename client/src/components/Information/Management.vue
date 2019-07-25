@@ -7,7 +7,7 @@
       <!-- 回答する -->
       <management-button
         :disabled="timeLimitExceeded"
-        :questionnaireId="questionnaireId"
+        :questionnaire-id="questionnaireId"
         type="newResponse"
         class="button-wrapper"
       >
@@ -17,12 +17,12 @@
           id="new-response-link"
           ref="link"
           :value="newResponseLink"
-          @click="$refs.link.select()"
           class="input"
           type="text"
           readonly
+          @click="$refs.link.select()"
         />
-        <span @click="copyNewResponseLink" class="button">
+        <span class="button" @click="copyNewResponseLink">
           <span class="ti-clipboard"></span>
         </span>
       </div>
@@ -35,7 +35,7 @@
       <!-- 結果を見る -->
       <management-button
         :disabled="!canViewResults"
-        :questionnaireId="questionnaireId"
+        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="viewResults"
       >
@@ -44,7 +44,7 @@
       <!-- アンケートを削除 -->
       <management-button
         :disabled="!administrates"
-        :questionnaireId="questionnaireId"
+        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="deleteQuestionnaire"
       >

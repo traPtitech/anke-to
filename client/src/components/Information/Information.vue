@@ -33,7 +33,7 @@
         <div class="card">
           <!-- 自分の回答一覧 -->
           <my-responses
-            :questionnaireId="questionnaireId"
+            :questionnaire-id="questionnaireId"
             @set-has-responded="setHasResponded"
           ></my-responses>
         </div>

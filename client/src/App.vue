@@ -1,18 +1,18 @@
 <template>
   <div id="app" class="is-fullheight">
     <top-navbar
+      :is-side-menu-active="isSideMenuActive"
       @toggle-side-menu="toggleSideMenu"
       @close-side-menu="closeSideMenu"
-      :isSideMenuActive="isSideMenuActive"
     ></top-navbar>
     <div class="columns is-fullheight">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
       <side-menu
         v-show="isSideMenuActive"
-        @close-side-menu="closeSideMenu"
         class="sidemenu"
+        @close-side-menu="closeSideMenu"
       ></side-menu>
-      <div @click="closeSideMenu" class="column app-main">
+      <div class="column app-main" @click="closeSideMenu">
         <router-view></router-view>
       </div>
     </div>

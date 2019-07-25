@@ -3,16 +3,16 @@
     <nav class="navbar" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
         <a
-          @click="$emit('toggle-side-menu')"
           :class="{ 'is-active': isSideMenuActive }"
           role="button"
           class="navbar-burger"
+          @click="$emit('toggle-side-menu')"
         >
           <span></span>
           <span></span>
           <span></span>
         </a>
-        <div @click="$emit('close-side-menu')" class="is-flex">
+        <div class="is-flex" @click="$emit('close-side-menu')">
           <router-link class="navbar-item" to="/targeted">
             <img class="title" src="@/static/img/logo.png" />
           </router-link>
@@ -20,7 +20,7 @@
         <div class="subtitle pull-right user">
           <img
             v-if="getMe !== null"
-            v-bind:src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
+            :src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
             class="user-icon"
           />
         </div>

@@ -13,8 +13,8 @@
       v-if="type === 'deleteQuestionnaire'"
       :class="{ 'is-disabled': disabled || processing }"
       :disabled="disabled || processing"
-      @click.prevent="deleteQuestionnaire"
       class="button"
+      @click.prevent="deleteQuestionnaire"
     >
       <span :class="iconClass"></span>
       <span v-if="size === 'normal'">{{ buttonLabel }}</span>

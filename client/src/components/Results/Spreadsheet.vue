@@ -13,9 +13,9 @@
           </li>
         </ul>
         <button
-          v-on:click="downloadTable"
           v-if="canDownload"
           class="button download"
+          @click="downloadTable"
         >
           <span class="ti-download"></span>
         </button>
@@ -28,8 +28,8 @@
               <th
                 v-for="(header, index) in headerLabels.concat(questions)"
                 :key="index"
-                @click="sort(index + 1)"
                 :class="{ active: sorted == index + 1 || sorted == -1 - index }"
+                @click="sort(index + 1)"
               >
                 {{ header }}
                 <span

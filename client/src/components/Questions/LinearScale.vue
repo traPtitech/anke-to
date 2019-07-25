@@ -57,10 +57,10 @@
         <span>
           <input
             :value="content.scaleLabels.left"
-            @input="setScaleLabels('left', $event.target.value)"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
+            @input="setScaleLabels('left', $event.target.value)"
           />
         </span>
       </div>
@@ -69,10 +69,10 @@
         <span>
           <input
             :value="content.scaleLabels.right"
-            @input="setScaleLabels('right', $event.target.value)"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
+            @input="setScaleLabels('right', $event.target.value)"
           />
         </span>
       </div>
@@ -91,8 +91,8 @@
             <label>
               {{ num }}
               <input
-                :value="num"
                 v-model="contentProps.selected"
+                :value="num"
                 type="radio"
               />
             </label>

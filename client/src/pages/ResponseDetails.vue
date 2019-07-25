@@ -12,12 +12,12 @@
         </router-link>
         <ul></ul>
         <a
-          id="edit-button"
-          :class="{ 'is-editing': isEditing }"
-          @click.prevent="isEditing = !isEditing"
           v-if="
             !isNewResponse && information.res_time_limit && !timeLimitExceeded
           "
+          id="edit-button"
+          :class="{ 'is-editing': isEditing }"
+          @click.prevent="isEditing = !isEditing"
         >
           <span class="ti-check-box"></span>
         </a>
@@ -28,24 +28,24 @@
       >
         <information-summary :information="summaryProps"></information-summary>
         <questions
-          :editMode="isEditing ? 'response' : undefined"
-          :questionsProps="questions"
-          :inputErrors="inputErrors"
+          :edit-mode="isEditing ? 'response' : undefined"
+          :questions-props="questions"
+          :input-errors="inputErrors"
         ></questions>
       </div>
       <edit-nav-bar v-if="isEditing">
         <button
-          @click="submitResponse"
           :disabled="!submitOk"
           class="button is-medium send-button"
+          @click="submitResponse"
         >
           <span class="ti-check"></span>
           <span>送信</span>
         </button>
-        <button @click="saveResponse" class="button is-medium save-button">
+        <button class="button is-medium save-button" @click="saveResponse">
           <span class="ti-save"></span>
         </button>
-        <button @click="abortEditing" class="button is-medium cancel-button">
+        <button class="button is-medium cancel-button" @click="abortEditing">
           <span class="ti-close"></span>
         </button>
       </edit-nav-bar>

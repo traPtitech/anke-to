@@ -7,13 +7,13 @@
       >
         <div class="dropdown-trigger">
           <button
+            class="button"
+            aria-haspopup="true"
+            aria-controls="dropdown-menu"
             @click="
               DropdownIsActive.targetedOption = false
               DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder
             "
-            class="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
           >
             <p>並び替え</p>
             <span class="ti-angle-down"></span>
@@ -24,11 +24,11 @@
             v-for="(order, index) in sortOrders"
             :key="index"
             :class="{ 'is-selected': order.opt === sortOrder }"
+            class="dropdown-content"
             @click="
               changeSortOrder(order.opt)
               DropdownIsActive.sortOrder = false
             "
-            class="dropdown-content"
           >
             <p class="dropdown-item">{{ order.str }}</p>
           </div>
@@ -40,13 +40,13 @@
       >
         <div class="dropdown-trigger">
           <button
+            class="button"
+            aria-haspopup="true"
+            aria-controls="dropdown-menu"
             @click="
               DropdownIsActive.sortOrder = false
               DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption
             "
-            class="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
           >
             <p>フィルター</p>
             <span class="ti-angle-down"></span>
@@ -57,11 +57,11 @@
             v-for="(option, index) in targetedOptions"
             :key="index"
             :class="{ 'is-selected': option.opt === targetedOption }"
+            class="dropdown-content"
             @click="
               changetargetedOption(option.opt)
               DropdownIsActive.targetedOption = false
             "
-            class="dropdown-content"
           >
             <p class="dropdown-item">{{ option.str }}</p>
           </div>
@@ -69,11 +69,11 @@
       </div>
     </div>
     <div
+      class="card-wrapper is-fullheight"
       @click="
         DropdownIsActive.sortOrder = false
         DropdownIsActive.targetedOption = false
       "
-      class="card-wrapper is-fullheight"
     >
       <div class="card">
         <!-- <button class="button" v-on:click="changeSortOrder('-title')">Button</button> -->
@@ -117,8 +117,8 @@
       </div>
     </div>
     <pagination
-      :currentPage="pageNumber"
-      :defaultPageLink="defaultPageLink"
+      :current-page="pageNumber"
+      :default-page-link="defaultPageLink"
       :range="range"
     ></pagination>
   </div>

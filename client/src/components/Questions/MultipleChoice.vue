@@ -27,33 +27,33 @@
         >
           <span class="sort-handle">
             <span
-              @click="swapOrder(content.options, index, index - 1)"
               :class="{ disabled: isFirstOption(index) }"
               class="ti-angle-up icon"
+              @click="swapOrder(content.options, index, index - 1)"
             ></span>
             <span
-              @click="swapOrder(content.options, index, index + 1)"
               :class="{ disabled: isLastOption(index) }"
               class="ti-angle-down icon"
+              @click="swapOrder(content.options, index, index + 1)"
             ></span>
           </span>
           <span :class="readOnlyBoxClass"></span>
           <input
             :value="content.options[index].label"
-            @input="setOption(index, $event.target.value)"
             type="text"
             class="input has-underline option-label is-editable"
+            @input="setOption(index, $event.target.value)"
           />
           <span class="delete-button">
             <span
-              @click="removeOption(index)"
               class="ti-trash icon is-medium"
+              @click="removeOption(index)"
             ></span>
           </span>
         </div>
       </transition-group>
       <div class="wrapper add-option">
-        <div @click="addOption()" class="add-option-button">
+        <div class="add-option-button" @click="addOption()">
           <span class="ti-plus circled icon"></span>
           <span>新しい選択肢を追加</span>
         </div>
@@ -70,14 +70,14 @@
         <label class="option-label">
           <input
             v-if="content.type === 'Checkbox'"
-            :value="option.label"
             v-model="contentProps.isSelected[option.label]"
+            :value="option.label"
             type="checkbox"
           />
           <input
             v-if="content.type === 'MultipleChoice'"
-            :value="option.label"
             v-model="contentProps.selected"
+            :value="option.label"
             type="radio"
           />
           {{ option.label }}

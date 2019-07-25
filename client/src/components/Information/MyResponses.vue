@@ -25,8 +25,8 @@
           >
           <a>
             <span
-              @click="deleteResponse(response.responseID, index)"
               class="ti-trash is-pulled-right"
+              @click="deleteResponse(response.responseID, index)"
             ></span>
           </a>
         </li>

@@ -11,15 +11,15 @@
                   <div class="wrapper">
                     <input
                       :value="information.title"
-                      @input="$set(information, 'title', $event.target.value)"
                       class="input"
                       placeholder="タイトル"
+                      @input="$set(information, 'title', $event.target.value)"
                     />
                   </div>
                 </div>
               </header>
               <input-error-message
-                :inputError="inputErrors.noTitle"
+                :input-error="inputErrors.noTitle"
               ></input-error-message>
               <div class="card-content">
                 <textarea
@@ -103,10 +103,10 @@
                 <user-list-modal
                   v-if="isModalActive"
                   :class="{ 'is-active': isModalActive }"
-                  :activeModal="activeModal"
-                  :userListProps="information[activeModal.name]"
+                  :active-modal="activeModal"
+                  :user-list-props="information[activeModal.name]"
                   :users="users"
-                  :groupTypes="groupTypes"
+                  :group-types="groupTypes"
                   :information="information"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
@@ -125,7 +125,7 @@
               </header>
               <div class="card-content management-buttons">
                 <management-button
-                  :questionnaireId="questionnaireId"
+                  :questionnaire-id="questionnaireId"
                   type="deleteQuestionnaire"
                 ></management-button>
               </div>

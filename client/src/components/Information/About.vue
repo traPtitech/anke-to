@@ -13,8 +13,8 @@
       <div class="user-lists">
         <div v-for="(userList, key) in userLists" :key="key">
           <div
-            @click.prevent="toggleListVisibility(userList.name)"
             class="label"
+            @click.prevent="toggleListVisibility(userList.name)"
           >
             <span
               :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"
@@ -56,19 +56,16 @@ export default {
       default: undefined
     },
     administrators: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
     respondents: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
     targets: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
     modifiedAt: {
       type: String,
@@ -88,26 +85,6 @@ export default {
         show: false,
         summary: ''
       }
-    }
-  },
-  methods: {
-    getDateStr: common.getDateStr,
-    listValidator(listObj) {
-      if (typeof listObj === 'undefined') return true
-      if (!Array.isArray(listObj.list)) return false
-      listObj.list.forEach(item => {
-        if (typeof item !== 'string') return false
-      })
-
-      return (
-        typeof listObj.editable === 'boolean' &&
-        typeof listObj.name === 'string' &&
-        typeof listObj.show === 'boolean' &&
-        typeof listObj.summary === 'string'
-      )
-    },
-    toggleListVisibility(listName) {
-      this.userLists[listName].show = !this.userLists[listName].show
     }
   },
   computed: {
@@ -130,7 +107,27 @@ export default {
       }
     }
   },
-  watch: {}
+  watch: {},
+  methods: {
+    getDateStr: common.getDateStr,
+    listValidator(listObj) {
+      if (typeof listObj === 'undefined') return true
+      if (!Array.isArray(listObj.list)) return false
+      listObj.list.forEach(item => {
+        if (typeof item !== 'string') return false
+      })
+
+      return (
+        typeof listObj.editable === 'boolean' &&
+        typeof listObj.name === 'string' &&
+        typeof listObj.show === 'boolean' &&
+        typeof listObj.summary === 'string'
+      )
+    },
+    toggleListVisibility(listName) {
+      this.userLists[listName].show = !this.userLists[listName].show
+    }
+  }
 }
 </script>
 

@@ -7,8 +7,8 @@
       <a>
         <span
           v-if="userList.editable"
-          @click="changeActiveModal(userList)"
           class="ti-pencil"
+          @click="changeActiveModal(userList)"
         ></span>
       </a>
     </div>
