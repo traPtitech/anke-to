@@ -12,18 +12,24 @@
       <!-- user lists -->
       <div class="user-lists">
         <div v-for="(userList, key) in userLists" :key="key">
-          <div class="label" @click.prevent="toggleListVisibility(userList.name)">
-            <span :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"></span>
+          <div
+            class="label"
+            @click.prevent="toggleListVisibility(userList.name)"
+          >
+            <span
+              :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"
+            ></span>
             <span>{{ userList.summary }} ({{ userList.list.length }})</span>
           </div>
-          <p class="has-text-grey user-list" v-if="userList.show">
+          <p v-if="userList.show" class="has-text-grey user-list">
             <span v-for="(user, index) in userList.list" :key="index">
               <span
                 :class="{
                   'highlight-name': user === 'traP' || user === getMyTraqId
                 }"
-              >{{ user }}</span>
-              <span>{{ index === userList.list.length - 1 ? "" : ", " }}</span>
+                >{{ user }}</span
+              >
+              <span>{{ index === userList.list.length - 1 ? '' : ', ' }}</span>
             </span>
           </p>
         </div>
@@ -43,35 +49,34 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'About',
-  components: {
-  },
+  components: {},
   props: {
-    res_shared_to: {
-      type: String
+    resSharedTo: {
+      type: String,
+      default: undefined
     },
     administrators: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
     respondents: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
     targets: {
-      type: Object
-      // validator: this.listValidator,
-      // default: this.defaultListObj
+      type: Object,
+      default: () => this.defaultListObj
     },
-    modified_at: {
-      type: String
+    modifiedAt: {
+      type: String,
+      default: undefined
     },
-    created_at: {
-      type: String
+    createdAt: {
+      type: String,
+      default: undefined
     }
   },
-  data () {
+  data() {
     return {
       defaultListObj: {
         list: [],
@@ -82,45 +87,46 @@ export default {
       }
     }
   },
+  computed: {
+    ...mapGetters(['getMyTraqId']),
+    resSharedToLabel() {
+      const labels = {
+        public: '全体に公開',
+        respondents: '回答済みの人に公開',
+        administrators: '管理者のみに公開'
+      }
+      return labels[this.res_shared_to]
+    },
+    userLists() {
+      return {
+        administrators: this.administrators
+          ? this.administrators
+          : this.defaultListObj,
+        respondents: this.respondents ? this.respondents : this.defaultListObj,
+        targets: this.targets ? this.targets : this.defaultListObj
+      }
+    }
+  },
+  watch: {},
   methods: {
     getDateStr: common.getDateStr,
-    listValidator (listObj) {
+    listValidator(listObj) {
       if (typeof listObj === 'undefined') return true
       if (!Array.isArray(listObj.list)) return false
       listObj.list.forEach(item => {
         if (typeof item !== 'string') return false
       })
 
-      return typeof listObj.editable === 'boolean' &&
+      return (
+        typeof listObj.editable === 'boolean' &&
         typeof listObj.name === 'string' &&
         typeof listObj.show === 'boolean' &&
         typeof listObj.summary === 'string'
+      )
     },
-    toggleListVisibility (listName) {
-      this.userLists[ listName ].show = !this.userLists[ listName ].show
+    toggleListVisibility(listName) {
+      this.userLists[listName].show = !this.userLists[listName].show
     }
-  },
-  computed: {
-    ...mapGetters([ 'getMyTraqId' ]),
-    resSharedToLabel () {
-      const labels = {
-        public: '全体に公開',
-        respondents: '回答済みの人に公開',
-        administrators: '管理者のみに公開'
-      }
-      return labels[ this.res_shared_to ]
-    },
-    userLists () {
-      return {
-        administrators: this.administrators ? this.administrators : this.defaultListObj,
-        respondents: this.respondents ? this.respondents : this.defaultListObj,
-        targets: this.targets ? this.targets : this.defaultListObj
-      }
-    }
-  },
-  watch: {
-  },
-  mounted () {
   }
 }
 </script>

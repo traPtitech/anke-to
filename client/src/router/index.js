@@ -1,6 +1,6 @@
 import Vue from 'vue'
-import store from '@/store'
 import Router from 'vue-router'
+import store from '@/store'
 import Targeted from '@/pages/Targeted'
 import Administrates from '@/pages/Administrates'
 import Responses from '@/pages/Responses'
@@ -66,13 +66,12 @@ const router = new Router({
       component: NotFound
     }
   ],
-  scrollBehavior (savedPosition) {
+  scrollBehavior(savedPosition) {
     if (savedPosition) {
       return savedPosition
-    } else {
-      // ページ遷移の時ページスクロールをトップに
-      return { x: 0, y: 0 }
     }
+    // ページ遷移の時ページスクロールをトップに
+    return { x: 0, y: 0 }
   }
 })
 
@@ -84,7 +83,7 @@ router.beforeEach(async (to, _, next) => {
 
   if (!store.state.me) {
     // 未ログインの場合、traQのログインページに飛ばす
-    const traQLoginURL = 'https://q.trap.jp/login?redirect=' + location.href
+    const traQLoginURL = `https://q.trap.jp/login?redirect=${location.href}`
     location.href = traQLoginURL
   }
 

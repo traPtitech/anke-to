@@ -2,72 +2,93 @@
   <div class="columns is-editing">
     <article class="column is-11">
       <div class="card">
-        <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
+        <input-error-message
+          :input-error="inputErrors.noQuestions"
+        ></input-error-message>
         <transition-group name="list" tag="div" class="card-content questions">
-          <div v-for="(question, index) in questions" :key="question.questionId" class="question">
+          <div
+            v-for="(question, index) in questions"
+            :key="question.questionId"
+            class="question"
+          >
             <div class="question-body columns is-mobile">
               <div class="column left-bar">
                 <div class="sort-handle">
                   <span
+                    :class="{ disabled: isFirstQuestion(index) }"
                     class="ti-angle-up icon"
-                    @click="swapOrder(questions, index, index-1)"
-                    :class="{disabled: isFirstQuestion(index)}"
+                    @click="swapOrder(questions, index, index - 1)"
                   ></span>
                   <span
+                    :class="{ disabled: isLastQuestion(index) }"
                     class="ti-angle-down icon"
-                    @click="swapOrder(questions, index, index+1)"
-                    :class="{disabled: isLastQuestion(index)}"
+                    @click="swapOrder(questions, index, index + 1)"
                   ></span>
                 </div>
                 <div class="delete-button">
-                  <span class="ti-trash icon is-medium" @click="removeQuestion(index)"></span>
+                  <span
+                    class="ti-trash icon is-medium"
+                    @click="removeQuestion(index)"
+                  ></span>
                 </div>
               </div>
               <div class="column question is-editable">
                 <div class="columns is-inline-block-mobile">
                   <div class="column">
                     <input
+                      v-model="question.questionBody"
                       type="text"
                       class="subtitle input has-underline is-editable"
                       placeholder="質問文"
-                      v-model="question.questionBody"
-                    >
+                    />
                   </div>
-                  <div class="column is-2 required-question-checkbox is-pulled-right">
+                  <div
+                    class="column is-2 required-question-checkbox is-pulled-right"
+                  >
                     <label class="checkbox">
                       必須
-                      <input type="checkbox" v-model="question.isRequired">
+                      <input v-model="question.isRequired" type="checkbox" />
                     </label>
                   </div>
                 </div>
                 <component
-                  :editMode="'question'"
                   :is="question.component"
-                  :contentProps="question"
-                  :questionIndex="index"
+                  :edit-mode="'question'"
+                  :content-props="question"
+                  :question-index="index"
                   class="response-body"
                   @set-question-content="setQuestionContent"
                 ></component>
               </div>
             </div>
-            <hr>
+            <hr />
           </div>
         </transition-group>
         <div class="add-question">
-          <div class="add-question-button button" @click="toggleNewQuestionDropdown">
+          <div
+            class="add-question-button button"
+            @click="toggleNewQuestionDropdown"
+          >
             <span>新しい質問を追加</span>
             <span
+              :class="
+                newQuestionDropdownIsActive ? 'ti-angle-down' : 'ti-angle-right'
+              "
               class="icon is-small"
-              :class=" newQuestionDropdownIsActive ? 'ti-angle-down' : 'ti-angle-right'"
             ></span>
           </div>
-          <div v-show="newQuestionDropdownIsActive" class="question-type-buttons">
+          <div
+            v-show="newQuestionDropdownIsActive"
+            class="question-type-buttons"
+          >
             <button
               v-for="(questionType, key) in questionTypes"
               :key="key"
               class="button"
               @click="insertQuestion(questionType)"
-            >{{ questionType.label }}</button>
+            >
+              {{ questionType.label }}
+            </button>
           </div>
         </div>
       </div>
@@ -76,7 +97,6 @@
 </template>
 
 <script>
-
 import MultipleChoice from '@/components/Questions/MultipleChoice'
 import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
@@ -94,7 +114,7 @@ export default {
   props: {
     questionsProps: {
       type: Array,
-      required: false
+      default: undefined
     },
     title: {
       type: String,
@@ -105,38 +125,44 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       newQuestionDropdownIsActive: false,
       questionTypes: common.questionTypes,
       lastQuestionId: 0
     }
   },
+  computed: {
+    questions() {
+      return this.questionsProps
+    }
+  },
+  mounted() {},
   methods: {
     swapOrder: common.swapOrder,
-    setQuestions (questions) {
+    setQuestions(questions) {
       this.$emit('set-data', 'questions', questions)
     },
-    setQuestionContent (index, label, value) {
+    setQuestionContent(index, label, value) {
       this.$emit('set-question-content', index, label, value)
     },
-    isFirstQuestion (index) {
+    isFirstQuestion(index) {
       return index === 0
     },
-    isLastQuestion (index) {
+    isLastQuestion(index) {
       return index === this.questions.length - 1
     },
-    removeQuestion (index) {
+    removeQuestion(index) {
       this.$emit('remove-question', index)
     },
-    insertQuestion (questionType) {
+    insertQuestion(questionType) {
       this.questions.push(this.getDefaultQuestion(questionType))
       this.setQuestions(this.questions)
     },
-    toggleNewQuestionDropdown () {
+    toggleNewQuestionDropdown() {
       this.newQuestionDropdownIsActive = !this.newQuestionDropdownIsActive
     },
-    getDefaultQuestion (questionType) {
+    getDefaultQuestion(questionType) {
       let ret = {
         questionId: this.getNewQuestionId(),
         type: questionType.type,
@@ -147,11 +173,11 @@ export default {
       }
       switch (questionType.type) {
         case 'Checkbox':
-          ret.options = [ { label: '', id: 0 } ]
-          ret.isSelected = [ false ]
+          ret.options = [{ label: '', id: 0 }]
+          ret.isSelected = [false]
           break
         case 'MultipleChoice':
-          ret.options = [ { label: '', id: 0 } ]
+          ret.options = [{ label: '', id: 0 }]
           break
         case 'LinearScale':
           ret.scaleRange = { left: 1, right: 5 }
@@ -160,18 +186,11 @@ export default {
       }
       return ret
     },
-    getNewQuestionId () {
+    getNewQuestionId() {
       const ret = this.lastQuestionId - 1
       this.lastQuestionId -= 1
       return ret
     }
-  },
-  computed: {
-    questions () {
-      return this.questionsProps
-    }
-  },
-  mounted () {
   }
 }
 </script>
