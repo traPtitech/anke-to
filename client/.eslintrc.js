@@ -20,7 +20,13 @@ module.exports = {
     'no-console': 'off',
     'func-names': 'off',
     'vue/no-template-shadow': 0,
-    'vue/component-name-in-template-casing': 1, // <template> にコンポーネントを書く時はkebab-case
+    'vue/no-unused-components': [
+      'error',
+      {
+        // suppresses all errors if binding has been detected in the template
+        ignoreWhenBindingPresent: true
+      }
+    ],
     'prettier/prettier': [
       'error',
       {
