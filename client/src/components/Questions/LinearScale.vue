@@ -5,17 +5,10 @@
       <div class="columns">
         <div class="column">{{ content.scaleLabels.left }}</div>
         <div class="column is-9 is-9-mobile is-flex">
-          <span
-            v-for="(num, index) in scaleArray"
-            :key="index"
-            class="scale-num has-text-centered"
-          >
+          <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
             <div>{{ num }}</div>
             <div>
-              <span
-                :class="{ checked: isSelected(num) }"
-                class="readonly-radiobutton"
-              ></span>
+              <span class="readonly-radiobutton" :class="{'checked' : isSelected(num)}"></span>
             </div>
           </span>
         </div>
@@ -24,18 +17,14 @@
     </div>
 
     <!-- edit question -->
-    <div v-if="editMode === 'question'">
+    <div v-if="editMode==='question'">
       <div class="is-flex scale-range-edit">
         <span class="select">
           <select
             :value="content.scaleRange.left"
             @input="setScaleRange('left', Number($event.target.value))"
           >
-            <option
-              v-for="(num, index) in progressiveArray(0, 1)"
-              :key="index"
-              >{{ num }}</option
-            >
+            <option v-for="(num, index) in progressiveArray(0, 1)" :key="index">{{ num }}</option>
           </select>
         </span>
         <span>to</span>
@@ -44,11 +33,7 @@
             :value="content.scaleRange.right"
             @input="setScaleRange('right', Number($event.target.value))"
           >
-            <option
-              v-for="(num, index) in progressiveArray(2, 10)"
-              :key="index"
-              >{{ num }}</option
-            >
+            <option v-for="(num, index) in progressiveArray(2, 10)" :key="index">{{ num }}</option>
           </select>
         </span>
       </div>
@@ -56,45 +41,37 @@
         <span>{{ content.scaleRange.left }}</span>
         <span>
           <input
-            :value="content.scaleLabels.left"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
+            :value="content.scaleLabels.left"
             @input="setScaleLabels('left', $event.target.value)"
-          />
+          >
         </span>
       </div>
       <div class="scale-label-edit is-flex">
         <span>{{ content.scaleRange.right }}</span>
         <span>
           <input
-            :value="content.scaleLabels.right"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
+            :value="content.scaleLabels.right"
             @input="setScaleLabels('right', $event.target.value)"
-          />
+          >
         </span>
       </div>
     </div>
 
     <!-- edit response -->
-    <div v-if="editMode === 'response'">
+    <div v-if="editMode==='response'">
       <div class="columns">
         <div class="column">{{ content.scaleLabels.left }}</div>
         <div class="column is-9 is-9-mobile is-flex">
-          <span
-            v-for="(num, index) in scaleArray"
-            :key="index"
-            class="scale-num has-text-centered"
-          >
+          <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
             <label>
               {{ num }}
-              <input
-                v-model="contentProps.selected"
-                :value="num"
-                type="radio"
-              />
+              <input type="radio" :value="num" v-model="contentProps.selected">
             </label>
           </span>
         </div>
@@ -105,15 +82,18 @@
 </template>
 
 <script>
+
+// import <componentname> from '<path to component file>'
 import question from '@/bin/question.js'
 
 export default {
   name: 'LinearScale',
-  components: {},
+  components: {
+  },
   props: {
     questionIndex: {
       type: Number,
-      default: undefined
+      required: false
     },
     contentProps: {
       type: Object,
@@ -121,47 +101,46 @@ export default {
     },
     editMode: {
       type: String,
-      default: undefined
+      required: false
     }
   },
-  data() {
-    return {}
-  },
-  computed: {
-    content() {
-      return this.contentProps
-    },
-    scaleArray() {
-      return this.progressiveArray(
-        this.content.scaleRange.left,
-        this.content.scaleRange.right
-      )
+  data () {
+    return {
     }
   },
-  mounted() {},
   methods: {
     setContent: question.setContent,
-    setScaleRange(side, value) {
+    setScaleRange (side, value) {
       let newScaleRange = Object.assign({}, this.content.scaleRange)
-      newScaleRange[side] = value
+      newScaleRange[ side ] = value
       this.setContent('scaleRange', newScaleRange)
     },
-    setScaleLabels(side, value) {
+    setScaleLabels (side, value) {
       let newScaleLabels = Object.assign({}, this.content.scaleLabels)
-      newScaleLabels[side] = value
+      newScaleLabels[ side ] = value
       this.setContent('scaleLabels', newScaleLabels)
     },
-    isSelected(num) {
+    isSelected (num) {
       return this.content.selected === num
     },
-    progressiveArray(min, max) {
+    progressiveArray (min, max) {
       const len = max - min + 1
       let arr = []
       for (let i = 0; i < len; i++) {
-        arr[i] = min + i
+        arr[ i ] = min + i
       }
       return arr
     }
+  },
+  computed: {
+    content () {
+      return this.contentProps
+    },
+    scaleArray () {
+      return this.progressiveArray(this.content.scaleRange.left, this.content.scaleRange.right)
+    }
+  },
+  mounted () {
   }
 }
 </script>

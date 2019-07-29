@@ -1,21 +1,26 @@
 <template>
-  <div v-show="inputError.isError" class="message is-warning">
+  <div class="message is-warning" v-show="inputError.isError">
     <p class="message-header error-message">{{ inputError.message }}</p>
   </div>
 </template>
 
 <script>
+
+// import <componentname> from '<path to component file>'
+
 export default {
   name: 'InputErrorMessage',
-  components: {},
+  components: {
+  },
   props: {
     inputError: {
       type: Object,
       required: true
     }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
   }
 }
 </script>

@@ -40,22 +40,45 @@ import common from '@/bin/common'
 
 export default {
   name: 'MyResponses',
-  components: {},
+  components: {
+  },
+  async created () {
+    await axios
+      .get('/users/me/responses/' + this.questionnaireId)
+      .then(res => {
+        this.responses = res.data
+      })
+  },
   props: {
     questionnaireId: {
-      type: Number,
-      default: undefined
+      type: Number
     }
   },
-  data() {
+  data () {
     return {
       responses: [],
       processing: {}
     }
   },
-  computed: {},
+  methods: {
+    getDateStr: common.getDateStr,
+    async deleteResponse (responseId, index) {
+      if (this.processing[ responseId ]) return
+      if (window.confirm('この回答を削除しますか？')) {
+        this.processing[ responseId ] = true
+        await axios
+          .delete('/responses/' + responseId, { method: 'delete', withCredentials: true })
+          .then(() => {
+            this.responses.splice(index, 1)
+            this.processing[ responseId ] = false
+          })
+      }
+    }
+  },
+  computed: {
+  },
   watch: {
-    responses: function(newArr) {
+    responses: function (newArr) {
       // 回答を送信済みかどうかを調べて Information に送信
       let hasResponded = false
       newArr.forEach(response => {
@@ -64,29 +87,7 @@ export default {
       this.$emit('set-has-responded', hasResponded)
     }
   },
-  async created() {
-    await axios.get('/users/me/responses/' + this.questionnaireId).then(res => {
-      this.responses = res.data
-    })
-  },
-  mounted() {},
-  methods: {
-    getDateStr: common.getDateStr,
-    async deleteResponse(responseId, index) {
-      if (this.processing[responseId]) return
-      if (window.confirm('この回答を削除しますか？')) {
-        this.processing[responseId] = true
-        await axios
-          .delete('/responses/' + responseId, {
-            method: 'delete',
-            withCredentials: true
-          })
-          .then(() => {
-            this.responses.splice(index, 1)
-            this.processing[responseId] = false
-          })
-      }
-    }
+  mounted () {
   }
 }
 </script>

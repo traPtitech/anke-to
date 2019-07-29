@@ -1,25 +1,18 @@
 <template>
   <div>
     <div>
-      <span class="has-text-weight-bold"
-        >{{ userList.summary }} ({{ userList.list.length }})</span
-      >
+      <span class="has-text-weight-bold">{{ userList.summary }} ({{ userList.list.length }})</span>
       <a>
-        <span
-          v-if="userList.editable"
-          class="ti-pencil"
-          @click="changeActiveModal(userList)"
-        ></span>
+        <span class="ti-pencil" v-if="userList.editable" @click="changeActiveModal(userList)"></span>
       </a>
     </div>
     <p class="has-text-grey user-list">
       <span v-for="(user, index) in userList.list" :key="index">
-        <span
-          :class="{ 'highlight-name': user === 'traP' || user === getMyTraqId }"
-          >{{ user }}</span
-        >
+        <span :class="{'highlight-name': user === 'traP' || user === getMyTraqId}">{{ user }}</span>
         <span>
-          {{ index === userList.list.length - 1 ? '' : ', ' }}
+          {{
+          index === userList.list.length - 1 ? "" : ", "
+          }}
         </span>
       </span>
     </p>
@@ -27,22 +20,28 @@
 </template>
 
 <script>
+
 export default {
   name: 'UserList',
-  components: {},
+  components: {
+  },
   props: {
     userList: {
-      type: Array,
-      default: undefined
+      type: Array
     }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
   },
-  computed: {},
-  watch: {},
-  mounted() {},
-  methods: {}
+  methods: {
+  },
+  computed: {
+  },
+  watch: {
+  },
+  mounted () {
+  }
 }
 </script>
 

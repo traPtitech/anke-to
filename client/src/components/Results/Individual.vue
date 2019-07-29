@@ -1,23 +1,26 @@
 <template>
   <div class="has-navbar-fixed-bottom">
-    <questions :questions-props="questionData"></questions>
+    <questions :questionsProps="questionData"></questions>
     <pagination
       :range="range"
-      :current-page="currentPage"
-      :default-page-link="defaultPageLink"
+      :currentPage="currentPage"
+      :defaultPageLink="defaultPageLink"
     ></pagination>
   </div>
 </template>
 
 <script>
+
 import Questions from '@/components/Questions/Questions'
 import Pagination from '@/components/Utils/Pagination'
 
 export default {
   name: 'Individual',
+  async created () {
+  },
   components: {
-    questions: Questions,
-    pagination: Pagination
+    'questions': Questions,
+    'pagination': Pagination
   },
   props: {
     results: {
@@ -37,22 +40,23 @@ export default {
       required: true
     }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
+  },
+  methods: {
   },
   computed: {
-    currentPage() {
-      return this.$route.query.page
-        ? Number(this.$route.query.page)
-        : this.range.first
+    currentPage () {
+      return this.$route.query.page ? Number(this.$route.query.page) : this.range.first
     },
-    range() {
+    range () {
       return {
         first: 1,
         last: this.results.length
       }
     },
-    defaultPageLink() {
+    defaultPageLink () {
       return {
         name: 'Results',
         params: { id: this.$route.params.id },
@@ -60,11 +64,11 @@ export default {
       }
     }
   },
-  watch: {},
-  async created() {},
-  methods: {}
+  watch: {
+  }
 }
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+</style>

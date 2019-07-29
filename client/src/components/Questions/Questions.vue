@@ -3,34 +3,26 @@
     <article class="column is-11">
       <div class="card">
         <div class="card-content questions">
-          <div
-            v-for="(question, index) in questions"
-            :key="index"
-            class="question"
-          >
+          <div v-for="(question, index) in questions" :key="index" class="question">
             <div class="question-body">
               <p class="subtitle">
                 {{ question.questionBody }}
                 <span
-                  v-if="showRequiredIcon(index)"
                   class="ti-alert required-question-icon"
-                  >必須</span
-                >
+                  v-if="showRequiredIcon(index)"
+                >必須</span>
               </p>
             </div>
-            <input-error-message
-              v-if="inputErrors"
-              :input-error="inputErrors[question.questionId]"
-            ></input-error-message>
+            <input-error-message v-if="inputErrors" :inputError="inputErrors[question.questionId]"></input-error-message>
             <component
+              :editMode="editMode"
               :is="question.component"
-              :edit-mode="editMode"
-              :content-props="question"
-              :question-index="index"
+              :contentProps="question"
+              :questionIndex="index"
               class="response-body"
               @set-question-content="setQuestionContent"
             ></component>
-            <hr />
+            <hr>
           </div>
         </div>
       </div>
@@ -39,6 +31,7 @@
 </template>
 
 <script>
+
 import MultipleChoice from '@/components/Questions/MultipleChoice'
 import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
@@ -57,33 +50,35 @@ export default {
   props: {
     questionsProps: {
       type: Array,
-      default: undefined
+      required: false
     },
     editMode: {
       type: String,
-      default: undefined
+      required: false
     },
     inputErrors: {
       type: Object,
-      default: undefined
+      required: false
     }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
+  },
+  methods: {
+    showRequiredIcon (index) {
+      return this.questions[ index ].isRequired
+    },
+    setQuestionContent (index, label, value) {
+      this.$emit('set-question-content', index, label, value)
+    }
   },
   computed: {
-    questions() {
+    questions () {
       return this.questionsProps
     }
   },
-  mounted() {},
-  methods: {
-    showRequiredIcon(index) {
-      return this.questions[index].isRequired
-    },
-    setQuestionContent(index, label, value) {
-      this.$emit('set-question-content', index, label, value)
-    }
+  mounted () {
   }
 }
 </script>

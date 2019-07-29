@@ -2,16 +2,10 @@
   <div class="wrapper">
     <div class="list card content">
       <header class="card-header">
-        <div class="card-header-title subtitle">
-          回答対象になっているアンケート
-        </div>
+        <div class="card-header-title subtitle">回答対象になっているアンケート</div>
       </header>
       <div class="card-content">
-        <article
-          v-for="(questionnaire, index) in questionnaires"
-          :key="index"
-          class="post"
-        >
+        <article class="post" v-for="(questionnaire, index) in questionnaires" :key="index">
           <div>
             <div class="questionnaire-title">
               <span
@@ -24,19 +18,18 @@
               <span class="subtitle">
                 <router-link
                   :to="'/questionnaires/' + questionnaire.questionnaireID"
-                  >{{ questionnaire.title }}</router-link
-                >
+                >{{ questionnaire.title }}</router-link>
               </span>
             </div>
             <p>{{ questionnaire.description }}</p>
             <div class="media">
               <div class="media-content has-text-weight-bold columns">
-                <div class="content column res-time-limit">
-                  回答期限: {{ getDateStr(questionnaire.res_time_limit) }}
-                </div>
-                <div class="content column modified-at">
-                  更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}
-                </div>
+                <div
+                  class="content column res-time-limit"
+                >回答期限: {{ getDateStr(questionnaire.res_time_limit) }}</div>
+                <div
+                  class="content column modified-at"
+                >更新日: {{ getRelativeDateStr(questionnaire.modified_at) }}</div>
               </div>
             </div>
           </div>
@@ -52,45 +45,41 @@ import common from '@/bin/common'
 
 export default {
   name: 'Mypage',
-  components: {},
-  props: {},
-  data() {
+  components: {
+  },
+  async created () {
+    axios
+      .get('/users/me/targeted')
+      .then(resp => {
+        this.questionnaires = resp.data
+        this.getStatus()
+      })
+  },
+  props: {
+  },
+  data () {
     return {
       questionnaires: [],
-      headers: [
-        'Title',
-        'Time Limit',
-        'Response',
-        'Modified At',
-        'Results',
-        'Details'
-      ]
+      headers: [ 'Title', 'Time Limit', 'Response', 'Modified At', 'Results', 'Details' ]
     }
   },
-  computed: {},
-  async created() {
-    axios.get('/users/me/targeted').then(resp => {
-      this.questionnaires = resp.data
-      this.getStatus()
-    })
+  computed: {
   },
   methods: {
-    getDateStr(str) {
+    getDateStr (str) {
       return common.getDateStr(str)
     },
-    getRelativeDateStr(str) {
+    getRelativeDateStr (str) {
       return common.relativeDateStr(str)
     },
-    getStatus() {
+    getStatus () {
       for (let i = 0; i < this.questionnaires.length; i++) {
-        if (this.questionnaires[i].responded_at !== 'NULL') {
+        if (this.questionnaires[ i ].responded_at !== 'NULL') {
           // 回答送信済み
           this.setStatus(i, 'sent')
         } else {
           axios
-            .get(
-              '/users/me/responses/' + this.questionnaires[i].questionnaireID
-            )
+            .get('/users/me/responses/' + this.questionnaires[ i ].questionnaireID)
             .then(resp => {
               if (resp.data.length > 0) {
                 // 保存済み
@@ -103,8 +92,8 @@ export default {
         }
       }
     },
-    setStatus(index, newStatus) {
-      let questionnaire = this.questionnaires[index]
+    setStatus (index, newStatus) {
+      let questionnaire = this.questionnaires[ index ]
       this.$set(questionnaire, 'status', newStatus)
       this.$set(this.questionnaires, index, questionnaire)
     }

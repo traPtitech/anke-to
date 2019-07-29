@@ -4,38 +4,31 @@
       <div class="tabs">
         <ul>
           <li
+            class="tab"
             v-for="tab in tableFormTabs"
             :key="tab"
-            :class="{ 'is-active': tableForm === tab }"
-            class="tab"
+            :class="{'is-active': tableForm===tab }"
           >
             <a @click="tableForm = tab">{{ tab }}</a>
           </li>
         </ul>
-        <button
-          v-if="canDownload"
-          class="button download"
-          @click="downloadTable"
-        >
+        <button class="button download" v-on:click="downloadTable" v-if="canDownload">
           <span class="ti-download"></span>
         </button>
       </div>
       <div class="scroll-view">
         <!-- table view -->
-        <table v-show="tableForm === 'view'" class="table is-striped">
+        <table class="table is-striped" v-show="tableForm==='view'">
           <thead>
             <tr>
               <th
                 v-for="(header, index) in headerLabels.concat(questions)"
                 :key="index"
-                :class="{ active: sorted == index + 1 || sorted == -1 - index }"
                 @click="sort(index + 1)"
+                :class="{ active: sorted == index + 1 || sorted == -1 - index }"
               >
                 {{ header }}
-                <span
-                  :class="sorted !== index + 1 ? 'asc' : 'dsc'"
-                  class="arrow"
-                ></span>
+                <span class="arrow" :class="sorted !==index + 1 ? 'asc' : 'dsc'"></span>
               </th>
             </tr>
           </thead>
@@ -46,28 +39,26 @@
               <td
                 v-for="response in result.responseBody"
                 :key="response.responseId"
-              >
-                {{ getResponse(response) }}
-              </td>
+              >{{ getResponse(response) }}</td>
             </tr>
           </tbody>
         </table>
 
         <!-- markdown view -->
         <textarea
-          v-show="tableForm === 'markdown'"
+          v-show="tableForm==='markdown'"
+          class="textarea"
           :value="markdownTable"
           :rows="results.length + 3"
-          class="textarea"
           readonly
         ></textarea>
 
         <!-- csv view -->
         <textarea
-          v-show="tableForm === 'csv'"
+          v-show="tableForm==='csv'"
+          class="textarea"
           :value="csvTable"
           :rows="results.length + 2"
-          class="textarea"
           readonly
         ></textarea>
       </div>
@@ -76,6 +67,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'Spreadsheet',
   components: {},
@@ -89,7 +81,7 @@ export default {
       required: true
     }
   },
-  data() {
+  data () {
     return {
       headers: [
         { name: 'traqId', label: 'traQID' },
@@ -98,82 +90,16 @@ export default {
       sorted: '',
       downloadLabel: 'CSV形式でダウンロード',
       tableForm: 'view', // 'view', 'markdown', 'csv'
-      tableFormTabs: ['view', 'markdown', 'csv']
+      tableFormTabs: [ 'view', 'markdown', 'csv' ]
     }
   },
-  computed: {
-    questionnaireId() {
-      return this.$route.params.id
-    },
-    headerLabels() {
-      let ret = []
-      this.headers.forEach(header => {
-        ret.push(header.label)
-      })
-      return ret
-    },
-    markdownTable() {
-      // results の表を markdown 形式にしたものを返す
-      let ret = ''
-
-      // 項目の行
-      ret += this.arrayToMarkdown(this.headerLabels.concat(this.questions))
-
-      // 2行目
-      ret += '|'
-      for (let i = 0; i < this.results.length + this.headers.length; i++) {
-        ret += ' - |'
-      }
-      ret += '\n'
-
-      // 各回答の行
-      for (let i = 0; i < this.results.length; i++) {
-        let arr = []
-        const result = this.results[i]
-        this.headers.forEach(header => {
-          arr.push(result[header.name])
-        })
-        result.responseBody.forEach(body => {
-          arr.push(this.getResponse(body))
-        })
-
-        ret += this.arrayToMarkdown(arr)
-      }
-
-      ret = ret.slice(0, -1) // 末尾の改行を削除
-
-      return ret
-    },
-    csvTable() {
-      let csv = '\ufeff'
-      this.headerLabels.concat(this.questions).forEach(header => {
-        if (csv !== '\ufeff') {
-          csv += ','
-        }
-        csv += '"' + header + '"'
-      })
-      csv += '\n'
-      this.results.forEach(result => {
-        csv += result.traqId + ',' + result.submittedAt
-        result.responseBody.forEach(response => {
-          csv += ',' + '"' + this.getResponse(response) + '"'
-        })
-        csv += '\n'
-      })
-      return csv
-    },
-    canDownload() {
-      return this.tableForm === 'markdown' || this.tableForm === 'csv'
-    }
-  },
-  mounted() {},
   methods: {
-    getResponse(body) {
-      let ret = ''
+    getResponse (body) {
       switch (body.question_type) {
         case 'MultipleChoice':
         case 'Checkbox':
         case 'Dropdown':
+          let ret = ''
           body.option_response.forEach(response => {
             if (ret !== '') {
               ret += ', '
@@ -185,7 +111,7 @@ export default {
           return body.response
       }
     },
-    downloadTable() {
+    downloadTable () {
       if (!this.canDownload) return
       let form = {}
       switch (this.tableForm) {
@@ -196,7 +122,7 @@ export default {
           form = { type: 'text/csv', ext: '.csv', data: this.csvTable }
           break
       }
-      const blob = new Blob([form.data], { type: form.type })
+      const blob = new Blob([ form.data ], { type: form.type })
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = 'Result' + form.ext
@@ -204,7 +130,7 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    sort(index) {
+    sort (index) {
       let query = ''
       if (this.sorted !== index) {
         query += '-'
@@ -224,7 +150,7 @@ export default {
       }
       this.$emit('get-results', '?sort=' + query)
     },
-    arrayToMarkdown(arr) {
+    arrayToMarkdown (arr) {
       // 配列を受け取ると、その配列1行分のmarkdownを返す
       let ret = '|'
       arr.forEach(val => {
@@ -233,7 +159,73 @@ export default {
       ret += '\n'
       return ret
     }
-  }
+  },
+  computed: {
+    questionnaireId () {
+      return this.$route.params.id
+    },
+    headerLabels () {
+      let ret = []
+      this.headers.forEach(header => {
+        ret.push(header.label)
+      })
+      return ret
+    },
+    markdownTable () {
+      // results の表を markdown 形式にしたものを返す
+      let ret = ''
+
+      // 項目の行
+      ret += this.arrayToMarkdown(this.headerLabels.concat(this.questions))
+
+      // 2行目
+      ret += '|'
+      for (let i = 0; i < this.results.length + this.headers.length; i++) {
+        ret += ' - |'
+      }
+      ret += '\n'
+
+      // 各回答の行
+      for (let i = 0; i < this.results.length; i++) {
+        let arr = []
+        const result = this.results[ i ]
+        this.headers.forEach(header => {
+          arr.push(result[ header.name ])
+        })
+        result.responseBody.forEach(body => {
+          arr.push(this.getResponse(body))
+        })
+
+        ret += this.arrayToMarkdown(arr)
+      }
+
+      ret = ret.slice(0, -1) // 末尾の改行を削除
+
+      return ret
+    },
+    csvTable () {
+      let csv = '\ufeff'
+      this.headerLabels.concat(this.questions).forEach(header => {
+        if (csv !== '\ufeff') {
+          csv += ','
+        }
+        csv += '"' + header + '"'
+      })
+      csv += '\n'
+      this.results.forEach(result => {
+        csv += result.traqId + ',' + result.submittedAt
+        result.responseBody.forEach(response => {
+          csv += ',' + '"' + this.getResponse(response) + '"'
+        })
+        csv += '\n'
+      })
+      return csv
+    },
+    canDownload () {
+      return this.tableForm === 'markdown' || this.tableForm === 'csv'
+    }
+  },
+  mounted () { }
 }
 </script>
 

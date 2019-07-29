@@ -4,20 +4,20 @@
     <div class="tabs is-centered">
       <ul>
         <li
+          class="tab"
+          :class="{ 'is-active': selectedTab === tab }"
           v-for="(tab, index) in detailTabs"
           :key="index"
-          :class="{ 'is-active': selectedTab === tab }"
-          class="tab"
           @click="selectedTab = tab"
         >
           <a>{{ tab }}</a>
         </li>
       </ul>
       <a
-        v-if="showEditButton"
+        @click="isEditing = !isEditing"
         id="edit-button"
         :class="{ 'is-editing': isEditing }"
-        @click="isEditing = !isEditing"
+        v-if="showEditButton"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -32,22 +32,22 @@
       ></information-summary>
       <component
         :is="currentTabComponent"
-        :name="currentTabComponent"
-        :edit-mode="isEditing ? 'question' : undefined"
-        :information-props="informationProps"
-        :questions-props="questions"
-        :title="title"
-        :input-errors="isEditing ? inputErrors : undefined"
         class="details-child is-fullheight"
+        :name="currentTabComponent"
+        :editMode="isEditing ? 'question' : undefined"
+        :informationProps="informationProps"
+        :questionsProps="questions"
+        :title="title"
+        :inputErrors="isEditing ? inputErrors : undefined"
         @set-data="setData"
         @set-question-content="setQuestionContent"
         @remove-question="removeQuestion"
       ></component>
       <edit-nav-bar v-if="isEditing">
         <button
-          :disabled="!submitOk"
           class="button is-medium send-button"
           @click="submitQuestionnaire"
+          :disabled="!this.submitOk"
         >
           <span class="ti-check"></span>
           <span>送信</span>
@@ -61,6 +61,7 @@
 </template>
 
 <script>
+
 import moment from 'moment'
 import { mapGetters } from 'vuex'
 import router from '@/router'
@@ -76,19 +77,24 @@ import TopBarMessage from '@/components/Utils/TopBarMessage'
 
 export default {
   name: 'QuestionnaireDetails',
+  async created () {
+    this.getInformation()
+    this.getQuestions()
+  },
   components: {
     'information-summary': InformationSummary,
-    information: Information,
+    'information': Information,
     'information-edit': InformationEdit,
-    questions: Questions,
+    'questions': Questions,
     'questions-edit': QuestionsEdit,
     'edit-nav-bar': EditNavBar,
     'top-bar-message': TopBarMessage
   },
-  props: {},
-  data() {
+  props: {
+  },
+  data () {
     return {
-      detailTabs: ['Information', 'Questions'],
+      detailTabs: [ 'Information', 'Questions' ],
       // selectedTab: 'Information',
       showEditButton: false,
       noTimeLimit: true,
@@ -101,157 +107,10 @@ export default {
       }
     }
   },
-  computed: {
-    ...mapGetters(['getMyTraqId']),
-    selectedTab: {
-      get() {
-        return this.$route.query.tab && this.$route.query.tab === 'questions'
-          ? 'Questions'
-          : 'Information'
-      },
-      set(newTab) {
-        router.push({
-          name: 'QuestionnaireDetails',
-          params: { questionnaireId: this.questionnaireId },
-          query: { tab: newTab.toLowerCase() },
-          hash: this.$route.hash
-        })
-      }
-    },
-    administrates() {
-      // 管理者かどうかを返す
-      // getInformation() が完了する前は false を返す
-      return this.information.administrators
-        ? common.administrates(
-            this.information.administrators,
-            this.getMyTraqId
-          )
-        : false
-    },
-    questionnaireId() {
-      if (this.isNewQuestionnaire) {
-        return undefined
-      } else {
-        return Number(this.$route.params.id)
-      }
-    },
-    isNewQuestionnaire() {
-      return this.$route.params.id === 'new'
-    },
-    submitOk() {
-      return common.noErrors(this.inputErrors)
-    },
-    isEditing: {
-      get: function() {
-        return (
-          this.isNewQuestionnaire ||
-          (this.$route.hash === '#edit' && this.administrates)
-        )
-      },
-      set: function(newBool) {
-        // newBool : 閲覧 -> 編集
-        // !newBool : 編集 -> 閲覧
-        const newRoute = {
-          name: 'QuestionnaireDetails',
-          params: { id: this.questionnaireId },
-          query: this.$route.query,
-          hash: newBool ? '#edit' : undefined
-        }
-        router.push(newRoute)
-      }
-    },
-    currentTabComponent() {
-      switch (this.selectedTab) {
-        case 'Information':
-          if (this.isEditing) {
-            return 'information-edit'
-          } else {
-            return 'information'
-          }
-        case 'Questions':
-          if (this.isEditing) {
-            return 'questions-edit'
-          } else {
-            return 'questions'
-          }
-        default:
-          console.error('unexpected selectedTab')
-          return null
-      }
-    },
-    title() {
-      return this.information.title
-    },
-    informationProps() {
-      return {
-        information: this.information,
-        administrates: this.administrates,
-        questionnaireId: this.questionnaireId,
-        noTimeLimit: this.noTimeLimit
-      }
-    },
-    summaryProps() {
-      let ret = {
-        title: this.information.title
-      }
-      if (this.selectedTab === 'Information') {
-        ret.description = this.information.description
-        ret.timeLimit = this.getDateStr(this.information.res_time_limit)
-      }
-      return ret
-    },
-    newTimeLimit() {
-      // 1週間後の23:59
-      return moment()
-        .add(7, 'days')
-        .endOf('day')
-        .format()
-        .slice(0, -6)
-    },
-    inputErrors() {
-      return {
-        noTitle: {
-          message: 'タイトルは入力必須です',
-          isError: this.information.title === ''
-        },
-        noQuestions: {
-          message: '質問がありません',
-          isError: this.questions.length === 0
-        }
-      }
-    }
-  },
-  watch: {
-    $route: function(newRoute, oldRoute) {
-      if (newRoute.params.id !== oldRoute.params.id) {
-        this.showEditButton = false
-        this.getInformation()
-        this.getQuestions()
-        this.newQuestionnaireId = undefined
-        if (oldRoute.params.id !== 'new') this.resetMessage()
-      }
-    },
-    noTimeLimit: function(newBool, oldBool) {
-      if (
-        oldBool &&
-        !newBool &&
-        (this.information.res_time_limit === 'NULL' ||
-          this.information.res_time_limit === '')
-      ) {
-        // 新しく回答期限を作ろうとしたとき
-        this.information.res_time_limit = this.newTimeLimit
-      }
-    }
-  },
-  async created() {
-    this.getInformation()
-    this.getQuestions()
-  },
-  mounted() {},
   methods: {
     alertNetworkError: common.alertNetworkError,
     getDateStr: common.getDateStr,
-    getInformation() {
+    getInformation () {
       // サーバーにアンケートの情報をリクエストする
       if (this.isNewQuestionnaire) {
         this.information = {
@@ -260,7 +119,7 @@ export default {
           res_shared_to: 'public',
           res_time_limit: this.newTimeLimit,
           respondents: [],
-          administrators: [this.getMyTraqId],
+          administrators: [ this.getMyTraqId ],
           targets: []
         }
       } else {
@@ -273,16 +132,13 @@ export default {
             } else {
               this.disableEditButton()
             }
-            if (
-              this.information.res_time_limit &&
-              this.information.res_time_limit !== 'NULL'
-            ) {
+            if (this.information.res_time_limit && this.information.res_time_limit !== 'NULL') {
               this.noTimeLimit = false
             }
           })
       }
     },
-    getQuestions() {
+    getQuestions () {
       this.questions = []
       if (!this.isNewQuestionnaire) {
         axios
@@ -295,15 +151,11 @@ export default {
           })
       }
     },
-    submitQuestionnaire() {
+    submitQuestionnaire () {
       const informationData = {
         title: this.information.title,
         description: this.information.description,
-        res_time_limit: this.noTimeLimit
-          ? 'NULL'
-          : moment(this.information.res_time_limit, 'YYYY-MM-DDTHH:mm').format(
-              'YYYY/MM/DD HH:mm'
-            ),
+        res_time_limit: this.noTimeLimit ? 'NULL' : moment(this.information.res_time_limit, 'YYYY-MM-DDTHH:mm').format('YYYY/MM/DD HH:mm'),
         res_shared_to: this.information.res_shared_to,
         targets: this.information.targets,
         administrators: this.information.administrators
@@ -312,8 +164,7 @@ export default {
       if (this.isNewQuestionnaire) {
         // アンケートの新規作成
 
-        axios
-          .post('/questionnaires', informationData)
+        axios.post('/questionnaires', informationData)
           .then(resp => {
             // 返ってきたquestionnaireIDを保存
             this.newQuestionnaireId = resp.data.questionnaireID
@@ -337,8 +188,7 @@ export default {
       } else {
         // 既存のアンケートの編集
 
-        axios
-          .patch('/questionnaires/' + this.questionnaireId, informationData)
+        axios.patch('/questionnaires/' + this.questionnaireId, informationData)
           .then(() => {
             // 質問を送信
             return this.sendQuestions(0)
@@ -362,18 +212,20 @@ export default {
           })
       }
     },
-    sendQuestions(index) {
+    sendQuestions (index) {
       // questions配列の、index番目以降の質問をサーバーに送信する
-      const question = this.questions[index]
+      const question = this.questions[ index ]
       const data = this.createQuestionData(index)
 
       if (this.isNewQuestion(question)) {
-        return axios.post('/questions', data).then(() => {
-          if (index < this.questions.length - 1) {
-            // 残りの質問を送信
-            return this.sendQuestions(index + 1)
-          }
-        })
+        return axios
+          .post('/questions', data)
+          .then(() => {
+            if (index < this.questions.length - 1) {
+              // 残りの質問を送信
+              return this.sendQuestions(index + 1)
+            }
+          })
       } else {
         return axios
           .patch('/questions/' + question.questionId, data)
@@ -385,22 +237,22 @@ export default {
           })
       }
     },
-    deleteRemovedQuestions(index) {
+    deleteRemovedQuestions (index) {
       // removedQuestionIds配列の、index以降の質問について、DELETEリクエストを送る
-      const id = this.removedQuestionIds[index]
-      return axios.delete('/questions/' + id).then(() => {
-        if (index < this.removedQuestionIds.length - 1) {
-          return this.deleteRemovedQuestions(index + 1)
-        }
-      })
+      const id = this.removedQuestionIds[ index ]
+      return axios
+        .delete('/questions/' + id)
+        .then(() => {
+          if (index < this.removedQuestionIds.length - 1) {
+            return this.deleteRemovedQuestions(index + 1)
+          }
+        })
     },
-    createQuestionData(index) {
+    createQuestionData (index) {
       // 与えられた質問1つ分のデータをサーバーに送るフォーマットのquestionDataにして返す
-      const question = this.questions[index]
+      const question = this.questions[ index ]
       let data = {
-        questionnaireID: this.isNewQuestionnaire
-          ? this.newQuestionnaireId
-          : this.questionnaireId,
+        questionnaireID: this.isNewQuestionnaire ? this.newQuestionnaireId : this.questionnaireId,
         question_type: question.type,
         question_num: index,
         page_num: question.pageNum,
@@ -428,19 +280,19 @@ export default {
       }
       return data
     },
-    isNewQuestion(question) {
+    isNewQuestion (question) {
       return question.questionId < 0
     },
-    enableEditButton() {
+    enableEditButton () {
       this.showEditButton = true
     },
-    disableEditButton() {
+    disableEditButton () {
       this.showEditButton = false
     },
-    disableEditing() {
+    disableEditing () {
       this.isEditing = false
     },
-    abortEditing() {
+    abortEditing () {
       // TODO: 変更したかどうかを検出
       // const alertMessage = this.isNewQuestionnaire ? 'アンケートを破棄します。よろしいですか？' : '変更を破棄します。よろしいですか？'
       // if (window.confirm(alertMessage)) {
@@ -448,11 +300,12 @@ export default {
         router.push('/administrates')
       } else {
         this.disableEditing()
-        this.getInformation().then(this.getQuestions)
+        this.getInformation()
+          .then(this.getQuestions)
       }
       // }
     },
-    setData(name, data) {
+    setData (name, data) {
       switch (name) {
         case 'questions':
           this.questions = data
@@ -465,12 +318,12 @@ export default {
           break
       }
     },
-    setQuestionContent(index, label, value) {
-      this.questions[index][label] = value
+    setQuestionContent (index, label, value) {
+      this.questions[ index ][ label ] = value
     },
-    removeQuestion(index) {
+    removeQuestion (index) {
       if (window.confirm('この質問を削除しますか？')) {
-        const id = this.questions[index].questionId
+        const id = this.questions[ index ].questionId
         if (id > 0) {
           // サーバーに存在する質問を削除した場合はリストに追加
           this.removedQuestionIds.push(id)
@@ -478,7 +331,7 @@ export default {
         this.questions.splice(index, 1)
       }
     },
-    async showMessage(body, color) {
+    async showMessage (body, color) {
       console.log(body)
       this.message = {
         showMessage: true,
@@ -488,14 +341,140 @@ export default {
       await new Promise(resolve => setTimeout(resolve, 3000))
       this.resetMessage()
     },
-    resetMessage() {
+    resetMessage () {
       this.message = {
         showMessage: false
       }
     }
+  },
+  computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
+    selectedTab: {
+      get () {
+        return this.$route.query.tab && this.$route.query.tab === 'questions' ? 'Questions' : 'Information'
+      },
+      set (newTab) {
+        router.push({
+          name: 'QuestionnaireDetails',
+          params: { questionnaireId: this.questionnaireId },
+          query: { tab: newTab.toLowerCase() },
+          hash: this.$route.hash
+        })
+      }
+    },
+    administrates () {
+      // 管理者かどうかを返す
+      // getInformation() が完了する前は false を返す
+      return this.information.administrators ? common.administrates(this.information.administrators, this.getMyTraqId) : false
+    },
+    questionnaireId () {
+      if (this.isNewQuestionnaire) {
+        return undefined
+      } else {
+        return Number(this.$route.params.id)
+      }
+    },
+    isNewQuestionnaire () {
+      return this.$route.params.id === 'new'
+    },
+    submitOk () {
+      return common.noErrors(this.inputErrors)
+    },
+    isEditing: {
+      get: function () {
+        return this.isNewQuestionnaire || (this.$route.hash === '#edit' && this.administrates)
+      },
+      set: function (newBool) {
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'QuestionnaireDetails',
+          params: { id: this.questionnaireId },
+          query: this.$route.query,
+          hash: newBool ? '#edit' : undefined
+        }
+        router.push(newRoute)
+      }
+    },
+    currentTabComponent () {
+      switch (this.selectedTab) {
+        case 'Information':
+          if (this.isEditing) {
+            return 'information-edit'
+          } else {
+            return 'information'
+          }
+        case 'Questions':
+          if (this.isEditing) {
+            return 'questions-edit'
+          } else {
+            return 'questions'
+          }
+        default:
+          console.error('unexpected selectedTab')
+          return null
+      }
+    },
+    title () {
+      return this.information.title
+    },
+    informationProps () {
+      return {
+        information: this.information,
+        administrates: this.administrates,
+        questionnaireId: this.questionnaireId,
+        noTimeLimit: this.noTimeLimit
+      }
+    },
+    summaryProps () {
+      let ret = {
+        title: this.information.title
+      }
+      if (this.selectedTab === 'Information') {
+        ret.description = this.information.description
+        ret.timeLimit = this.getDateStr(this.information.res_time_limit)
+      }
+      return ret
+    },
+    newTimeLimit () {
+      // 1週間後の23:59
+      return moment().add(7, 'days').endOf('day').format().slice(0, -6)
+    },
+    inputErrors () {
+      return {
+        noTitle: {
+          message: 'タイトルは入力必須です',
+          isError: this.information.title === ''
+        },
+        noQuestions: {
+          message: '質問がありません',
+          isError: this.questions.length === 0
+        }
+      }
+    }
+  },
+  watch: {
+    $route: function (newRoute, oldRoute) {
+      if (newRoute.params.id !== oldRoute.params.id) {
+        this.showEditButton = false
+        this.getInformation()
+        this.getQuestions()
+        this.newQuestionnaireId = undefined
+        if (oldRoute.params.id !== 'new') this.resetMessage()
+      }
+    },
+    noTimeLimit: function (newBool, oldBool) {
+      if (oldBool && !newBool && (this.information.res_time_limit === 'NULL' || this.information.res_time_limit === '')) {
+        // 新しく回答期限を作ろうとしたとき
+        this.information.res_time_limit = this.newTimeLimit
+      }
+    }
+  },
+  mounted () {
   }
 }
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+</style>

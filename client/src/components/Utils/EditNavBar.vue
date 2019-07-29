@@ -10,31 +10,38 @@
         @click.prevent="atClick(editButton.atClick)"
       >
         {{ editButton.label }}
-      </button>-->
+      </button> -->
       <slot></slot>
     </div>
   </nav>
 </template>
 
 <script>
+
+// import <componentname> from '<path to component file>'
+
 export default {
   name: 'EditNavBar',
-  components: {},
+  components: {
+  },
   props: {
     // editButtons: {
     //   type: Array,
     //   required: true
     // }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
   },
-  computed: {},
-  mounted() {},
   methods: {
-    atClick(func) {
+    atClick (func) {
       this.$emit(func)
     }
+  },
+  computed: {
+  },
+  mounted () {
   }
 }
 </script>
@@ -70,7 +77,7 @@ export default {
       background-color: $button-background-color-green;
       border-color: $button-border-color-green;
       min-width: 10rem;
-      [class^='ti-'] {
+      [class^="ti-"] {
         margin: auto 0.3em;
       }
     }

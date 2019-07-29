@@ -2,46 +2,46 @@
   <div>
     <!-- view or edit question -->
     <p
+      class="has-underline placeholder"
       v-if="
         editMode === 'question' ||
           (editMode !== 'response' &&
             typeof content.responseBody === 'undefined')
       "
-      class="has-underline placeholder"
-    >
-      {{ responsePlaceholder }}
-    </p>
+    >{{ responsePlaceholder }}</p>
 
     <!-- view response -->
     <p
-      v-if="!editMode && typeof content.responseBody !== 'undefined'"
       class="has-underline"
-    >
-      {{ content.responseBody }}
-    </p>
+      v-if="!editMode && typeof content.responseBody !== 'undefined'"
+    >{{ content.responseBody }}</p>
 
     <!-- edit response -->
     <input
-      v-if="editMode === 'response' && content.type === 'Text'"
-      v-model="content.responseBody"
       type="text"
       class="input has-underline"
+      v-if="editMode === 'response' && content.type === 'Text'"
       placeholder="回答"
-    />
+      v-model="content.responseBody"
+    >
     <input
-      v-if="editMode === 'response' && content.type === 'Number'"
-      v-model.number="content.responseBody"
       type="number"
       class="input has-underline"
+      v-if="editMode === 'response' && content.type === 'Number'"
       placeholder="0"
-    />
+      v-model.number="content.responseBody"
+    >
   </div>
 </template>
 
 <script>
+
+// import <componentname> from '<path to component file>'
+
 export default {
   name: '',
-  components: {},
+  components: {
+  },
   props: {
     contentProps: {
       type: Object,
@@ -49,17 +49,20 @@ export default {
     },
     editMode: {
       type: String, // 'question' or 'response'
-      default: undefined
+      required: false // 渡されなかった場合はview
     }
   },
-  data() {
-    return {}
+  data () {
+    return {
+    }
+  },
+  methods: {
   },
   computed: {
-    content() {
+    content () {
       return this.contentProps
     },
-    responsePlaceholder() {
+    responsePlaceholder () {
       if (this.content.type === 'Text') {
         return '回答 (テキスト)'
       } else if (this.content.type === 'Number') {
@@ -69,8 +72,8 @@ export default {
       }
     }
   },
-  mounted() {},
-  methods: {}
+  mounted () {
+  }
 }
 </script>
 

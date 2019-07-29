@@ -2,15 +2,15 @@
   <div>
     <div v-if="canViewResults" class="details is-fullheight">
       <div class="tabs is-centered">
-        <router-link id="return-button" :to="summaryProps.titleLink">
+        <router-link :to="summaryProps.titleLink" id="return-button">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul>
           <li
+            class="tab"
+            :class="{ 'is-active': selectedTab === tab }"
             v-for="(tab, index) in detailTabs"
             :key="index"
-            :class="{ 'is-active': selectedTab === tab }"
-            class="tab"
           >
             <router-link :to="getTabLink(tab)">{{ tab }}</router-link>
           </li>
@@ -19,27 +19,25 @@
       <information-summary :information="summaryProps"></information-summary>
       <component
         :is="currentTabComponent"
+        class="details-child is-fullheight"
         :name="currentTabComponent"
         :results="results"
         :information="information"
         :questions="questions"
-        :question-data="questionData"
-        :response-data="responseData"
-        class="details-child is-fullheight"
+        :questionData="questionData"
+        :responseData="responseData"
         @get-results="getResults"
       ></component>
     </div>
 
-    <div
-      v-if="information.administrators && !canViewResults"
-      class="message is-danger"
-    >
+    <div v-if="this.information.administrators && !canViewResults" class="message is-danger">
       <p class="message-body error-message">結果を閲覧する権限がありません</p>
     </div>
   </div>
 </template>
 
 <script>
+
 import { mapGetters } from 'vuex'
 import axios from '@/bin/axios'
 import common from '@/bin/common'
@@ -50,90 +48,11 @@ import InformationSummary from '@/components/Information/InformationSummary'
 export default {
   name: 'Results',
   components: {
-    Individual,
-    Spreadsheet,
-    InformationSummary
+    individual: Individual,
+    spreadsheet: Spreadsheet,
+    'information-summary': InformationSummary
   },
-  props: {},
-  data() {
-    return {
-      results: [],
-      questions: [],
-      questionData: [],
-      responseData: {},
-      information: {},
-      hasResponded: false,
-      detailTabs: ['Spreadsheet', 'Individual']
-    }
-  },
-  computed: {
-    ...mapGetters(['getMyTraqId']),
-    questionnaireId() {
-      return this.$route.params.id
-    },
-    administrates() {
-      if (!this.information.administrators) {
-        return undefined
-      }
-      return common.administrates(
-        this.information.administrators,
-        this.getMyTraqId
-      )
-    },
-    canViewResults() {
-      return common.canViewResults(
-        this.information,
-        this.administrates,
-        this.hasResponded
-      )
-    },
-    currentTabComponent() {
-      switch (this.selectedTab) {
-        case 'Spreadsheet':
-          return 'spreadsheet'
-        case 'Individual':
-          return 'individual'
-        default:
-          console.error('unexpected selectedTab')
-          return 'spreadsheet'
-      }
-    },
-    selectedTab() {
-      return this.$route.query.tab && this.$route.query.tab === 'individual'
-        ? 'Individual'
-        : 'Spreadsheet'
-    },
-    currentPage() {
-      if (this.$route.query.tab === 'individual') {
-        return this.$route.query.page ? Number(this.$route.query.page) : 1
-      } else {
-        return undefined
-      }
-    },
-    summaryProps() {
-      let ret = {
-        title: this.information.title,
-        titleLink: '/questionnaires/' + this.questionnaireId
-      }
-      if (this.selectedTab === 'Individual') {
-        ret.responseDetails = {
-          timeLabel: '回答日時',
-          time: this.responseData.submittedAt,
-          respondent: this.responseData.traqId
-        }
-      }
-      return ret
-    }
-  },
-  watch: {
-    $route: function(newRoute) {
-      if (newRoute.query.tab === 'individual') {
-        this.setResponseData()
-        this.setResponsesToQuestions()
-      }
-    }
-  },
-  async created() {
+  async created () {
     this.getInformation()
       .then(this.getMyResponses)
       .then(() => {
@@ -149,23 +68,38 @@ export default {
         }
       })
   },
+  props: {
+  },
+  data () {
+    return {
+      results: [],
+      questions: [],
+      questionData: [],
+      responseData: {},
+      information: {},
+      hasResponded: false,
+      detailTabs: [ 'Spreadsheet', 'Individual' ]
+    }
+  },
   methods: {
     getDateStr: common.getDateStr,
-    async getResults(query) {
-      return axios.get('/results/' + this.questionnaireId + query).then(res => {
-        this.results = []
-        res.data.forEach(data => {
-          this.results.push({
-            modifiedAt: this.getDateStr(data.modified_at),
-            responseId: data.responseID,
-            responseBody: data.response_body,
-            submittedAt: this.getDateStr(data.submitted_at),
-            traqId: data.traqID
+    async getResults (query) {
+      return axios
+        .get('/results/' + this.questionnaireId + query)
+        .then(res => {
+          this.results = []
+          res.data.forEach(data => {
+            this.results.push({
+              modifiedAt: this.getDateStr(data.modified_at),
+              responseId: data.responseID,
+              responseBody: data.response_body,
+              submittedAt: this.getDateStr(data.submitted_at),
+              traqId: data.traqID
+            })
           })
         })
-      })
     },
-    getQuestions() {
+    getQuestions () {
       this.questions = []
       this.questionData = []
       return axios
@@ -177,12 +111,14 @@ export default {
           }
         })
     },
-    getInformation() {
-      return axios.get('/questionnaires/' + this.questionnaireId).then(res => {
-        this.information = res.data
-      })
+    getInformation () {
+      return axios
+        .get('/questionnaires/' + this.questionnaireId)
+        .then(res => {
+          this.information = res.data
+        })
     },
-    getMyResponses() {
+    getMyResponses () {
       return axios
         .get('/users/me/responses/' + this.questionnaireId)
         .then(res => {
@@ -191,7 +127,7 @@ export default {
           }
         })
     },
-    getTabLink(tab) {
+    getTabLink (tab) {
       let ret = {
         name: 'Results',
         params: { id: this.$route.params.id },
@@ -204,29 +140,80 @@ export default {
       }
       return ret
     },
-    setResponseData() {
-      this.responseData = this.results[this.currentPage - 1]
+    setResponseData () {
+      this.responseData = this.results[ this.currentPage - 1 ]
       let newBody = {}
       this.responseData.responseBody.forEach(data => {
-        newBody[data.questionID] = data
+        newBody[ data.questionID ] = data
       })
       this.responseData.body = newBody
     },
-    setResponsesToQuestions() {
+    setResponsesToQuestions () {
       const questions = Object.assign([], this.questionData)
       questions.forEach((question, index) => {
-        this.$set(
-          this.questionData,
-          index,
-          common.setResponseToQuestion(
-            question,
-            this.responseData.body[question.questionId]
-          )
-        )
+        this.$set(this.questionData, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
       })
     },
-    setResults(results) {
+    setResults (results) {
       this.results = results
+    }
+  },
+  computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
+    questionnaireId () {
+      return this.$route.params.id
+    },
+    administrates () {
+      if (!this.information.administrators) {
+        return undefined
+      }
+      return common.administrates(this.information.administrators, this.getMyTraqId)
+    },
+    canViewResults () {
+      return common.canViewResults(this.information, this.administrates, this.hasResponded)
+    },
+    currentTabComponent () {
+      switch (this.selectedTab) {
+        case 'Spreadsheet':
+          return 'spreadsheet'
+        case 'Individual':
+          return 'individual'
+        default:
+          console.error('unexpected selectedTab')
+          return ''
+      }
+    },
+    selectedTab () {
+      return this.$route.query.tab && this.$route.query.tab === 'individual' ? 'Individual' : 'Spreadsheet'
+    },
+    currentPage () {
+      if (this.$route.query.tab === 'individual') {
+        return this.$route.query.page ? Number(this.$route.query.page) : 1
+      } else {
+        return undefined
+      }
+    },
+    summaryProps () {
+      let ret = {
+        title: this.information.title,
+        titleLink: '/questionnaires/' + this.questionnaireId
+      }
+      if (this.selectedTab === 'Individual') {
+        ret.responseDetails = {
+          timeLabel: '回答日時',
+          time: this.responseData.submittedAt,
+          respondent: this.responseData.traqId
+        }
+      }
+      return ret
+    }
+  },
+  watch: {
+    $route: function (newRoute) {
+      if (newRoute.query.tab === 'individual') {
+        this.setResponseData()
+        this.setResponsesToQuestions()
+      }
     }
   }
 }

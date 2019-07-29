@@ -7,17 +7,17 @@
       class="is-fullheight details"
     >
       <div class="tabs is-centered">
-        <router-link id="return-button" :to="titleLink">
+        <router-link :to="titleLink" id="return-button">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul></ul>
         <a
-          v-if="
-            !isNewResponse && information.res_time_limit && !timeLimitExceeded
-          "
           id="edit-button"
           :class="{ 'is-editing': isEditing }"
           @click.prevent="isEditing = !isEditing"
+          v-if="
+            !isNewResponse && information.res_time_limit && !timeLimitExceeded
+          "
         >
           <span class="ti-check-box"></span>
         </a>
@@ -28,17 +28,13 @@
       >
         <information-summary :information="summaryProps"></information-summary>
         <questions
-          :edit-mode="isEditing ? 'response' : undefined"
-          :questions-props="questions"
-          :input-errors="inputErrors"
+          :editMode="isEditing ? 'response' : undefined"
+          :questionsProps="questions"
+          :inputErrors="inputErrors"
         ></questions>
       </div>
       <edit-nav-bar v-if="isEditing">
-        <button
-          :disabled="!submitOk"
-          class="button is-medium send-button"
-          @click="submitResponse"
-        >
+        <button class="button is-medium send-button" @click="submitResponse" :disabled="!submitOk">
           <span class="ti-check"></span>
           <span>送信</span>
         </button>
@@ -54,6 +50,7 @@
 </template>
 
 <script>
+
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import router from '@/router'
@@ -66,127 +63,12 @@ import InformationSummary from '@/components/Information/InformationSummary'
 export default {
   name: 'ResponseDetails',
   components: {
-    questions: Questions,
+    'questions': Questions,
     'edit-nav-bar': EditNavBar,
     'information-summary': InformationSummary,
     'top-bar-message': TopBarMessage
   },
-  props: {
-    isNewResponse: {
-      type: Boolean,
-      default: undefined
-    }
-  },
-  data() {
-    return {
-      questions: [],
-      information: {},
-      responseData: {},
-      message: {
-        showMessage: false
-      }
-    }
-  },
-  computed: {
-    ...mapGetters(['getMyTraqId']),
-    responseId() {
-      return this.isNewResponse ? undefined : Number(this.$route.params.id)
-    },
-    questionnaireId() {
-      if (this.isNewResponse) {
-        return Number(this.$route.params.questionnaireId)
-      } else if (!this.responseData) {
-        return undefined
-      } else {
-        return this.responseData.questionnaireID
-      }
-    },
-    isEditing: {
-      get: function() {
-        if (this.isNewResponse || this.$route.hash === '#edit') {
-          return true
-        }
-        return false
-      },
-      set: function(newBool) {
-        // newBool : 閲覧 -> 編集
-        // !newBool : 編集 -> 閲覧
-        const newRoute = {
-          name: 'ResponseDetails',
-          params: { id: this.responseId },
-          hash: newBool ? '#edit' : undefined
-        }
-        router.push(newRoute)
-      }
-    },
-    submitOk() {
-      for (const error of Object.keys(this.inputErrors)) {
-        if (this.inputErrors[error].isError) {
-          return false
-        }
-      }
-      return true
-    },
-    timeLimitExceeded() {
-      // 回答期限を過ぎていた場合はtrueを返す
-      return (
-        this.information.res_time_limit &&
-        new Date(this.information.res_time_limit).getTime() <
-          new Date().getTime()
-      )
-    },
-    titleLink() {
-      return '/questionnaires/' + this.questionnaireId
-    },
-    responseIconClass() {
-      if (this.isNewResponse) {
-        return undefined
-      }
-      switch (this.responseData.submitted_at) {
-        case 'NULL':
-          return 'ti-save'
-        default:
-          return 'ti-check'
-      }
-    },
-    summaryProps() {
-      const ret = {
-        title: this.information.title,
-        titleLink: this.titleLink,
-        description: this.information.description,
-        // timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
-        responseIconClass: this.responseIconClass,
-        responseDetails: {
-          timeLabel: '更新日時',
-          time: this.getDateStr(this.responseData.modified_at),
-          respondent: this.getMyTraqId
-        }
-      }
-      return ret
-    },
-    inputErrors() {
-      let ret = {}
-      for (const question of this.questions) {
-        ret[question.questionId] = {
-          isError: question.isRequired && !this.hasAnswered(question),
-          message: 'この質問は回答必須です'
-        }
-      }
-      return ret
-    }
-  },
-  watch: {
-    $route: function(newRoute, oldRoute) {
-      if (newRoute.params.id !== oldRoute.params.id) {
-        this.resetMessage()
-        this.getResponseData()
-          .then(this.getQuestionnaireData)
-          .then(this.getQuestions)
-          .then(this.setResponsesToQuestions)
-      }
-    }
-  },
-  async created() {
+  async created () {
     if (this.isNewResponse) {
       this.getQuestions()
       this.getInformation()
@@ -197,34 +79,55 @@ export default {
         .then(this.setResponsesToQuestions)
     }
   },
+  props: {
+    isNewResponse: {
+      type: Boolean,
+      required: false
+    }
+  },
+  data () {
+    return {
+      questions: [],
+      information: {},
+      responseData: {},
+      message: {
+        showMessage: false
+      }
+    }
+  },
   methods: {
     alertNetworkError: common.alertNetworkError,
     getDateStr: common.getDateStr,
-    getInformation() {
-      return axios.get('/questionnaires/' + this.questionnaireId).then(res => {
-        this.information = res.data
-        if (this.timeLimitExceeded && this.isEditing) {
-          this.message = {
-            body: '回答期限が過ぎています',
-            color: 'red',
-            showMessage: true
+    getInformation () {
+      return axios
+        .get('/questionnaires/' + this.questionnaireId)
+        .then(res => {
+          this.information = res.data
+          if (this.timeLimitExceeded && this.isEditing) {
+            this.message =
+              {
+                body: '回答期限が過ぎています',
+                color: 'red',
+                showMessage: true
+              }
           }
-        }
-      })
-    },
-    getResponseData() {
-      return axios.get('/responses/' + this.responseId).then(res => {
-        this.responseData = res.data
-
-        // questionIdをキーにしてresponseData.body の各要素をとれるようにする
-        let newBody = {}
-        this.responseData.body.forEach(data => {
-          newBody[data.questionID] = data
         })
-        this.responseData.body = newBody
-      })
     },
-    getQuestions() {
+    getResponseData () {
+      return axios
+        .get('/responses/' + this.responseId)
+        .then(res => {
+          this.responseData = res.data
+
+          // questionIdをキーにしてresponseData.body の各要素をとれるようにする
+          let newBody = {}
+          this.responseData.body.forEach(data => {
+            newBody[ data.questionID ] = data
+          })
+          this.responseData.body = newBody
+        })
+    },
+    getQuestions () {
       this.questions = []
       return axios
         .get('/questionnaires/' + this.questionnaireId + '/questions')
@@ -235,20 +138,13 @@ export default {
           })
         })
     },
-    setResponsesToQuestions() {
+    setResponsesToQuestions () {
       // 各質問に対して、該当する回答の情報を this.questions に入れる
       this.questions.forEach((question, index) => {
-        this.$set(
-          this.questions,
-          index,
-          common.setResponseToQuestion(
-            question,
-            this.responseData.body[question.questionId]
-          )
-        )
+        this.$set(this.questions, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
       })
     },
-    sendResponse(data) {
+    sendResponse (data) {
       // サーバーにPOST/PATCHリクエストを送る
       if (this.isNewResponse) {
         axios
@@ -280,21 +176,21 @@ export default {
           })
       }
     },
-    submitResponse() {
+    submitResponse () {
       // 回答の送信
       let data = this.createResponseData()
       data.submitted_at = new Date().toLocaleString('ja-GB')
       this.setMessage('回答を送信しました', 'green')
       this.sendResponse(data)
     },
-    saveResponse() {
+    saveResponse () {
       // 回答の保存
       let data = this.createResponseData()
       data.submitted_at = 'NULL'
       this.setMessage('回答を保存しました (まだ未送信です)', 'green')
       this.sendResponse(data)
     },
-    abortEditing() {
+    abortEditing () {
       // TODO: 変更したかどうかを検出
       // const alertMessage = this.isNewResponse ? '回答を破棄します。よろしいですか？' : '変更を破棄します。よろしいですか？'
       // if (window.confirm(alertMessage)) {
@@ -313,7 +209,7 @@ export default {
       }
       // }
     },
-    createResponseData() {
+    createResponseData () {
       // サーバーに送るフォーマットのresponseDataを作成する
       let data = {
         questionnaireID: this.questionnaireId,
@@ -328,11 +224,11 @@ export default {
         }
         switch (question.type) {
           case 'MultipleChoice':
-            body.option_response = [question.selected]
+            body.option_response = [ question.selected ]
             break
           case 'Checkbox':
             Object.keys(question.isSelected).forEach(key => {
-              if (question.isSelected[key]) {
+              if (question.isSelected[ key ]) {
                 body.option_response.push(key)
               }
             })
@@ -351,43 +247,135 @@ export default {
       })
       return data
     },
-    hasAnswered(question) {
-      let hasSelectedOption = false
+    hasAnswered (question) {
       switch (question.type) {
         case 'Text':
         case 'Number':
-          return (
-            typeof question.responseBody !== 'undefined' &&
-            question.responseBody !== ''
-          )
+          return typeof question.responseBody !== 'undefined' && question.responseBody !== ''
         case 'Checkbox':
+          let hasSelectedOption = false
           for (const option of Object.keys(question.isSelected)) {
-            if (question.isSelected[option]) {
+            if (question.isSelected[ option ]) {
               hasSelectedOption = true
             }
           }
           return hasSelectedOption
         case 'MultipleChoice':
         case 'LinearScale':
-          return (
-            typeof question.selected !== 'undefined' && question.selected !== ''
-          )
+          return typeof question.selected !== 'undefined' && question.selected !== ''
         default:
           return true
       }
     },
-    setMessage(body, color) {
+    setMessage (body, color) {
       this.$set(this.message, 'color', color)
       this.$set(this.message, 'body', body)
     },
-    showMessage() {
+    showMessage () {
       this.$set(this.message, 'showMessage', true)
     },
-    resetMessage() {
+    resetMessage () {
       this.message = {
         showMessage: false
       }
     }
+  },
+  computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
+    responseId () {
+      return this.isNewResponse ? undefined : Number(this.$route.params.id)
+    },
+    questionnaireId () {
+      if (this.isNewResponse) {
+        return Number(this.$route.params.questionnaireId)
+      } else if (!this.responseData) {
+        return undefined
+      } else {
+        return this.responseData.questionnaireID
+      }
+    },
+    isEditing: {
+      get: function () {
+        if (this.isNewResponse || this.$route.hash === '#edit') {
+          return true
+        }
+        return false
+      },
+      set: function (newBool) {
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'ResponseDetails',
+          params: { id: this.responseId },
+          hash: newBool ? '#edit' : undefined
+        }
+        router.push(newRoute)
+      }
+    },
+    submitOk () {
+      for (const error of Object.keys(this.inputErrors)) {
+        if (this.inputErrors[ error ].isError) {
+          return false
+        }
+      }
+      return true
+    },
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return this.information.res_time_limit && new Date(this.information.res_time_limit).getTime() < new Date().getTime()
+    },
+    titleLink () {
+      return '/questionnaires/' + this.questionnaireId
+    },
+    responseIconClass () {
+      if (this.isNewResponse) {
+        return undefined
+      }
+      switch (this.responseData.submitted_at) {
+        case 'NULL':
+          return 'ti-save'
+        default:
+          return 'ti-check'
+      }
+    },
+    summaryProps () {
+      const ret = {
+        title: this.information.title,
+        titleLink: this.titleLink,
+        description: this.information.description,
+        // timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
+        responseIconClass: this.responseIconClass,
+        responseDetails: {
+          timeLabel: '更新日時',
+          time: this.getDateStr(this.responseData.modified_at),
+          respondent: this.getMyTraqId
+        }
+      }
+      return ret
+    },
+    inputErrors () {
+      let ret = {}
+      for (const question of this.questions) {
+        ret[ question.questionId ] = {
+          isError: question.isRequired && !this.hasAnswered(question),
+          message: 'この質問は回答必須です'
+        }
+      }
+      return ret
+    }
+  },
+  watch: {
+    $route: function (newRoute, oldRoute) {
+      if (newRoute.params.id !== oldRoute.params.id) {
+        this.resetMessage()
+        this.getResponseData()
+          .then(this.getQuestionnaireData)
+          .then(this.getQuestions)
+          .then(this.setResponsesToQuestions)
+      }
+    }
+  },
+  mounted () {
   }
 }
 </script>

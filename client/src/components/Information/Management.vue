@@ -6,47 +6,47 @@
     <div class="card-content management-buttons">
       <!-- 回答する -->
       <management-button
-        :disabled="timeLimitExceeded"
-        :questionnaire-id="questionnaireId"
         type="newResponse"
         class="button-wrapper"
+        :disabled="timeLimitExceeded"
+        :questionnaireId="questionnaireId"
       >
       </management-button>
       <div class="new-response-link-panel">
         <input
           id="new-response-link"
-          ref="link"
-          :value="newResponseLink"
           class="input"
           type="text"
-          readonly
+          :value="newResponseLink"
+          ref="link"
           @click="$refs.link.select()"
+          readonly
         />
         <span class="button" @click="copyNewResponseLink">
           <span class="ti-clipboard"></span>
         </span>
       </div>
       <transition name="fade">
-        <p v-if="copyMessage.showMessage" class="copy-message">
+        <p class="copy-message" v-if="copyMessage.showMessage">
           {{ copyMessage.message }}
         </p>
       </transition>
 
       <!-- 結果を見る -->
       <management-button
-        :disabled="!canViewResults"
-        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="viewResults"
+        :disabled="!canViewResults"
+        :questionnaireId="questionnaireId"
       >
       </management-button>
 
       <!-- アンケートを削除 -->
       <management-button
-        :disabled="!administrates"
-        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="deleteQuestionnaire"
+        :disabled="!administrates"
+        :questionnaireId="questionnaireId"
       >
       </management-button>
     </div>
@@ -62,13 +62,11 @@ export default {
     'management-button': ManagementButton
   },
   props: {
-    resTimeLimit: {
-      type: String,
-      default: undefined
+    res_time_limit: {
+      type: String
     },
     questionnaireId: {
-      type: Number,
-      default: undefined
+      type: Number
     },
     canViewResults: {
       type: Boolean
@@ -77,32 +75,15 @@ export default {
       type: Boolean
     }
   },
-  data() {
+  data () {
     return {
       copyMessage: {
         showMessage: false
       }
     }
   },
-  computed: {
-    timeLimitExceeded() {
-      // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.res_time_limit).getTime() < new Date().getTime()
-    },
-    newResponseLink() {
-      return (
-        location.protocol +
-        '//' +
-        location.host +
-        '/responses/new/' +
-        this.questionnaireId
-      )
-    }
-  },
-  watch: {},
-  mounted() {},
   methods: {
-    copyNewResponseLink() {
+    copyNewResponseLink () {
       let link = document.querySelector('#new-response-link')
       // link.select()
       let range = document.createRange()
@@ -114,7 +95,7 @@ export default {
         this.showCopyMessage('コピーに失敗しました')
       }
     },
-    async showCopyMessage(message) {
+    async showCopyMessage (message) {
       this.copyMessage = {
         showMessage: true,
         message: message
@@ -122,11 +103,24 @@ export default {
       await new Promise(resolve => setTimeout(resolve, 3000))
       this.resetCopyMessage()
     },
-    resetCopyMessage() {
+    resetCopyMessage () {
       this.copyMessage = {
         showMessage: false
       }
     }
+  },
+  computed: {
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return new Date(this.res_time_limit).getTime() < new Date().getTime()
+    },
+    newResponseLink () {
+      return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId
+    }
+  },
+  watch: {
+  },
+  mounted () {
   }
 }
 </script>
