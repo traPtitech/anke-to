@@ -46,7 +46,7 @@
       <edit-nav-bar v-if="isEditing">
         <button
           class="button is-medium send-button"
-          :disabled="!this.submitOk"
+          :disabled="!submitOk"
           @click="submitQuestionnaire"
         >
           <span class="ti-check"></span>

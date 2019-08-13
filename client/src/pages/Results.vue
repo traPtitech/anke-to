@@ -31,7 +31,7 @@
     </div>
 
     <div
-      v-if="this.information.administrators && !canViewResults"
+      v-if="information.administrators && !canViewResults"
       class="message is-danger"
     >
       <p class="message-body error-message">結果を閲覧する権限がありません</p>
