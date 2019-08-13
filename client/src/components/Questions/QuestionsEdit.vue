@@ -10,13 +10,13 @@
                 <div class="sort-handle">
                   <span
                     class="ti-angle-up icon"
-                    @click="swapOrder(questions, index, index-1)"
                     :class="{disabled: isFirstQuestion(index)}"
+                    @click="swapOrder(questions, index, index-1)"
                   ></span>
                   <span
                     class="ti-angle-down icon"
-                    @click="swapOrder(questions, index, index+1)"
                     :class="{disabled: isLastQuestion(index)}"
+                    @click="swapOrder(questions, index, index+1)"
                   ></span>
                 </div>
                 <div class="delete-button">
@@ -27,22 +27,22 @@
                 <div class="columns is-inline-block-mobile">
                   <div class="column">
                     <input
+                      v-model="question.questionBody"
                       type="text"
                       class="subtitle input has-underline is-editable"
                       placeholder="質問文"
-                      v-model="question.questionBody"
                     >
                   </div>
                   <div class="column is-2 required-question-checkbox is-pulled-right">
                     <label class="checkbox">
                       必須
-                      <input type="checkbox" v-model="question.isRequired">
+                      <input v-model="question.isRequired" type="checkbox">
                     </label>
                   </div>
                 </div>
                 <component
-                  :editMode="'question'"
                   :is="question.component"
+                  :editMode="'question'"
                   :contentProps="question"
                   :questionIndex="index"
                   class="response-body"
@@ -112,6 +112,13 @@ export default {
       lastQuestionId: 0
     }
   },
+  computed: {
+    questions () {
+      return this.questionsProps
+    }
+  },
+  mounted () {
+  },
   methods: {
     swapOrder: common.swapOrder,
     setQuestions (questions) {
@@ -165,13 +172,6 @@ export default {
       this.lastQuestionId -= 1
       return ret
     }
-  },
-  computed: {
-    questions () {
-      return this.questionsProps
-    }
-  },
-  mounted () {
   }
 }
 </script>

@@ -4,28 +4,32 @@
       <div class="tabs">
         <ul>
           <li
-            class="tab"
             v-for="tab in tableFormTabs"
             :key="tab"
+            class="tab"
             :class="{'is-active': tableForm===tab }"
           >
             <a @click="tableForm = tab">{{ tab }}</a>
           </li>
         </ul>
-        <button class="button download" v-on:click="downloadTable" v-if="canDownload">
+        <button
+          v-if="canDownload"
+          class="button download"
+          v-on:click="downloadTable"
+        >
           <span class="ti-download"></span>
         </button>
       </div>
       <div class="scroll-view">
         <!-- table view -->
-        <table class="table is-striped" v-show="tableForm==='view'">
+        <table v-show="tableForm==='view'" class="table is-striped">
           <thead>
             <tr>
               <th
                 v-for="(header, index) in headerLabels.concat(questions)"
                 :key="index"
-                @click="sort(index + 1)"
                 :class="{ active: sorted == index + 1 || sorted == -1 - index }"
+                @click="sort(index + 1)"
               >
                 {{ header }}
                 <span class="arrow" :class="sorted !==index + 1 ? 'asc' : 'dsc'"></span>

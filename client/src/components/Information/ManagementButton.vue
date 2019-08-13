@@ -11,9 +11,9 @@
     </router-link>
     <button
       v-if="type === 'deleteQuestionnaire'"
-      class="button"
       :class="{ 'is-disabled': disabled || processing }"
       :disabled="disabled || processing"
+      class="button"
       @click.prevent="deleteQuestionnaire"
     >
       <span :class="iconClass"></span>

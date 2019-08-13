@@ -2,15 +2,15 @@
   <div>
     <div v-if="canViewResults" class="details is-fullheight">
       <div class="tabs is-centered">
-        <router-link :to="summaryProps.titleLink" id="return-button">
+        <router-link id="return-button" :to="summaryProps.titleLink">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul>
           <li
-            class="tab"
-            :class="{ 'is-active': selectedTab === tab }"
             v-for="(tab, index) in detailTabs"
             :key="index"
+            class="tab"
+            :class="{ 'is-active': selectedTab === tab }"
           >
             <router-link :to="getTabLink(tab)">{{ tab }}</router-link>
           </li>
@@ -52,6 +52,19 @@ export default {
     spreadsheet: Spreadsheet,
     'information-summary': InformationSummary
   },
+  props: {
+  },
+  data () {
+    return {
+      results: [],
+      questions: [],
+      questionData: [],
+      responseData: {},
+      information: {},
+      hasResponded: false,
+      detailTabs: [ 'Spreadsheet', 'Individual' ]
+    }
+  },
   async created () {
     this.getInformation()
       .then(this.getMyResponses)
@@ -67,19 +80,6 @@ export default {
             })
         }
       })
-  },
-  props: {
-  },
-  data () {
-    return {
-      results: [],
-      questions: [],
-      questionData: [],
-      responseData: {},
-      information: {},
-      hasResponded: false,
-      detailTabs: [ 'Spreadsheet', 'Individual' ]
-    }
   },
   methods: {
     getDateStr: common.getDateStr,

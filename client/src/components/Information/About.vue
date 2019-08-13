@@ -12,11 +12,16 @@
       <!-- user lists -->
       <div class="user-lists">
         <div v-for="(userList, key) in userLists" :key="key">
-          <div class="label" @click.prevent="toggleListVisibility(userList.name)">
-            <span :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"></span>
+          <div
+            class="label"
+            @click.prevent="toggleListVisibility(userList.name)"
+          >
+            <span
+              :class="userList.show ? 'ti-angle-down' : 'ti-angle-right'"
+            ></span>
             <span>{{ userList.summary }} ({{ userList.list.length }})</span>
           </div>
-          <p class="has-text-grey user-list" v-if="userList.show">
+          <p v-if="userList.show" class="has-text-grey user-list">
             <span v-for="(user, index) in userList.list" :key="index">
               <span
                 :class="{

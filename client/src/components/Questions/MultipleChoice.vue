@@ -14,25 +14,28 @@
         <div v-for="(option, index) in content.options" :key="option.id" class="is-flex">
           <span class="sort-handle">
             <span
+              :class="{ disabled: isFirstOption(index) }"
               class="ti-angle-up icon"
-              @click="swapOrder(content.options, index, index-1)"
-              :class="{disabled: isFirstOption(index)}"
+              @click="swapOrder(content.options, index, index - 1)"
             ></span>
             <span
+              :class="{ disabled: isLastOption(index) }"
               class="ti-angle-down icon"
-              @click="swapOrder(content.options, index, index+1)"
-              :class="{disabled: isLastOption(index)}"
+              @click="swapOrder(content.options, index, index + 1)"
             ></span>
           </span>
           <span :class="readOnlyBoxClass"></span>
           <input
+            :value="content.options[index].label"
             type="text"
             class="input has-underline option-label is-editable"
-            :value="content.options[index].label"
             @input="setOption(index, $event.target.value)"
-          >
+          />
           <span class="delete-button">
-            <span class="ti-trash icon is-medium" @click="removeOption(index)"></span>
+            <span
+              class="ti-trash icon is-medium"
+              @click="removeOption(index)"
+            ></span>
           </span>
         </div>
       </transition-group>
@@ -46,20 +49,20 @@
 
     <!-- edit response -->
     <div v-if="editMode==='response'">
-      <div class="is-flex" v-for="(option, index) in content.options" :key="index">
+      <div v-for="(option, index) in content.options" :key="index" class="is-flex">
         <label class="option-label">
           <input
-            v-if="content.type==='Checkbox'"
-            type="checkbox"
-            :value="option.label"
+            v-if="content.type === 'Checkbox'"
             v-model="contentProps.isSelected[option.label]"
-          >
-          <input
-            v-if="content.type==='MultipleChoice'"
-            type="radio"
             :value="option.label"
+            type="checkbox"
+          />
+          <input
+            v-if="content.type === 'MultipleChoice'"
             v-model="contentProps.selected"
-          >
+            :value="option.label"
+            type="radio"
+          />
           {{ option.label }}
         </label>
       </div>

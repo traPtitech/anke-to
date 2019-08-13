@@ -3,7 +3,11 @@
     <div>
       <span class="has-text-weight-bold">{{ userList.summary }} ({{ userList.list.length }})</span>
       <a>
-        <span class="ti-pencil" v-if="userList.editable" @click="changeActiveModal(userList)"></span>
+        <span
+          v-if="userList.editable"
+          class="ti-pencil"
+          @click="changeActiveModal(userList)"
+        ></span>
       </a>
     </div>
     <p class="has-text-grey user-list">

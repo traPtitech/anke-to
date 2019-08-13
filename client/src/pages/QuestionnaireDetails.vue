@@ -4,20 +4,20 @@
     <div class="tabs is-centered">
       <ul>
         <li
-          class="tab"
-          :class="{ 'is-active': selectedTab === tab }"
           v-for="(tab, index) in detailTabs"
           :key="index"
+          class="tab"
+          :class="{ 'is-active': selectedTab === tab }"
           @click="selectedTab = tab"
         >
           <a>{{ tab }}</a>
         </li>
       </ul>
       <a
-        @click="isEditing = !isEditing"
+        v-if="showEditButton"
         id="edit-button"
         :class="{ 'is-editing': isEditing }"
-        v-if="showEditButton"
+        @click="isEditing = !isEditing"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -46,8 +46,8 @@
       <edit-nav-bar v-if="isEditing">
         <button
           class="button is-medium send-button"
-          @click="submitQuestionnaire"
           :disabled="!this.submitOk"
+          @click="submitQuestionnaire"
         >
           <span class="ti-check"></span>
           <span>送信</span>
@@ -77,10 +77,6 @@ import TopBarMessage from '@/components/Utils/TopBarMessage'
 
 export default {
   name: 'QuestionnaireDetails',
-  async created () {
-    this.getInformation()
-    this.getQuestions()
-  },
   components: {
     'information-summary': InformationSummary,
     'information': Information,
@@ -106,6 +102,10 @@ export default {
         showMessage: false
       }
     }
+  },
+  async created () {
+    this.getInformation()
+    this.getQuestions()
   },
   methods: {
     alertNetworkError: common.alertNetworkError,

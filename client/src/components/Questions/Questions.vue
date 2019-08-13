@@ -8,15 +8,15 @@
               <p class="subtitle">
                 {{ question.questionBody }}
                 <span
-                  class="ti-alert required-question-icon"
                   v-if="showRequiredIcon(index)"
+                  class="ti-alert required-question-icon"
                 >必須</span>
               </p>
             </div>
             <input-error-message v-if="inputErrors" :inputError="inputErrors[question.questionId]"></input-error-message>
             <component
-              :editMode="editMode"
               :is="question.component"
+              :editMode="editMode"
               :contentProps="question"
               :questionIndex="index"
               class="response-body"
@@ -65,6 +65,13 @@ export default {
     return {
     }
   },
+  computed: {
+    questions () {
+      return this.questionsProps
+    }
+  },
+  mounted () {
+  },
   methods: {
     showRequiredIcon (index) {
       return this.questions[ index ].isRequired
@@ -72,13 +79,6 @@ export default {
     setQuestionContent (index, label, value) {
       this.$emit('set-question-content', index, label, value)
     }
-  },
-  computed: {
-    questions () {
-      return this.questionsProps
-    }
-  },
-  mounted () {
   }
 }
 </script>

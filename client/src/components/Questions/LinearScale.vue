@@ -41,24 +41,24 @@
         <span>{{ content.scaleRange.left }}</span>
         <span>
           <input
+            :value="content.scaleLabels.left"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
-            :value="content.scaleLabels.left"
             @input="setScaleLabels('left', $event.target.value)"
-          >
+          />
         </span>
       </div>
       <div class="scale-label-edit is-flex">
         <span>{{ content.scaleRange.right }}</span>
         <span>
           <input
+            :value="content.scaleLabels.right"
             type="text"
             placeholder="ラベル (任意)"
             class="input has-underline is-editable"
-            :value="content.scaleLabels.right"
             @input="setScaleLabels('right', $event.target.value)"
-          >
+          />
         </span>
       </div>
     </div>
@@ -71,7 +71,11 @@
           <span v-for="(num, index) in scaleArray" :key="index" class="scale-num has-text-centered">
             <label>
               {{ num }}
-              <input type="radio" :value="num" v-model="contentProps.selected">
+              <input
+                v-model="contentProps.selected"
+                :value="num"
+                type="radio"
+              />
             </label>
           </span>
         </div>

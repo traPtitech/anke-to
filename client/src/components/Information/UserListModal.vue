@@ -5,9 +5,13 @@
       <header class="modal-card-head">
         <p class="modal-card-title">{{ activeModal.summary }} ({{ numberOfSelectedUsers }})</p>
         <span
+          :class="{ disabled: !confirmOk }"
           class="ti-check icon-button round confirm"
           @click.prevent="confirmList"
-          :class="{ disabled: !confirmOk }"
+        ></span>
+        <span
+          class="ti-close icon-button round close"
+          @click.prevent="disableModal"
         ></span>
         <span class="ti-close icon-button round close" @click.prevent="disableModal"></span>
       </header>
@@ -18,7 +22,7 @@
 
         <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">
-          <input type="checkbox" v-model="isUserTrap">
+          <input v-model="isUserTrap" type="checkbox">
           traP
         </label>
 
@@ -26,10 +30,10 @@
         <div class="tabs is-centered">
           <ul>
             <li
-              class="tab"
-              :class="{ 'is-active': selectedGroupType === tab }"
               v-for="(tab, index) in tabs"
               :key="index"
+              :class="{ 'is-active': selectedGroupType === tab }"
+              class="tab"
               @click="selectedGroupType = tab"
             >
               <a>{{ tab }}</a>
@@ -57,7 +61,7 @@
             <!-- not user: traP -->
             <span v-for="(userName, index) in group.activeMembers" :key="index">
               <label v-if="!isUserTrap && userName !== getMyTraqId" class="checkbox">
-                <input type="checkbox" v-model="usersIsSelected[userName]">
+                <input v-model="usersIsSelected[userName]" type="checkbox">
                 <span>{{ userName }}</span>
               </label>
 

@@ -8,20 +8,20 @@
             aria-haspopup="true"
             aria-controls="dropdown-menu"
             @click="
-              DropdownIsActive.targetedOption = false;
-              DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder;
+              DropdownIsActive.targetedOption = false
+              DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder
             "
           >
             <p>並び替え</p>
             <span class="ti-angle-down"></span>
           </button>
         </div>
-        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+        <div id="dropdown-menu" class="dropdown-menu" role="menu">
           <div
-            class="dropdown-content"
             v-for="(order, index) in sortOrders"
             :key="index"
             :class="{ 'is-selected': order.opt === sortOrder }"
+            class="dropdown-content"
             @click="
               changeSortOrder(order.opt);
               DropdownIsActive.sortOrder = false;
@@ -38,20 +38,20 @@
             aria-haspopup="true"
             aria-controls="dropdown-menu"
             @click="
-              DropdownIsActive.sortOrder = false;
-              DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption;
+              DropdownIsActive.sortOrder = false
+              DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption
             "
           >
             <p>フィルター</p>
             <span class="ti-angle-down"></span>
           </button>
         </div>
-        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+        <div id="dropdown-menu" class="dropdown-menu" role="menu">
           <div
-            class="dropdown-content"
             v-for="(option, index) in targetedOptions"
             :key="index"
             :class="{ 'is-selected': option.opt === targetedOption }"
+            class="dropdown-content"
             @click="
               changetargetedOption(option.opt);
               DropdownIsActive.targetedOption = false;

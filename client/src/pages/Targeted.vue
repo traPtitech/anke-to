@@ -5,7 +5,7 @@
         <div class="card-header-title subtitle">回答対象になっているアンケート</div>
       </header>
       <div class="card-content">
-        <article class="post" v-for="(questionnaire, index) in questionnaires" :key="index">
+        <article v-for="(questionnaire, index) in questionnaires" :key="index" class="post">
           <div>
             <div class="questionnaire-title">
               <span

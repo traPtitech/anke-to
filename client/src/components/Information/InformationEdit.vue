@@ -11,9 +11,9 @@
                   <div class="wrapper">
                     <input
                       :value="information.title"
-                      @input="$set(information, 'title', $event.target.value)"
                       class="input"
                       placeholder="タイトル"
+                      @input="$set(information, 'title', $event.target.value)"
                     />
                   </div>
                 </div>
@@ -32,14 +32,14 @@
                 <div class="wrapper editable">
                   <span class="label">回答期限 :</span>
                   <input
+                    v-model="resTimeLimitEditStr"
                     class="input"
                     type="datetime-local"
-                    v-model="resTimeLimitEditStr"
                     :disabled="noTimeLimit"
                   >
                 </div>
                 <label class="checkbox is-pulled-right">
-                  <input type="checkbox" v-model="noTimeLimit">
+                  <input v-model="noTimeLimit" type="checkbox">
                   期限なし
                 </label>
               </div>
@@ -80,11 +80,11 @@
                   >(トップページに表示してほしいアンケートは、対象者を traP にしてください)</span>
                   <div class="user-list">
                     <label>
-                      <input type="radio" v-model="targetedList" :value="['traP']">
+                      <input v-model="targetedList" type="radio" :value="['traP']">
                       traP
                     </label>
                     <label>
-                      <input type="radio" v-model="targetedList" :value="[]">
+                      <input v-model="targetedList" type="radio" :value="[]">
                       なし
                     </label>
                   </div>

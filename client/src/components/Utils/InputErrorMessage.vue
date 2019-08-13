@@ -1,5 +1,5 @@
 <template>
-  <div class="message is-warning" v-show="inputError.isError">
+  <div v-show="inputError.isError" class="message is-warning">
     <p class="message-header error-message">{{ inputError.message }}</p>
   </div>
 </template>

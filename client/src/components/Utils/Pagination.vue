@@ -12,8 +12,8 @@
       </li>
       <li v-for="pageNum in pages" :key="pageNum">
         <router-link
-          class="pagination-link"
           v-if="pageNum"
+          class="pagination-link"
           :class="{'is-current' : pageNum===currentPage}"
           :to="getPageLink(pageNum)"
         >{{ pageNum }}</router-link>

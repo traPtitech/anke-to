@@ -15,19 +15,19 @@
       <div class="new-response-link-panel">
         <input
           id="new-response-link"
+          ref="link"
+          :value="newResponseLink"
           class="input"
           type="text"
-          :value="newResponseLink"
-          ref="link"
-          @click="$refs.link.select()"
           readonly
+          @click="$refs.link.select()"
         />
         <span class="button" @click="copyNewResponseLink">
           <span class="ti-clipboard"></span>
         </span>
       </div>
       <transition name="fade">
-        <p class="copy-message" v-if="copyMessage.showMessage">
+        <p v-if="copyMessage.showMessage" class="copy-message">
           {{ copyMessage.message }}
         </p>
       </transition>

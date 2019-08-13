@@ -7,17 +7,17 @@
       class="is-fullheight details"
     >
       <div class="tabs is-centered">
-        <router-link :to="titleLink" id="return-button">
+        <router-link id="return-button" :to="titleLink">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul></ul>
         <a
-          id="edit-button"
-          :class="{ 'is-editing': isEditing }"
-          @click.prevent="isEditing = !isEditing"
           v-if="
             !isNewResponse && information.res_time_limit && !timeLimitExceeded
           "
+          id="edit-button"
+          :class="{ 'is-editing': isEditing }"
+          @click.prevent="isEditing = !isEditing"
         >
           <span class="ti-check-box"></span>
         </a>
@@ -34,7 +34,11 @@
         ></questions>
       </div>
       <edit-nav-bar v-if="isEditing">
-        <button class="button is-medium send-button" @click="submitResponse" :disabled="!submitOk">
+        <button
+          :disabled="!submitOk"
+          class="button is-medium send-button"
+          @click="submitResponse"
+        >
           <span class="ti-check"></span>
           <span>送信</span>
         </button>
