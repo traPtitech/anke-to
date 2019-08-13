@@ -33,18 +33,18 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'TopNavbar',
-  created () {
-  },
   props: {
     isSideMenuActive: {
       type: Boolean,
       required: true
     }
   },
-  methods: {
-  },
   computed: {
     ...mapGetters([ 'getMe', 'getMyTraqId' ])
+  },
+  created () {
+  },
+  methods: {
   }
 }
 </script>

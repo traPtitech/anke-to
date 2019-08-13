@@ -82,6 +82,19 @@ export default {
       }
     }
   },
+  computed: {
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return new Date(this.res_time_limit).getTime() < new Date().getTime()
+    },
+    newResponseLink () {
+      return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId
+    }
+  },
+  watch: {
+  },
+  mounted () {
+  },
   methods: {
     copyNewResponseLink () {
       let link = document.querySelector('#new-response-link')
@@ -108,19 +121,6 @@ export default {
         showMessage: false
       }
     }
-  },
-  computed: {
-    timeLimitExceeded () {
-      // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.res_time_limit).getTime() < new Date().getTime()
-    },
-    newResponseLink () {
-      return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId
-    }
-  },
-  watch: {
-  },
-  mounted () {
   }
 }
 </script>

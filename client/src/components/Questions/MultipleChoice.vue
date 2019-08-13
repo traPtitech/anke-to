@@ -99,6 +99,25 @@ export default {
       newId: -1
     }
   },
+  computed: {
+    content () {
+      return this.contentProps
+    },
+    readOnlyBoxClass () {
+      switch (this.content.type) {
+        case 'Checkbox':
+          return 'readonly-checkbox'
+        case 'MultipleChoice':
+          return 'readonly-radiobutton'
+        default:
+          return undefined
+      }
+    }
+  },
+  watch: {
+  },
+  mounted () {
+  },
   methods: {
     swapOrder: common.swapOrder,
     setContent: question.setContent,
@@ -137,25 +156,6 @@ export default {
       newOptions.splice(index, 1)
       this.setContent('options', newOptions)
     }
-  },
-  computed: {
-    content () {
-      return this.contentProps
-    },
-    readOnlyBoxClass () {
-      switch (this.content.type) {
-        case 'Checkbox':
-          return 'readonly-checkbox'
-        case 'MultipleChoice':
-          return 'readonly-radiobutton'
-        default:
-          return undefined
-      }
-    }
-  },
-  watch: {
-  },
-  mounted () {
   }
 }
 </script>

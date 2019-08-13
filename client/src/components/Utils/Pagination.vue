@@ -59,20 +59,6 @@ export default {
       paginationWidth: 1
     }
   },
-  methods: {
-    getPageLink (pageName) {
-      let ret = Object.assign({}, this.defaultPageLink)
-      ret.query = typeof this.defaultPageLink.query === 'undefined' ? {} : Object.assign({}, this.defaultPageLink.query)
-      if (this.range && pageName === 'first') {
-        ret.query.page = this.range.first
-      } else if (this.range && pageName === 'last') {
-        ret.query.page = this.range.last
-      } else {
-        ret.query.page = pageName
-      }
-      return ret
-    }
-  },
   computed: {
     pages () {
       let ret = []
@@ -99,6 +85,20 @@ export default {
     }
   },
   mounted () {
+  },
+  methods: {
+    getPageLink (pageName) {
+      let ret = Object.assign({}, this.defaultPageLink)
+      ret.query = typeof this.defaultPageLink.query === 'undefined' ? {} : Object.assign({}, this.defaultPageLink.query)
+      if (this.range && pageName === 'first') {
+        ret.query.page = this.range.first
+      } else if (this.range && pageName === 'last') {
+        ret.query.page = this.range.last
+      } else {
+        ret.query.page = pageName
+      }
+      return ret
+    }
   }
 }
 </script>

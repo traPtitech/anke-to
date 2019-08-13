@@ -56,8 +56,6 @@ export default {
     return {
     }
   },
-  methods: {
-  },
   computed: {
     content () {
       return this.contentProps
@@ -73,6 +71,8 @@ export default {
     }
   },
   mounted () {
+  },
+  methods: {
   }
 }
 </script>

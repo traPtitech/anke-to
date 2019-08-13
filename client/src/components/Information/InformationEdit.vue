@@ -136,10 +136,6 @@ import ManagementButton from '@/components/Information/ManagementButton'
 
 export default {
   name: 'InformationEdit',
-  created () {
-    // this.getUsers()
-    // .then(this.getGroupTypes)
-  },
   components: {
     'input-error-message': InputErrorMessage,
     'user-list': UserList,
@@ -164,66 +160,6 @@ export default {
       users: {},
       groupTypes: {}
       // usersIsSelected: {}
-    }
-  },
-  methods: {
-    getDateStr (str) {
-      return common.getDateStr(str)
-    },
-    setInformation (newInformation) {
-      this.$emit('set-data', 'information', newInformation)
-    },
-    changeActiveModal (obj) {
-      this.activeModal = obj
-      this.isModalActive = true
-    },
-    disableModal () {
-      this.isModalActive = false
-    },
-    setUserList (listName, newList) {
-      let newInformation = this.information
-      newInformation[ listName ] = newList
-      this.setInformation(newInformation)
-    },
-    getUsers () {
-      return axios
-        .get('https://q.trap.jp/api/1.0/users')
-        .then(res => {
-          res.data.forEach(user => {
-            if (user.accountStatus === 1) {
-              this.users[ user.userId ] = user
-            }
-          })
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    },
-    getGroupTypes () {
-      return axios
-        .get('https://q.trap.jp/api/1.0/groups')
-        .then(res => {
-          let tmp = {}
-          res.data.forEach(group => {
-            if (typeof tmp[ group.type ] === 'undefined') {
-              tmp[ group.type ] = []
-            }
-            // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
-            group.activeMembers =
-              group.members.filter(userId => typeof this.users[ userId ] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
-                .map(userId => this.users[ userId ].name)
-                .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
-            tmp[ group.type ].push(group)
-          })
-
-          // typeごとに、group名をソートしたものをgroupTypesに入れる
-          Object.keys(tmp).forEach(type => {
-            this.$set(this.groupTypes, type, {})
-            tmp[ type ]
-              .sort((a, b) => { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) })
-          })
-          this.groupTypes = tmp
-        })
     }
   },
   computed: {
@@ -302,7 +238,71 @@ export default {
   },
   watch: {
   },
+  created () {
+    // this.getUsers()
+    // .then(this.getGroupTypes)
+  },
   mounted () {
+  },
+  methods: {
+    getDateStr (str) {
+      return common.getDateStr(str)
+    },
+    setInformation (newInformation) {
+      this.$emit('set-data', 'information', newInformation)
+    },
+    changeActiveModal (obj) {
+      this.activeModal = obj
+      this.isModalActive = true
+    },
+    disableModal () {
+      this.isModalActive = false
+    },
+    setUserList (listName, newList) {
+      let newInformation = this.information
+      newInformation[ listName ] = newList
+      this.setInformation(newInformation)
+    },
+    getUsers () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/users')
+        .then(res => {
+          res.data.forEach(user => {
+            if (user.accountStatus === 1) {
+              this.users[ user.userId ] = user
+            }
+          })
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    getGroupTypes () {
+      return axios
+        .get('https://q.trap.jp/api/1.0/groups')
+        .then(res => {
+          let tmp = {}
+          res.data.forEach(group => {
+            if (typeof tmp[ group.type ] === 'undefined') {
+              tmp[ group.type ] = []
+            }
+            // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
+            group.activeMembers =
+              group.members.filter(userId => typeof this.users[ userId ] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
+                .map(userId => this.users[ userId ].name)
+                .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
+            tmp[ group.type ].push(group)
+          })
+
+          // typeごとに、group名をソートしたものをgroupTypesに入れる
+          Object.keys(tmp).forEach(type => {
+            this.$set(this.groupTypes, type, {})
+            tmp[ type ]
+              .sort((a, b) => { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) })
+          })
+          this.groupTypes = tmp
+        })
+    }
   }
 }
 </script>

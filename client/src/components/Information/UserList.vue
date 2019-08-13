@@ -38,13 +38,13 @@ export default {
     return {
     }
   },
-  methods: {
-  },
   computed: {
   },
   watch: {
   },
   mounted () {
+  },
+  methods: {
   }
 }
 </script>

@@ -97,6 +97,72 @@ export default {
       tableFormTabs: [ 'view', 'markdown', 'csv' ]
     }
   },
+  computed: {
+    questionnaireId () {
+      return this.$route.params.id
+    },
+    headerLabels () {
+      let ret = []
+      this.headers.forEach(header => {
+        ret.push(header.label)
+      })
+      return ret
+    },
+    markdownTable () {
+      // results の表を markdown 形式にしたものを返す
+      let ret = ''
+
+      // 項目の行
+      ret += this.arrayToMarkdown(this.headerLabels.concat(this.questions))
+
+      // 2行目
+      ret += '|'
+      for (let i = 0; i < this.results.length + this.headers.length; i++) {
+        ret += ' - |'
+      }
+      ret += '\n'
+
+      // 各回答の行
+      for (let i = 0; i < this.results.length; i++) {
+        let arr = []
+        const result = this.results[ i ]
+        this.headers.forEach(header => {
+          arr.push(result[ header.name ])
+        })
+        result.responseBody.forEach(body => {
+          arr.push(this.getResponse(body))
+        })
+
+        ret += this.arrayToMarkdown(arr)
+      }
+
+      ret = ret.slice(0, -1) // 末尾の改行を削除
+
+      return ret
+    },
+    csvTable () {
+      let csv = '\ufeff'
+      this.headerLabels.concat(this.questions).forEach(header => {
+        if (csv !== '\ufeff') {
+          csv += ','
+        }
+        csv += '"' + header + '"'
+      })
+      csv += '\n'
+      this.results.forEach(result => {
+        csv += result.traqId + ',' + result.submittedAt
+        result.responseBody.forEach(response => {
+          csv += ',' + '"' + this.getResponse(response) + '"'
+        })
+        csv += '\n'
+      })
+      return csv
+    },
+    canDownload () {
+      return this.tableForm === 'markdown' || this.tableForm === 'csv'
+    }
+  },
+  mounted () { },
   methods: {
     getResponse (body) {
       switch (body.question_type) {
@@ -163,73 +229,7 @@ export default {
       ret += '\n'
       return ret
     }
-  },
-  computed: {
-    questionnaireId () {
-      return this.$route.params.id
-    },
-    headerLabels () {
-      let ret = []
-      this.headers.forEach(header => {
-        ret.push(header.label)
-      })
-      return ret
-    },
-    markdownTable () {
-      // results の表を markdown 形式にしたものを返す
-      let ret = ''
-
-      // 項目の行
-      ret += this.arrayToMarkdown(this.headerLabels.concat(this.questions))
-
-      // 2行目
-      ret += '|'
-      for (let i = 0; i < this.results.length + this.headers.length; i++) {
-        ret += ' - |'
-      }
-      ret += '\n'
-
-      // 各回答の行
-      for (let i = 0; i < this.results.length; i++) {
-        let arr = []
-        const result = this.results[ i ]
-        this.headers.forEach(header => {
-          arr.push(result[ header.name ])
-        })
-        result.responseBody.forEach(body => {
-          arr.push(this.getResponse(body))
-        })
-
-        ret += this.arrayToMarkdown(arr)
-      }
-
-      ret = ret.slice(0, -1) // 末尾の改行を削除
-
-      return ret
-    },
-    csvTable () {
-      let csv = '\ufeff'
-      this.headerLabels.concat(this.questions).forEach(header => {
-        if (csv !== '\ufeff') {
-          csv += ','
-        }
-        csv += '"' + header + '"'
-      })
-      csv += '\n'
-      this.results.forEach(result => {
-        csv += result.traqId + ',' + result.submittedAt
-        result.responseBody.forEach(response => {
-          csv += ',' + '"' + this.getResponse(response) + '"'
-        })
-        csv += '\n'
-      })
-      return csv
-    },
-    canDownload () {
-      return this.tableForm === 'markdown' || this.tableForm === 'csv'
-    }
-  },
-  mounted () { }
+  }
 }
 </script>
 

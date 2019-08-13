@@ -47,14 +47,6 @@ export default {
   name: 'Mypage',
   components: {
   },
-  async created () {
-    axios
-      .get('/users/me/targeted')
-      .then(resp => {
-        this.questionnaires = resp.data
-        this.getStatus()
-      })
-  },
   props: {
   },
   data () {
@@ -64,6 +56,14 @@ export default {
     }
   },
   computed: {
+  },
+  async created () {
+    axios
+      .get('/users/me/targeted')
+      .then(resp => {
+        this.questionnaires = resp.data
+        this.getStatus()
+      })
   },
   methods: {
     getDateStr (str) {

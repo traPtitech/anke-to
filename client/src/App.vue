@@ -29,8 +29,6 @@ export default {
     'top-navbar': TopNavbar,
     'side-menu': SideMenu
   },
-  async created () {
-  },
   data () {
     return {
       isSideMenuActive: false,
@@ -38,6 +36,8 @@ export default {
     }
   },
   computed: {
+  },
+  async created () {
   },
   methods: {
     toggleSideMenu () {

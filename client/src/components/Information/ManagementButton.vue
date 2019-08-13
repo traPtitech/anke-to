@@ -61,32 +61,6 @@ export default {
       }
     }
   },
-  methods: {
-    deleteQuestionnaire () {
-      if (this.disabled || this.processing) return
-      if (window.confirm('アンケートを削除しますか？')) {
-        if (this.isNewQuestionnaire) {
-          this.$router.push('/administrates')
-        } else {
-          this.processing = true
-          axios
-            .delete('/questionnaires/' + this.questionnaireId)
-            .then(() => {
-              this.processing = false
-              this.$router.push('/administrates')
-              // アンケートを削除したら、Administratesページに戻る
-            })
-            .catch(error => {
-              this.processing = false
-              console.log(error)
-              this.alertNetworkError()
-            })
-            .finally(() => {
-            })
-        }
-      }
-    }
-  },
   computed: {
     iconClass () {
       return this.iconClasses[ this.type ]
@@ -115,6 +89,32 @@ export default {
   watch: {
   },
   mounted () {
+  },
+  methods: {
+    deleteQuestionnaire () {
+      if (this.disabled || this.processing) return
+      if (window.confirm('アンケートを削除しますか？')) {
+        if (this.isNewQuestionnaire) {
+          this.$router.push('/administrates')
+        } else {
+          this.processing = true
+          axios
+            .delete('/questionnaires/' + this.questionnaireId)
+            .then(() => {
+              this.processing = false
+              this.$router.push('/administrates')
+              // アンケートを削除したら、Administratesページに戻る
+            })
+            .catch(error => {
+              this.processing = false
+              console.log(error)
+              this.alertNetworkError()
+            })
+            .finally(() => {
+            })
+        }
+      }
+    }
   }
 }
 </script>

@@ -72,17 +72,6 @@ export default {
     'information-summary': InformationSummary,
     'top-bar-message': TopBarMessage
   },
-  async created () {
-    if (this.isNewResponse) {
-      this.getQuestions()
-      this.getInformation()
-    } else {
-      this.getResponseData()
-        .then(this.getInformation)
-        .then(this.getQuestions)
-        .then(this.setResponsesToQuestions)
-    }
-  },
   props: {
     isNewResponse: {
       type: Boolean,
@@ -97,6 +86,112 @@ export default {
       message: {
         showMessage: false
       }
+    }
+  },
+  computed: {
+    ...mapGetters([ 'getMyTraqId' ]),
+    responseId () {
+      return this.isNewResponse ? undefined : Number(this.$route.params.id)
+    },
+    questionnaireId () {
+      if (this.isNewResponse) {
+        return Number(this.$route.params.questionnaireId)
+      } else if (!this.responseData) {
+        return undefined
+      } else {
+        return this.responseData.questionnaireID
+      }
+    },
+    isEditing: {
+      get: function () {
+        if (this.isNewResponse || this.$route.hash === '#edit') {
+          return true
+        }
+        return false
+      },
+      set: function (newBool) {
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'ResponseDetails',
+          params: { id: this.responseId },
+          hash: newBool ? '#edit' : undefined
+        }
+        router.push(newRoute)
+      }
+    },
+    submitOk () {
+      for (const error of Object.keys(this.inputErrors)) {
+        if (this.inputErrors[ error ].isError) {
+          return false
+        }
+      }
+      return true
+    },
+    timeLimitExceeded () {
+      // 回答期限を過ぎていた場合はtrueを返す
+      return this.information.res_time_limit && new Date(this.information.res_time_limit).getTime() < new Date().getTime()
+    },
+    titleLink () {
+      return '/questionnaires/' + this.questionnaireId
+    },
+    responseIconClass () {
+      if (this.isNewResponse) {
+        return undefined
+      }
+      switch (this.responseData.submitted_at) {
+        case 'NULL':
+          return 'ti-save'
+        default:
+          return 'ti-check'
+      }
+    },
+    summaryProps () {
+      const ret = {
+        title: this.information.title,
+        titleLink: this.titleLink,
+        description: this.information.description,
+        // timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
+        responseIconClass: this.responseIconClass,
+        responseDetails: {
+          timeLabel: '更新日時',
+          time: this.getDateStr(this.responseData.modified_at),
+          respondent: this.getMyTraqId
+        }
+      }
+      return ret
+    },
+    inputErrors () {
+      let ret = {}
+      for (const question of this.questions) {
+        ret[ question.questionId ] = {
+          isError: question.isRequired && !this.hasAnswered(question),
+          message: 'この質問は回答必須です'
+        }
+      }
+      return ret
+    }
+  },
+  watch: {
+    $route: function (newRoute, oldRoute) {
+      if (newRoute.params.id !== oldRoute.params.id) {
+        this.resetMessage()
+        this.getResponseData()
+          .then(this.getQuestionnaireData)
+          .then(this.getQuestions)
+          .then(this.setResponsesToQuestions)
+      }
+    }
+  },
+  async created () {
+    if (this.isNewResponse) {
+      this.getQuestions()
+      this.getInformation()
+    } else {
+      this.getResponseData()
+        .then(this.getInformation)
+        .then(this.getQuestions)
+        .then(this.setResponsesToQuestions)
     }
   },
   methods: {
@@ -283,103 +378,6 @@ export default {
         showMessage: false
       }
     }
-  },
-  computed: {
-    ...mapGetters([ 'getMyTraqId' ]),
-    responseId () {
-      return this.isNewResponse ? undefined : Number(this.$route.params.id)
-    },
-    questionnaireId () {
-      if (this.isNewResponse) {
-        return Number(this.$route.params.questionnaireId)
-      } else if (!this.responseData) {
-        return undefined
-      } else {
-        return this.responseData.questionnaireID
-      }
-    },
-    isEditing: {
-      get: function () {
-        if (this.isNewResponse || this.$route.hash === '#edit') {
-          return true
-        }
-        return false
-      },
-      set: function (newBool) {
-        // newBool : 閲覧 -> 編集
-        // !newBool : 編集 -> 閲覧
-        const newRoute = {
-          name: 'ResponseDetails',
-          params: { id: this.responseId },
-          hash: newBool ? '#edit' : undefined
-        }
-        router.push(newRoute)
-      }
-    },
-    submitOk () {
-      for (const error of Object.keys(this.inputErrors)) {
-        if (this.inputErrors[ error ].isError) {
-          return false
-        }
-      }
-      return true
-    },
-    timeLimitExceeded () {
-      // 回答期限を過ぎていた場合はtrueを返す
-      return this.information.res_time_limit && new Date(this.information.res_time_limit).getTime() < new Date().getTime()
-    },
-    titleLink () {
-      return '/questionnaires/' + this.questionnaireId
-    },
-    responseIconClass () {
-      if (this.isNewResponse) {
-        return undefined
-      }
-      switch (this.responseData.submitted_at) {
-        case 'NULL':
-          return 'ti-save'
-        default:
-          return 'ti-check'
-      }
-    },
-    summaryProps () {
-      const ret = {
-        title: this.information.title,
-        titleLink: this.titleLink,
-        description: this.information.description,
-        // timeLimit: this.getTimeLimitStr(this.information.res_time_limit),
-        responseIconClass: this.responseIconClass,
-        responseDetails: {
-          timeLabel: '更新日時',
-          time: this.getDateStr(this.responseData.modified_at),
-          respondent: this.getMyTraqId
-        }
-      }
-      return ret
-    },
-    inputErrors () {
-      let ret = {}
-      for (const question of this.questions) {
-        ret[ question.questionId ] = {
-          isError: question.isRequired && !this.hasAnswered(question),
-          message: 'この質問は回答必須です'
-        }
-      }
-      return ret
-    }
-  },
-  watch: {
-    $route: function (newRoute, oldRoute) {
-      if (newRoute.params.id !== oldRoute.params.id) {
-        this.resetMessage()
-        this.getResponseData()
-          .then(this.getQuestionnaireData)
-          .then(this.getQuestions)
-          .then(this.setResponsesToQuestions)
-      }
-    }
-  },
-  mounted () {
   }
 }
 </script>

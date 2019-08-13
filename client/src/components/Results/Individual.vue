@@ -16,8 +16,6 @@ import Pagination from '@/components/Utils/Pagination'
 
 export default {
   name: 'Individual',
-  async created () {
-  },
   components: {
     'questions': Questions,
     'pagination': Pagination
@@ -44,8 +42,6 @@ export default {
     return {
     }
   },
-  methods: {
-  },
   computed: {
     currentPage () {
       return this.$route.query.page ? Number(this.$route.query.page) : this.range.first
@@ -65,6 +61,10 @@ export default {
     }
   },
   watch: {
+  },
+  async created () {
+  },
+  methods: {
   }
 }
 </script>

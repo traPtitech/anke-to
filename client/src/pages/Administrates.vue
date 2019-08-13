@@ -45,12 +45,6 @@ import common from '@/bin/common'
 export default {
   name: 'Administrates',
   components: {},
-  async created () {
-    axios.get('/users/me/administrates').then(resp => {
-      this.questionnaires = resp.data
-      this.getStatus()
-    })
-  },
   props: {
   },
   data () {
@@ -67,6 +61,12 @@ export default {
     }
   },
   computed: {},
+  async created () {
+    axios.get('/users/me/administrates').then(resp => {
+      this.questionnaires = resp.data
+      this.getStatus()
+    })
+  },
   methods: {
     getDateStr (str) {
       return common.getDateStr(str)

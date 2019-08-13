@@ -112,6 +112,16 @@ export default {
     return {
     }
   },
+  computed: {
+    content () {
+      return this.contentProps
+    },
+    scaleArray () {
+      return this.progressiveArray(this.content.scaleRange.left, this.content.scaleRange.right)
+    }
+  },
+  mounted () {
+  },
   methods: {
     setContent: question.setContent,
     setScaleRange (side, value) {
@@ -135,16 +145,6 @@ export default {
       }
       return arr
     }
-  },
-  computed: {
-    content () {
-      return this.contentProps
-    },
-    scaleArray () {
-      return this.progressiveArray(this.content.scaleRange.left, this.content.scaleRange.right)
-    }
-  },
-  mounted () {
   }
 }
 </script>

@@ -55,9 +55,6 @@ export default {
     management: Management,
     'my-responses': MyResponses
   },
-  created () {
-    this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
-  },
   props: {
     informationProps: {
       type: Object,
@@ -71,17 +68,6 @@ export default {
       isModalActive: false,
       newQuestionnaire: false,
       userLists: {}
-    }
-  },
-  methods: {
-    createResponse () {
-      router.push({
-        name: 'NewResponseDetails',
-        params: { questionnaireId: this.questionnaireId }
-      })
-    },
-    setHasResponded (bool) {
-      this.hasResponded = bool
     }
   },
   computed: {
@@ -107,7 +93,21 @@ export default {
       this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
     }
   },
+  created () {
+    this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
+  },
   mounted () {
+  },
+  methods: {
+    createResponse () {
+      router.push({
+        name: 'NewResponseDetails',
+        params: { questionnaireId: this.questionnaireId }
+      })
+    },
+    setHasResponded (bool) {
+      this.hasResponded = bool
+    }
   }
 }
 </script>

@@ -87,24 +87,6 @@ export default {
       }
     }
   },
-  methods: {
-    getDateStr: common.getDateStr,
-    listValidator (listObj) {
-      if (typeof listObj === 'undefined') return true
-      if (!Array.isArray(listObj.list)) return false
-      listObj.list.forEach(item => {
-        if (typeof item !== 'string') return false
-      })
-
-      return typeof listObj.editable === 'boolean' &&
-        typeof listObj.name === 'string' &&
-        typeof listObj.show === 'boolean' &&
-        typeof listObj.summary === 'string'
-    },
-    toggleListVisibility (listName) {
-      this.userLists[ listName ].show = !this.userLists[ listName ].show
-    }
-  },
   computed: {
     ...mapGetters([ 'getMyTraqId' ]),
     resSharedToLabel () {
@@ -123,9 +105,26 @@ export default {
       }
     }
   },
-  watch: {
-  },
-  mounted () {
+  watch: {},
+  methods: {
+    getDateStr: common.getDateStr,
+    listValidator(listObj) {
+      if (typeof listObj === 'undefined') return true
+      if (!Array.isArray(listObj.list)) return false
+      listObj.list.forEach(item => {
+        if (typeof item !== 'string') return false
+      })
+
+      return (
+        typeof listObj.editable === 'boolean' &&
+        typeof listObj.name === 'string' &&
+        typeof listObj.show === 'boolean' &&
+        typeof listObj.summary === 'string'
+      )
+    },
+    toggleListVisibility(listName) {
+      this.userLists[listName].show = !this.userLists[listName].show
+    }
   }
 }
 </script>

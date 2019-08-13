@@ -113,9 +113,6 @@ export default {
   components: {
     'pagination': Pagination
   },
-  async created () {
-    this.getQuestionnaires()
-  },
   props: {
   },
   data () {
@@ -201,6 +198,14 @@ export default {
       }
     }
   },
+  watch: {
+    $route: function (newRoute) {
+      this.getQuestionnaires()
+    }
+  },
+  async created () {
+    this.getQuestionnaires()
+  },
   methods: {
     getDateStr (str) {
       return common.getDateStr(str)
@@ -227,11 +232,6 @@ export default {
       this.getQuestionnaires()
     }
 
-  },
-  watch: {
-    $route: function (newRoute) {
-      this.getQuestionnaires()
-    }
   }
 }
 </script>

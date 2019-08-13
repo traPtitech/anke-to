@@ -49,11 +49,6 @@ export default {
   name: 'Responses',
   components: {
   },
-  async created () {
-    axios.get('/users/me/responses').then(resp => {
-      this.responses = resp.data
-    })
-  },
   props: {
   },
   data () {
@@ -63,6 +58,11 @@ export default {
     }
   },
   computed: {},
+  async created () {
+    axios.get('/users/me/responses').then(resp => {
+      this.responses = resp.data
+    })
+  },
   methods: {
     getDateStr (str) {
       return common.getDateStr(str)

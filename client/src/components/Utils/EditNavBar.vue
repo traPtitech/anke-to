@@ -34,14 +34,14 @@ export default {
     return {
     }
   },
+  computed: {
+  },
+  mounted () {
+  },
   methods: {
     atClick (func) {
       this.$emit(func)
     }
-  },
-  computed: {
-  },
-  mounted () {
   }
 }
 </script>

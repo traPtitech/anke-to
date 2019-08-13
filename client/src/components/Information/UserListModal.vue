@@ -89,10 +89,6 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'UserListModal',
-  created () {
-    this.setUsersIsSelected(this.users)
-    this.selectedTab = Object.keys(this.groupTypes)[ 0 ]
-  },
   components: {
     'input-error-message': InputErrorMessage
   },
@@ -123,45 +119,6 @@ export default {
       traq: null,
       selectedGroupType: 'grade',
       usersIsSelected: {}
-    }
-  },
-  methods: {
-    disableModal () {
-      this.$emit('disable-modal')
-    },
-    confirmList () {
-      if (this.confirmOk) {
-        let selectedUsersList = []
-        Object.keys(this.usersIsSelected).forEach(userName => {
-          if (this.usersIsSelected[ userName ]) {
-            selectedUsersList.push(userName)
-          }
-        })
-        this.$emit('set-user-list', this.activeModal.name, selectedUsersList)
-        this.disableModal()
-      }
-    },
-    selectAllInGroup (type, index) {
-      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
-        this.usersIsSelected[ userName ] = true
-      })
-    },
-    removeAllInGroup (type, index) {
-      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
-        this.usersIsSelected[ userName ] = false
-      })
-    },
-    setUsersIsSelected (users) {
-      let tmp = {}
-      if (Object.keys(users).length > 0 && this.information.administrators && this.information.targets) {
-        Object.keys(users).forEach(userId => {
-          tmp[ users[ userId ].name ] = false
-        })
-        this.information[ this.activeModal.name ].forEach(userName => {
-          tmp[ userName ] = true
-        })
-      }
-      this.usersIsSelected = tmp
     }
   },
   computed: {
@@ -215,7 +172,50 @@ export default {
   },
   watch: {
   },
+  created () {
+    this.setUsersIsSelected(this.users)
+    this.selectedTab = Object.keys(this.groupTypes)[ 0 ]
+  },
   mounted () {
+  },
+  methods: {
+    disableModal () {
+      this.$emit('disable-modal')
+    },
+    confirmList () {
+      if (this.confirmOk) {
+        let selectedUsersList = []
+        Object.keys(this.usersIsSelected).forEach(userName => {
+          if (this.usersIsSelected[ userName ]) {
+            selectedUsersList.push(userName)
+          }
+        })
+        this.$emit('set-user-list', this.activeModal.name, selectedUsersList)
+        this.disableModal()
+      }
+    },
+    selectAllInGroup (type, index) {
+      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
+        this.usersIsSelected[ userName ] = true
+      })
+    },
+    removeAllInGroup (type, index) {
+      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
+        this.usersIsSelected[ userName ] = false
+      })
+    },
+    setUsersIsSelected (users) {
+      let tmp = {}
+      if (Object.keys(users).length > 0 && this.information.administrators && this.information.targets) {
+        Object.keys(users).forEach(userId => {
+          tmp[ users[ userId ].name ] = false
+        })
+        this.information[ this.activeModal.name ].forEach(userName => {
+          tmp[ userName ] = true
+        })
+      }
+      this.usersIsSelected = tmp
+    }
   }
 }
 </script>

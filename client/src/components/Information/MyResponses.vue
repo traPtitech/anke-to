@@ -42,13 +42,6 @@ export default {
   name: 'MyResponses',
   components: {
   },
-  async created () {
-    await axios
-      .get('/users/me/responses/' + this.questionnaireId)
-      .then(res => {
-        this.responses = res.data
-      })
-  },
   props: {
     questionnaireId: {
       type: Number
@@ -59,6 +52,27 @@ export default {
       responses: [],
       processing: {}
     }
+  },
+  computed: {
+  },
+  watch: {
+    responses: function (newArr) {
+      // 回答を送信済みかどうかを調べて Information に送信
+      let hasResponded = false
+      newArr.forEach(response => {
+        if (response.submitted_at !== 'NULL') hasResponded = true
+      })
+      this.$emit('set-has-responded', hasResponded)
+    }
+  },
+  async created () {
+    await axios
+      .get('/users/me/responses/' + this.questionnaireId)
+      .then(res => {
+        this.responses = res.data
+      })
+  },
+  mounted () {
   },
   methods: {
     getDateStr: common.getDateStr,
@@ -74,20 +88,6 @@ export default {
           })
       }
     }
-  },
-  computed: {
-  },
-  watch: {
-    responses: function (newArr) {
-      // 回答を送信済みかどうかを調べて Information に送信
-      let hasResponded = false
-      newArr.forEach(response => {
-        if (response.submitted_at !== 'NULL') hasResponded = true
-      })
-      this.$emit('set-has-responded', hasResponded)
-    }
-  },
-  mounted () {
   }
 }
 </script>
