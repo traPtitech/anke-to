@@ -15,7 +15,7 @@
         <button
           v-if="canDownload"
           class="button download"
-          v-on:click="downloadTable"
+          @click="downloadTable"
         >
           <span class="ti-download"></span>
         </button>
