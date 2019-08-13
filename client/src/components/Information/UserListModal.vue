@@ -18,7 +18,9 @@
       <section class="modal-card-body">
         <!-- Content ... -->
         <!-- error message -->
-        <input-error-message :inputError="inputErrors.noAdministrator"></input-error-message>
+        <input-error-message
+          :input-error="inputErrors.noAdministrator"
+        ></input-error-message>
 
         <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">

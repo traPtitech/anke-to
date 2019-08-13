@@ -13,12 +13,12 @@
                 >必須</span>
               </p>
             </div>
-            <input-error-message v-if="inputErrors" :inputError="inputErrors[question.questionId]"></input-error-message>
+            <input-error-message v-if="inputErrors" :input-error="inputErrors[question.questionId]"></input-error-message>
             <component
               :is="question.component"
-              :editMode="editMode"
-              :contentProps="question"
-              :questionIndex="index"
+              :edit-mode="editMode"
+              :content-props="question"
+              :question-index="index"
               class="response-body"
               @set-question-content="setQuestionContent"
             ></component>

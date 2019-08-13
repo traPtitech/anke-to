@@ -6,10 +6,10 @@
     <div class="card-content management-buttons">
       <!-- 回答する -->
       <management-button
+        :disabled="timeLimitExceeded"
+        :questionnaire-id="questionnaireId"
         type="newResponse"
         class="button-wrapper"
-        :disabled="timeLimitExceeded"
-        :questionnaireId="questionnaireId"
       >
       </management-button>
       <div class="new-response-link-panel">
@@ -34,19 +34,19 @@
 
       <!-- 結果を見る -->
       <management-button
+        :disabled="!canViewResults"
+        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="viewResults"
-        :disabled="!canViewResults"
-        :questionnaireId="questionnaireId"
       >
       </management-button>
 
       <!-- アンケートを削除 -->
       <management-button
+        :disabled="!administrates"
+        :questionnaire-id="questionnaireId"
         class="button-wrapper"
         type="deleteQuestionnaire"
-        :disabled="!administrates"
-        :questionnaireId="questionnaireId"
       >
       </management-button>
     </div>

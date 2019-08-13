@@ -24,8 +24,8 @@
         :results="results"
         :information="information"
         :questions="questions"
-        :questionData="questionData"
-        :responseData="responseData"
+        :question-data="questionData"
+        :response-data="responseData"
         @get-results="getResults"
       ></component>
     </div>

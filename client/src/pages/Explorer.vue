@@ -98,7 +98,11 @@
         </table>
       </div>
     </div>
-    <pagination :currentPage="pageNumber" :defaultPageLink="defaultPageLink" :range="range"></pagination>
+    <pagination
+      :current-page="pageNumber"
+      :default-page-link="defaultPageLink"
+      :range="range"
+    ></pagination>
   </div>
 </template>
 

@@ -18,7 +18,9 @@
                   </div>
                 </div>
               </header>
-              <input-error-message :inputError="inputErrors.noTitle"></input-error-message>
+              <input-error-message
+                :input-error="inputErrors.noTitle"
+              ></input-error-message>
               <div class="card-content">
                 <textarea
                   id="description"
@@ -94,10 +96,10 @@
                 <user-list-modal
                   v-if="isModalActive"
                   :class="{ 'is-active': isModalActive }"
-                  :activeModal="activeModal"
-                  :userListProps="information[activeModal.name]"
+                  :active-modal="activeModal"
+                  :user-list-props="information[activeModal.name]"
                   :users="users"
-                  :groupTypes="groupTypes"
+                  :group-types="groupTypes"
                   :information="information"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
@@ -115,7 +117,10 @@
                 <div class="card-header-title subtitle">操作</div>
               </header>
               <div class="card-content management-buttons">
-                <management-button :questionnaireId="questionnaireId" type="deleteQuestionnaire"></management-button>
+                <management-button
+                  :questionnaire-id="questionnaireId"
+                  type="deleteQuestionnaire"
+                ></management-button>
               </div>
             </div>
           </div>

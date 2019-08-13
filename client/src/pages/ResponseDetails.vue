@@ -28,9 +28,9 @@
       >
         <information-summary :information="summaryProps"></information-summary>
         <questions
-          :editMode="isEditing ? 'response' : undefined"
-          :questionsProps="questions"
-          :inputErrors="inputErrors"
+          :edit-mode="isEditing ? 'response' : undefined"
+          :questions-props="questions"
+          :input-errors="inputErrors"
         ></questions>
       </div>
       <edit-nav-bar v-if="isEditing">

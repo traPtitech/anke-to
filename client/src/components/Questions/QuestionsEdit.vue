@@ -2,7 +2,7 @@
   <div class="columns is-editing">
     <article class="column is-11">
       <div class="card">
-        <input-error-message :inputError="inputErrors.noQuestions"></input-error-message>
+        <input-error-message :input-error="inputErrors.noQuestions"></input-error-message>
         <transition-group name="list" tag="div" class="card-content questions">
           <div v-for="(question, index) in questions" :key="question.questionId" class="question">
             <div class="question-body columns is-mobile">
@@ -42,9 +42,9 @@
                 </div>
                 <component
                   :is="question.component"
-                  :editMode="'question'"
-                  :contentProps="question"
-                  :questionIndex="index"
+                  :edit-mode="'question'"
+                  :content-props="question"
+                  :question-index="index"
                   class="response-body"
                   @set-question-content="setQuestionContent"
                 ></component>

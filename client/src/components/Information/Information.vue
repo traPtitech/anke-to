@@ -32,7 +32,10 @@
 
         <div class="card">
           <!-- 自分の回答一覧 -->
-          <my-responses :questionnaireId="questionnaireId" @set-has-responded="setHasResponded"></my-responses>
+          <my-responses
+            :questionnaire-id="questionnaireId"
+            @set-has-responded="setHasResponded"
+          ></my-responses>
         </div>
       </article>
     </div>

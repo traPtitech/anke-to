@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="is-fullheight">
     <top-navbar
-      :isSideMenuActive="isSideMenuActive"
+      :is-side-menu-active="isSideMenuActive"
       @toggle-side-menu="toggleSideMenu"
       @close-side-menu="closeSideMenu"
     ></top-navbar>
