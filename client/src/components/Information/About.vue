@@ -36,8 +36,8 @@
       </div>
 
       <div class="has-text-weight-bold">
-        <div>更新日時 : {{ getDateStr(modified_at) }}</div>
-        <div>作成日時 : {{ getDateStr(created_at) }}</div>
+        <div>更新日時 : {{ getDateStr(modifiedAt) }}</div>
+        <div>作成日時 : {{ getDateStr(createdAt) }}</div>
       </div>
     </div>
   </div>
@@ -54,8 +54,9 @@ export default {
   name: 'About',
   components: {},
   props: {
-    res_shared_to: {
-      type: String
+    resSharedTo: {
+      type: String,
+      default: undefined
     },
     administrators: {
       type: Object
@@ -72,11 +73,13 @@ export default {
       // validator: this.listValidator,
       // default: this.defaultListObj
     },
-    modified_at: {
-      type: String
+    modifiedAt: {
+      type: String,
+      default: undefined
     },
-    created_at: {
-      type: String
+    createdAt: {
+      type: String,
+      default: undefined
     }
   },
   data() {
@@ -98,7 +101,7 @@ export default {
         respondents: '回答済みの人に公開',
         administrators: '管理者のみに公開'
       }
-      return labels[this.res_shared_to]
+      return labels[this.resSharedTo]
     },
     userLists() {
       return {

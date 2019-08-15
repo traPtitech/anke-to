@@ -62,7 +62,7 @@ export default {
     'management-button': ManagementButton
   },
   props: {
-    res_time_limit: {
+    resTimeLimit: {
       type: String,
       default: undefined
     },
@@ -87,7 +87,7 @@ export default {
   computed: {
     timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.res_time_limit).getTime() < new Date().getTime()
+      return new Date(this.resTimeLimit).getTime() < new Date().getTime()
     },
     newResponseLink() {
       return (

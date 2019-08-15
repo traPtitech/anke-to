@@ -7,12 +7,12 @@
         <about
           class="card"
           v-bind="{
-            res_shared_to: information.res_shared_to,
+            resSharedTo: information.res_shared_to,
             administrators: userLists.administrators,
             respondents: userLists.respondents,
             targets: userLists.targets,
-            modified_at: information.modified_at,
-            created_at: information.created_at
+            modifiedAt: information.modified_at,
+            createdAt: information.created_at
           }"
         ></about>
       </article>
@@ -22,7 +22,7 @@
           <!-- 操作 -->
           <management
             v-bind="{
-              res_time_limit: information.res_time_limit,
+              resTimeLimit: information.res_time_limit,
               questionnaireId: questionnaireId,
               canViewResults: canViewResults,
               administrates: administrates
