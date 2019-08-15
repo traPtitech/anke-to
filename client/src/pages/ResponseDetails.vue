@@ -347,12 +347,12 @@ export default {
       return data
     },
     hasAnswered (question) {
+      let hasSelectedOption = false
       switch (question.type) {
         case 'Text':
         case 'Number':
           return typeof question.responseBody !== 'undefined' && question.responseBody !== ''
         case 'Checkbox':
-          let hasSelectedOption = false
           for (const option of Object.keys(question.isSelected)) {
             if (question.isSelected[ option ]) {
               hasSelectedOption = true

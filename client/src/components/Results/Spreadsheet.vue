@@ -165,11 +165,11 @@ export default {
   mounted () { },
   methods: {
     getResponse (body) {
+      let ret = ''
       switch (body.question_type) {
         case 'MultipleChoice':
         case 'Checkbox':
         case 'Dropdown':
-          let ret = ''
           body.option_response.forEach(response => {
             if (ret !== '') {
               ret += ', '

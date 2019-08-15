@@ -92,7 +92,7 @@ export default {
     }
   },
   watch: {
-    information: function (newVal) {
+    information: function () {
       this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
     }
   },

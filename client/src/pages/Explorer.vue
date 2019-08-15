@@ -203,7 +203,7 @@ export default {
     }
   },
   watch: {
-    $route: function (newRoute) {
+    $route: function () {
       this.getQuestionnaires()
     }
   },
