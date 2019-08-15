@@ -16,7 +16,7 @@
 <script>
 
 export default {
-  name: 'top-bar-message',
+  name: 'TopBarMessage',
   components: {
   },
   props: {

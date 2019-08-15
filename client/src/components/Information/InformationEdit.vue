@@ -143,7 +143,7 @@ export default {
   name: 'InformationEdit',
   components: {
     'input-error-message': InputErrorMessage,
-    'user-list': UserList,
+    // 'user-list': UserList,
     'user-list-modal': UserListModal,
     'management-button': ManagementButton
   },
