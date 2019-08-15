@@ -49,7 +49,8 @@ export default {
     },
     editMode: {
       type: String, // 'question' or 'response'
-      required: false // 渡されなかった場合はview
+      required: false, // 渡されなかった場合はview
+      default: undefined
     }
   },
   data () {

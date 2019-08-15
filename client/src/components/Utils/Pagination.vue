@@ -43,7 +43,8 @@ export default {
   props: {
     range: {
       type: Object,
-      required: false
+      required: false,
+      default: undefined
     },
     currentPage: {
       type: Number,

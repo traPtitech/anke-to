@@ -101,7 +101,8 @@ export default {
     },
     userListProps: {
       type: Array,
-      required: false
+      required: false,
+      default: undefined
     },
     users: {
       type: Object,

@@ -43,6 +43,9 @@
 </template>
 
 <script>
+/* eslint-disable vue/require-default-prop */
+// TODO: administrators, respondents, targets の管理をstoreで行うようにする
+
 import common from '@/bin/common'
 import { mapGetters } from 'vuex'
 

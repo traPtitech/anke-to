@@ -94,7 +94,8 @@ export default {
   props: {
     questionsProps: {
       type: Array,
-      required: false
+      required: false,
+      default: undefined
     },
     title: {
       type: String,

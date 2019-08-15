@@ -97,7 +97,8 @@ export default {
   props: {
     questionIndex: {
       type: Number,
-      required: false
+      required: false,
+      default: undefined
     },
     contentProps: {
       type: Object,
@@ -105,7 +106,8 @@ export default {
     },
     editMode: {
       type: String,
-      required: false
+      required: false,
+      default: undefined
     }
   },
   data () {

@@ -87,11 +87,13 @@ export default {
     },
     questionIndex: {
       type: Number,
-      required: false
+      required: false,
+      default: undefined
     },
     editMode: {
       type: String,
-      required: false
+      required: false,
+      default: undefined
     }
   },
   data () {

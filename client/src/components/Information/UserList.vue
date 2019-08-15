@@ -31,7 +31,8 @@ export default {
   },
   props: {
     userList: {
-      type: Array
+      type: Array,
+      default: undefined
     }
   },
   data () {

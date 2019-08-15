@@ -63,10 +63,12 @@ export default {
   },
   props: {
     res_time_limit: {
-      type: String
+      type: String,
+      default: undefined
     },
     questionnaireId: {
-      type: Number
+      type: Number,
+      default: undefined
     },
     canViewResults: {
       type: Boolean

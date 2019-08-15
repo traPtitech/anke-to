@@ -50,15 +50,18 @@ export default {
   props: {
     questionsProps: {
       type: Array,
-      required: false
+      required: false,
+      default: undefined
     },
     editMode: {
       type: String,
-      required: false
+      required: false,
+      default: undefined
     },
     inputErrors: {
       type: Object,
-      required: false
+      required: false,
+      default: undefined
     }
   },
   data () {

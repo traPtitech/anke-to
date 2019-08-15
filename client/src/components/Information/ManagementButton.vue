@@ -31,7 +31,8 @@ export default {
   },
   props: {
     questionnaireId: {
-      type: Number
+      type: Number,
+      default: undefined
     },
     size: {
       type: String,
