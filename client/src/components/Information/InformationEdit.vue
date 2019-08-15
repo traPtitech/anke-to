@@ -38,10 +38,10 @@
                     class="input"
                     type="datetime-local"
                     :disabled="noTimeLimit"
-                  >
+                  />
                 </div>
                 <label class="checkbox is-pulled-right">
-                  <input v-model="noTimeLimit" type="checkbox">
+                  <input v-model="noTimeLimit" type="checkbox" />
                   期限なし
                 </label>
               </div>
@@ -76,17 +76,24 @@
 
                 <!-- 対象者は traP or なし から選べるようにしておく (↑が実装されるまで) -->
                 <div class="user-list-wrapper">
-                  <span class="has-text-weight-bold">{{ userLists.targets.summary }}</span>
-                  <span
-                    class="is-small targets-description"
-                  >(トップページに表示してほしいアンケートは、対象者を traP にしてください)</span>
+                  <span class="has-text-weight-bold">{{
+                    userLists.targets.summary
+                  }}</span>
+                  <span class="is-small targets-description"
+                    >(トップページに表示してほしいアンケートは、対象者を traP
+                    にしてください)</span
+                  >
                   <div class="user-list">
                     <label>
-                      <input v-model="targetedList" type="radio" :value="['traP']">
+                      <input
+                        v-model="targetedList"
+                        type="radio"
+                        :value="['traP']"
+                      />
                       traP
                     </label>
                     <label>
-                      <input v-model="targetedList" type="radio" :value="[]">
+                      <input v-model="targetedList" type="radio" :value="[]" />
                       なし
                     </label>
                   </div>
@@ -131,7 +138,6 @@
 </template>
 
 <script>
-
 import common from '@/bin/common'
 import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
@@ -156,7 +162,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       responses: [],
       activeModal: {},
@@ -167,41 +173,48 @@ export default {
     }
   },
   computed: {
-    information () {
+    information() {
       return this.informationProps.information
     },
-    administrates () {
+    administrates() {
       return this.informationProps.administrates
     },
-    questionnaireId () {
+    questionnaireId() {
       return this.informationProps.questionnaireId
     },
     noTimeLimit: {
-      get () {
+      get() {
         return this.informationProps.noTimeLimit
       },
-      set (newBool) {
+      set(newBool) {
         this.$emit('set-data', 'noTimeLimit', newBool)
       }
     },
-    isNewQuestionnaire () {
+    isNewQuestionnaire() {
       return this.$route.params.id === 'new'
     },
-    userLists () {
-      return common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
+    userLists() {
+      return common.getUserLists(
+        this.information.targets,
+        this.information.respondents,
+        this.information.administrators
+      )
     },
     resSharedToStr: {
-      get: function () {
+      get: function() {
         switch (this.information.res_shared_to) {
-          case 'public': return '全体'
-          case 'administrators': return '管理者のみ'
-          case 'respondents': return '回答済みの人'
+          case 'public':
+            return '全体'
+          case 'administrators':
+            return '管理者のみ'
+          case 'respondents':
+            return '回答済みの人'
           default:
             console.error('unexpected res_shared_to')
             return null
         }
       },
-      set: function (str) {
+      set: function(str) {
         switch (str) {
           case '全体': {
             this.information.res_shared_to = 'public'
@@ -219,11 +232,15 @@ export default {
       }
     },
     resTimeLimitEditStr: {
-      get: function () {
-        if (!this.information.res_time_limit || this.information.res_time_limit === 'NULL') return ''
+      get: function() {
+        if (
+          !this.information.res_time_limit ||
+          this.information.res_time_limit === 'NULL'
+        )
+          return ''
         return this.information.res_time_limit.slice(0, 16)
       },
-      set: function (str) {
+      set: function(str) {
         if (str === '') {
           this.$emit('set-data', 'noTimeLimit', true)
         } else {
@@ -232,48 +249,46 @@ export default {
       }
     },
     targetedList: {
-      get () {
+      get() {
         return this.information.targets
       },
-      set (newVal) {
+      set(newVal) {
         this.setUserList('targets', newVal)
       }
     }
   },
-  watch: {
-  },
-  created () {
+  watch: {},
+  created() {
     // this.getUsers()
     // .then(this.getGroupTypes)
   },
-  mounted () {
-  },
+  mounted() {},
   methods: {
-    getDateStr (str) {
+    getDateStr(str) {
       return common.getDateStr(str)
     },
-    setInformation (newInformation) {
+    setInformation(newInformation) {
       this.$emit('set-data', 'information', newInformation)
     },
-    changeActiveModal (obj) {
+    changeActiveModal(obj) {
       this.activeModal = obj
       this.isModalActive = true
     },
-    disableModal () {
+    disableModal() {
       this.isModalActive = false
     },
-    setUserList (listName, newList) {
+    setUserList(listName, newList) {
       let newInformation = this.information
-      newInformation[ listName ] = newList
+      newInformation[listName] = newList
       this.setInformation(newInformation)
     },
-    getUsers () {
+    getUsers() {
       return axios
         .get('https://q.trap.jp/api/1.0/users')
         .then(res => {
           res.data.forEach(user => {
             if (user.accountStatus === 1) {
-              this.users[ user.userId ] = user
+              this.users[user.userId] = user
             }
           })
         })
@@ -281,31 +296,37 @@ export default {
           console.log(err)
         })
     },
-    getGroupTypes () {
-      return axios
-        .get('https://q.trap.jp/api/1.0/groups')
-        .then(res => {
-          let tmp = {}
-          res.data.forEach(group => {
-            if (typeof tmp[ group.type ] === 'undefined') {
-              tmp[ group.type ] = []
-            }
-            // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
-            group.activeMembers =
-              group.members.filter(userId => typeof this.users[ userId ] !== 'undefined' && this.users[ userId ].accountStatus === 1 && this.users[ userId ].name !== 'traP')
-                .map(userId => this.users[ userId ].name)
-                .sort((a, b) => { return a.toLowerCase().localeCompare(b.toLowerCase()) })
-            tmp[ group.type ].push(group)
-          })
-
-          // typeごとに、group名をソートしたものをgroupTypesに入れる
-          Object.keys(tmp).forEach(type => {
-            this.$set(this.groupTypes, type, {})
-            tmp[ type ]
-              .sort((a, b) => { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) })
-          })
-          this.groupTypes = tmp
+    getGroupTypes() {
+      return axios.get('https://q.trap.jp/api/1.0/groups').then(res => {
+        let tmp = {}
+        res.data.forEach(group => {
+          if (typeof tmp[group.type] === 'undefined') {
+            tmp[group.type] = []
+          }
+          // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
+          group.activeMembers = group.members
+            .filter(
+              userId =>
+                typeof this.users[userId] !== 'undefined' &&
+                this.users[userId].accountStatus === 1 &&
+                this.users[userId].name !== 'traP'
+            )
+            .map(userId => this.users[userId].name)
+            .sort((a, b) => {
+              return a.toLowerCase().localeCompare(b.toLowerCase())
+            })
+          tmp[group.type].push(group)
         })
+
+        // typeごとに、group名をソートしたものをgroupTypesに入れる
+        Object.keys(tmp).forEach(type => {
+          this.$set(this.groupTypes, type, {})
+          tmp[type].sort((a, b) => {
+            return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+          })
+        })
+        this.groupTypes = tmp
+      })
     }
   }
 }

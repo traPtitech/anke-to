@@ -27,8 +27,7 @@ import axios from '@/bin/axios'
 
 export default {
   name: 'ManagementButton',
-  components: {
-  },
+  components: {},
   props: {
     questionnaireId: {
       type: Number,
@@ -47,7 +46,7 @@ export default {
       default: false
     }
   },
-  data () {
+  data() {
     return {
       processing: false,
       iconClasses: {
@@ -63,13 +62,13 @@ export default {
     }
   },
   computed: {
-    iconClass () {
-      return this.iconClasses[ this.type ]
+    iconClass() {
+      return this.iconClasses[this.type]
     },
-    buttonLabel () {
-      return this.buttonLabels[ this.type ]
+    buttonLabel() {
+      return this.buttonLabels[this.type]
     },
-    routeData () {
+    routeData() {
       switch (this.type) {
         case 'newResponse':
           return {
@@ -87,12 +86,10 @@ export default {
       }
     }
   },
-  watch: {
-  },
-  mounted () {
-  },
+  watch: {},
+  mounted() {},
   methods: {
-    deleteQuestionnaire () {
+    deleteQuestionnaire() {
       if (this.disabled || this.processing) return
       if (window.confirm('アンケートを削除しますか？')) {
         if (this.isNewQuestionnaire) {
@@ -111,8 +108,7 @@ export default {
               console.log(error)
               this.alertNetworkError()
             })
-            .finally(() => {
-            })
+            .finally(() => {})
         }
       }
     }

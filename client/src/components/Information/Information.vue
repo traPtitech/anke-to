@@ -43,7 +43,6 @@
 </template>
 
 <script>
-
 // import axios from '@/bin/axios'
 import router from '@/router'
 import common from '@/bin/common'
@@ -64,7 +63,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       hasResponded: false,
       activeModal: {},
@@ -74,41 +73,52 @@ export default {
     }
   },
   computed: {
-    information () {
+    information() {
       return this.informationProps.information
     },
-    administrates () {
+    administrates() {
       return this.informationProps.administrates
     },
-    questionnaireId () {
+    questionnaireId() {
       return this.informationProps.questionnaireId
     },
-    noTimeLimit () {
+    noTimeLimit() {
       return this.informationProps.noTimeLimit
     },
-    canViewResults () {
+    canViewResults() {
       // 結果をみる権限があるかどうかを返す
-      return common.canViewResults(this.information, this.administrates, this.hasResponded)
+      return common.canViewResults(
+        this.information,
+        this.administrates,
+        this.hasResponded
+      )
     }
   },
   watch: {
-    information: function () {
-      this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
+    information: function() {
+      this.userLists = common.getUserLists(
+        this.information.targets,
+        this.information.respondents,
+        this.information.administrators
+      )
     }
   },
-  created () {
-    this.userLists = common.getUserLists(this.information.targets, this.information.respondents, this.information.administrators)
+  created() {
+    this.userLists = common.getUserLists(
+      this.information.targets,
+      this.information.respondents,
+      this.information.administrators
+    )
   },
-  mounted () {
-  },
+  mounted() {},
   methods: {
-    createResponse () {
+    createResponse() {
       router.push({
         name: 'NewResponseDetails',
         params: { questionnaireId: this.questionnaireId }
       })
     },
-    setHasResponded (bool) {
+    setHasResponded(bool) {
       this.hasResponded = bool
     }
   }

@@ -3,7 +3,9 @@
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">{{ activeModal.summary }} ({{ numberOfSelectedUsers }})</p>
+        <p class="modal-card-title">
+          {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
+        </p>
         <span
           :class="{ disabled: !confirmOk }"
           class="ti-check icon-button round confirm"
@@ -13,7 +15,10 @@
           class="ti-close icon-button round close"
           @click.prevent="disableModal"
         ></span>
-        <span class="ti-close icon-button round close" @click.prevent="disableModal"></span>
+        <span
+          class="ti-close icon-button round close"
+          @click.prevent="disableModal"
+        ></span>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
@@ -24,7 +29,7 @@
 
         <!-- user traP -->
         <label class="checkbox user-trap has-text-weight-bold">
-          <input v-model="isUserTrap" type="checkbox">
+          <input v-model="isUserTrap" type="checkbox" />
           traP
         </label>
 
@@ -45,7 +50,10 @@
 
         <!-- list -->
         <div class="user-list-wrapper">
-          <span v-for="(group, index) in groupTypes[selectedGroupType]" :key="index">
+          <span
+            v-for="(group, index) in groupTypes[selectedGroupType]"
+            :key="index"
+          >
             <div class="has-text-weight-bold group-name">
               {{ group.name }}
               <span
@@ -62,13 +70,19 @@
 
             <!-- not user: traP -->
             <span v-for="(userName, index) in group.activeMembers" :key="index">
-              <label v-if="!isUserTrap && userName !== getMyTraqId" class="checkbox">
-                <input v-model="usersIsSelected[userName]" type="checkbox">
+              <label
+                v-if="!isUserTrap && userName !== getMyTraqId"
+                class="checkbox"
+              >
+                <input v-model="usersIsSelected[userName]" type="checkbox" />
                 <span>{{ userName }}</span>
               </label>
 
               <!-- user: traP -->
-              <span v-if="isUserTrap || userName === getMyTraqId" class="dummy-checkbox">
+              <span
+                v-if="isUserTrap || userName === getMyTraqId"
+                class="dummy-checkbox"
+              >
                 <span class="readonly-checkbox checked"></span>
                 <span>{{ userName }}</span>
               </span>
@@ -81,7 +95,6 @@
 </template>
 
 <script>
-
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/bin/common'
 import { mapGetters } from 'vuex'
@@ -117,7 +130,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       traq: null,
       selectedGroupType: 'grade',
@@ -125,71 +138,71 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([ 'getMyTraqId' ]),
+    ...mapGetters(['getMyTraqId']),
     isUserTrap: {
-      get () {
+      get() {
         return this.usersIsSelected.traP === true
       },
-      set (newBool) {
+      set(newBool) {
         if (newBool) {
           Object.keys(this.usersIsSelected).forEach(userName => {
-            this.usersIsSelected[ userName ] = false
+            this.usersIsSelected[userName] = false
           })
         } else {
-          this.usersIsSelected[ this.getMyTraqId ] = true
+          this.usersIsSelected[this.getMyTraqId] = true
         }
         this.usersIsSelected.traP = newBool
       }
     },
-    numberOfSelectedUsers () {
+    numberOfSelectedUsers() {
       if (this.isUserTrap) {
         return Object.keys(this.users).length
       }
       let count = 0
       Object.keys(this.usersIsSelected).forEach(userName => {
-        if (this.usersIsSelected[ userName ]) {
+        if (this.usersIsSelected[userName]) {
           count++
         }
       })
       return count
     },
-    inputErrors () {
+    inputErrors() {
       return {
         noAdministrator: {
-          isError: this.activeModal.name === 'administrators' && this.numberOfSelectedUsers === 0,
+          isError:
+            this.activeModal.name === 'administrators' &&
+            this.numberOfSelectedUsers === 0,
           message: '管理者がいません'
         }
       }
     },
-    confirmOk () {
+    confirmOk() {
       return common.noErrors(this.inputErrors)
     },
-    visibleUsersList () {
+    visibleUsersList() {
       let ret = Object.assign({}, this.allUsersList)
       delete ret.traP
       return ret
     },
-    tabs () {
+    tabs() {
       return Object.keys(this.groupTypes)
     }
   },
-  watch: {
-  },
-  created () {
+  watch: {},
+  created() {
     this.setUsersIsSelected(this.users)
-    this.selectedTab = Object.keys(this.groupTypes)[ 0 ]
+    this.selectedTab = Object.keys(this.groupTypes)[0]
   },
-  mounted () {
-  },
+  mounted() {},
   methods: {
-    disableModal () {
+    disableModal() {
       this.$emit('disable-modal')
     },
-    confirmList () {
+    confirmList() {
       if (this.confirmOk) {
         let selectedUsersList = []
         Object.keys(this.usersIsSelected).forEach(userName => {
-          if (this.usersIsSelected[ userName ]) {
+          if (this.usersIsSelected[userName]) {
             selectedUsersList.push(userName)
           }
         })
@@ -197,24 +210,28 @@ export default {
         this.disableModal()
       }
     },
-    selectAllInGroup (type, index) {
-      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
-        this.usersIsSelected[ userName ] = true
+    selectAllInGroup(type, index) {
+      this.groupTypes[type][index].activeMembers.forEach(userName => {
+        this.usersIsSelected[userName] = true
       })
     },
-    removeAllInGroup (type, index) {
-      this.groupTypes[ type ][ index ].activeMembers.forEach(userName => {
-        this.usersIsSelected[ userName ] = false
+    removeAllInGroup(type, index) {
+      this.groupTypes[type][index].activeMembers.forEach(userName => {
+        this.usersIsSelected[userName] = false
       })
     },
-    setUsersIsSelected (users) {
+    setUsersIsSelected(users) {
       let tmp = {}
-      if (Object.keys(users).length > 0 && this.information.administrators && this.information.targets) {
+      if (
+        Object.keys(users).length > 0 &&
+        this.information.administrators &&
+        this.information.targets
+      ) {
         Object.keys(users).forEach(userId => {
-          tmp[ users[ userId ].name ] = false
+          tmp[users[userId].name] = false
         })
-        this.information[ this.activeModal.name ].forEach(userName => {
-          tmp[ userName ] = true
+        this.information[this.activeModal.name].forEach(userName => {
+          tmp[userName] = true
         })
       }
       this.usersIsSelected = tmp

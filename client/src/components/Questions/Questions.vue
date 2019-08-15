@@ -3,17 +3,25 @@
     <article class="column is-11">
       <div class="card">
         <div class="card-content questions">
-          <div v-for="(question, index) in questions" :key="index" class="question">
+          <div
+            v-for="(question, index) in questions"
+            :key="index"
+            class="question"
+          >
             <div class="question-body">
               <p class="subtitle">
                 {{ question.questionBody }}
                 <span
                   v-if="showRequiredIcon(index)"
                   class="ti-alert required-question-icon"
-                >必須</span>
+                  >必須</span
+                >
               </p>
             </div>
-            <input-error-message v-if="inputErrors" :input-error="inputErrors[question.questionId]"></input-error-message>
+            <input-error-message
+              v-if="inputErrors"
+              :input-error="inputErrors[question.questionId]"
+            ></input-error-message>
             <component
               :is="question.component"
               :edit-mode="editMode"
@@ -22,7 +30,7 @@
               class="response-body"
               @set-question-content="setQuestionContent"
             ></component>
-            <hr>
+            <hr />
           </div>
         </div>
       </div>
@@ -31,7 +39,6 @@
 </template>
 
 <script>
-
 import MultipleChoice from '@/components/Questions/MultipleChoice'
 import LinearScale from '@/components/Questions/LinearScale'
 import ShortAnswer from '@/components/Questions/ShortAnswer'
@@ -64,22 +71,20 @@ export default {
       default: undefined
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
   computed: {
-    questions () {
+    questions() {
       return this.questionsProps
     }
   },
-  mounted () {
-  },
+  mounted() {},
   methods: {
-    showRequiredIcon (index) {
-      return this.questions[ index ].isRequired
+    showRequiredIcon(index) {
+      return this.questions[index].isRequired
     },
-    setQuestionContent (index, label, value) {
+    setQuestionContent(index, label, value) {
       this.$emit('set-question-content', index, label, value)
     }
   }

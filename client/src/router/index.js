@@ -66,7 +66,7 @@ const router = new Router({
       component: NotFound
     }
   ],
-  scrollBehavior (savedPosition) {
+  scrollBehavior(savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {

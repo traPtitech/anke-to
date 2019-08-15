@@ -27,8 +27,9 @@
                 :class="{
                   'highlight-name': user === 'traP' || user === getMyTraqId
                 }"
-              >{{ user }}</span>
-              <span>{{ index === userList.list.length - 1 ? "" : ", " }}</span>
+                >{{ user }}</span
+              >
+              <span>{{ index === userList.list.length - 1 ? '' : ', ' }}</span>
             </span>
           </p>
         </div>
@@ -51,8 +52,7 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'About',
-  components: {
-  },
+  components: {},
   props: {
     res_shared_to: {
       type: String
@@ -79,7 +79,7 @@ export default {
       type: String
     }
   },
-  data () {
+  data() {
     return {
       defaultListObj: {
         list: [],
@@ -91,18 +91,20 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([ 'getMyTraqId' ]),
-    resSharedToLabel () {
+    ...mapGetters(['getMyTraqId']),
+    resSharedToLabel() {
       const labels = {
         public: '全体に公開',
         respondents: '回答済みの人に公開',
         administrators: '管理者のみに公開'
       }
-      return labels[ this.res_shared_to ]
+      return labels[this.res_shared_to]
     },
-    userLists () {
+    userLists() {
       return {
-        administrators: this.administrators ? this.administrators : this.defaultListObj,
+        administrators: this.administrators
+          ? this.administrators
+          : this.defaultListObj,
         respondents: this.respondents ? this.respondents : this.defaultListObj,
         targets: this.targets ? this.targets : this.defaultListObj
       }

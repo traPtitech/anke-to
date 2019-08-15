@@ -8,13 +8,17 @@
             typeof content.responseBody === 'undefined')
       "
       class="has-underline placeholder"
-    >{{ responsePlaceholder }}</p>
+    >
+      {{ responsePlaceholder }}
+    </p>
 
     <!-- view response -->
     <p
       v-if="!editMode && typeof content.responseBody !== 'undefined'"
       class="has-underline"
-    >{{ content.responseBody }}</p>
+    >
+      {{ content.responseBody }}
+    </p>
 
     <!-- edit response -->
     <input
@@ -23,25 +27,23 @@
       type="text"
       class="input has-underline"
       placeholder="回答"
-    >
+    />
     <input
       v-if="editMode === 'response' && content.type === 'Number'"
       v-model.number="content.responseBody"
       type="number"
       class="input has-underline"
       placeholder="0"
-    >
+    />
   </div>
 </template>
 
 <script>
-
 // import <componentname> from '<path to component file>'
 
 export default {
   name: '',
-  components: {
-  },
+  components: {},
   props: {
     contentProps: {
       type: Object,
@@ -53,15 +55,14 @@ export default {
       default: undefined
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
   computed: {
-    content () {
+    content() {
       return this.contentProps
     },
-    responsePlaceholder () {
+    responsePlaceholder() {
       if (this.content.type === 'Text') {
         return '回答 (テキスト)'
       } else if (this.content.type === 'Number') {
@@ -71,10 +72,8 @@ export default {
       }
     }
   },
-  mounted () {
-  },
-  methods: {
-  }
+  mounted() {},
+  methods: {}
 }
 </script>
 

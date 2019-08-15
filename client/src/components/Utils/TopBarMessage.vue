@@ -14,27 +14,21 @@
 </template>
 
 <script>
-
 export default {
   name: 'TopBarMessage',
-  components: {
-  },
+  components: {},
   props: {
     message: {
       type: Object,
       required: true
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
-  computed: {
-  },
-  mounted () {
-  },
-  methods: {
-  }
+  computed: {},
+  mounted() {},
+  methods: {}
 }
 </script>
 

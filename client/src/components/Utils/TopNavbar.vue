@@ -14,7 +14,7 @@
         </a>
         <div class="is-flex" @click="$emit('close-side-menu')">
           <router-link class="navbar-item" to="/targeted">
-            <img class="title" src="@/static/img/logo.png">
+            <img class="title" src="@/static/img/logo.png" />
           </router-link>
         </div>
         <div class="subtitle pull-right user">
@@ -22,7 +22,7 @@
             v-if="getMe !== null"
             :src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
             class="user-icon"
-          >
+          />
         </div>
       </div>
     </nav>
@@ -40,12 +40,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([ 'getMe', 'getMyTraqId' ])
+    ...mapGetters(['getMe', 'getMyTraqId'])
   },
-  created () {
-  },
-  methods: {
-  }
+  created() {},
+  methods: {}
 }
 </script>
 

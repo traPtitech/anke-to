@@ -1,7 +1,10 @@
 <template>
   <div class="wrapper is-fullheight has-navbar-fixed-bottom">
     <div class="dropdowns">
-      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.sortOrder }">
+      <div
+        class="dropdown"
+        :class="{ 'is-active': DropdownIsActive.sortOrder }"
+      >
         <div class="dropdown-trigger">
           <button
             class="button"
@@ -23,15 +26,18 @@
             :class="{ 'is-selected': order.opt === sortOrder }"
             class="dropdown-content"
             @click="
-              changeSortOrder(order.opt);
-              DropdownIsActive.sortOrder = false;
+              changeSortOrder(order.opt)
+              DropdownIsActive.sortOrder = false
             "
           >
             <p class="dropdown-item">{{ order.str }}</p>
           </div>
         </div>
       </div>
-      <div class="dropdown" :class="{ 'is-active': DropdownIsActive.targetedOption }">
+      <div
+        class="dropdown"
+        :class="{ 'is-active': DropdownIsActive.targetedOption }"
+      >
         <div class="dropdown-trigger">
           <button
             class="button"
@@ -53,8 +59,8 @@
             :class="{ 'is-selected': option.opt === targetedOption }"
             class="dropdown-content"
             @click="
-              changetargetedOption(option.opt);
-              DropdownIsActive.targetedOption = false;
+              changetargetedOption(option.opt)
+              DropdownIsActive.targetedOption = false
             "
           >
             <p class="dropdown-item">{{ option.str }}</p>
@@ -65,8 +71,8 @@
     <div
       class="card-wrapper is-fullheight"
       @click="
-        DropdownIsActive.sortOrder = false;
-        DropdownIsActive.targetedOption = false;
+        DropdownIsActive.sortOrder = false
+        DropdownIsActive.targetedOption = false
       "
     >
       <div class="card">
@@ -74,7 +80,9 @@
         <table class="table is-striped">
           <thead>
             <tr>
-              <th v-for="(header, index) in headers" :key="index">{{ header }}</th>
+              <th v-for="(header, index) in headers" :key="index">
+                {{ header }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -82,15 +90,25 @@
               <td class="table-item-title">
                 <router-link
                   :to="'/questionnaires/' + questionnaire.questionnaireID"
-                >{{ questionnaire.title }}</router-link>
+                  >{{ questionnaire.title }}</router-link
+                >
               </td>
-              <td class="table-item-date">{{ getDateStr(questionnaire.res_time_limit) }}</td>
-              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.modified_at) }}</td>
-              <td class="table-item-date">{{ getRelativeDateStr(questionnaire.created_at) }}</td>
+              <td class="table-item-date">
+                {{ getDateStr(questionnaire.res_time_limit) }}
+              </td>
+              <td class="table-item-date">
+                {{ getRelativeDateStr(questionnaire.modified_at) }}
+              </td>
+              <td class="table-item-date">
+                {{ getRelativeDateStr(questionnaire.created_at) }}
+              </td>
               <td>
-                <router-link :to="'/results/' + questionnaire.questionnaireID" target="_blank">
+                <router-link
+                  :to="'/results/' + questionnaire.questionnaireID"
+                  target="_blank"
+                >
                   <span class="ti-new-window"></span>
-                  <br>Open
+                  <br />Open
                 </router-link>
               </td>
             </tr>
@@ -115,14 +133,13 @@ import common from '@/bin/common'
 export default {
   name: 'Explorer',
   components: {
-    'pagination': Pagination
+    pagination: Pagination
   },
-  props: {
-  },
-  data () {
+  props: {},
+  data() {
     return {
       questionnaires: [],
-      headers: [ '', '回答期限', '更新日時', '作成日時', '結果' ],
+      headers: ['', '回答期限', '更新日時', '作成日時', '結果'],
       sortOrders: [
         {
           str: '最近更新された',
@@ -171,31 +188,52 @@ export default {
   },
   computed: {
     pageNumber: {
-      get () {
+      get() {
         return this.$route.query.page ? Number(this.$route.query.page) : 1
       },
-      set (newVal) {
-        router.push({ name: 'Explorer', query: { nontargeted: String(this.targetedOption), page: String(newVal), sort: this.sortOrder } })
+      set(newVal) {
+        router.push({
+          name: 'Explorer',
+          query: {
+            nontargeted: String(this.targetedOption),
+            page: String(newVal),
+            sort: this.sortOrder
+          }
+        })
       }
     },
     sortOrder: {
-      get () {
+      get() {
         return this.$route.query.sort ? this.$route.query.sort : '-modified_at'
       },
-      set (newVal) {
-        router.push({ name: 'Explorer', query: { nontargeted: String(this.targetedOption), page: String(this.pageNumber), sort: newVal } })
+      set(newVal) {
+        router.push({
+          name: 'Explorer',
+          query: {
+            nontargeted: String(this.targetedOption),
+            page: String(this.pageNumber),
+            sort: newVal
+          }
+        })
       }
     },
     targetedOption: {
-      get () {
+      get() {
         // return typeof this.$route.query.nontargeted !== 'undefined' && this.$route.query.nontargeted === 'true'
         return this.$route.query.nontargeted === 'true'
       },
-      set (newVal) {
-        router.push({ name: 'Explorer', query: { nontargeted: String(newVal), page: String(this.pageNumber), sort: this.sortOrder } })
+      set(newVal) {
+        router.push({
+          name: 'Explorer',
+          query: {
+            nontargeted: String(newVal),
+            page: String(this.pageNumber),
+            sort: this.sortOrder
+          }
+        })
       }
     },
-    defaultPageLink () {
+    defaultPageLink() {
       return {
         name: 'Explorer',
         query: { nontargeted: this.targetedOption, sort: this.sortOrder }
@@ -203,39 +241,45 @@ export default {
     }
   },
   watch: {
-    $route: function () {
+    $route: function() {
       this.getQuestionnaires()
     }
   },
-  async created () {
+  async created() {
     this.getQuestionnaires()
   },
   methods: {
-    getDateStr (str) {
+    getDateStr(str) {
       return common.getDateStr(str)
     },
-    getRelativeDateStr (str) {
+    getRelativeDateStr(str) {
       return common.relativeDateStr(str)
     },
-    getQuestionnaires () {
+    getQuestionnaires() {
       this.questionnaires = []
       axios
-        .get('/questionnaires?sort=' + this.sortOrder + '&nontargeted=' + this.targetedOption + '&page=' + this.pageNumber)
+        .get(
+          '/questionnaires?sort=' +
+            this.sortOrder +
+            '&nontargeted=' +
+            this.targetedOption +
+            '&page=' +
+            this.pageNumber
+        )
         .then(response => {
           this.questionnaires = response.data.questionnaires
           this.$set(this.range, 'last', response.data.page_max)
         })
         .catch(error => console.log(error))
     },
-    changeSortOrder (sortOrder) {
+    changeSortOrder(sortOrder) {
       this.sortOrder = sortOrder
       this.getQuestionnaires()
     },
-    changetargetedOption (targetedOption) {
+    changetargetedOption(targetedOption) {
       this.targetedOption = targetedOption
       this.getQuestionnaires()
     }
-
   }
 }
 </script>

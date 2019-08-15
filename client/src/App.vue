@@ -29,21 +29,19 @@ export default {
     'top-navbar': TopNavbar,
     'side-menu': SideMenu
   },
-  data () {
+  data() {
     return {
       isSideMenuActive: false,
       user: {}
     }
   },
-  computed: {
-  },
-  async created () {
-  },
+  computed: {},
+  async created() {},
   methods: {
-    toggleSideMenu () {
+    toggleSideMenu() {
       this.isSideMenuActive = !this.isSideMenuActive
     },
-    closeSideMenu () {
+    closeSideMenu() {
       this.isSideMenuActive = false
     }
   }
@@ -51,8 +49,8 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../node_modules/bulma/bulma.sass";
-@import "@/style/global.scss";
-@import "@/style/colors.scss";
-@import "static/css/themify-icons.css";
+@import '../node_modules/bulma/bulma.sass';
+@import '@/style/global.scss';
+@import '@/style/colors.scss';
+@import 'static/css/themify-icons.css';
 </style>

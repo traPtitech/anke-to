@@ -77,7 +77,7 @@ export default {
       type: Boolean
     }
   },
-  data () {
+  data() {
     return {
       copyMessage: {
         showMessage: false
@@ -85,20 +85,24 @@ export default {
     }
   },
   computed: {
-    timeLimitExceeded () {
+    timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
       return new Date(this.res_time_limit).getTime() < new Date().getTime()
     },
-    newResponseLink () {
-      return location.protocol + '//' + location.host + '/responses/new/' + this.questionnaireId
+    newResponseLink() {
+      return (
+        location.protocol +
+        '//' +
+        location.host +
+        '/responses/new/' +
+        this.questionnaireId
+      )
     }
   },
-  watch: {
-  },
-  mounted () {
-  },
+  watch: {},
+  mounted() {},
   methods: {
-    copyNewResponseLink () {
+    copyNewResponseLink() {
       let link = document.querySelector('#new-response-link')
       // link.select()
       let range = document.createRange()
@@ -110,7 +114,7 @@ export default {
         this.showCopyMessage('コピーに失敗しました')
       }
     },
-    async showCopyMessage (message) {
+    async showCopyMessage(message) {
       this.copyMessage = {
         showMessage: true,
         message: message
@@ -118,7 +122,7 @@ export default {
       await new Promise(resolve => setTimeout(resolve, 3000))
       this.resetCopyMessage()
     },
-    resetCopyMessage () {
+    resetCopyMessage() {
       this.copyMessage = {
         showMessage: false
       }

@@ -5,22 +5,19 @@
 </template>
 
 <script>
-
 // import <componentname> from '<path to component file>'
 
 export default {
   name: 'InputErrorMessage',
-  components: {
-  },
+  components: {},
   props: {
     inputError: {
       type: Object,
       required: true
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   }
 }
 </script>

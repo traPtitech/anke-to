@@ -7,7 +7,7 @@
             v-for="tab in tableFormTabs"
             :key="tab"
             class="tab"
-            :class="{'is-active': tableForm===tab }"
+            :class="{ 'is-active': tableForm === tab }"
           >
             <a @click="tableForm = tab">{{ tab }}</a>
           </li>
@@ -22,7 +22,7 @@
       </div>
       <div class="scroll-view">
         <!-- table view -->
-        <table v-show="tableForm==='view'" class="table is-striped">
+        <table v-show="tableForm === 'view'" class="table is-striped">
           <thead>
             <tr>
               <th
@@ -32,7 +32,10 @@
                 @click="sort(index + 1)"
               >
                 {{ header }}
-                <span class="arrow" :class="sorted !==index + 1 ? 'asc' : 'dsc'"></span>
+                <span
+                  class="arrow"
+                  :class="sorted !== index + 1 ? 'asc' : 'dsc'"
+                ></span>
               </th>
             </tr>
           </thead>
@@ -43,14 +46,16 @@
               <td
                 v-for="response in result.responseBody"
                 :key="response.responseId"
-              >{{ getResponse(response) }}</td>
+              >
+                {{ getResponse(response) }}
+              </td>
             </tr>
           </tbody>
         </table>
 
         <!-- markdown view -->
         <textarea
-          v-show="tableForm==='markdown'"
+          v-show="tableForm === 'markdown'"
           class="textarea"
           :value="markdownTable"
           :rows="results.length + 3"
@@ -59,7 +64,7 @@
 
         <!-- csv view -->
         <textarea
-          v-show="tableForm==='csv'"
+          v-show="tableForm === 'csv'"
           class="textarea"
           :value="csvTable"
           :rows="results.length + 2"
@@ -71,7 +76,6 @@
 </template>
 
 <script>
-
 export default {
   name: 'Spreadsheet',
   components: {},
@@ -85,7 +89,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       headers: [
         { name: 'traqId', label: 'traQID' },
@@ -94,21 +98,21 @@ export default {
       sorted: '',
       downloadLabel: 'CSV形式でダウンロード',
       tableForm: 'view', // 'view', 'markdown', 'csv'
-      tableFormTabs: [ 'view', 'markdown', 'csv' ]
+      tableFormTabs: ['view', 'markdown', 'csv']
     }
   },
   computed: {
-    questionnaireId () {
+    questionnaireId() {
       return this.$route.params.id
     },
-    headerLabels () {
+    headerLabels() {
       let ret = []
       this.headers.forEach(header => {
         ret.push(header.label)
       })
       return ret
     },
-    markdownTable () {
+    markdownTable() {
       // results の表を markdown 形式にしたものを返す
       let ret = ''
 
@@ -125,9 +129,9 @@ export default {
       // 各回答の行
       for (let i = 0; i < this.results.length; i++) {
         let arr = []
-        const result = this.results[ i ]
+        const result = this.results[i]
         this.headers.forEach(header => {
-          arr.push(result[ header.name ])
+          arr.push(result[header.name])
         })
         result.responseBody.forEach(body => {
           arr.push(this.getResponse(body))
@@ -140,7 +144,7 @@ export default {
 
       return ret
     },
-    csvTable () {
+    csvTable() {
       let csv = '\ufeff'
       this.headerLabels.concat(this.questions).forEach(header => {
         if (csv !== '\ufeff') {
@@ -158,13 +162,13 @@ export default {
       })
       return csv
     },
-    canDownload () {
+    canDownload() {
       return this.tableForm === 'markdown' || this.tableForm === 'csv'
     }
   },
-  mounted () { },
+  mounted() {},
   methods: {
-    getResponse (body) {
+    getResponse(body) {
       let ret = ''
       switch (body.question_type) {
         case 'MultipleChoice':
@@ -181,7 +185,7 @@ export default {
           return body.response
       }
     },
-    downloadTable () {
+    downloadTable() {
       if (!this.canDownload) return
       let form = {}
       switch (this.tableForm) {
@@ -192,7 +196,7 @@ export default {
           form = { type: 'text/csv', ext: '.csv', data: this.csvTable }
           break
       }
-      const blob = new Blob([ form.data ], { type: form.type })
+      const blob = new Blob([form.data], { type: form.type })
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = 'Result' + form.ext
@@ -200,7 +204,7 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    sort (index) {
+    sort(index) {
       let query = ''
       if (this.sorted !== index) {
         query += '-'
@@ -220,7 +224,7 @@ export default {
       }
       this.$emit('get-results', '?sort=' + query)
     },
-    arrayToMarkdown (arr) {
+    arrayToMarkdown(arr) {
       // 配列を受け取ると、その配列1行分のmarkdownを返す
       let ret = '|'
       arr.forEach(val => {
