@@ -12,11 +12,12 @@
       </li>
       <li v-for="pageNum in pages" :key="pageNum">
         <router-link
-          class="pagination-link"
           v-if="pageNum"
-          :class="{'is-current' : pageNum===currentPage}"
+          class="pagination-link"
+          :class="{ 'is-current': pageNum === currentPage }"
           :to="getPageLink(pageNum)"
-        >{{ pageNum }}</router-link>
+          >{{ pageNum }}</router-link
+        >
         <span v-if="!pageNum" class="pagination-link" disabled></span>
       </li>
       <li v-if="range">
@@ -33,17 +34,16 @@
 </template>
 
 <script>
-
 // import <componentname> from '<path to component file>'
 
 export default {
   name: 'Pagination',
-  components: {
-  },
+  components: {},
   props: {
     range: {
       type: Object,
-      required: false
+      required: false,
+      default: undefined
     },
     currentPage: {
       type: Number,
@@ -54,29 +54,19 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       paginationWidth: 1
     }
   },
-  methods: {
-    getPageLink (pageName) {
-      let ret = Object.assign({}, this.defaultPageLink)
-      ret.query = typeof this.defaultPageLink.query === 'undefined' ? {} : Object.assign({}, this.defaultPageLink.query)
-      if (this.range && pageName === 'first') {
-        ret.query.page = this.range.first
-      } else if (this.range && pageName === 'last') {
-        ret.query.page = this.range.last
-      } else {
-        ret.query.page = pageName
-      }
-      return ret
-    }
-  },
   computed: {
-    pages () {
+    pages() {
       let ret = []
-      for (let i = this.currentPage - this.paginationWidth; i <= this.currentPage + this.paginationWidth; i++) {
+      for (
+        let i = this.currentPage - this.paginationWidth;
+        i <= this.currentPage + this.paginationWidth;
+        i++
+      ) {
         let min = 1
         let max = this.currentPage + this.paginationWidth
         if (this.range) {
@@ -91,14 +81,30 @@ export default {
       }
       return ret
     },
-    disableFirstButton () {
+    disableFirstButton() {
       return this.currentPage - this.paginationWidth <= this.range.first
     },
-    disableLastButton () {
+    disableLastButton() {
       return this.currentPage + this.paginationWidth >= this.range.last
     }
   },
-  mounted () {
+  mounted() {},
+  methods: {
+    getPageLink(pageName) {
+      let ret = Object.assign({}, this.defaultPageLink)
+      ret.query =
+        typeof this.defaultPageLink.query === 'undefined'
+          ? {}
+          : Object.assign({}, this.defaultPageLink.query)
+      if (this.range && pageName === 'first') {
+        ret.query.page = this.range.first
+      } else if (this.range && pageName === 'last') {
+        ret.query.page = this.range.last
+      } else {
+        ret.query.page = pageName
+      }
+      return ret
+    }
   }
 }
 </script>

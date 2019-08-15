@@ -14,7 +14,8 @@
               <router-link
                 v-if="information.titleLink"
                 :to="information.titleLink"
-              >{{ information.title }}</router-link>
+                >{{ information.title }}</router-link
+              >
               <p v-if="!information.titleLink">{{ information.title }}</p>
             </div>
           </header>
@@ -23,18 +24,27 @@
             <pre>{{ information.description }}</pre>
           </div>
 
-          <div v-if="information.timeLimit" class="is-pulled-right wrapper editable time-limit">
+          <div
+            v-if="information.timeLimit"
+            class="is-pulled-right wrapper editable time-limit"
+          >
             <span class="label">回答期限 :</span>
             <span class="time-limit">{{ information.timeLimit }}</span>
           </div>
 
           <div v-if="information.responseDetails" class="response-details">
             <div class="is-pulled-left is-inline-block wrapper editable">
-              <span class="respondent subtitle is-5">{{ information.responseDetails.respondent }}</span>
+              <span class="respondent subtitle is-5">{{
+                information.responseDetails.respondent
+              }}</span>
             </div>
             <div class="is-pulled-right is-flex editable">
-              <span class="label">{{ information.responseDetails.timeLabel + ': ' }}</span>
-              <span class="time-limit">{{ information.responseDetails.time }}</span>
+              <span class="label">{{
+                information.responseDetails.timeLabel + ': '
+              }}</span>
+              <span class="time-limit">{{
+                information.responseDetails.time
+              }}</span>
             </div>
           </div>
         </div>
@@ -44,29 +54,23 @@
 </template>
 
 <script>
-
 // import <componentname> from '<path to component file>'
 
 export default {
   name: '',
-  components: {
-  },
+  components: {},
   props: {
     information: {
       type: Object,
       required: true
     }
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
-  methods: {
-  },
-  computed: {
-  },
-  mounted () {
-  }
+  computed: {},
+  mounted() {},
+  methods: {}
 }
 </script>
 

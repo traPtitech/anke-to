@@ -2,15 +2,15 @@
   <div>
     <div v-if="canViewResults" class="details is-fullheight">
       <div class="tabs is-centered">
-        <router-link :to="summaryProps.titleLink" id="return-button">
+        <router-link id="return-button" :to="summaryProps.titleLink">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul>
           <li
-            class="tab"
-            :class="{ 'is-active': selectedTab === tab }"
             v-for="(tab, index) in detailTabs"
             :key="index"
+            class="tab"
+            :class="{ 'is-active': selectedTab === tab }"
           >
             <router-link :to="getTabLink(tab)">{{ tab }}</router-link>
           </li>
@@ -24,20 +24,22 @@
         :results="results"
         :information="information"
         :questions="questions"
-        :questionData="questionData"
-        :responseData="responseData"
+        :question-data="questionData"
+        :response-data="responseData"
         @get-results="getResults"
       ></component>
     </div>
 
-    <div v-if="this.information.administrators && !canViewResults" class="message is-danger">
+    <div
+      v-if="information.administrators && !canViewResults"
+      class="message is-danger"
+    >
       <p class="message-body error-message">結果を閲覧する権限がありません</p>
     </div>
   </div>
 </template>
 
 <script>
-
 import { mapGetters } from 'vuex'
 import axios from '@/bin/axios'
 import common from '@/bin/common'
@@ -52,25 +54,8 @@ export default {
     spreadsheet: Spreadsheet,
     'information-summary': InformationSummary
   },
-  async created () {
-    this.getInformation()
-      .then(this.getMyResponses)
-      .then(() => {
-        if (this.canViewResults) {
-          this.getResults('')
-            .then(this.getQuestions)
-            .then(() => {
-              if (this.$route.query.tab === 'individual') {
-                this.setResponseData()
-                this.setResponsesToQuestions()
-              }
-            })
-        }
-      })
-  },
-  props: {
-  },
-  data () {
+  props: {},
+  data() {
     return {
       results: [],
       questions: [],
@@ -78,101 +63,31 @@ export default {
       responseData: {},
       information: {},
       hasResponded: false,
-      detailTabs: [ 'Spreadsheet', 'Individual' ]
-    }
-  },
-  methods: {
-    getDateStr: common.getDateStr,
-    async getResults (query) {
-      return axios
-        .get('/results/' + this.questionnaireId + query)
-        .then(res => {
-          this.results = []
-          res.data.forEach(data => {
-            this.results.push({
-              modifiedAt: this.getDateStr(data.modified_at),
-              responseId: data.responseID,
-              responseBody: data.response_body,
-              submittedAt: this.getDateStr(data.submitted_at),
-              traqId: data.traqID
-            })
-          })
-        })
-    },
-    getQuestions () {
-      this.questions = []
-      this.questionData = []
-      return axios
-        .get('/questionnaires/' + this.questionnaireId + '/questions')
-        .then(res => {
-          for (const question of res.data) {
-            this.questions.push(question.body)
-            this.questionData.push(common.convertDataToQuestion(question))
-          }
-        })
-    },
-    getInformation () {
-      return axios
-        .get('/questionnaires/' + this.questionnaireId)
-        .then(res => {
-          this.information = res.data
-        })
-    },
-    getMyResponses () {
-      return axios
-        .get('/users/me/responses/' + this.questionnaireId)
-        .then(res => {
-          if (res.data.length > 0) {
-            this.hasResponded = true
-          }
-        })
-    },
-    getTabLink (tab) {
-      let ret = {
-        name: 'Results',
-        params: { id: this.$route.params.id },
-        query: {}
-      }
-      if (tab === 'Individual') {
-        ret.query.tab = 'individual'
-      } else {
-        ret.query.tab = 'spreadsheet'
-      }
-      return ret
-    },
-    setResponseData () {
-      this.responseData = this.results[ this.currentPage - 1 ]
-      let newBody = {}
-      this.responseData.responseBody.forEach(data => {
-        newBody[ data.questionID ] = data
-      })
-      this.responseData.body = newBody
-    },
-    setResponsesToQuestions () {
-      const questions = Object.assign([], this.questionData)
-      questions.forEach((question, index) => {
-        this.$set(this.questionData, index, common.setResponseToQuestion(question, this.responseData.body[ question.questionId ]))
-      })
-    },
-    setResults (results) {
-      this.results = results
+      detailTabs: ['Spreadsheet', 'Individual']
     }
   },
   computed: {
-    ...mapGetters([ 'getMyTraqId' ]),
-    questionnaireId () {
+    ...mapGetters(['getMyTraqId']),
+    questionnaireId() {
       return this.$route.params.id
     },
-    administrates () {
+    administrates() {
       if (!this.information.administrators) {
         return undefined
       }
-      return common.administrates(this.information.administrators, this.getMyTraqId)
+      return common.administrates(
+        this.information.administrators,
+        this.getMyTraqId
+      )
     },
-    canViewResults () {
-      return common.canViewResults(this.information, this.administrates, this.hasResponded)
+    canViewResults() {
+      return common.canViewResults(
+        this.information,
+        this.administrates,
+        this.hasResponded
+      )
     },
-    currentTabComponent () {
+    currentTabComponent() {
       switch (this.selectedTab) {
         case 'Spreadsheet':
           return 'spreadsheet'
@@ -183,17 +98,19 @@ export default {
           return ''
       }
     },
-    selectedTab () {
-      return this.$route.query.tab && this.$route.query.tab === 'individual' ? 'Individual' : 'Spreadsheet'
+    selectedTab() {
+      return this.$route.query.tab && this.$route.query.tab === 'individual'
+        ? 'Individual'
+        : 'Spreadsheet'
     },
-    currentPage () {
+    currentPage() {
       if (this.$route.query.tab === 'individual') {
         return this.$route.query.page ? Number(this.$route.query.page) : 1
       } else {
         return undefined
       }
     },
-    summaryProps () {
+    summaryProps() {
       let ret = {
         title: this.information.title,
         titleLink: '/questionnaires/' + this.questionnaireId
@@ -209,11 +126,107 @@ export default {
     }
   },
   watch: {
-    $route: function (newRoute) {
+    $route: function(newRoute) {
       if (newRoute.query.tab === 'individual') {
         this.setResponseData()
         this.setResponsesToQuestions()
       }
+    }
+  },
+  async created() {
+    this.getInformation()
+      .then(this.getMyResponses)
+      .then(() => {
+        if (this.canViewResults) {
+          this.getResults('')
+            .then(this.getQuestions)
+            .then(() => {
+              if (this.$route.query.tab === 'individual') {
+                this.setResponseData()
+                this.setResponsesToQuestions()
+              }
+            })
+        }
+      })
+  },
+  methods: {
+    getDateStr: common.getDateStr,
+    async getResults(query) {
+      return axios.get('/results/' + this.questionnaireId + query).then(res => {
+        this.results = []
+        res.data.forEach(data => {
+          this.results.push({
+            modifiedAt: this.getDateStr(data.modified_at),
+            responseId: data.responseID,
+            responseBody: data.response_body,
+            submittedAt: this.getDateStr(data.submitted_at),
+            traqId: data.traqID
+          })
+        })
+      })
+    },
+    getQuestions() {
+      this.questions = []
+      this.questionData = []
+      return axios
+        .get('/questionnaires/' + this.questionnaireId + '/questions')
+        .then(res => {
+          for (const question of res.data) {
+            this.questions.push(question.body)
+            this.questionData.push(common.convertDataToQuestion(question))
+          }
+        })
+    },
+    getInformation() {
+      return axios.get('/questionnaires/' + this.questionnaireId).then(res => {
+        this.information = res.data
+      })
+    },
+    getMyResponses() {
+      return axios
+        .get('/users/me/responses/' + this.questionnaireId)
+        .then(res => {
+          if (res.data.length > 0) {
+            this.hasResponded = true
+          }
+        })
+    },
+    getTabLink(tab) {
+      let ret = {
+        name: 'Results',
+        params: { id: this.$route.params.id },
+        query: {}
+      }
+      if (tab === 'Individual') {
+        ret.query.tab = 'individual'
+      } else {
+        ret.query.tab = 'spreadsheet'
+      }
+      return ret
+    },
+    setResponseData() {
+      this.responseData = this.results[this.currentPage - 1]
+      let newBody = {}
+      this.responseData.responseBody.forEach(data => {
+        newBody[data.questionID] = data
+      })
+      this.responseData.body = newBody
+    },
+    setResponsesToQuestions() {
+      const questions = Object.assign([], this.questionData)
+      questions.forEach((question, index) => {
+        this.$set(
+          this.questionData,
+          index,
+          common.setResponseToQuestion(
+            question,
+            this.responseData.body[question.questionId]
+          )
+        )
+      })
+    },
+    setResults(results) {
+      this.results = results
     }
   }
 }
