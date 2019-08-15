@@ -35,14 +35,18 @@
       </div>
       <edit-nav-bar v-if="isEditing">
         <button
-          :disabled="!submitOk"
+          :disabled="!submitOk || isSubmitting"
           class="button is-medium send-button"
           @click="submitResponse"
         >
           <span class="ti-check"></span>
           <span>送信</span>
         </button>
-        <button class="button is-medium save-button" @click="saveResponse">
+        <button
+          :disabled="isSaving"
+          class="button is-medium save-button"
+          @click="saveResponse"
+        >
           <span class="ti-save"></span>
         </button>
         <button class="button is-medium cancel-button" @click="abortEditing">
@@ -84,7 +88,9 @@ export default {
       responseData: {},
       message: {
         showMessage: false
-      }
+      },
+      isSubmitting: false,
+      isSaving: false
     }
   },
   computed: {
@@ -120,6 +126,7 @@ export default {
       }
     },
     submitOk() {
+      // 入力内容に不備がないかどうか
       for (const error of Object.keys(this.inputErrors)) {
         if (this.inputErrors[error].isError) {
           return false
@@ -251,7 +258,7 @@ export default {
     sendResponse(data) {
       // サーバーにPOST/PATCHリクエストを送る
       if (this.isNewResponse) {
-        axios
+        return axios
           .post('/responses', data)
           .then(resp => {
             const responseId = resp.data.responseID
@@ -281,18 +288,30 @@ export default {
       }
     },
     submitResponse() {
+      if (this.isSubmitting) return // 二重サブミット防止
+
       // 回答の送信
       let data = this.createResponseData()
       data.submitted_at = new Date().toLocaleString('ja-GB')
-      this.setMessage('回答を送信しました', 'green')
-      this.sendResponse(data)
+
+      this.isSubmitting = true
+      this.sendResponse(data).then(() => {
+        this.isSubmitting = false
+        this.setMessage('回答を送信しました', 'green')
+      })
     },
     saveResponse() {
+      if (this.isSaving) return // 二重サブミット防止
+
       // 回答の保存
       let data = this.createResponseData()
       data.submitted_at = 'NULL'
-      this.setMessage('回答を保存しました (まだ未送信です)', 'green')
-      this.sendResponse(data)
+
+      this.isSaving = true
+      this.sendResponse(data).then(() => {
+        this.isSaving = false
+        this.setMessage('回答を保存しました (まだ未送信です)', 'green')
+      })
     },
     abortEditing() {
       // TODO: 変更したかどうかを検出
