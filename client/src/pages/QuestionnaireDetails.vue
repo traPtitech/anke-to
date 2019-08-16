@@ -46,7 +46,7 @@
       <edit-nav-bar v-if="isEditing">
         <button
           class="button is-medium send-button"
-          :disabled="!submitOk"
+          :disabled="!submitOk || isSubmitting"
           @click="submitQuestionnaire"
         >
           <span class="ti-check"></span>
@@ -89,7 +89,6 @@ export default {
   data() {
     return {
       detailTabs: ['Information', 'Questions'],
-      // selectedTab: 'Information',
       showEditButton: false,
       noTimeLimit: true,
       information: {},
@@ -98,7 +97,8 @@ export default {
       removedQuestionIds: [],
       message: {
         showMessage: false
-      }
+      },
+      isSubmitting: false
     }
   },
   computed: {
@@ -296,6 +296,8 @@ export default {
       }
     },
     submitQuestionnaire() {
+      if (this.isSubmitting) return // 二重サブミット防止
+
       const informationData = {
         title: this.information.title,
         description: this.information.description,
@@ -309,6 +311,7 @@ export default {
         administrators: this.information.administrators
       }
 
+      this.isSubmitting = true
       if (this.isNewQuestionnaire) {
         // アンケートの新規作成
 
@@ -330,9 +333,11 @@ export default {
           .catch(error => {
             // エラーが起きた場合は、送信済みのInformationを削除する
             axios.delete('/questionnaires/' + this.newQuestionnaireId)
-            // this.showMessage('通信エラー', 'red')
             console.log(error)
             this.alertNetworkError()
+          })
+          .finally(() => {
+            this.isSubmitting = false
           })
       } else {
         // 既存のアンケートの編集
@@ -360,6 +365,9 @@ export default {
             console.log(error)
             this.alertNetworkError()
           })
+          .finally(() => {
+            this.isSubmitting = false
+          })
       }
     },
     sendQuestions(index) {
@@ -368,12 +376,18 @@ export default {
       const data = this.createQuestionData(index)
 
       if (this.isNewQuestion(question)) {
-        return axios.post('/questions', data).then(() => {
-          if (index < this.questions.length - 1) {
-            // 残りの質問を送信
-            return this.sendQuestions(index + 1)
-          }
-        })
+        return axios
+          .post('/questions', data)
+          .then(() => {
+            if (index < this.questions.length - 1) {
+              // 残りの質問を送信
+              return this.sendQuestions(index + 1)
+            }
+          })
+          .catch(err => {
+            this.showMessage('質問の作成に失敗しました', 'red')
+            console.log(err.response)
+          })
       } else {
         return axios
           .patch('/questions/' + question.questionId, data)
@@ -382,6 +396,10 @@ export default {
               // 残りの質問を送信
               return this.sendQuestions(index + 1)
             }
+          })
+          .catch(err => {
+            this.showMessage('質問の更新に失敗しました', 'red')
+            console.log(err.response)
           })
       }
     },

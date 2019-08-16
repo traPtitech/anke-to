@@ -1,50 +1,27 @@
 <template>
   <nav class="navbar is-fixed-bottom is-flex">
     <div class="editor-buttons">
-      <!-- <button
-        v-for="editButton in editButtons"
-        :key="editButton.label"
-        class="button is-medium"
-        :class="editButton.class"
-        :disabled="editButton.disabled"
-        @click.prevent="atClick(editButton.atClick)"
-      >
-        {{ editButton.label }}
-      </button> -->
       <slot></slot>
     </div>
   </nav>
 </template>
 
 <script>
-// import <componentname> from '<path to component file>'
-
 export default {
   name: 'EditNavBar',
   components: {},
-  props: {
-    // editButtons: {
-    //   type: Array,
-    //   required: true
-    // }
-  },
+  props: {},
   data() {
     return {}
   },
   computed: {},
   mounted() {},
-  methods: {
-    atClick(func) {
-      this.$emit(func)
-    }
-  }
+  methods: {}
 }
 </script>
 
-<!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .editor-buttons {
-  // width: -webkit-fill-available;
   display: inline-flex;
   margin: 0 0 0 auto;
   .button {
