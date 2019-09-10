@@ -18,8 +18,7 @@ func PostMessageUsingBot(c echo.Context, message string) error {
 	url := "https://q.trap.jp/api/1.0/channels/" + channelId + "/messages"
 	req, err := http.NewRequest("POST",
 		url,
-		strings.NewReader(message)
-	)
+		strings.NewReader(message))
 	if err != nil {
 		return err
 	}
