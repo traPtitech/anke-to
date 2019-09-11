@@ -107,7 +107,9 @@ export default {
       // link.select()
       let range = document.createRange()
       range.selectNode(link)
-      window.getSelection().addRange(range)
+      const selection = window.getSelection()
+      selection.removeAllRanges()
+      selection.addRange(range)
       if (document.execCommand('copy')) {
         this.showCopyMessage('リンクをコピーしました！')
       } else {
@@ -137,7 +139,6 @@ export default {
   .new-response-link-panel {
     display: flex;
     input {
-      width: -webkit-fill-available;
       max-width: 20rem;
       margin: 0;
       display: inherit;
