@@ -16,7 +16,7 @@ type (
 	UserInfo struct {
 		Name     string `db:"name"`      // traQ ID
 		UserId   string `db:"user_id"`   // traQ内部のUUID
-		UserType string `db:"user_type"` // user or group
+		UserType string `db:"user_type"` // "user" or "group"
 	}
 
 	// traQが返却するユーザーオブジェクト
@@ -28,7 +28,7 @@ type (
 		Bot           bool   `json:"bot"`
 		TwitterId     string `json:"twitterId"`
 		LastOnline    string `json:"lastOnline"`
-		IsOnline      string `json:"isOnline"`
+		IsOnline      bool   `json:"isOnline"`
 		Suspended     bool   `json:"suspended"`
 		AccountStatus int    `json:"accountStatus"`
 	}
@@ -100,7 +100,6 @@ func FetchUserInfo(names []string) ([]UserInfo, error) {
 	}
 
 	newUsers := make([]UserInfo, 0, len(names))
-	// TODO: なんかもうちょいいいのを考える
 	u, g := 0, 0
 	for _, name := range names {
 		if users[u].Name == name {
