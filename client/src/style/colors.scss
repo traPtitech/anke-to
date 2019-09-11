@@ -66,8 +66,11 @@ summary {
 }
 
 // editing background
-.is-editing {
-  background-color: $base-darkbrown;
+.details-child,
+#edit-button {
+  &.is-editing {
+    background-color: $base-darkbrown;
+  }
 }
 
 // card
