@@ -135,17 +135,6 @@ CREATE TABLE `targets` (
   `user_traqid` char(30) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- テーブルの構造 `users`(よくわかんなかったので手動で追加しました)
---
-CREATE TABLE `users` (
-    `name` char(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `user_type` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 --
 -- Indexes for dumped tables
 --
@@ -204,12 +193,6 @@ ALTER TABLE `targets`
   ADD PRIMARY KEY (`questionnaire_id`,`user_traqid`) USING BTREE;
 
 --
--- Indexes for table `users`(これも勝手に追加しました)
---
-ALTER TABLE `users`
-    ADD PRIMARY KEY (`name`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -265,7 +248,6 @@ ALTER TABLE `scale_labels`
 ALTER TABLE `targets`
   ADD CONSTRAINT `targets_ibfk_1` FOREIGN KEY (`questionnaire_id`) REFERENCES `questionnaires` (`id`);
 COMMIT;
-
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

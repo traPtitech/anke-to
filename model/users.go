@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
-	"os"
 
+	"database/sql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 )
 
@@ -49,7 +50,7 @@ type (
 func FetchUserInfo(names []string) ([]UserInfo, error) {
 	// ユーザー一覧の取得
 	userUrl := "https://q.trap.jp/api/1.0/users"
-	reqUser, err := http.NewRequest("GET", userUrl, nil)
+	reqUser, err := http.NewRequest("GET", userUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func FetchUserInfo(names []string) ([]UserInfo, error) {
 
 	// グループ一覧の取得
 	groupUrl := "https://q.trap.jp/api/1.0/groups"
-	reqGroup, err := http.NewRequest("GET", groupUrl, nil)
+	reqGroup, err := http.NewRequest("GET", groupUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func GetAllUserInfo() ([]UserInfo, error) {
 }
 
 func MakeMentionText(user UserInfo) string {
-	return fmt.Sprintf(`!{"type":"%s","raw":"@%s","id":"%s"}`, user.UserType, user.Name, user.UserId)
+	return fmt.Sprintf(`!{"type":"%s","raw":"@%s","id":"%s"}`, user.UserType, user.TraqID, user.Uuid)
 }
 
 func MakeMentionTexts(traqIds []string) ([]string, error) {
@@ -153,7 +154,7 @@ func MakeMentionTexts(traqIds []string) ([]string, error) {
 		return nil, err
 	}
 
-	sort.Strings(traqIds)
+	sort.Sort(traqIds)
 
 	mentions := make([]string, 0, len(traqIds))
 	unknowns := make([]string, 0, len(traqIds)) // DBになかった人の一覧
