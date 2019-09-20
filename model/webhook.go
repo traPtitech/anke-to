@@ -30,6 +30,7 @@ func PostMessage(c echo.Context, message string) error {
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
 	req.Header.Set("X-TRAQ-Signature", CalcHMACSHA1(message))
+	req.Header.Set("embed", 1)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
