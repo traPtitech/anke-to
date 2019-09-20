@@ -91,11 +91,7 @@ func PostQuestionnaire(c echo.Context) error {
 
 	targets_mention_text := "なし"
 	if len(req.Targets) != 0 {
-		var err error
-		targets_mention_text, err = strings.Join(model.MakeMentionTexts(req.Targets), " ")
-		if err != nil {
-			c.Logger().Error(err)
-		}
+		targets_mention_text = "@" + strings.Join(req.Targets, " @")
 	}
 
 	if err := model.PostMessage(c,
