@@ -89,6 +89,11 @@ func PostQuestionnaire(c echo.Context) error {
 		time_limit = req.ResTimeLimit
 	}
 
+	targets_mention_text := "なし"
+	if len(req.Targets) != 0 {
+		targets_mention_text = "@" + strings.Join(req.Targets, " @")
+	}
+
 	if err := model.PostMessage(c,
 		"### 新しいアンケートが作成されました\n"+
 			"#### タイトル\n"+
@@ -97,6 +102,7 @@ func PostQuestionnaire(c echo.Context) error {
 			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
 			"#### 説明\n"+req.Description+"\n"+
 			"#### 回答期限\n"+time_limit+"\n"+
+			"#### 対象者\n"+targets_mention_text+"\n"+
 			"http://anke-to.sysad.trap.show/responses/new/"+strconv.Itoa(lastID)); err != nil {
 		c.Logger().Error(err)
 	}

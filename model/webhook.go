@@ -7,6 +7,7 @@ import (
 
 	"fmt"
 	"net/http"
+	netUrl "net/url"
 	"os"
 	"strings"
 
@@ -30,6 +31,10 @@ func PostMessage(c echo.Context, message string) error {
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
 	req.Header.Set("X-TRAQ-Signature", CalcHMACSHA1(message))
+
+	query := netUrl.Values{}
+	query.Add("embed", "1")
+	req.URL.RawQuery = query.Encode()
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
