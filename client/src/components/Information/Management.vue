@@ -43,7 +43,7 @@
 
       <!-- アンケートを締め切る -->
       <management-button
-        :disabled="!administrates && !timeLimitExceeded"
+        :disabled="!administrates || timeLimitExceeded"
         :questionnaire-id="questionnaireId"
         :questionnaire-information="questionnaireInformation"
         class="button-wrapper"
