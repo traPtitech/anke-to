@@ -66,6 +66,7 @@ export default {
       iconClasses: {
         newResponse: 'ti-check-box',
         viewResults: 'ti-bar-chart',
+        closeQuestionnaire: 'ti-timer',
         deleteQuestionnaire: 'ti-trash'
       },
       buttonLabels: {
