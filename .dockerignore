@@ -8,3 +8,4 @@ docker-compose.yml
 anke-to
 showcase.yaml
 /client/node_modules/
+/client/dist/
