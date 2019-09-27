@@ -9,7 +9,7 @@
       <span :class="iconClass"></span>
       <span v-if="size === 'normal'">{{ buttonLabel }}</span>
     </router-link>
-    <button
+    <div
       v-if="type === 'deleteQuestionnaire'"
       :class="{ 'is-disabled': disabled || processing }"
       :disabled="disabled || processing"
@@ -18,7 +18,7 @@
     >
       <span :class="iconClass"></span>
       <span v-if="size === 'normal'">{{ buttonLabel }}</span>
-    </button>
+    </div>
   </div>
 </template>
 
