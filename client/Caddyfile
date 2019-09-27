@@ -1,7 +1,0 @@
-:80
-gzip
-
-rewrite {
-	regexp .*
-	to {path} /
-}

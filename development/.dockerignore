@@ -7,4 +7,4 @@ docker-compose.yml
 /vendor/
 anke-to
 showcase.yaml
-/client/node_modules/
+/client/
