@@ -22,7 +22,7 @@
           <!-- 操作 -->
           <management
             v-bind="{
-              resTimeLimit: information.res_time_limit,
+              questionnaireInformation: information,
               questionnaireId: questionnaireId,
               canViewResults: canViewResults,
               administrates: administrates

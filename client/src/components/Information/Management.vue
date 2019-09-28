@@ -41,6 +41,16 @@
       >
       </management-button>
 
+      <!-- アンケートを締め切る -->
+      <management-button
+        :disabled="!administrates || timeLimitExceeded"
+        :questionnaire-id="questionnaireId"
+        :questionnaire-information="questionnaireInformation"
+        class="button-wrapper"
+        type="closeQuestionnaire"
+      >
+      </management-button>
+
       <!-- アンケートを削除 -->
       <management-button
         :disabled="!administrates"
@@ -62,9 +72,9 @@ export default {
     'management-button': ManagementButton
   },
   props: {
-    resTimeLimit: {
-      type: String,
-      default: undefined
+    questionnaireInformation: {
+      type: Object,
+      required: true
     },
     questionnaireId: {
       type: Number,
@@ -87,7 +97,10 @@ export default {
   computed: {
     timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
-      return new Date(this.resTimeLimit).getTime() < new Date().getTime()
+      return (
+        new Date(this.questionnaireInformation.res_time_limit).getTime() <
+        new Date().getTime()
+      )
     },
     newResponseLink() {
       return (

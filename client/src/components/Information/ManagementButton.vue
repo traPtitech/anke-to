@@ -19,11 +19,21 @@
       <span :class="iconClass"></span>
       <span v-if="size === 'normal'">{{ buttonLabel }}</span>
     </div>
+    <button
+      v-if="type === 'closeQuestionnaire'"
+      :class="{ 'is-disabled': disabled | processing }"
+      class="button"
+      @click.prevent="closeQuestionnaire"
+    >
+      <span :class="iconClass"></span>
+      <span v-if="size === 'normal'">{{ buttonLabel }}</span>
+    </button>
   </div>
 </template>
 
 <script>
 import axios from '@/bin/axios'
+import moment from 'moment'
 
 export default {
   name: 'ManagementButton',
@@ -44,6 +54,10 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    questionnaireInformation: {
+      type: Object,
+      default: undefined
     }
   },
   data() {
@@ -52,11 +66,13 @@ export default {
       iconClasses: {
         newResponse: 'ti-check-box',
         viewResults: 'ti-bar-chart',
+        closeQuestionnaire: 'ti-timer',
         deleteQuestionnaire: 'ti-trash'
       },
       buttonLabels: {
         newResponse: '回答する',
         viewResults: '結果を見る',
+        closeQuestionnaire: 'アンケートを締め切る',
         deleteQuestionnaire: 'アンケートを削除'
       }
     }
@@ -110,6 +126,33 @@ export default {
             })
             .finally(() => {})
         }
+      }
+    },
+
+    closeQuestionnaire() {
+      if (this.disabled || this.processing) return
+      if (window.confirm('アンケートを今すぐ締め切りますか？')) {
+        this.processing = true
+        const time_limit = moment().format('YYYY/MM/DD HH:mm')
+        axios
+          .patch('/questionnaires/' + this.questionnaireId, {
+            title: this.questionnaireInformation.title,
+            description: this.questionnaireInformation.description,
+            res_time_limit: time_limit,
+            res_shared_to: this.questionnaireInformation.res_shared_to,
+            targets: this.questionnaireInformation.targets,
+            administrators: this.questionnaireInformation.administrators
+          })
+          .then(() => {
+            this.processing = false
+            this.questionnaireInformation.res_time_limit = time_limit
+          })
+          .catch(error => {
+            this.processing = false
+            console.log(error)
+            this.alertNetworkError()
+          })
+          .finally(() => {})
       }
     }
   }
