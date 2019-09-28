@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form>
+    <form @submit.prevent>
       <div class="columns is-flex">
         <article class="column is-11">
           <div class="card">
