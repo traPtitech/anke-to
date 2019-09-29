@@ -97,13 +97,13 @@ func PostQuestionnaire(c echo.Context) error {
 	if err := model.PostMessage(c,
 		"### 新しいアンケートが作成されました\n"+
 			"#### タイトル\n"+
-			"["+req.Title+"](http://anke-to.sysad.trap.show/questionnaires/"+
+			"["+req.Title+"](https://anke-to.trap.jp/questionnaires/"+
 			strconv.Itoa(lastID)+")\n"+
 			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
 			"#### 説明\n"+req.Description+"\n"+
 			"#### 回答期限\n"+time_limit+"\n"+
 			"#### 対象者\n"+targets_mention_text+"\n"+
-			"http://anke-to.sysad.trap.show/responses/new/"+strconv.Itoa(lastID)); err != nil {
+			"https://anke-to.trap.jp/responses/new/"+strconv.Itoa(lastID)); err != nil {
 		c.Logger().Error(err)
 	}
 
