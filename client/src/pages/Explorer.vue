@@ -138,6 +138,7 @@ export default {
   props: {},
   data() {
     return {
+      title: 'アンケート一覧',
       questionnaires: [],
       headers: ['', '回答期限', '更新日時', '作成日時', '結果'],
       sortOrders: [

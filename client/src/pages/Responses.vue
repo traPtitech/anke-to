@@ -61,6 +61,7 @@ export default {
   props: {},
   data() {
     return {
+      title: '回答一覧',
       responses: [],
       headers: ['', '回答期限', '回答日時', '更新日時', '回答']
     }

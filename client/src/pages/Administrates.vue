@@ -55,6 +55,7 @@ export default {
   props: {},
   data() {
     return {
+      title: '管理者になっているアンケート一覧',
       questionnaires: [],
       headers: [
         'Title',

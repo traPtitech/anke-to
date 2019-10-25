@@ -180,6 +180,9 @@ export default {
         }
       }
       return ret
+    },
+    title() {
+      return this.information.title
     }
   },
   watch: {

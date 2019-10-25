@@ -180,7 +180,7 @@ export default {
       }
     },
     title() {
-      return this.information.title
+      return this.information.title || '新規アンケート作成'
     },
     informationProps() {
       return {

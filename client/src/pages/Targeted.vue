@@ -56,6 +56,7 @@ export default {
   props: {},
   data() {
     return {
+      title: '回答対象のアンケート一覧',
       questionnaires: [],
       headers: [
         'Title',
