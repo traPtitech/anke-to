@@ -16,7 +16,7 @@
     <p
       v-if="!editMode && typeof content.responseBody !== 'undefined'"
       class="has-underline"
-      :class="{ 'multi-line': content.type === 'TextArea'}"
+      :class="{ 'multi-line': content.type === 'TextArea' }"
     >
       {{ content.responseBody }}
     </p>
