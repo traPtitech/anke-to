@@ -7,6 +7,19 @@ import store from './store'
 
 Vue.config.productionTip = false
 
+Vue.mixin({
+  watch: {
+    title(val) {
+      document.title = `${val} | anke-to`
+    }
+  },
+  mounted() {
+    if (this.title) {
+      document.title = `${this.title} | anke-to`
+    }
+  }
+})
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

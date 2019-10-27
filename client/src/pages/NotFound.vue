@@ -6,6 +6,11 @@
 
 <script>
 export default {
-  name: 'NotFound'
+  name: 'NotFound',
+  data() {
+    return {
+      title: 'ページが見つかりませんでした'
+    }
+  }
 }
 </script>
