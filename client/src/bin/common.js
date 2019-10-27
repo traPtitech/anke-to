@@ -37,6 +37,7 @@ export default {
     }
     switch (data.question_type) {
       case 'Text':
+      case 'TextArea':
       case 'Number':
         question.responseBody = ''
         break
@@ -90,6 +91,7 @@ export default {
     let question = Object.assign({}, questionData)
     switch (question.type) {
       case 'Text':
+      case 'TextArea':
         question.responseBody = responseData.response
         break
       case 'Number':
@@ -117,6 +119,11 @@ export default {
     Text: {
       type: 'Text',
       label: 'テキスト',
+      component: 'short-answer'
+    },
+    TextArea: {
+      type: 'TextArea',
+      label: 'テキスト（長文）',
       component: 'short-answer'
     },
     Number: {

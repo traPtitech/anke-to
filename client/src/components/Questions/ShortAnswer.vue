@@ -16,6 +16,7 @@
     <p
       v-if="!editMode && typeof content.responseBody !== 'undefined'"
       class="has-underline"
+      :class="{ 'multi-line': content.type === 'TextArea' }"
     >
       {{ content.responseBody }}
     </p>
@@ -35,6 +36,13 @@
       class="input has-underline"
       placeholder="0"
     />
+    <textarea
+      v-if="editMode === 'response' && content.type === 'TextArea'"
+      v-model="content.responseBody"
+      class="input has-underline"
+      placeholder="回答"
+      rows="5"
+    ></textarea>
   </div>
 </template>
 
@@ -63,7 +71,7 @@ export default {
       return this.contentProps
     },
     responsePlaceholder() {
-      if (this.content.type === 'Text') {
+      if (this.content.type === 'Text' || this.content.type === 'TextArea') {
         return '回答 (テキスト)'
       } else if (this.content.type === 'Number') {
         return '回答 (数値)'
@@ -84,5 +92,14 @@ export default {
   &.has-underline {
     border-bottom: $base-brown dotted 0.5px;
   }
+}
+
+.multi-line {
+  white-space: pre-line;
+  word-break: break-all;
+}
+
+textarea {
+  height: 10em;
 }
 </style>

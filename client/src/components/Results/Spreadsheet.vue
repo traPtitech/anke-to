@@ -244,6 +244,7 @@ td {
   vertical-align: middle;
   font-size: 0.9em;
   min-width: 10em;
+  word-break: break-all;
 }
 
 th.active {

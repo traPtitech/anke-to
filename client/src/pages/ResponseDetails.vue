@@ -357,6 +357,7 @@ export default {
             })
             break
           case 'Text':
+          case 'TextArea':
           case 'Number':
             body.option_response = []
             body.response = String(question.responseBody)
@@ -374,6 +375,7 @@ export default {
       let hasSelectedOption = false
       switch (question.type) {
         case 'Text':
+        case 'TextArea':
         case 'Number':
           return (
             typeof question.responseBody !== 'undefined' &&
