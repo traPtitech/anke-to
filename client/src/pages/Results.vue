@@ -44,6 +44,7 @@ import { mapGetters } from 'vuex'
 import axios from '@/bin/axios'
 import common from '@/bin/common'
 import Individual from '@/components/Results/Individual'
+import Statistics from '@/components/Results/Statistics'
 import Spreadsheet from '@/components/Results/Spreadsheet'
 import InformationSummary from '@/components/Information/InformationSummary'
 
@@ -51,6 +52,7 @@ export default {
   name: 'Results',
   components: {
     individual: Individual,
+    statistics: Statistics,
     spreadsheet: Spreadsheet,
     'information-summary': InformationSummary
   },
@@ -63,7 +65,7 @@ export default {
       responseData: {},
       information: {},
       hasResponded: false,
-      detailTabs: ['Spreadsheet', 'Individual']
+      detailTabs: ['Spreadsheet', 'Statistics', 'Individual']
     }
   },
   computed: {
@@ -90,18 +92,19 @@ export default {
     currentTabComponent() {
       switch (this.selectedTab) {
         case 'Spreadsheet':
-          return 'spreadsheet'
+        case 'Statistics':
         case 'Individual':
-          return 'individual'
+          return this.selectedTab.toLowerCase()
         default:
           console.error('unexpected selectedTab')
           return ''
       }
     },
     selectedTab() {
-      return this.$route.query.tab && this.$route.query.tab === 'individual'
-        ? 'Individual'
-        : 'Spreadsheet'
+      if (!this.$route.query.tab) {
+        return 'Spreadsheet'
+      }
+      return this.$route.query.tab.replace(/^[a-z]/, ch => ch.toUpperCase())
     },
     currentPage() {
       if (this.$route.query.tab === 'individual') {
@@ -197,8 +200,8 @@ export default {
         params: { id: this.$route.params.id },
         query: {}
       }
-      if (tab === 'Individual') {
-        ret.query.tab = 'individual'
+      if (['Individual', 'Statistics', 'Spreadsheet'].includes(tab)) {
+        ret.query.tab = tab.toLowerCase()
       } else {
         ret.query.tab = 'spreadsheet'
       }
