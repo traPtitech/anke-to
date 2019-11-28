@@ -176,14 +176,14 @@ const getMedian = data => {
 
 const getMode = data => {
   const map = new Map()
-  for (const datum of data) {
-    if (!map.has(datum)) map.set(datum, 0)
-    map.set(datum, map.get(datum) + 1)
+  for (const { answer } of data) {
+    if (!map.has(answer)) map.set(answer, 0)
+    map.set(answer, map.get(answer) + 1)
   }
-  const arr = [...map].sort((a, b) => a[1] - b[1])
+  const arr = [...map].sort((a, b) => b[1] - a[1])
   return arr
     .filter(v => arr[0][1] === v[1])
-    .map(v => v[0].answer)
+    .map(v => v[0])
     .join(', ')
 }
 
