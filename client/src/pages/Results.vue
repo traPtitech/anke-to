@@ -65,7 +65,7 @@ export default {
       responseData: {},
       information: {},
       hasResponded: false,
-      detailTabs: ['Spreadsheet', 'Statistics', 'Individual']
+      detailTabs: ['Statistics', 'Spreadsheet', 'Individual']
     }
   },
   computed: {
@@ -91,8 +91,8 @@ export default {
     },
     currentTabComponent() {
       switch (this.selectedTab) {
-        case 'Spreadsheet':
         case 'Statistics':
+        case 'Spreadsheet':
         case 'Individual':
           return this.selectedTab.toLowerCase()
         default:
@@ -102,7 +102,7 @@ export default {
     },
     selectedTab() {
       if (!this.$route.query.tab) {
-        return 'Spreadsheet'
+        return 'Statistics'
       }
       return this.$route.query.tab.replace(/^[a-z]/, ch => ch.toUpperCase())
     },
@@ -203,7 +203,7 @@ export default {
       if (['Individual', 'Statistics', 'Spreadsheet'].includes(tab)) {
         ret.query.tab = tab.toLowerCase()
       } else {
-        ret.query.tab = 'spreadsheet'
+        ret.query.tab = 'statistics'
       }
       return ret
     },
