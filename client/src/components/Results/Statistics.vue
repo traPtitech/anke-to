@@ -77,7 +77,7 @@
           v-show="tableForm === 'markdown'"
           class="textarea"
           :value="markdownTable"
-          :rows="results.length + 3"
+          :rows="markdownTable.split('\n').length + 3"
           readonly
         ></textarea>
       </div>
