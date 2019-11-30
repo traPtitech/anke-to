@@ -2,8 +2,6 @@ name: Build image
 
 on: 
   push:
-    branches: 
-      - master
 
 env:
   IMAGE_NAME: anke-to
