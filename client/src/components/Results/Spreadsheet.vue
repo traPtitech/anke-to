@@ -234,6 +234,10 @@ export default {
             ret += response
           })
           return ret
+        case 'TextArea':
+          return this.tableForm === 'markdown'
+            ? body.response.replace(/\n/g, '<br>')
+            : body.response
         default:
           return body.response
       }
