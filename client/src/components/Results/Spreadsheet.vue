@@ -177,20 +177,18 @@ export default {
         this.tableHeaders.filter((_, index) => !this.isColumnHidden(index))
       )
 
-      this.results
-        .filter((_, index) => !this.isColumnHidden(index))
-        .forEach(result => {
-          const defaultResults = [result.traqId, result.submittedAt]
-          csv += arrayToCsv(
-            defaultResults
-              .concat(
-                result.responseBody.map(response =>
-                  this.responseToString(response)
-                )
+      this.results.forEach(result => {
+        const defaultResults = [result.traqId, result.submittedAt]
+        csv += arrayToCsv(
+          defaultResults
+            .concat(
+              result.responseBody.map(response =>
+                this.responseToString(response)
               )
-              .filter((_, index) => !this.isColumnHidden(index))
-          )
-        })
+            )
+            .filter((_, index) => !this.isColumnHidden(index))
+        )
+      })
       return csv
     },
     isTextTable() {
