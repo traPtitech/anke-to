@@ -116,18 +116,13 @@ export default {
   mounted() {},
   methods: {
     copyNewResponseLink() {
-      let link = document.querySelector('#new-response-link')
-      // link.select()
-      let range = document.createRange()
-      range.selectNode(link)
-      const selection = window.getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
-      if (document.execCommand('copy')) {
-        this.showCopyMessage('リンクをコピーしました！')
-      } else {
-        this.showCopyMessage('コピーに失敗しました')
-      }
+      this.$copyText(this.newResponseLink).then(
+        () => this.showCopyMessage('リンクをコピーしました！'),
+        e => {
+          this.showCopyMessage('コピーに失敗しました')
+          console.log(e)
+        }
+      )
     },
     async showCopyMessage(message) {
       this.copyMessage = {
