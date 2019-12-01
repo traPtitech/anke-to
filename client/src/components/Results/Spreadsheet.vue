@@ -12,8 +12,11 @@
             <a @click="tableForm = tab">{{ tab }}</a>
           </li>
         </ul>
+        <button v-if="isTextTable" class="button copy" @click="copyTable">
+          <span class="ti-clipboard"></span>
+        </button>
         <button
-          v-if="canDownload"
+          v-if="isTextTable"
           class="button download"
           @click="downloadTable"
         >
@@ -132,6 +135,12 @@ export default {
         .concat(this.questions)
       return ret
     },
+    textTables() {
+      return {
+        markdown: this.markdownTable,
+        csv: this.csvTable
+      }
+    },
     markdownTable() {
       // results の表を markdown 形式にしたものを返す
       let ret = ''
@@ -155,8 +164,6 @@ export default {
 
         ret += this.arrayToMarkdown(arr)
       }
-
-      ret = ret.slice(0, -1) // 末尾の改行を削除
 
       return ret
     },
@@ -193,8 +200,8 @@ export default {
         })
       return csv
     },
-    canDownload() {
-      return this.tableForm === 'markdown' || this.tableForm === 'csv'
+    isTextTable() {
+      return Object.keys(this.textTables).includes(this.tableForm)
     }
   },
   beforeUpdate() {
@@ -232,7 +239,7 @@ export default {
       }
     },
     downloadTable() {
-      if (!this.canDownload) return
+      if (!this.isTextTable) return
       let form = {}
       switch (this.tableForm) {
         case 'markdown':
@@ -295,6 +302,9 @@ export default {
       return (
         this.showColumn.length === this.tableWidth && !this.showColumn[index]
       )
+    },
+    copyTable() {
+      this.$copyText(this.textTables[this.tableForm])
     }
   }
 }
@@ -325,10 +335,6 @@ th.active-header {
   opacity: 1;
 }
 
-.download {
-  margin: auto 0.5rem;
-}
-
 .card {
   overflow-x: unset;
 }
@@ -339,6 +345,7 @@ th.active-header {
 
 .button {
   display: block;
+  margin: auto 5px;
 }
 
 .header-wrapper {
