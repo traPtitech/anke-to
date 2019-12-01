@@ -5,6 +5,28 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: $var-indigo;
+
+  --base-lightbrown: #{$base-lightbrown};
+  --base-pink: #{$base-pink};
+  --base-gray: #{$base-gray};
+  --base-bluegray: #{$base-bluegray};
+  --base-brown: #{$base-brown};
+  --base-darkbrown: #{$base-darkbrown};
+  --var-red: #{$var-red};
+  --var-indigo: #{$var-indigo};
+  --var-yellow: #{$var-yellow};
+  --point-black: #{$point-black};
+
+  --button-background-color-green:#{$button-background-color-green};
+  --button-border-color-green: #{$button-border-color-green};
+  --button-background-color-gray: #{$button-background-color-gray};
+  --button-border-color-gray: #{$button-border-color-gray};
+  --button-background-color-red: #{$button-background-color-red};
+  --button-border-color-red: #{$button-border-color-red};
+
+  --button-color: #{$button-color};
+  --button-disabled-background-color: #{$button-disabled-background-color};
+  --button-disabled-border-color: #{$button-disabled-border-color};
 }
 
 .columns {
