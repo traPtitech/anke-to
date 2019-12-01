@@ -69,21 +69,14 @@
           </tbody>
         </table>
 
-        <!-- markdown view -->
+        <!-- markdown, csv view -->
         <textarea
-          v-show="tableForm === 'markdown'"
+          v-for="(table, name) in textTables"
+          v-show="tableForm === name"
+          :key="name"
           class="textarea"
-          :value="markdownTable"
-          :rows="results.length + 3"
-          readonly
-        ></textarea>
-
-        <!-- csv view -->
-        <textarea
-          v-show="tableForm === 'csv'"
-          class="textarea"
-          :value="csvTable"
-          :rows="results.length + 2"
+          :value="table"
+          :rows="table.split('\n').length + 3"
           readonly
         ></textarea>
       </div>
