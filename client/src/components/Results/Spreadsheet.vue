@@ -195,12 +195,20 @@ export default {
       return Object.keys(this.textTables).includes(this.tableForm)
     }
   },
-  beforeUpdate() {
-    if (this.showColumn.length < this.tableWidth) {
-      this.showColumn = new Array(this.tableWidth).fill(true)
+  watch: {
+    questions() {
+      this.initializeShowColumn(this.tableWidth)
     }
   },
+  mounted() {
+    this.initializeShowColumn(this.tableWidth)
+  },
   methods: {
+    initializeShowColumn(len) {
+      if (this.showColumn.length < len) {
+        this.showColumn = new Array(len).fill(true)
+      }
+    },
     getTableRow(index) {
       // 表のindex行目に表示する文字列の配列を返す
       const ret = this.defaultColumns
