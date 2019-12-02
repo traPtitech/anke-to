@@ -250,7 +250,11 @@ export default {
               ['| 回答 | 回答数 | その回答をした人 |', '| - | - | - |'],
               data.map(
                 ([choice, ids]) =>
-                  `| ${choice} | ${ids.length} | ${ids.join(', ')} |`
+                  `| ${
+                    isNumberType(question.type)
+                      ? choice
+                      : choice.replace(/\n/g, '<br>')
+                  } | ${ids.length} | ${ids.join(', ')} |`
               )
             )
           }

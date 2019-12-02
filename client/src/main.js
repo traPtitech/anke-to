@@ -4,8 +4,10 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import store from './store'
+import VueClipboard from 'vue-clipboard2'
 
 Vue.config.productionTip = false
+Vue.use(VueClipboard)
 
 Vue.mixin({
   watch: {
