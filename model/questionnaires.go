@@ -364,3 +364,68 @@ func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, erro
 
 	return ret, nil
 }
+
+func GetTargettedQuestionnairesBytraQID(c echo.Context, traQID string) ([]TargettedQuestionnaires, error) {
+	// 全てのアンケート
+	allquestionnaires, err := GetAllQuestionnaires(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// 指定したtraQIDがtargetになっているアンケート
+	targetedQuestionnaireID, err := GetTargettedQuestionnaireIDBytraQID(c, traQID)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []TargettedQuestionnaires{}
+	for _, v := range allquestionnaires {
+		var targeted = false
+		for _, w := range targetedQuestionnaireID {
+			if w == v.ID {
+				targeted = true
+			}
+		}
+		if !targeted {
+			continue
+		}
+
+		// 回答済みなら次へ
+		respondedAt, err := RespondedAtBytraQID(c, v.ID, traQID)
+		if err != nil {
+			return nil, err
+		}
+		if respondedAt != "NULL" {
+			continue
+		}
+
+		// アンケートの期限がNULLまたは期限を過ぎていたら次へ
+		if !v.ResTimeLimit.Valid || time.Now().After(v.ResTimeLimit.Time) {
+			continue
+		}
+
+		ret = append(ret,
+			TargettedQuestionnaires{
+				ID:           v.ID,
+				Title:        v.Title,
+				Description:  v.Description,
+				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
+				ResSharedTo:  v.ResSharedTo,
+				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
+				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
+				RespondedAt:  respondedAt,
+			})
+	}
+
+	// アンケートが1つも無い場合
+	if len(ret) == 0 {
+		return nil, echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	// 回答期限が近い順に
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].ResTimeLimit < ret[j].ResTimeLimit
+	})
+
+	return ret, nil
+}

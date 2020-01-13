@@ -48,3 +48,15 @@ func GetTargettedQuestionnaireID(c echo.Context) ([]int, error) {
 	}
 	return targetedQuestionnaireID, nil
 }
+
+// 指定したtraQIDまたはtraPが含まれているアンケートのID
+func GetTargettedQuestionnaireIDBytraQID(c echo.Context, traQID string) ([]int, error) {
+	targetedQuestionnaireID := []int{}
+	if err := db.Select(&targetedQuestionnaireID,
+		`SELECT DISTINCT questionnaire_id FROM targets WHERE user_traqid = ? OR user_traqid = 'traP'`,
+		traQID); err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return targetedQuestionnaireID, nil
+}
