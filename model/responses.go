@@ -202,6 +202,18 @@ func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
 	return NullStringConvert(respondedAt), nil
 }
 
+func RespondedAtBytraQID(c echo.Context, questionnaireID int, traQID string) (string, error) {
+	respondedAt := sql.NullString{}
+	if err := db.Get(&respondedAt,
+		`SELECT MAX(submitted_at) FROM respondents
+		WHERE user_traqid = ? AND questionnaire_id = ? AND deleted_at IS NULL`,
+		traQID, questionnaireID); err != nil {
+		c.Logger().Error(err)
+		return "", echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return NullStringConvert(respondedAt), nil
+}
+
 func GetRespondentByID(c echo.Context, responseID int) (ResponseID, error) {
 	respondentInfo := ResponseID{}
 	if err := db.Get(&respondentInfo,

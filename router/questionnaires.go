@@ -268,3 +268,14 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, ret)
 }
+
+// GetTargetedQuestionnaire GET /users/:traQID/targeted
+func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
+	traQID := c.Param("traQID")
+	ret, err := model.GetTargettedQuestionnairesBytraQID(c, traQID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, ret)
+}

@@ -64,6 +64,7 @@ func SetRouting(e *echo.Echo) {
 				apiUsersMe.GET("/targeted", GetTargetedQuestionnaire)
 				apiUsersMe.GET("/administrates", GetMyQuestionnaire)
 			}
+			apiUsers.GET("/:traQID/targeted", GetTargettedQuestionnairesBytraQID)
 		}
 
 		apiResults := api.Group("/results")
