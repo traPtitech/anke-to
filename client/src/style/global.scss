@@ -72,14 +72,14 @@
   }
 }
 
-@media screen and (max-width: 1088px) {
+@media screen and (max-width: 1023px) {
   // 固定サイドメニューは非表示
   .fixed-sidemenu {
     display: none;
   }
 }
 
-@media screen and (min-width: 1088px) {
+@media screen and (min-width: 1024px) {
   // widthが大きいときは固定サイドメニューのみ表示
   .sidemenu {
     display: none;
