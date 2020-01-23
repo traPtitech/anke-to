@@ -2,8 +2,10 @@ package model
 
 import (
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"database/sql"
@@ -85,6 +87,9 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 		return []QuestionnairesInfo{}, 0, err
 	}
 
+	search := c.QueryParam("search")
+	regex := regexp.MustCompile(strings.ToLower(search))
+
 	questionnaires := []QuestionnairesInfo{}
 	for _, q := range allquestionnaires {
 		var targeted = false
@@ -96,6 +101,10 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 
 		// 今見ているquestionnairesがtargetであり、targetでないものを返す場合はcontinue
 		if nontargeted && targeted {
+			continue
+		}
+
+		if search != "" && !regex.MatchString(strings.ToLower(q.Title)) {
 			continue
 		}
 

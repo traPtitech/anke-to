@@ -1,71 +1,90 @@
 <template>
   <div class="wrapper is-fullheight has-navbar-fixed-bottom">
-    <div class="dropdowns">
-      <div
-        class="dropdown"
-        :class="{ 'is-active': DropdownIsActive.sortOrder }"
-      >
-        <div class="dropdown-trigger">
-          <button
-            class="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-            @click="
-              DropdownIsActive.targetedOption = false
-              DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder
-            "
-          >
-            <p>並び替え</p>
-            <span class="ti-angle-down"></span>
-          </button>
+    <div class="tool-wrapper">
+      <div id="dropdowns" class="tool">
+        <div
+          class="dropdown"
+          :class="{ 'is-active': DropdownIsActive.sortOrder }"
+        >
+          <div class="dropdown-trigger">
+            <button
+              class="button"
+              aria-haspopup="true"
+              aria-controls="dropdown-menu"
+              @click="
+                DropdownIsActive.targetedOption = false
+                DropdownIsActive.sortOrder = !DropdownIsActive.sortOrder
+              "
+            >
+              <p>並び替え</p>
+              <span class="ti-angle-down"></span>
+            </button>
+          </div>
+          <div id="dropdown-menu" class="dropdown-menu" role="menu">
+            <div
+              v-for="(order, index) in sortOrders"
+              :key="index"
+              :class="{ 'is-selected': order.opt === sortOrder }"
+              class="dropdown-content"
+              @click="
+                changeSortOrder(order.opt)
+                DropdownIsActive.sortOrder = false
+              "
+            >
+              <p class="dropdown-item">{{ order.str }}</p>
+            </div>
+          </div>
         </div>
-        <div id="dropdown-menu" class="dropdown-menu" role="menu">
-          <div
-            v-for="(order, index) in sortOrders"
-            :key="index"
-            :class="{ 'is-selected': order.opt === sortOrder }"
-            class="dropdown-content"
-            @click="
-              changeSortOrder(order.opt)
-              DropdownIsActive.sortOrder = false
-            "
-          >
-            <p class="dropdown-item">{{ order.str }}</p>
+        <div
+          class="dropdown"
+          :class="{ 'is-active': DropdownIsActive.targetedOption }"
+        >
+          <div class="dropdown-trigger">
+            <button
+              class="button"
+              aria-haspopup="true"
+              aria-controls="dropdown-menu"
+              @click="
+                DropdownIsActive.sortOrder = false
+                DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption
+              "
+            >
+              <p>フィルター</p>
+              <span class="ti-angle-down"></span>
+            </button>
+          </div>
+          <div id="dropdown-menu" class="dropdown-menu" role="menu">
+            <div
+              v-for="(option, index) in targetedOptions"
+              :key="index"
+              :class="{ 'is-selected': option.opt === targetedOption }"
+              class="dropdown-content"
+              @click="
+                changetargetedOption(option.opt)
+                DropdownIsActive.targetedOption = false
+              "
+            >
+              <p class="dropdown-item">{{ option.str }}</p>
+            </div>
           </div>
         </div>
       </div>
-      <div
-        class="dropdown"
-        :class="{ 'is-active': DropdownIsActive.targetedOption }"
-      >
-        <div class="dropdown-trigger">
-          <button
-            class="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-            @click="
-              DropdownIsActive.sortOrder = false
-              DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption
-            "
-          >
-            <p>フィルター</p>
-            <span class="ti-angle-down"></span>
-          </button>
-        </div>
-        <div id="dropdown-menu" class="dropdown-menu" role="menu">
-          <div
-            v-for="(option, index) in targetedOptions"
-            :key="index"
-            :class="{ 'is-selected': option.opt === targetedOption }"
-            class="dropdown-content"
-            @click="
-              changetargetedOption(option.opt)
-              DropdownIsActive.targetedOption = false
-            "
-          >
-            <p class="dropdown-item">{{ option.str }}</p>
-          </div>
-        </div>
+      <div class="tool search-box">
+        <input
+          v-model="searchQueryInput"
+          type="text"
+          maxlength="50"
+          class="input"
+          placeholder="検索"
+          @click="
+            DropdownIsActive.sortOrder = false
+            DropdownIsActive.targetedOption = false
+          "
+          @keypress.enter="searchQuestionnaires(searchQueryInput)"
+        />
+        <span class="button" @click="searchQuestionnaires(searchQueryInput)">
+          <span class="ti-search"></span>
+        </span>
       </div>
     </div>
     <div
@@ -184,7 +203,8 @@ export default {
       range: {
         first: 1,
         last: 1
-      }
+      },
+      searchQueryInput: ''
     }
   },
   computed: {
@@ -198,7 +218,8 @@ export default {
           query: {
             nontargeted: String(this.targetedOption),
             page: String(newVal),
-            sort: this.sortOrder
+            sort: this.sortOrder,
+            search: this.searchQuery
           }
         })
       }
@@ -213,7 +234,8 @@ export default {
           query: {
             nontargeted: String(this.targetedOption),
             page: String(this.pageNumber),
-            sort: newVal
+            sort: newVal,
+            search: this.searchQuery
           }
         })
       }
@@ -229,7 +251,24 @@ export default {
           query: {
             nontargeted: String(newVal),
             page: String(this.pageNumber),
-            sort: this.sortOrder
+            sort: this.sortOrder,
+            search: this.searchQuery
+          }
+        })
+      }
+    },
+    searchQuery: {
+      get() {
+        return this.$route.query.search ? this.$route.query.search : ''
+      },
+      set(newVal) {
+        router.push({
+          name: 'Explorer',
+          query: {
+            nontargeted: String(this.targetedOption),
+            page: String(this.pageNumber),
+            sort: this.sortOrder,
+            search: String(newVal)
           }
         })
       }
@@ -237,13 +276,20 @@ export default {
     defaultPageLink() {
       return {
         name: 'Explorer',
-        query: { nontargeted: this.targetedOption, sort: this.sortOrder }
+        query: {
+          nontargeted: this.targetedOption,
+          sort: this.sortOrder,
+          search: this.searchQuery
+        }
       }
     }
   },
   watch: {
     $route: function() {
       this.getQuestionnaires()
+      this.searchQueryInput = this.$route.query.search
+        ? this.$route.query.search
+        : ''
     }
   },
   async created() {
@@ -265,7 +311,9 @@ export default {
             '&nontargeted=' +
             this.targetedOption +
             '&page=' +
-            this.pageNumber
+            this.pageNumber +
+            '&search=' +
+            this.searchQuery
         )
         .then(response => {
           this.questionnaires = response.data.questionnaires
@@ -279,6 +327,10 @@ export default {
     },
     changetargetedOption(targetedOption) {
       this.targetedOption = targetedOption
+      this.getQuestionnaires()
+    },
+    searchQuestionnaires(searchQuery) {
+      this.searchQuery = searchQuery
       this.getQuestionnaires()
     }
   }
@@ -298,11 +350,6 @@ td {
   min-width: 8em;
   text-align: center;
 }
-.dropdowns {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-top: 1.5rem;
-}
 .dropdown-content:hover {
   background-color: $base-pink;
 }
@@ -317,5 +364,27 @@ td {
 }
 .card-wrapper {
   padding: 1rem 1.5rem;
+}
+.tool-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.5rem;
+}
+.tool {
+  margin: 1rem 1.5rem 0 0;
+}
+.search-box {
+  display: inherit;
+  input {
+    border-radius: 4px 0 0 4px;
+  }
+  .button {
+    border-radius: 0 4px 4px 0;
+    &:hover {
+      background-color: $base-pink;
+    }
+  }
 }
 </style>
