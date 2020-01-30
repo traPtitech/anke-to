@@ -40,9 +40,25 @@ const router = new Router({
       component: Explorer
     },
     {
+      path: '/questionnaires/new',
+      name: 'QuestionnaireDetailsNew',
+      component: QuestionnaireDetails,
+      meta: {
+        requiresTraqAuth: true
+      }
+    },
+    {
       path: '/questionnaires/:id',
       name: 'QuestionnaireDetails',
       component: QuestionnaireDetails
+    },
+    {
+      path: '/questionnaires/:id/edit',
+      name: 'QuestionnaireDetailsEdit',
+      component: QuestionnaireDetails,
+      meta: {
+        requiresTraqAuth: true
+      }
     },
     {
       path: '/results/:id',
