@@ -191,7 +191,7 @@ export default {
       }
     },
     isNewQuestionnaire() {
-      return this.$route.params.id === 'new'
+      return this.$route.name === 'QuestionnaireDetailsNew'
     },
     userLists() {
       return common.getUserLists(
