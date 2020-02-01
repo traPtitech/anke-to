@@ -21,6 +21,14 @@
         <label class="checkbox user-trap has-text-weight-bold">
           <input v-model="isUserTrap" type="checkbox" />
           traP
+          <!-- <span
+            class="ti-check icon-button select-group"
+            @click.prevent="selectAll()"
+          ></span>
+          <span
+            class="ti-close icon-button select-group"
+            @click.prevent="removeAll()"
+          ></span> -->
         </label>
 
         <!-- select type tab -->
@@ -45,27 +53,26 @@
             :key="index"
           >
             <div class="has-text-weight-bold group-name">
+              <input
+                :checked="isGroupSelectedMap[group.groupId]"
+                type="checkbox"
+                @input="toggleIsGroupSelected(group.groupId)"
+              />
               {{ group.name }}
-              <span
-                v-if="!isUserTrap && group.activeMembers.length > 0"
+              <!-- <span
                 class="ti-check icon-button select-group"
-                @click.prevent="selectAllInGroup(selectedGroupType, index)"
+                @click.prevent="selectAllInGroup(group.groupId)"
               ></span>
               <span
-                v-if="!isUserTrap && group.activeMembers.length > 0"
                 class="ti-close icon-button select-group"
-                @click.prevent="removeAllInGroup(selectedGroupType, index)"
-              ></span>
+                @click.prevent="removeAllInGroup(group.groupId)"
+              ></span> -->
             </div>
 
-            <!-- not user: traP -->
             <span v-for="(userId, index) in group.activeMembers" :key="index">
-              <label
-                v-if="!isUserTrap && userId !== getMyTraqId"
-                class="checkbox"
-              >
+              <label class="checkbox">
                 <input
-                  v-model="usersIsSelected[getUsersMap[userId].name]"
+                  v-model="userIsSelectedMap[getUsersMap[userId].name]"
                   type="checkbox"
                 />
                 <span>{{ getUsersMap[userId].name }}</span>
@@ -115,40 +122,48 @@ export default {
   data() {
     return {
       traq: null,
-      selectedGroupType: this.getGroupTypes ? this.getGroupTypes[0] : '',
-      usersIsSelected: {}
+      selectedGroupType: '',
+      userIsSelectedMap: {} // userName をキー、そのユーザーが選択されているかどうかを値として持つ
     }
   },
   computed: {
     ...mapGetters(['getMyTraqId']),
     ...mapGetters('traq', [
       'getActiveUsers',
+      'getSortedGroups',
+      'getSortedGroupsMap',
       'getGroupTypes',
       'getGroupTypeMap',
       'getUsersMap'
     ]),
     isUserTrap: {
       get() {
-        return this.usersIsSelected.traP === true
+        return !Object.values(this.userIsSelectedMap).includes(false)
       },
       set(newBool) {
         if (newBool) {
-          Object.keys(this.usersIsSelected).forEach(userName => {
-            this.usersIsSelected[userName] = false
-          })
+          this.selectAll()
         } else {
-          this.usersIsSelected[this.getMyTraqId] = true
+          this.removeAll()
         }
-        this.usersIsSelected.traP = newBool
       }
+    },
+    isGroupSelectedMap() {
+      // groupIdをキー、グループのすべてのメンバーが選択されているかどうかを値として持つ連想配列
+      return Object.fromEntries(
+        this.getSortedGroups.map(group => [
+          group.groupId,
+          this.isGroupSelected(group.groupId)
+        ])
+      )
     },
     numberOfSelectedUsers() {
       if (this.isUserTrap) {
         return Object.keys(this.getActiveUsers).length
       }
       let count = 0
-      Object.keys(this.usersIsSelected).forEach(userName => {
-        if (this.usersIsSelected[userName]) {
+      Object.keys(this.userIsSelectedMap).forEach(userName => {
+        if (this.userIsSelectedMap[userName]) {
           count++
         }
       })
@@ -175,7 +190,18 @@ export default {
   },
   watch: {},
   created() {
-    this.setUsersIsSelected(this.getActiveUsers)
+    // this.userIsSelectedMap を初期化
+    if (this.information[this.activeModal.name] && this.getActiveUsers) {
+      this.userIsSelectedMap = Object.fromEntries(
+        this.getActiveUsers.map(user => [user.name, false])
+      )
+      this.information[this.activeModal.name].forEach(userName => {
+        this.$set(this.userIsSelectedMap, userName, true)
+      })
+    }
+
+    // this.selectedGroupType を初期化
+    this.selectedGroupType = this.getGroupTypes ? this.getGroupTypes[0] : ''
   },
   mounted() {},
   methods: {
@@ -185,40 +211,45 @@ export default {
     confirmList() {
       if (this.confirmOk) {
         let selectedUsersList = []
-        Object.keys(this.usersIsSelected).forEach(userName => {
-          if (this.usersIsSelected[userName]) {
-            selectedUsersList.push(userName)
-          }
-        })
+        if (this.isUserTrap) {
+          selectedUsersList = ['traP']
+        } else {
+          selectedUsersList = this.getActiveUsers
+            .filter(user => this.userIsSelectedMap[user.name])
+            .map(user => user.name)
+        }
         this.$emit('set-user-list', this.activeModal.name, selectedUsersList)
         this.disableModal()
       }
     },
-    selectAllInGroup(type, index) {
-      this.getGroupTypeMap[type][index].activeMembers.forEach(userId => {
-        this.usersIsSelected[this.getUsersMap[userId].name] = true
+    selectAll() {
+      Object.keys(this.userIsSelectedMap).forEach(userName => {
+        this.userIsSelectedMap[userName] = true
       })
     },
-    removeAllInGroup(type, index) {
-      this.getGroupTypeMap[type][index].activeMembers.forEach(userId => {
-        this.usersIsSelected[this.getUsersMap[userId].name] = false
+    removeAll() {
+      Object.keys(this.userIsSelectedMap).forEach(userName => {
+        this.userIsSelectedMap[userName] = false
       })
     },
-    setUsersIsSelected(users) {
-      let tmp = {}
-      if (
-        Object.keys(users).length > 0 &&
-        this.information.administrators &&
-        this.information.targets
-      ) {
-        Object.keys(users).forEach(userId => {
-          tmp[users[userId].name] = false
-        })
-        this.information[this.activeModal.name].forEach(userName => {
-          tmp[userName] = true
-        })
-      }
-      this.usersIsSelected = tmp
+    isGroupSelected(groupId) {
+      return !this.getSortedGroupsMap[groupId].activeMembers
+        .map(userId => this.userIsSelectedMap[this.getUsersMap[userId].name])
+        .includes(false)
+    },
+    toggleIsGroupSelected(groupId) {
+      if (this.isGroupSelectedMap[groupId]) this.removeAllInGroup(groupId)
+      else this.selectAllInGroup(groupId)
+    },
+    selectAllInGroup(groupId) {
+      this.getSortedGroupsMap[groupId].activeMembers.forEach(userId => {
+        this.userIsSelectedMap[this.getUsersMap[userId].name] = true
+      })
+    },
+    removeAllInGroup(groupId) {
+      this.getSortedGroupsMap[groupId].activeMembers.forEach(userId => {
+        this.userIsSelectedMap[this.getUsersMap[userId].name] = false
+      })
     }
   }
 }
