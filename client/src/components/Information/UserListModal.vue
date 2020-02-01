@@ -12,23 +12,10 @@
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
-        <!-- error message -->
-        <input-error-message
-          :input-error="inputErrors.noAdministrator"
-        ></input-error-message>
-
         <!-- user traP -->
-        <label class="checkbox user-trap has-text-weight-bold">
-          <input v-model="isUserTrap" type="checkbox" />
-          traP
-          <!-- <span
-            class="ti-check icon-button select-group"
-            @click.prevent="selectAll()"
-          ></span>
-          <span
-            class="ti-close icon-button select-group"
-            @click.prevent="removeAll()"
-          ></span> -->
+        <label class="group-name has-text-weight-bold">
+          <checkbox :checked="isUserTrap" @input="isUserTrap = $event" />
+          <span>traP</span>
         </label>
 
         <!-- select type tab -->
@@ -53,24 +40,18 @@
             :key="index"
           >
             <div class="has-text-weight-bold group-name">
-              <input
+              <checkbox
+                class="checkbox"
                 :checked="isGroupSelectedMap[group.groupId]"
-                type="checkbox"
                 @input="toggleIsGroupSelected(group.groupId)"
               />
-              {{ group.name }}
-              <!-- <span
-                class="ti-check icon-button select-group"
-                @click.prevent="selectAllInGroup(group.groupId)"
-              ></span>
-              <span
-                class="ti-close icon-button select-group"
-                @click.prevent="removeAllInGroup(group.groupId)"
-              ></span> -->
+              <span>
+                {{ group.name }}
+              </span>
             </div>
 
             <span v-for="(userId, index) in group.activeMembers" :key="index">
-              <label class="checkbox">
+              <label class="checkbox-label">
                 <input
                   v-model="userIsSelectedMap[getUsersMap[userId].name]"
                   type="checkbox"
@@ -82,11 +63,20 @@
         </div>
       </section>
       <footer class="modal-card-foot">
+        <div
+          v-for="(inputError, index) in errorsList"
+          :key="index"
+          class="error-message"
+        >
+          <span class="ti-alert"></span>
+          <span>{{ inputError.message }}</span>
+        </div>
         <button
           :class="{ disabled: !confirmOk }"
-          class="button"
+          class="button confirm"
           @click.prevent="confirmList"
         >
+          <span class="ti-check" />
           決定
         </button>
       </footer>
@@ -95,14 +85,14 @@
 </template>
 
 <script>
-import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+import Checkbox from '@/components/Utils/Checkbox'
 import common from '@/bin/common'
 import { mapGetters } from 'vuex'
 
 export default {
   name: 'UserListModal',
   components: {
-    'input-error-message': InputErrorMessage
+    checkbox: Checkbox
   },
   props: {
     activeModal: {
@@ -161,13 +151,7 @@ export default {
       if (this.isUserTrap) {
         return Object.keys(this.getActiveUsers).length
       }
-      let count = 0
-      Object.keys(this.userIsSelectedMap).forEach(userName => {
-        if (this.userIsSelectedMap[userName]) {
-          count++
-        }
-      })
-      return count
+      return Object.values(this.userIsSelectedMap).filter(val => val).length
     },
     inputErrors() {
       return {
@@ -178,6 +162,9 @@ export default {
           message: '管理者がいません'
         }
       }
+    },
+    errorsList() {
+      return Object.values(this.inputErrors).filter(err => err.isError)
     },
     confirmOk() {
       return common.noErrors(this.inputErrors)
@@ -192,12 +179,18 @@ export default {
   created() {
     // this.userIsSelectedMap を初期化
     if (this.information[this.activeModal.name] && this.getActiveUsers) {
-      this.userIsSelectedMap = Object.fromEntries(
-        this.getActiveUsers.map(user => [user.name, false])
-      )
-      this.information[this.activeModal.name].forEach(userName => {
-        this.$set(this.userIsSelectedMap, userName, true)
-      })
+      if (this.information[this.activeModal.name][0] === 'traP') {
+        this.userIsSelectedMap = Object.fromEntries(
+          this.getActiveUsers.map(user => [user.name, true])
+        )
+      } else {
+        this.userIsSelectedMap = Object.fromEntries(
+          this.getActiveUsers.map(user => [user.name, false])
+        )
+        this.information[this.activeModal.name].forEach(userName => {
+          this.$set(this.userIsSelectedMap, userName, true)
+        })
+      }
     }
 
     // this.selectedGroupType を初期化
@@ -271,26 +264,10 @@ export default {
   &:hover {
     cursor: pointer;
   }
-  &.confirm {
-    background-color: $base-bluegray;
-    &:hover {
-      background-color: $var-indigo;
-    }
-    &.disabled {
-      background-color: lightgray;
-      pointer-events: none;
-    }
-  }
   &.close {
     background-color: $base-brown;
     &:hover {
       background-color: $var-red;
-    }
-  }
-  &.select-group {
-    background-color: $base-gray;
-    &:hover {
-      background-color: $base-darkbrown;
     }
   }
   span[class^='ti-'] {
@@ -301,23 +278,44 @@ export default {
 }
 .group-name {
   margin: 1.5rem 0 0.5rem 0;
+  display: flex;
+  * {
+    margin: auto 0;
+  }
+  .checkbox {
+    margin-right: 0.5rem;
+  }
 }
 .modal-card-body {
-  .details.checkbox {
+  .checkbox-label {
     margin: 0.5rem;
     display: -webkit-inline-box;
     width: fit-content;
+    span {
+      margin-left: 0.2rem;
+    }
   }
 }
-.checkbox,
-.dummy-checkbox {
-  width: 180px;
-  display: inline-block;
-  line-height: 1.25;
-  margin: 0.5rem;
-  &.user-trap {
-    display: block;
-    margin-bottom: 1rem;
+.error-message {
+  color: $var-red;
+  [class^='ti-'] {
+    margin-right: 0.5rem;
+  }
+}
+.button.confirm {
+  margin-left: auto;
+  background-color: $button-background-color-green;
+  border: none;
+  box-sizing: border-box;
+  width: fit-content;
+  &.disabled {
+    border: $button-disabled-border-color 1px solid;
+    color: $button-disabled-border-color;
+    background-color: $button-disabled-background-color;
+    pointer-events: none;
+  }
+  span {
+    margin: 3px 4px 0 0;
   }
 }
 </style>
