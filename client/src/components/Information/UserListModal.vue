@@ -12,11 +12,17 @@
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
-        <!-- user traP -->
-        <label class="group-name has-text-weight-bold">
-          <checkbox :checked="isUserTrap" @input="isUserTrap = $event" />
-          <span>traP</span>
-        </label>
+        <div class="modal-body-top-wrapper">
+          <label class="has-text-weight-bold">
+            <checkbox :checked="isUserTrap" @input="isUserTrap = $event" />
+            <span>traP</span>
+          </label>
+          <input
+            v-model="searchQuery"
+            placeholder="traQ ID でフィルター"
+            class="input search"
+          />
+        </div>
 
         <!-- select type tab -->
         <div class="tabs is-centered">
@@ -41,6 +47,7 @@
           >
             <div class="has-text-weight-bold group-name">
               <checkbox
+                v-show="searchQuery.length === 0"
                 class="checkbox"
                 :checked="isGroupSelectedMap[group.groupId]"
                 @input="toggleIsGroupSelected(group.groupId)"
@@ -50,7 +57,10 @@
               </span>
             </div>
 
-            <span v-for="(userId, index) in group.activeMembers" :key="index">
+            <span
+              v-for="(userId, index) in getFilteredActiveMembers(group.groupId)"
+              :key="index"
+            >
               <label class="checkbox-label">
                 <input
                   v-model="userIsSelectedMap[getUsersMap[userId].name]"
@@ -113,7 +123,8 @@ export default {
     return {
       traq: null,
       selectedGroupType: '',
-      userIsSelectedMap: {} // userName をキー、そのユーザーが選択されているかどうかを値として持つ
+      userIsSelectedMap: {}, // userName をキー、そのユーザーが選択されているかどうかを値として持つ
+      searchQuery: ''
     }
   },
   computed: {
@@ -235,14 +246,22 @@ export default {
       else this.selectAllInGroup(groupId)
     },
     selectAllInGroup(groupId) {
-      this.getSortedGroupsMap[groupId].activeMembers.forEach(userId => {
+      this.getActiveMembers(groupId).forEach(userId => {
         this.userIsSelectedMap[this.getUsersMap[userId].name] = true
       })
     },
     removeAllInGroup(groupId) {
-      this.getSortedGroupsMap[groupId].activeMembers.forEach(userId => {
+      this.getActiveMembers(groupId).forEach(userId => {
         this.userIsSelectedMap[this.getUsersMap[userId].name] = false
       })
+    },
+    getActiveMembers(groupId) {
+      return this.getSortedGroupsMap[groupId].activeMembers
+    },
+    getFilteredActiveMembers(groupId) {
+      return this.getSortedGroupsMap[groupId].activeMembers.filter(userId =>
+        this.getUsersMap[userId].name.includes(this.searchQuery)
+      )
     }
   }
 }
@@ -274,6 +293,21 @@ export default {
     line-height: normal;
     font-size: small;
     margin: 10% auto 0 auto;
+  }
+}
+.modal-body-top-wrapper {
+  display: inline-flex;
+  width: 100%;
+  margin: 10px 0 20px 0;
+  * {
+    margin: auto 0;
+  }
+  label {
+    display: flex;
+  }
+  .input.search {
+    width: 13rem;
+    margin-left: auto;
   }
 }
 .group-name {
