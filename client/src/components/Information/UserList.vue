@@ -4,7 +4,7 @@
       <span class="has-text-weight-bold"
         >{{ userList.summary }} ({{ userList.list.length }})</span
       >
-      <a>
+      <a class="edit-list-icon">
         <span
           v-if="userList.editable"
           class="ti-pencil"
@@ -50,5 +50,8 @@ export default {
 <style lang="scss" scoped>
 .user-list {
   margin: 0 0.5rem;
+}
+.edit-list-icon {
+  margin-left: 0.2rem;
 }
 </style>
