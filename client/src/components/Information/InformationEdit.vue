@@ -82,31 +82,6 @@
                   @change-active-modal="changeActiveModal"
                 ></user-list>
 
-                <!-- 対象者は traP or なし から選べるようにしておく (↑が実装されるまで) -->
-                <!-- <div class="user-list-wrapper">
-                  <span class="has-text-weight-bold">{{
-                    userLists.targets.summary
-                  }}</span>
-                  <span class="is-small targets-description"
-                    >(トップページに表示してほしいアンケートは、対象者を traP
-                    にしてください)</span
-                  >
-                  <div class="user-list">
-                    <label>
-                      <input
-                        v-model="targetedList"
-                        type="radio"
-                        :value="['traP']"
-                      />
-                      traP
-                    </label>
-                    <label>
-                      <input v-model="targetedList" type="radio" :value="[]" />
-                      なし
-                    </label>
-                  </div>
-                </div> -->
-
                 <!-- modal -->
                 <user-list-modal
                   v-if="isModalActive"
