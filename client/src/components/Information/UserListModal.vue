@@ -1,24 +1,14 @@
 <template>
   <div class="modal">
-    <div class="modal-background"></div>
+    <div class="modal-background" @click="disableModal"></div>
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">
           {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
         </p>
-        <span
-          :class="{ disabled: !confirmOk }"
-          class="ti-check icon-button round confirm"
-          @click.prevent="confirmList"
-        ></span>
-        <span
-          class="ti-close icon-button round close"
-          @click.prevent="disableModal"
-        ></span>
-        <span
-          class="ti-close icon-button round close"
-          @click.prevent="disableModal"
-        ></span>
+        <div class="icon-button close round">
+          <span class="ti-close" @click.prevent="disableModal"></span>
+        </div>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
@@ -37,13 +27,13 @@
         <div class="tabs is-centered">
           <ul>
             <li
-              v-for="(tab, index) in tabs"
+              v-for="(tab, index) in getGroupTypes"
               :key="index"
               :class="{ 'is-active': selectedGroupType === tab }"
               class="tab"
               @click="selectedGroupType = tab"
             >
-              <a>{{ tab }}</a>
+              <a>{{ tab !== '' ? tab : 'その他' }}</a>
             </li>
           </ul>
         </div>
@@ -51,7 +41,7 @@
         <!-- list -->
         <div class="user-list-wrapper">
           <span
-            v-for="(group, index) in groupTypes[selectedGroupType]"
+            v-for="(group, index) in getGroupTypeMap[selectedGroupType]"
             :key="index"
           >
             <div class="has-text-weight-bold group-name">
@@ -69,27 +59,30 @@
             </div>
 
             <!-- not user: traP -->
-            <span v-for="(userName, index) in group.activeMembers" :key="index">
+            <span v-for="(userId, index) in group.activeMembers" :key="index">
               <label
-                v-if="!isUserTrap && userName !== getMyTraqId"
+                v-if="!isUserTrap && userId !== getMyTraqId"
                 class="checkbox"
               >
-                <input v-model="usersIsSelected[userName]" type="checkbox" />
-                <span>{{ userName }}</span>
+                <input
+                  v-model="usersIsSelected[getUsersMap[userId].name]"
+                  type="checkbox"
+                />
+                <span>{{ getUsersMap[userId].name }}</span>
               </label>
-
-              <!-- user: traP -->
-              <span
-                v-if="isUserTrap || userName === getMyTraqId"
-                class="dummy-checkbox"
-              >
-                <span class="readonly-checkbox checked"></span>
-                <span>{{ userName }}</span>
-              </span>
             </span>
           </span>
         </div>
       </section>
+      <footer class="modal-card-foot">
+        <button
+          :class="{ disabled: !confirmOk }"
+          class="button"
+          @click.prevent="confirmList"
+        >
+          決定
+        </button>
+      </footer>
     </div>
   </div>
 </template>
@@ -98,9 +91,6 @@
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
 import common from '@/bin/common'
 import { mapGetters } from 'vuex'
-
-// selectedUsersList を消す
-// user: traPの処理
 
 export default {
   name: 'UserListModal',
@@ -117,14 +107,6 @@ export default {
       required: false,
       default: undefined
     },
-    users: {
-      type: Object,
-      required: true
-    },
-    groupTypes: {
-      type: Object,
-      required: true
-    },
     information: {
       type: Object,
       required: true
@@ -133,12 +115,18 @@ export default {
   data() {
     return {
       traq: null,
-      selectedGroupType: 'grade',
+      selectedGroupType: this.getGroupTypes ? this.getGroupTypes[0] : '',
       usersIsSelected: {}
     }
   },
   computed: {
     ...mapGetters(['getMyTraqId']),
+    ...mapGetters('traq', [
+      'getActiveUsers',
+      'getGroupTypes',
+      'getGroupTypeMap',
+      'getUsersMap'
+    ]),
     isUserTrap: {
       get() {
         return this.usersIsSelected.traP === true
@@ -156,7 +144,7 @@ export default {
     },
     numberOfSelectedUsers() {
       if (this.isUserTrap) {
-        return Object.keys(this.users).length
+        return Object.keys(this.getActiveUsers).length
       }
       let count = 0
       Object.keys(this.usersIsSelected).forEach(userName => {
@@ -183,15 +171,11 @@ export default {
       let ret = Object.assign({}, this.allUsersList)
       delete ret.traP
       return ret
-    },
-    tabs() {
-      return Object.keys(this.groupTypes)
     }
   },
   watch: {},
   created() {
-    this.setUsersIsSelected(this.users)
-    this.selectedTab = Object.keys(this.groupTypes)[0]
+    this.setUsersIsSelected(this.getActiveUsers)
   },
   mounted() {},
   methods: {
@@ -211,13 +195,13 @@ export default {
       }
     },
     selectAllInGroup(type, index) {
-      this.groupTypes[type][index].activeMembers.forEach(userName => {
-        this.usersIsSelected[userName] = true
+      this.getGroupTypeMap[type][index].activeMembers.forEach(userId => {
+        this.usersIsSelected[this.getUsersMap[userId].name] = true
       })
     },
     removeAllInGroup(type, index) {
-      this.groupTypes[type][index].activeMembers.forEach(userName => {
-        this.usersIsSelected[userName] = false
+      this.getGroupTypeMap[type][index].activeMembers.forEach(userId => {
+        this.usersIsSelected[this.getUsersMap[userId].name] = false
       })
     },
     setUsersIsSelected(users) {
@@ -249,6 +233,7 @@ export default {
   height: 1.5rem;
   padding: 0.25rem;
   margin-left: 1rem;
+  display: flex;
   &.round {
     border-radius: 1rem;
   }
@@ -276,6 +261,11 @@ export default {
     &:hover {
       background-color: $base-darkbrown;
     }
+  }
+  span[class^='ti-'] {
+    line-height: normal;
+    font-size: small;
+    margin: 10% auto 0 auto;
   }
 }
 .group-name {

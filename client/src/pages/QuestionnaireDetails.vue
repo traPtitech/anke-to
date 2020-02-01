@@ -230,8 +230,8 @@ export default {
     }
   },
   async created() {
-    this.getInformation()
-    this.getQuestions()
+    await this.getInformation()
+    await this.getQuestions()
   },
   mounted() {},
   methods: {
