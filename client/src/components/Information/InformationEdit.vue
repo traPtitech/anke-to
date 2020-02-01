@@ -71,11 +71,19 @@
                 </div>
 
                 <!-- 対象者・管理者の選択 (/api/users が実装されてから) -->
-                <!-- <user-list :userList="userLists.targets" class="user-list-wrapper"></user-list>
-                <user-list :userList="userLists.administrators" class="user-list-wrapper"></user-list>-->
+                <user-list
+                  :user-list="userLists.targets"
+                  class="user-list-wrapper"
+                  @change-active-modal="changeActiveModal"
+                ></user-list>
+                <user-list
+                  :user-list="userLists.administrators"
+                  class="user-list-wrapper"
+                  @change-active-modal="changeActiveModal"
+                ></user-list>
 
                 <!-- 対象者は traP or なし から選べるようにしておく (↑が実装されるまで) -->
-                <div class="user-list-wrapper">
+                <!-- <div class="user-list-wrapper">
                   <span class="has-text-weight-bold">{{
                     userLists.targets.summary
                   }}</span>
@@ -97,7 +105,7 @@
                       なし
                     </label>
                   </div>
-                </div>
+                </div> -->
 
                 <!-- modal -->
                 <user-list-modal
@@ -105,8 +113,6 @@
                   :class="{ 'is-active': isModalActive }"
                   :active-modal="activeModal"
                   :user-list-props="information[activeModal.name]"
-                  :users="users"
-                  :group-types="groupTypes"
                   :information="information"
                   @disable-modal="disableModal"
                   @set-user-list="setUserList"
@@ -139,8 +145,8 @@
 
 <script>
 import common from '@/bin/common'
-import axios from '@/bin/axios'
 import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+import UserList from '@/components/Information/UserList'
 import UserListModal from '@/components/Information/UserListModal'
 import ManagementButton from '@/components/Information/ManagementButton'
 
@@ -148,7 +154,7 @@ export default {
   name: 'InformationEdit',
   components: {
     'input-error-message': InputErrorMessage,
-    // 'user-list': UserList,
+    'user-list': UserList,
     'user-list-modal': UserListModal,
     'management-button': ManagementButton
   },
@@ -166,10 +172,7 @@ export default {
     return {
       responses: [],
       activeModal: {},
-      isModalActive: false,
-      users: {},
-      groupTypes: {}
-      // usersIsSelected: {}
+      isModalActive: false
     }
   },
   computed: {
@@ -194,6 +197,7 @@ export default {
       return this.$route.name === 'QuestionnaireDetailsNew'
     },
     userLists() {
+      if (!this.information) return []
       return common.getUserLists(
         this.information.targets,
         this.information.respondents,
@@ -210,7 +214,6 @@ export default {
           case 'respondents':
             return '回答済みの人'
           default:
-            console.error('unexpected res_shared_to')
             return null
         }
       },
@@ -258,11 +261,12 @@ export default {
     }
   },
   watch: {},
-  created() {
-    // this.getUsers()
-    // .then(this.getGroupTypes)
+  async created() {
+    if (!this.$store.state.traq.users)
+      await this.$store.dispatch('traq/updateUsers')
+    if (!this.$store.state.traq.groups)
+      await this.$store.dispatch('traq/updateGroups')
   },
-  mounted() {},
   methods: {
     getDateStr(str) {
       return common.getDateStr(str)
@@ -281,52 +285,6 @@ export default {
       let newInformation = this.information
       newInformation[listName] = newList
       this.setInformation(newInformation)
-    },
-    getUsers() {
-      return axios
-        .get('https://q.trap.jp/api/1.0/users')
-        .then(res => {
-          res.data.forEach(user => {
-            if (user.accountStatus === 1) {
-              this.users[user.userId] = user
-            }
-          })
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    },
-    getGroupTypes() {
-      return axios.get('https://q.trap.jp/api/1.0/groups').then(res => {
-        let tmp = {}
-        res.data.forEach(group => {
-          if (typeof tmp[group.type] === 'undefined') {
-            tmp[group.type] = []
-          }
-          // 除名されていないメンバーをtraQID順にソートしたtraQIDのリストactiveMembersを作成
-          group.activeMembers = group.members
-            .filter(
-              userId =>
-                typeof this.users[userId] !== 'undefined' &&
-                this.users[userId].accountStatus === 1 &&
-                this.users[userId].name !== 'traP'
-            )
-            .map(userId => this.users[userId].name)
-            .sort((a, b) => {
-              return a.toLowerCase().localeCompare(b.toLowerCase())
-            })
-          tmp[group.type].push(group)
-        })
-
-        // typeごとに、group名をソートしたものをgroupTypesに入れる
-        Object.keys(tmp).forEach(type => {
-          this.$set(this.groupTypes, type, {})
-          tmp[type].sort((a, b) => {
-            return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-          })
-        })
-        this.groupTypes = tmp
-      })
     }
   }
 }

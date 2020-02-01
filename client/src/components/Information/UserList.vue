@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="userList">
     <div>
       <span class="has-text-weight-bold"
         >{{ userList.summary }} ({{ userList.list.length }})</span
@@ -15,7 +15,9 @@
     <p class="has-text-grey user-list">
       <span v-for="(user, index) in userList.list" :key="index">
         <span
-          :class="{ 'highlight-name': user === 'traP' || user === getMyTraqId }"
+          :class="{
+            'highlight-name': user === 'traP' || user === $store.state.me.traqId
+          }"
           >{{ user }}</span
         >
         <span>
@@ -32,17 +34,15 @@ export default {
   components: {},
   props: {
     userList: {
-      type: Array,
+      type: Object,
       default: undefined
     }
   },
-  data() {
-    return {}
-  },
-  computed: {},
-  watch: {},
-  mounted() {},
-  methods: {}
+  methods: {
+    changeActiveModal(list) {
+      this.$emit('change-active-modal', list)
+    }
+  }
 }
 </script>
 
