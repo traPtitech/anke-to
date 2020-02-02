@@ -5,14 +5,14 @@
       @toggle-side-menu="toggleSideMenu"
       @close-side-menu="closeSideMenu"
     ></top-navbar>
-    <div class="columns is-fullheight">
+    <div class="columns">
       <side-menu class="fixed-sidemenu desktop"></side-menu>
       <side-menu
         v-show="isSideMenuActive"
         class="sidemenu"
         @close-side-menu="closeSideMenu"
       ></side-menu>
-      <div class="column app-main is-fullheight" @click="closeSideMenu">
+      <div class="column app-main" @click="closeSideMenu">
         <router-view></router-view>
       </div>
     </div>
