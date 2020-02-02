@@ -1,49 +1,40 @@
 <template>
   <div class="modal">
-    <div class="modal-background"></div>
+    <div class="modal-background" @click="disableModal"></div>
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">
           {{ activeModal.summary }} ({{ numberOfSelectedUsers }})
         </p>
-        <span
-          :class="{ disabled: !confirmOk }"
-          class="ti-check icon-button round confirm"
-          @click.prevent="confirmList"
-        ></span>
-        <span
-          class="ti-close icon-button round close"
-          @click.prevent="disableModal"
-        ></span>
-        <span
-          class="ti-close icon-button round close"
-          @click.prevent="disableModal"
-        ></span>
+        <div class="icon-button close round">
+          <span class="ti-close" @click.prevent="disableModal"></span>
+        </div>
       </header>
       <section class="modal-card-body">
         <!-- Content ... -->
-        <!-- error message -->
-        <input-error-message
-          :input-error="inputErrors.noAdministrator"
-        ></input-error-message>
-
-        <!-- user traP -->
-        <label class="checkbox user-trap has-text-weight-bold">
-          <input v-model="isUserTrap" type="checkbox" />
-          traP
-        </label>
+        <div class="modal-body-top-wrapper">
+          <label class="has-text-weight-bold">
+            <checkbox :checked="isUserTrap" @input="isUserTrap = $event" />
+            <span>traP</span>
+          </label>
+          <input
+            v-model="searchQuery"
+            placeholder="traQ ID でフィルター"
+            class="input search"
+          />
+        </div>
 
         <!-- select type tab -->
         <div class="tabs is-centered">
           <ul>
             <li
-              v-for="(tab, index) in tabs"
+              v-for="(tab, index) in getGroupTypes"
               :key="index"
               :class="{ 'is-active': selectedGroupType === tab }"
               class="tab"
               @click="selectedGroupType = tab"
             >
-              <a>{{ tab }}</a>
+              <a>{{ tab !== '' ? tab : 'その他' }}</a>
             </li>
           </ul>
         </div>
@@ -51,61 +42,67 @@
         <!-- list -->
         <div class="user-list-wrapper">
           <span
-            v-for="(group, index) in groupTypes[selectedGroupType]"
+            v-for="(group, index) in getGroupTypeMap[selectedGroupType]"
             :key="index"
           >
             <div class="has-text-weight-bold group-name">
-              {{ group.name }}
-              <span
-                v-if="!isUserTrap && group.activeMembers.length > 0"
-                class="ti-check icon-button select-group"
-                @click.prevent="selectAllInGroup(selectedGroupType, index)"
-              ></span>
-              <span
-                v-if="!isUserTrap && group.activeMembers.length > 0"
-                class="ti-close icon-button select-group"
-                @click.prevent="removeAllInGroup(selectedGroupType, index)"
-              ></span>
+              <checkbox
+                v-show="searchQuery.length === 0"
+                class="checkbox"
+                :checked="isGroupSelectedMap[group.groupId]"
+                @input="toggleIsGroupSelected(group.groupId)"
+              />
+              <span>
+                {{ group.name }}
+              </span>
             </div>
 
-            <!-- not user: traP -->
-            <span v-for="(userName, index) in group.activeMembers" :key="index">
-              <label
-                v-if="!isUserTrap && userName !== getMyTraqId"
-                class="checkbox"
-              >
-                <input v-model="usersIsSelected[userName]" type="checkbox" />
-                <span>{{ userName }}</span>
+            <span
+              v-for="(userId, index) in getFilteredActiveMembers(group.groupId)"
+              :key="index"
+            >
+              <label class="checkbox-label">
+                <input
+                  v-model="userIsSelectedMap[getUsersMap[userId].name]"
+                  type="checkbox"
+                />
+                <span>{{ getUsersMap[userId].name }}</span>
               </label>
-
-              <!-- user: traP -->
-              <span
-                v-if="isUserTrap || userName === getMyTraqId"
-                class="dummy-checkbox"
-              >
-                <span class="readonly-checkbox checked"></span>
-                <span>{{ userName }}</span>
-              </span>
             </span>
           </span>
         </div>
       </section>
+      <footer class="modal-card-foot">
+        <div
+          v-for="(inputError, index) in errorsList"
+          :key="index"
+          class="error-message"
+        >
+          <span class="ti-alert"></span>
+          <span>{{ inputError.message }}</span>
+        </div>
+        <button
+          :class="{ disabled: !confirmOk }"
+          class="button confirm"
+          @click.prevent="confirmList"
+        >
+          <span class="ti-check" />
+          決定
+        </button>
+      </footer>
     </div>
   </div>
 </template>
 
 <script>
-import InputErrorMessage from '@/components/Utils/InputErrorMessage'
+import Checkbox from '@/components/Utils/Checkbox'
 import common from '@/bin/common'
 import { mapGetters } from 'vuex'
-
-// selectedUsersList を消す
-// user: traPの処理
 
 export default {
   name: 'UserListModal',
   components: {
-    'input-error-message': InputErrorMessage
+    checkbox: Checkbox
   },
   props: {
     activeModal: {
@@ -117,14 +114,6 @@ export default {
       required: false,
       default: undefined
     },
-    users: {
-      type: Object,
-      required: true
-    },
-    groupTypes: {
-      type: Object,
-      required: true
-    },
     information: {
       type: Object,
       required: true
@@ -133,38 +122,47 @@ export default {
   data() {
     return {
       traq: null,
-      selectedGroupType: 'grade',
-      usersIsSelected: {}
+      selectedGroupType: '',
+      userIsSelectedMap: {}, // userName をキー、そのユーザーが選択されているかどうかを値として持つ
+      searchQuery: ''
     }
   },
   computed: {
     ...mapGetters(['getMyTraqId']),
+    ...mapGetters('traq', [
+      'getActiveUsers',
+      'getSortedGroups',
+      'getSortedGroupsMap',
+      'getGroupTypes',
+      'getGroupTypeMap',
+      'getUsersMap'
+    ]),
     isUserTrap: {
       get() {
-        return this.usersIsSelected.traP === true
+        return !Object.values(this.userIsSelectedMap).includes(false)
       },
       set(newBool) {
         if (newBool) {
-          Object.keys(this.usersIsSelected).forEach(userName => {
-            this.usersIsSelected[userName] = false
-          })
+          this.selectAll()
         } else {
-          this.usersIsSelected[this.getMyTraqId] = true
+          this.removeAll()
         }
-        this.usersIsSelected.traP = newBool
       }
+    },
+    isGroupSelectedMap() {
+      // groupIdをキー、グループのすべてのメンバーが選択されているかどうかを値として持つ連想配列
+      return Object.fromEntries(
+        this.getSortedGroups.map(group => [
+          group.groupId,
+          this.isGroupSelected(group.groupId)
+        ])
+      )
     },
     numberOfSelectedUsers() {
       if (this.isUserTrap) {
-        return Object.keys(this.users).length
+        return Object.keys(this.getActiveUsers).length
       }
-      let count = 0
-      Object.keys(this.usersIsSelected).forEach(userName => {
-        if (this.usersIsSelected[userName]) {
-          count++
-        }
-      })
-      return count
+      return Object.values(this.userIsSelectedMap).filter(val => val).length
     },
     inputErrors() {
       return {
@@ -176,6 +174,9 @@ export default {
         }
       }
     },
+    errorsList() {
+      return Object.values(this.inputErrors).filter(err => err.isError)
+    },
     confirmOk() {
       return common.noErrors(this.inputErrors)
     },
@@ -183,15 +184,28 @@ export default {
       let ret = Object.assign({}, this.allUsersList)
       delete ret.traP
       return ret
-    },
-    tabs() {
-      return Object.keys(this.groupTypes)
     }
   },
   watch: {},
   created() {
-    this.setUsersIsSelected(this.users)
-    this.selectedTab = Object.keys(this.groupTypes)[0]
+    // this.userIsSelectedMap を初期化
+    if (this.information[this.activeModal.name] && this.getActiveUsers) {
+      if (this.information[this.activeModal.name][0] === 'traP') {
+        this.userIsSelectedMap = Object.fromEntries(
+          this.getActiveUsers.map(user => [user.name, true])
+        )
+      } else {
+        this.userIsSelectedMap = Object.fromEntries(
+          this.getActiveUsers.map(user => [user.name, false])
+        )
+        this.information[this.activeModal.name].forEach(userName => {
+          this.$set(this.userIsSelectedMap, userName, true)
+        })
+      }
+    }
+
+    // this.selectedGroupType を初期化
+    this.selectedGroupType = this.getGroupTypes ? this.getGroupTypes[0] : ''
   },
   mounted() {},
   methods: {
@@ -201,40 +215,53 @@ export default {
     confirmList() {
       if (this.confirmOk) {
         let selectedUsersList = []
-        Object.keys(this.usersIsSelected).forEach(userName => {
-          if (this.usersIsSelected[userName]) {
-            selectedUsersList.push(userName)
-          }
-        })
+        if (this.isUserTrap) {
+          selectedUsersList = ['traP']
+        } else {
+          selectedUsersList = this.getActiveUsers
+            .filter(user => this.userIsSelectedMap[user.name])
+            .map(user => user.name)
+        }
         this.$emit('set-user-list', this.activeModal.name, selectedUsersList)
         this.disableModal()
       }
     },
-    selectAllInGroup(type, index) {
-      this.groupTypes[type][index].activeMembers.forEach(userName => {
-        this.usersIsSelected[userName] = true
+    selectAll() {
+      Object.keys(this.userIsSelectedMap).forEach(userName => {
+        this.userIsSelectedMap[userName] = true
       })
     },
-    removeAllInGroup(type, index) {
-      this.groupTypes[type][index].activeMembers.forEach(userName => {
-        this.usersIsSelected[userName] = false
+    removeAll() {
+      Object.keys(this.userIsSelectedMap).forEach(userName => {
+        this.userIsSelectedMap[userName] = false
       })
     },
-    setUsersIsSelected(users) {
-      let tmp = {}
-      if (
-        Object.keys(users).length > 0 &&
-        this.information.administrators &&
-        this.information.targets
-      ) {
-        Object.keys(users).forEach(userId => {
-          tmp[users[userId].name] = false
-        })
-        this.information[this.activeModal.name].forEach(userName => {
-          tmp[userName] = true
-        })
-      }
-      this.usersIsSelected = tmp
+    isGroupSelected(groupId) {
+      return !this.getSortedGroupsMap[groupId].activeMembers
+        .map(userId => this.userIsSelectedMap[this.getUsersMap[userId].name])
+        .includes(false)
+    },
+    toggleIsGroupSelected(groupId) {
+      if (this.isGroupSelectedMap[groupId]) this.removeAllInGroup(groupId)
+      else this.selectAllInGroup(groupId)
+    },
+    selectAllInGroup(groupId) {
+      this.getActiveMembers(groupId).forEach(userId => {
+        this.userIsSelectedMap[this.getUsersMap[userId].name] = true
+      })
+    },
+    removeAllInGroup(groupId) {
+      this.getActiveMembers(groupId).forEach(userId => {
+        this.userIsSelectedMap[this.getUsersMap[userId].name] = false
+      })
+    },
+    getActiveMembers(groupId) {
+      return this.getSortedGroupsMap[groupId].activeMembers
+    },
+    getFilteredActiveMembers(groupId) {
+      return this.getSortedGroupsMap[groupId].activeMembers.filter(userId =>
+        this.getUsersMap[userId].name.includes(this.searchQuery)
+      )
     }
   }
 }
@@ -249,21 +276,12 @@ export default {
   height: 1.5rem;
   padding: 0.25rem;
   margin-left: 1rem;
+  display: flex;
   &.round {
     border-radius: 1rem;
   }
   &:hover {
     cursor: pointer;
-  }
-  &.confirm {
-    background-color: $base-bluegray;
-    &:hover {
-      background-color: $var-indigo;
-    }
-    &.disabled {
-      background-color: lightgray;
-      pointer-events: none;
-    }
   }
   &.close {
     background-color: $base-brown;
@@ -271,32 +289,67 @@ export default {
       background-color: $var-red;
     }
   }
-  &.select-group {
-    background-color: $base-gray;
-    &:hover {
-      background-color: $base-darkbrown;
-    }
+  span[class^='ti-'] {
+    line-height: normal;
+    font-size: small;
+    margin: 10% auto 0 auto;
+  }
+}
+.modal-body-top-wrapper {
+  display: inline-flex;
+  width: 100%;
+  margin: 10px 0 20px 0;
+  * {
+    margin: auto 0;
+  }
+  label {
+    display: flex;
+  }
+  .input.search {
+    width: 13rem;
+    margin-left: auto;
   }
 }
 .group-name {
   margin: 1.5rem 0 0.5rem 0;
+  display: flex;
+  * {
+    margin: auto 0;
+  }
+  .checkbox {
+    margin-right: 0.5rem;
+  }
 }
 .modal-card-body {
-  .details.checkbox {
+  .checkbox-label {
     margin: 0.5rem;
     display: -webkit-inline-box;
     width: fit-content;
+    span {
+      margin-left: 0.2rem;
+    }
   }
 }
-.checkbox,
-.dummy-checkbox {
-  width: 180px;
-  display: inline-block;
-  line-height: 1.25;
-  margin: 0.5rem;
-  &.user-trap {
-    display: block;
-    margin-bottom: 1rem;
+.error-message {
+  color: $var-red;
+  [class^='ti-'] {
+    margin-right: 0.5rem;
+  }
+}
+.button.confirm {
+  margin-left: auto;
+  background-color: $button-background-color-green;
+  border: none;
+  box-sizing: border-box;
+  width: fit-content;
+  &.disabled {
+    border: $button-disabled-border-color 1px solid;
+    color: $button-disabled-border-color;
+    background-color: $button-disabled-background-color;
+    pointer-events: none;
+  }
+  span {
+    margin: 3px 4px 0 0;
   }
 }
 </style>
