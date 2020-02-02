@@ -1,11 +1,15 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import createPersistedState from 'vuex-persistedstate'
 import axios from '@/bin/axios'
+import traq from './traq'
 
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
-  namespaced: true,
+  modules: {
+    traq
+  },
   state: {
     me: null
   },
@@ -40,7 +44,12 @@ const store = new Vuex.Store({
           console.log(err)
         })
     }
-  }
+  },
+  plugins: [
+    createPersistedState({
+      paths: ['traq.accessToken']
+    })
+  ]
 })
 
 export default store

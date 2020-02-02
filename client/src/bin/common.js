@@ -178,14 +178,14 @@ export default {
           name: 'targets',
           summary: '対象者',
           list: targets,
-          editable: false,
+          editable: true,
           show: true
         },
         administrators: {
           name: 'administrators',
           summary: '管理者',
           list: administrators,
-          editable: false,
+          editable: true,
           show: true
         },
         respondents: {

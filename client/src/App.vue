@@ -12,7 +12,7 @@
         class="sidemenu"
         @close-side-menu="closeSideMenu"
       ></side-menu>
-      <div class="column app-main" @click="closeSideMenu">
+      <div class="column app-main is-fullheight" @click="closeSideMenu">
         <router-view></router-view>
       </div>
     </div>

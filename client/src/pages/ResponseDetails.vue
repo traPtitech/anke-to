@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="is-fullheight">
     <top-bar-message :message="message"></top-bar-message>
 
     <div
@@ -418,9 +418,6 @@ export default {
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
-.details-child.is-fullheight {
-  min-height: -webkit-fill-available;
-}
 .error-message {
   font-size: 1rem;
   margin: 1rem;
