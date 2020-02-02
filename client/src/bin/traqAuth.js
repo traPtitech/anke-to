@@ -2,9 +2,16 @@ import axios from 'axios'
 import sha256 from 'js-sha256'
 import base64url from 'base64url'
 
-const traqClientId = process.env.VUE_APP_TRAQ_CLIENT_ID
-
 const baseUrl = 'https://q.trap.jp/api/1.0/oauth2'
+
+const getTraqClientId = () => {
+  const clientId = process.env.VUE_APP_TRAQ_CLIENT_ID
+  if (!clientId) {
+    console.error('client ID not set')
+    return
+  }
+  return clientId
+}
 
 const randomString = len => {
   const characters =
@@ -31,7 +38,7 @@ export function sendCodeRequest() {
 
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: traqClientId,
+    client_id: getTraqClientId(),
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
@@ -44,7 +51,7 @@ export async function sendTokenRequest(code, codeVerifier) {
 
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
-    client_id: traqClientId,
+    client_id: getTraqClientId(),
     code: code,
     code_verifier: codeVerifier
   })
