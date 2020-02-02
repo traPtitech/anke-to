@@ -16,6 +16,9 @@
           <router-link class="navbar-item" to="/targeted">
             <img class="title" src="@/static/img/logo.png" />
           </router-link>
+          <a href="https://wiki.trap.jp/SysAd/docs/anke-to" class="help-link">
+            <span class="ti-help-alt"></span>
+          </a>
         </div>
         <div class="subtitle pull-right user">
           <img
@@ -64,6 +67,13 @@ export default {
 }
 .navbar-burger {
   margin-left: 0;
+}
+a.help-link {
+  margin: auto 10px;
+  font-size: larger;
+  ::before {
+    vertical-align: bottom;
+  }
 }
 .user {
   height: fit-content;
