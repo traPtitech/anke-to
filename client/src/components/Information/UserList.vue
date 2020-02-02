@@ -1,10 +1,10 @@
 <template>
-  <div v-if="userList">
+  <div>
     <div>
       <span class="has-text-weight-bold"
         >{{ userList.summary }} ({{ userList.list.length }})</span
       >
-      <a class="edit-list-icon">
+      <a>
         <span
           v-if="userList.editable"
           class="ti-pencil"
@@ -15,9 +15,7 @@
     <p class="has-text-grey user-list">
       <span v-for="(user, index) in userList.list" :key="index">
         <span
-          :class="{
-            'highlight-name': user === 'traP' || user === $store.state.me.traqId
-          }"
+          :class="{ 'highlight-name': user === 'traP' || user === getMyTraqId }"
           >{{ user }}</span
         >
         <span>
@@ -34,15 +32,17 @@ export default {
   components: {},
   props: {
     userList: {
-      type: Object,
+      type: Array,
       default: undefined
     }
   },
-  methods: {
-    changeActiveModal(list) {
-      this.$emit('change-active-modal', list)
-    }
-  }
+  data() {
+    return {}
+  },
+  computed: {},
+  watch: {},
+  mounted() {},
+  methods: {}
 }
 </script>
 
@@ -50,8 +50,5 @@ export default {
 <style lang="scss" scoped>
 .user-list {
   margin: 0 0.5rem;
-}
-.edit-list-icon {
-  margin-left: 0.2rem;
 }
 </style>

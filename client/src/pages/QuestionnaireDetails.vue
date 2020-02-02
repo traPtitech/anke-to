@@ -17,7 +17,7 @@
         v-if="showEditButton"
         id="edit-button"
         :class="{ 'is-editing': isEditing }"
-        @click="toggleEditing"
+        @click="isEditing = !isEditing"
       >
         <span class="ti-pencil"></span>
       </a>
@@ -111,9 +111,10 @@ export default {
       },
       set(newTab) {
         router.push({
-          name: this.$route.name,
+          name: 'QuestionnaireDetails',
           params: { questionnaireId: this.questionnaireId },
-          query: { tab: newTab.toLowerCase() }
+          query: { tab: newTab.toLowerCase() },
+          hash: this.$route.hash
         })
       }
     },
@@ -135,16 +136,29 @@ export default {
       }
     },
     isNewQuestionnaire() {
-      return this.$route.name === 'QuestionnaireDetailsNew'
+      return this.$route.params.id === 'new'
     },
     submitOk() {
       return common.noErrors(this.inputErrors)
     },
-    isEditing() {
-      return (
-        this.$route.name === 'QuestionnaireDetailsEdit' ||
-        this.$route.name === 'QuestionnaireDetailsNew'
-      )
+    isEditing: {
+      get: function() {
+        return (
+          this.isNewQuestionnaire ||
+          (this.$route.hash === '#edit' && this.administrates)
+        )
+      },
+      set: function(newBool) {
+        // newBool : 閲覧 -> 編集
+        // !newBool : 編集 -> 閲覧
+        const newRoute = {
+          name: 'QuestionnaireDetails',
+          params: { id: this.questionnaireId },
+          query: this.$route.query,
+          hash: newBool ? '#edit' : undefined
+        }
+        router.push(newRoute)
+      }
     },
     currentTabComponent() {
       switch (this.selectedTab) {
@@ -214,7 +228,7 @@ export default {
         this.getInformation()
         this.getQuestions()
         this.newQuestionnaireId = undefined
-        if (oldRoute.name !== 'QuestionnaireDetailsNew') this.resetMessage()
+        if (oldRoute.params.id !== 'new') this.resetMessage()
       }
     },
     noTimeLimit: function(newBool, oldBool) {
@@ -230,8 +244,8 @@ export default {
     }
   },
   async created() {
-    await this.getInformation()
-    await this.getQuestions()
+    this.getInformation()
+    this.getQuestions()
   },
   mounted() {},
   methods: {
@@ -441,27 +455,8 @@ export default {
     disableEditButton() {
       this.showEditButton = false
     },
-    toggleEditing() {
-      if (this.isNewQuestionnaire) return
-
-      if (this.isEditing) this.disableEditing()
-      else this.enableEditing()
-    },
-    enableEditing() {
-      if (this.isNewQuestionnaire) return
-      router.push({
-        name: 'QuestionnaireDetailsEdit',
-        params: this.$route.params,
-        query: this.$route.query
-      })
-    },
     disableEditing() {
-      if (this.isNewQuestionnaire) return
-      router.push({
-        name: 'QuestionnaireDetails',
-        params: this.$route.params,
-        query: this.$route.query
-      })
+      this.isEditing = false
     },
     abortEditing() {
       // TODO: 変更したかどうかを検出
