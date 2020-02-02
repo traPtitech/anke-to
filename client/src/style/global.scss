@@ -63,6 +63,14 @@
   pointer-events: none; // ポインター操作を無効化
 }
 
+.sidemenu,
+.fixed-sidemenu {
+  height: auto;
+}
+.app-main {
+  height: fit-content;
+}
+
 @media screen and (max-width: 480px) {
   // mobile
   .sidemenu {
