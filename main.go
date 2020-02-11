@@ -6,11 +6,18 @@ import (
 
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
+
+	"cloud.google.com/go/logging"
 )
 
 func main() {
 
-	err := model.EstablishConnection()
+	logger, err := model.GetLogger()
+	if err != nil {
+		panic(err)
+	}
+
+	err = model.EstablishConnection()
 	if err != nil {
 		panic(err)
 	}
@@ -22,9 +29,17 @@ func main() {
 	}))
 
 	// Middleware
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
+	if logger != nil {
+		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Output: logger.StandardLogger(logging.Info).Writer(),
+		}))
+		e.Logger.SetOutput(logger.StandardLogger(logging.Error).Writer())
+	} else {
+		e.Use(middleware.Logger())
+	}
+
 	// Static Files
 	e.Static("/", "client/dist")
 	e.Static("/js", "client/dist/js")
@@ -35,7 +50,7 @@ func main() {
 	e.File("/app.js", "client/dist/app.js")
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
-	
+
 	router.SetRouting(e)
 
 	// Start server
