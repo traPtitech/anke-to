@@ -3,6 +3,7 @@ module github.com/traPtitech/anke-to
 go 1.12
 
 require (
+	cloud.google.com/go/logging v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0
@@ -15,7 +16,5 @@ require (
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
-	golang.org/x/crypto v0.0.0-20180718160520-a2144134853f // indirect
-	golang.org/x/sys v0.0.0-20180715085529-ac767d655b30 // indirect
-	google.golang.org/appengine v1.1.0 // indirect
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 )
