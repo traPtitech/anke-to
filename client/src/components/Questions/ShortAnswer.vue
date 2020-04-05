@@ -4,8 +4,7 @@
     <p
       v-if="
         editMode === 'question' ||
-          (editMode !== 'response' &&
-            typeof content.responseBody === 'undefined')
+        (editMode !== 'response' && typeof content.responseBody === 'undefined')
       "
       class="has-underline placeholder"
     >

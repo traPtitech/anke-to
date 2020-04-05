@@ -95,7 +95,7 @@ export default {
     }
   },
   watch: {
-    information: function() {
+    information: function () {
       this.userLists = common.getUserLists(
         this.information.targets,
         this.information.respondents,

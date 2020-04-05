@@ -108,13 +108,13 @@ export default {
       }
     },
     isEditing: {
-      get: function() {
+      get: function () {
         if (this.isNewResponse || this.$route.hash === '#edit') {
           return true
         }
         return false
       },
-      set: function(newBool) {
+      set: function (newBool) {
         // newBool : 閲覧 -> 編集
         // !newBool : 編集 -> 閲覧
         const newRoute = {
@@ -186,7 +186,7 @@ export default {
     }
   },
   watch: {
-    $route: function(newRoute, oldRoute) {
+    $route: function (newRoute, oldRoute) {
       if (newRoute.params.id !== oldRoute.params.id) {
         this.resetMessage()
         this.getResponseData()

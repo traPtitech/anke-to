@@ -285,7 +285,7 @@ export default {
     }
   },
   watch: {
-    $route: function() {
+    $route: function () {
       this.getQuestionnaires()
       this.searchQueryInput = this.$route.query.search
         ? this.$route.query.search
