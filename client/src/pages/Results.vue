@@ -129,7 +129,7 @@ export default {
     }
   },
   watch: {
-    $route: function(newRoute) {
+    $route: function (newRoute) {
       if (newRoute.query.tab === 'individual') {
         this.setResponseData()
         this.setResponsesToQuestions()

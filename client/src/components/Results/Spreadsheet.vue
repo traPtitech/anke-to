@@ -161,7 +161,7 @@ export default {
       return ret
     },
     csvTable() {
-      const arrayToCsv = function(arr) {
+      const arrayToCsv = function (arr) {
         let ret = ''
         arr.forEach(val => {
           ret += '"' + val + '",'

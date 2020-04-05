@@ -180,7 +180,7 @@ export default {
       )
     },
     resSharedToStr: {
-      get: function() {
+      get: function () {
         switch (this.information.res_shared_to) {
           case 'public':
             return '全体'
@@ -192,7 +192,7 @@ export default {
             return null
         }
       },
-      set: function(str) {
+      set: function (str) {
         switch (str) {
           case '全体': {
             this.information.res_shared_to = 'public'
@@ -210,7 +210,7 @@ export default {
       }
     },
     resTimeLimitEditStr: {
-      get: function() {
+      get: function () {
         if (
           !this.information.res_time_limit ||
           this.information.res_time_limit === 'NULL'
@@ -218,7 +218,7 @@ export default {
           return ''
         return this.information.res_time_limit.slice(0, 16)
       },
-      set: function(str) {
+      set: function (str) {
         if (str === '') {
           this.$emit('set-data', 'noTimeLimit', true)
         } else {

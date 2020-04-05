@@ -27,7 +27,9 @@ module.exports = {
         singleQuote: true,
         semi: false,
         bracketSpacing: true,
-        tabWidth: 2
+        tabWidth: 2,
+        trailingComma: 'none',
+        arrowParens: 'avoid'
       }
     ]
   }

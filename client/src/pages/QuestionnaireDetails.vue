@@ -188,11 +188,7 @@ export default {
     },
     newTimeLimit() {
       // 1週間後の23:59
-      return moment()
-        .add(7, 'days')
-        .endOf('day')
-        .format()
-        .slice(0, -6)
+      return moment().add(7, 'days').endOf('day').format().slice(0, -6)
     },
     inputErrors() {
       return {
@@ -208,7 +204,7 @@ export default {
     }
   },
   watch: {
-    $route: function(newRoute, oldRoute) {
+    $route: function (newRoute, oldRoute) {
       if (newRoute.params.id !== oldRoute.params.id) {
         this.showEditButton = false
         this.getInformation()
@@ -217,7 +213,7 @@ export default {
         if (oldRoute.name !== 'QuestionnaireDetailsNew') this.resetMessage()
       }
     },
-    noTimeLimit: function(newBool, oldBool) {
+    noTimeLimit: function (newBool, oldBool) {
       if (
         oldBool &&
         !newBool &&

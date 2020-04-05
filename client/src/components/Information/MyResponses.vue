@@ -55,7 +55,7 @@ export default {
   },
   computed: {},
   watch: {
-    responses: function(newArr) {
+    responses: function (newArr) {
       // 回答を送信済みかどうかを調べて Information に送信
       let hasResponded = false
       newArr.forEach(response => {
