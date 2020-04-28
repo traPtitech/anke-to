@@ -7,7 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0
-	github.com/labstack/echo v3.3.5+incompatible
+	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.0.0-20180613044413-d6898124de91 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
