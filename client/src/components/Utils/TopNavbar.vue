@@ -23,7 +23,7 @@
         <div class="subtitle pull-right user">
           <img
             v-if="getMe !== null"
-            :src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
+            :src="'https://q.trap.jp/api/v3/public/icon/' + getMyTraqId"
             class="user-icon"
           />
         </div>

@@ -22,29 +22,29 @@ export default {
   },
   getters: {
     getUsersMap(state) {
-      // userIdをキーとするusersの連想配列
+      // userのidをキーとするusersの連想配列
       if (!state.users) return null
-      return Object.fromEntries(state.users.map(user => [user.userId, user]))
+      return Object.fromEntries(state.users.map(user => [user.id, user]))
     },
     getActiveUsers(state) {
       if (!state.users) return null
-      return state.users.filter(
-        user => !user.suspended && user.name !== 'traP' && !user.bot
-      )
+      return state.users
+        .filter(user => !user.suspended && user.name !== 'traP' && !user.bot)
+        .sort((a, b) => {
+          return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        })
     },
     getActiveUsersMap(_, getters) {
-      // userIdをキーとするactiveなusersの連想配列
+      // userのidをキーとするactiveなusersの連想配列
       if (!getters.getActiveUsers) return null
       return Object.fromEntries(
-        getters.getActiveUsers.map(user => [user.userId, user])
+        getters.getActiveUsers.map(user => [user.id, user])
       )
     },
     getGroupsMap(state) {
-      // groupIdをキーとするgroupsの連想配列
+      // groupのidをキーとするgroupsの連想配列
       if (!state.groups) return null
-      return Object.fromEntries(
-        state.groups.map(group => [group.groupId, group])
-      )
+      return Object.fromEntries(state.groups.map(group => [group.id, group]))
     },
     getSortedGroups(state, getters) {
       if (!state.groups || !getters.getActiveUsersMap) return null
@@ -58,18 +58,21 @@ export default {
       // グループメンバーをソート
       const sortGroupMembers = data => {
         let group = JSON.parse(JSON.stringify(data)) // deep copy
-
-        group.members.sort((a, b) => {
-          const nameA = getters.getUsersMap[a].name
-          const nameB = getters.getUsersMap[b].name
-          return nameA.toLowerCase().localeCompare(nameB.toLowerCase())
-        })
+        group.members = group.members
+          .filter(member => getters.getUsersMap[member.id])
+          .sort((a, b) => {
+            const nameA = getters.getUsersMap[a.id].name
+            const nameB = getters.getUsersMap[b.id].name
+            return nameA.toLowerCase().localeCompare(nameB.toLowerCase())
+          })
         // activeなメンバーのみのリストを作る
-        group.activeMembers = group.members.filter(
-          userId =>
-            getters.getActiveUsersMap[userId] &&
-            getters.getActiveUsersMap[userId].name !== 'traP'
-        )
+        group.activeMembers = group.members
+          .filter(
+            member =>
+              getters.getActiveUsersMap[member.id] &&
+              getters.getActiveUsersMap[member.id].name !== 'traP'
+          )
+          .map(member => member.id)
         return group
       }
 
@@ -80,10 +83,10 @@ export default {
       return groups
     },
     getSortedGroupsMap(_, getters) {
-      // groupIdをキーとするgroupsの連想配列
+      // groupのidをキーとするgroupsの連想配列
       if (!getters.getSortedGroups) return null
       return Object.fromEntries(
-        getters.getSortedGroups.map(group => [group.groupId, group])
+        getters.getSortedGroups.map(group => [group.id, group])
       )
     },
     getGroupTypes(state) {
