@@ -21,7 +21,7 @@ func CalcHMACSHA1(message string) string {
 }
 
 func PostMessage(c echo.Context, message string) error {
-	url := "https://q.trap.jp/api/1.0/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
+	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
 	req, err := http.NewRequest("POST",
 		url,
 		strings.NewReader(message))
