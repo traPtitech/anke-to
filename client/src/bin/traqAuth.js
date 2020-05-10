@@ -2,7 +2,7 @@ import axios from 'axios'
 import sha256 from 'js-sha256'
 import base64url from 'base64url'
 
-const baseUrl = 'https://q.trap.jp/api/1.0/oauth2'
+const baseUrl = 'https://q.trap.jp/api/v3/oauth2'
 
 const getTraqClientId = () => {
   const clientId = process.env.VUE_APP_TRAQ_CLIENT_ID

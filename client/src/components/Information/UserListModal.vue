@@ -49,8 +49,8 @@
               <checkbox
                 v-show="searchQuery.length === 0"
                 class="checkbox"
-                :checked="isGroupSelectedMap[group.groupId]"
-                @input="toggleIsGroupSelected(group.groupId)"
+                :checked="isGroupSelectedMap[group.id]"
+                @input="toggleIsGroupSelected(group.id)"
               />
               <span>
                 {{ group.name }}
@@ -58,7 +58,7 @@
             </div>
 
             <span
-              v-for="(userId, index) in getFilteredActiveMembers(group.groupId)"
+              v-for="(userId, index) in getFilteredActiveMembers(group.id)"
               :key="index"
             >
               <label class="checkbox-label">
@@ -150,11 +150,11 @@ export default {
       }
     },
     isGroupSelectedMap() {
-      // groupIdをキー、グループのすべてのメンバーが選択されているかどうかを値として持つ連想配列
+      // groupのidをキー、グループのすべてのメンバーが選択されているかどうかを値として持つ連想配列
       return Object.fromEntries(
         this.getSortedGroups.map(group => [
-          group.groupId,
-          this.isGroupSelected(group.groupId)
+          group.id,
+          this.isGroupSelected(group.id)
         ])
       )
     },
