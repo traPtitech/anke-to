@@ -1,15 +1,15 @@
 import axios from 'axios'
+import { Apis } from '@traptitech/traq'
 
-const api = axios.create({
-  baseURL: 'https://q.trap.jp/api/1.0',
-  withCredentials: false
-})
+let apis = null
 
 const setAuthToken = token => {
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  } else {
-    delete api.defaults.headers.common['Authorization']
+  if (token && !apis) {
+    apis = new Apis(
+      { accessToken: token }, // configuration
+      undefined, // base path (デフォルト値を入れるように)
+      axios.create({ withCredentials: false }) // axios instance (withCredentials: false が必要)
+    )
   }
 }
 
@@ -127,8 +127,8 @@ export default {
       }
       setAuthToken(state.accessToken)
 
-      await api
-        .get('/users')
+      await apis
+        .getUsers()
         .then(res => {
           commit('setUsers', res.data)
         })
@@ -143,8 +143,8 @@ export default {
       }
       setAuthToken(state.accessToken)
 
-      await api
-        .get('/groups')
+      await apis
+        .getUserGroups()
         .then(res => {
           commit('setGroups', res.data)
         })

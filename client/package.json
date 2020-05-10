@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@traptitech/traq": "^3.1.1-0",
     "axios": "^0.19.2",
     "base64url": "^3.0.1",
     "bulma": "^0.8.2",
