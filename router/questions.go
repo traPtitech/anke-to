@@ -40,18 +40,24 @@ func GetQuestions(c echo.Context) error {
 		ScaleLabelLeft  string   `json:"scale_label_left"`
 		ScaleMin        int      `json:"scale_min"`
 		ScaleMax        int      `json:"scale_max"`
+		RegexPattern    string   `json:"regex_pattern"`
+		MinBound        string   `json:"min_bound"`
+		MaxBound        string   `json:"max_bound"`
 	}
 	var ret []questionInfo
 
 	for _, v := range allquestions {
 		options := []string{}
 		scalelabel := model.ScaleLabels{}
+		validation := model.Validations{}
 		var err error
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			options, err = model.GetOptions(c, v.ID)
 		case "LinearScale":
 			scalelabel, err = model.GetScaleLabels(c, v.ID)
+		case "Text", "TextArea", "Number":
+			validation, err = model.GetValidations(c, v.ID)
 		}
 		if err != nil {
 			return err
@@ -71,6 +77,9 @@ func GetQuestions(c echo.Context) error {
 				ScaleLabelLeft:  scalelabel.ScaleLabelLeft,
 				ScaleMin:        scalelabel.ScaleMin,
 				ScaleMax:        scalelabel.ScaleMax,
+				RegexPattern:    validation.RegexPattern,
+				MinBound:        validation.MinBound,
+				MaxBound:        validation.MaxBound,
 			})
 	}
 
@@ -91,6 +100,9 @@ func PostQuestion(c echo.Context) error {
 		ScaleLabelLeft  string   `json:"scale_label_left"`
 		ScaleMin        int      `json:"scale_min"`
 		ScaleMax        int      `json:"scale_max"`
+		RegexPattern    string   `json:"regex_pattern"`
+		MinBound        string   `json:"min_bound"`
+		MaxBound        string   `json:"max_bound"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -122,6 +134,15 @@ func PostQuestion(c echo.Context) error {
 			}); err != nil {
 			return err
 		}
+	case "Text", "TextArea", "Number":
+		if err := model.InsertValidations(c, lastID,
+			model.Validations{
+				RegexPattern: req.RegexPattern,
+				MinBound:     req.MinBound,
+				MaxBound:     req.MaxBound,
+			}); err !=nil{
+				return err
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -137,6 +158,9 @@ func PostQuestion(c echo.Context) error {
 		"scale_label_left":  req.ScaleLabelLeft,
 		"scale_max":         req.ScaleMax,
 		"scale_min":         req.ScaleMin,
+		"RegexPattern":      req.RegexPattern,
+		"MinBound":          req.MinBound,
+		"MaxBound":          req.MaxBound,
 	})
 }
 
@@ -159,6 +183,9 @@ func EditQuestion(c echo.Context) error {
 		ScaleLabelLeft  string   `json:"scale_label_left"`
 		ScaleMax        int      `json:"scale_max"`
 		ScaleMin        int      `json:"scale_min"`
+		RegexPattern    string   `json:"regex_pattern"`
+		MinBound        string   `json:"min_bound"`
+		MaxBound        string   `json:"max_bound"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -187,6 +214,15 @@ func EditQuestion(c echo.Context) error {
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
 			return err
+		}
+	case "Text", "TextArea", "Number":
+		if err := model.UpdateValidations(c, questionID,
+			model.Validations{
+				RegexPattern: req.RegexPattern,
+				MinBound:     req.MinBound,
+				MaxBound:     req.MaxBound,
+			}); err !=nil{
+				return err
 		}
 	}
 
