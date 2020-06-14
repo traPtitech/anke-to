@@ -2,7 +2,8 @@ package model
 
 import (
 	"net/http"
-
+	"strconv"
+	"fmt"
 	"github.com/labstack/echo"
 )
 
@@ -52,6 +53,21 @@ func DeleteValidations(c echo.Context, questionID int) error {
 		questionID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return nil
+}
+
+func CheckNumberValid(MinBound, MaxBound string) error {
+	min_bound, err := strconv.Atoi(MinBound)
+	if err != nil {
+		return err
+	}
+	max_bound, err := strconv.Atoi(MaxBound)
+	if err != nil {
+		return err
+	}
+	if min_bound > max_bound {
+		return fmt.Errorf("failed: min_bound is greater than max_bound")
 	}
 	return nil
 }

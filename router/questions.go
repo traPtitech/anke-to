@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
+	"regexp"
 	"github.com/labstack/echo"
 
 	"github.com/traPtitech/anke-to/model"
@@ -109,6 +109,21 @@ func PostQuestion(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
+	
+	switch req.QuestionType {
+		case "Text", "TextArea":
+			//正規表現のチェック
+			if _,err := regexp.Compile(req.RegexPattern); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+		case "Number":
+			//数字か，min<=maxになってるか
+			if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+	}
 
 	lastID, err := model.InsertQuestion(
 		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
@@ -158,9 +173,9 @@ func PostQuestion(c echo.Context) error {
 		"scale_label_left":  req.ScaleLabelLeft,
 		"scale_max":         req.ScaleMax,
 		"scale_min":         req.ScaleMin,
-		"RegexPattern":      req.RegexPattern,
-		"MinBound":          req.MinBound,
-		"MaxBound":          req.MaxBound,
+		"regex_pattern":      req.RegexPattern,
+		"min_bound":          req.MinBound,
+		"max_bound":          req.MaxBound,
 	})
 }
 
@@ -193,6 +208,21 @@ func EditQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	switch req.QuestionType {
+		case "Text", "TextArea":
+			//正規表現のチェック
+			if _,err := regexp.Compile(req.RegexPattern); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+		case "Number":
+			//数字か，min<=maxになってるか
+			if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+	}
+	
 	if err := model.UpdateQuestion(
 		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
 		req.IsRequired, questionID); err != nil {
