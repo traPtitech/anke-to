@@ -56,7 +56,7 @@ func GetQuestions(c echo.Context) error {
 			options, err = model.GetOptions(c, v.ID)
 		case "LinearScale":
 			scalelabel, err = model.GetScaleLabels(c, v.ID)
-		case "Text", "TextArea", "Number":
+		case "Text", "Number":
 			validation, err = model.GetValidations(c, v.ID)
 		}
 		if err != nil {
@@ -111,7 +111,7 @@ func PostQuestion(c echo.Context) error {
 	}
 	
 	switch req.QuestionType {
-		case "Text", "TextArea":
+		case "Text":
 			//正規表現のチェック
 			if _,err := regexp.Compile(req.RegexPattern); err != nil {
 				c.Logger().Error(err)
@@ -149,7 +149,7 @@ func PostQuestion(c echo.Context) error {
 			}); err != nil {
 			return err
 		}
-	case "Text", "TextArea", "Number":
+	case "Text", "Number":
 		if err := model.InsertValidations(c, lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
@@ -209,7 +209,7 @@ func EditQuestion(c echo.Context) error {
 	}
 
 	switch req.QuestionType {
-		case "Text", "TextArea":
+		case "Text":
 			//正規表現のチェック
 			if _,err := regexp.Compile(req.RegexPattern); err != nil {
 				c.Logger().Error(err)
@@ -245,7 +245,7 @@ func EditQuestion(c echo.Context) error {
 			}); err != nil {
 			return err
 		}
-	case "Text", "TextArea", "Number":
+	case "Text", "Number":
 		if err := model.UpdateValidations(c, questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,

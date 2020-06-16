@@ -1,17 +1,19 @@
 package model
 
 import (
-	"net/http"
-	"strconv"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strconv"
+
 	"github.com/labstack/echo"
 )
 
 type Validations struct {
-	ID              int    `json:"questionID" db:"question_id"`
+	ID           int    `json:"questionID" db:"question_id"`
 	RegexPattern string `json:"regex_pattern" db:"regex_pattern"`
-	MinBound  string `json:"min_bound"  db:"min_bound"`
-	MaxBound  string `json:"max_bound"  db:"max_bound"`
+	MinBound     string `json:"min_bound"  db:"min_bound"`
+	MaxBound     string `json:"max_bound"  db:"max_bound"`
 }
 
 func GetValidations(c echo.Context, questionID int) (Validations, error) {
@@ -58,16 +60,61 @@ func DeleteValidations(c echo.Context, questionID int) error {
 }
 
 func CheckNumberValid(MinBound, MaxBound string) error {
-	min_bound, err := strconv.Atoi(MinBound)
+	var min_bound, max_bound int
+	if MinBound != "" {
+		min, err := strconv.Atoi(MinBound)
+		min_bound = min
+		if err != nil {
+			return err
+		}
+	}
+	if MaxBound != "" {
+		max, err := strconv.Atoi(MaxBound)
+		max_bound = max
+		if err != nil {
+			return err
+		}
+	}
+
+	if MinBound != "" && MaxBound != "" {
+		if min_bound > max_bound {
+			return fmt.Errorf("failed: min_bound is greater than max_bound")
+		}
+	}
+
+	return nil
+}
+
+func CheckNumberValidation(MinBound, MaxBound, Body string) error {
+	if Body == "" {
+		return nil
+	}
+	number, err := strconv.Atoi(Body)
 	if err != nil {
 		return err
 	}
-	max_bound, err := strconv.Atoi(MaxBound)
-	if err != nil {
-		return err
+
+	if MinBound != "" {
+		min_bound, _ := strconv.Atoi(MinBound)
+		if min_bound > number {
+			return fmt.Errorf("failed: value too small")
+		}
 	}
-	if min_bound > max_bound {
-		return fmt.Errorf("failed: min_bound is greater than max_bound")
+	if MaxBound != "" {
+		max_bound, _ := strconv.Atoi(MaxBound)
+		if max_bound < number {
+			return fmt.Errorf("failed: value too large")
+		}
 	}
+
+	return nil
+}
+
+func CheckTextValidation(RegexPattern, Response string) error {
+	r, _ := regexp.Compile(RegexPattern)
+	if !r.MatchString(Response) && Response != "" {
+		return fmt.Errorf("failed: %s does not match the pattern%s", Response, r)
+	}
+
 	return nil
 }
