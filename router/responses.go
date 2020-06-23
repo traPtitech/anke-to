@@ -39,14 +39,12 @@ func PostResponse(c echo.Context) error {
 		}
 		switch body.QuestionType {
 		case "Number":
-			if err := model.CheckNumberValidation(validation.MinBound, validation.MaxBound, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+				return err
 			}
 		case "Text":
-			if err := model.CheckTextValidation(validation.RegexPattern, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+				return err
 			}
 		}
 	}
@@ -299,14 +297,12 @@ func EditResponse(c echo.Context) error {
 		}
 		switch body.QuestionType {
 		case "Number":
-			if err := model.CheckNumberValidation(validation.MinBound, validation.MaxBound, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+				return err
 			}
 		case "Text":
-			if err := model.CheckTextValidation(validation.RegexPattern, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+				return err
 			}
 		}
 	}

@@ -85,7 +85,12 @@ func CheckNumberValid(MinBound, MaxBound string) error {
 	return nil
 }
 
-func CheckNumberValidation(MinBound, MaxBound, Body string) error {
+func CheckNumberValidation(c echo.Context, validation Validations, Body string) error {
+	if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	if Body == "" {
 		return nil
 	}
@@ -94,26 +99,37 @@ func CheckNumberValidation(MinBound, MaxBound, Body string) error {
 		return err
 	}
 
-	if MinBound != "" {
-		min_bound, _ := strconv.Atoi(MinBound)
+	if validation.MinBound != "" {
+		min_bound, _ := strconv.Atoi(validation.MinBound)
 		if min_bound > number {
-			return fmt.Errorf("failed: value too small")
+			err := fmt.Errorf("failed: value too small")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	}
-	if MaxBound != "" {
-		max_bound, _ := strconv.Atoi(MaxBound)
+	if validation.MaxBound != "" {
+		max_bound, _ := strconv.Atoi(validation.MaxBound)
 		if max_bound < number {
-			return fmt.Errorf("failed: value too large")
+			err := fmt.Errorf("failed: value too large")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	}
 
 	return nil
 }
 
-func CheckTextValidation(RegexPattern, Response string) error {
-	r, _ := regexp.Compile(RegexPattern)
+func CheckTextValidation(c echo.Context, validation Validations, Response string) error {
+	if _, err := regexp.Compile(validation.RegexPattern); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	r, _ := regexp.Compile(validation.RegexPattern)
 	if !r.MatchString(Response) && Response != "" {
-		return fmt.Errorf("failed: %s does not match the pattern%s", Response, r)
+		err := fmt.Errorf("failed: %s does not match the pattern%s", Response, r)
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	return nil
