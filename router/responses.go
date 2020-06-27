@@ -31,6 +31,24 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
+	//パターンマッチ
+	for _, body := range req.Body {
+		validation, err := model.GetValidations(c, body.QuestionID)
+		if err != nil {
+			return err
+		}
+		switch body.QuestionType {
+		case "Number":
+			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+				return err
+			}
+		case "Text":
+			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+				return err
+			}
+		}
+	}
+
 	responseID, err := model.InsertRespondents(c, req)
 	if err != nil {
 		return err
@@ -269,6 +287,24 @@ func EditResponse(c echo.Context) error {
 	// 回答期限を過ぎた回答は許可しない
 	if limit != "NULL" && limit < time.Now().Format(time.RFC3339) {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
+	}
+
+	//パターンマッチ
+	for _, body := range req.Body {
+		validation, err := model.GetValidations(c, body.QuestionID)
+		if err != nil {
+			return err
+		}
+		switch body.QuestionType {
+		case "Number":
+			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+				return err
+			}
+		case "Text":
+			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := model.UpdateRespondents(c, req.ID, responseID, req.SubmittedAt); err != nil {
