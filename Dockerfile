@@ -20,7 +20,7 @@ RUN npm run build
 
 # run
 
-FROM alpine:3.9
+FROM alpine:3.12.0
 WORKDIR /app
 
 ENV DOCKERIZE_VERSION v0.6.1
