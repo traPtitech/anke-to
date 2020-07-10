@@ -5,7 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go/logging v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/go-sql-driver/mysql v1.4.0
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.0.0-20180613044413-d6898124de91 // indirect
