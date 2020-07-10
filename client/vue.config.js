@@ -5,7 +5,7 @@ module.exports = {
       // pass options to sass-loader
       sass: {
         // import `src/style/_main.scss` to all components
-        prependData: `@import "~@/style/_main.scss";`
+        additionalData: `@import "~@/style/_main.scss";`
       }
     }
   },
