@@ -49,7 +49,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '../node_modules/bulma/bulma.sass';
+@import '~bulma/bulma.sass';
 @import '@/style/global.scss';
 @import '@/style/colors.scss';
 @import 'static/css/themify-icons.css';
