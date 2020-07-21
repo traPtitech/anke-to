@@ -14,7 +14,9 @@ RUN go build -o /anke-to
 #build frontend
 FROM node:12-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
+COPY ./client/package*.json ./
 RUN npm ci
+COPY ./client .
 RUN npm run build
 
 
