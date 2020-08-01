@@ -135,19 +135,6 @@ CREATE TABLE `targets` (
   `user_traqid` char(30) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- テーブルの構造 `validations`
---
-
-CREATE TABLE `validations` (
-  `question_id` int(11) NOT NULL,
-  `regex_pattern` text COLLATE utf8mb4_unicode_ci,
-  `max_bound` text COLLATE utf8mb4_unicode_ci,
-  `min_bound` text COLLATE utf8mb4_unicode_ci
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 --
 -- Indexes for dumped tables
 --
@@ -206,12 +193,6 @@ ALTER TABLE `targets`
   ADD PRIMARY KEY (`questionnaire_id`,`user_traqid`) USING BTREE;
 
 --
--- Indexes for table `validations`
---
-ALTER TABLE `validations`
-  ADD PRIMARY KEY (`question_id`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -267,12 +248,6 @@ ALTER TABLE `scale_labels`
 ALTER TABLE `targets`
   ADD CONSTRAINT `targets_ibfk_1` FOREIGN KEY (`questionnaire_id`) REFERENCES `questionnaires` (`id`);
 COMMIT;
-
---
--- テーブルの制約 `validations`
---
-ALTER TABLE `validations`
-  ADD CONSTRAINT `validations_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
