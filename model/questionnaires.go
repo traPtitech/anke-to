@@ -18,19 +18,19 @@ import (
 )
 
 type Questionnaires struct {
-	ID           int            `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
-	Title        string         `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
-	Description  string         `json:"description"     gorm:"type:text;NOT NULL;"`
+	ID           int       `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
+	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
+	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
 	ResTimeLimit null.Time `json:"res_time_limit"  gorm:"type:timestamp;DEFAULT:NULL;"`
 	DeletedAt    null.Time `json:"deleted_at"      gorm:"type:timestamp;DEFAULT:NULL;"`
-	ResSharedTo  string         `json:"res_shared_to"   gorm:"type:char(30);NOT NULL;DEFAULT:administrators;"`
-	CreatedAt    time.Time      `json:"created_at"      gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	ModifiedAt   time.Time      `json:"modified_at"     gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30);NOT NULL;DEFAULT:administrators;"`
+	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	ModifiedAt   time.Time `json:"modified_at"     gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 }
 
 type QuestionnairesInfo struct {
 	Questionnaires
-	IsTargeted   bool   `json:"is_targeted" gorm:"type:boolean"`
+	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
 type TargettedQuestionnaires struct {
@@ -131,7 +131,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 		c.Logger().Error(fmt.Errorf("failed to retrieve the number of questionnaires: %w", err))
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	pageMax := (count + 19)/20
+	pageMax := (count + 19) / 20
 
 	if pageNum > pageMax {
 		c.Logger().Error("too large page number")
@@ -163,7 +163,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 				continue
 			}
 
-			retQuestionnaires = append(retQuestionnaires,q)
+			retQuestionnaires = append(retQuestionnaires, q)
 		}
 
 		questionnaires = retQuestionnaires
@@ -213,7 +213,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaires, 
 
 func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
 	res := struct {
-		Title        string         `db:"title"`
+		Title        string    `db:"title"`
 		ResTimeLimit null.Time `db:"res_time_limit"`
 	}{}
 	if err := db.Get(&res,
@@ -231,7 +231,7 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
-		Title        string         `db:"title"`
+		Title        string    `db:"title"`
 		ResTimeLimit null.Time `db:"res_time_limit"`
 	}{}
 	if err := db.Get(&res,

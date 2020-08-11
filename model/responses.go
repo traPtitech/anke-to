@@ -26,9 +26,9 @@ type Responses struct {
 }
 
 type ResponseInfo struct {
-	QuestionnaireID int            `db:"questionnaire_id"`
-	ResponseID      int            `db:"response_id"`
-	ModifiedAt      time.Time      `db:"modified_at"`
+	QuestionnaireID int       `db:"questionnaire_id"`
+	ResponseID      int       `db:"response_id"`
+	ModifiedAt      time.Time `db:"modified_at"`
 	SubmittedAt     null.Time `db:"submitted_at"`
 }
 
@@ -42,14 +42,14 @@ type MyResponse struct {
 }
 
 type UserResponse struct {
-	ResponseID  int            `db:"response_id"`
-	UserID      string         `db:"user_traqid"`
-	ModifiedAt  time.Time      `db:"modified_at"`
+	ResponseID  int       `db:"response_id"`
+	UserID      string    `db:"user_traqid"`
+	ModifiedAt  time.Time `db:"modified_at"`
 	SubmittedAt null.Time `db:"submitted_at"`
 }
 
 type ResponseID struct {
-	QuestionnaireID int            `db:"questionnaire_id"`
+	QuestionnaireID int       `db:"questionnaire_id"`
 	ModifiedAt      null.Time `db:"modified_at"`
 	SubmittedAt     null.Time `db:"submitted_at"`
 }
