@@ -33,7 +33,6 @@ func EstablishConnection() error {
 	}
 
 	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
-	_db.LogMode(true)
 	gormDB = _db
 	db = sqlx.NewDb(_db.DB(), "mysql")
 

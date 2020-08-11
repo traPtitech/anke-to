@@ -174,14 +174,17 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {
 	questionnaire := Questionnaires{}
-	if err := db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
+
+	err := gormDB.Where("id = ? AND deleted_at IS NULL", questionnaireID).First(&questionnaire).Error
+	if err != nil {
 		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
+		if gorm.IsRecordNotFoundError(err) {
 			return Questionnaires{}, echo.NewHTTPError(http.StatusNotFound)
 		} else {
 			return Questionnaires{}, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+
 	return questionnaire, nil
 }
 
