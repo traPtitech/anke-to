@@ -6,20 +6,20 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
 
 type Validations struct {
-	ID           int    `json:"questionID" db:"question_id"`
-	RegexPattern string `json:"regex_pattern" db:"regex_pattern"`
-	MinBound     string `json:"min_bound"  db:"min_bound"`
-	MaxBound     string `json:"max_bound"  db:"max_bound"`
+	ID           int    `json:"questionID"    db:"question_id"   gorm:"column:question_id"`
+	RegexPattern string `json:"regex_pattern" db:"regex_pattern" gorm:"column:regex_pattern"`
+	MinBound     string `json:"min_bound"     db:"min_bound"     gorm:"column:min_bound"`
+	MaxBound     string `json:"max_bound"     db:"max_bound"     gorm:"column:max_bound"`
 }
 
 func GetValidations(c echo.Context, questionID int) (Validations, error) {
 	validation := Validations{}
-	if err := db.Get(&validation, "SELECT * FROM validations WHERE question_id = ?",
-		questionID); err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).First(&validation).Error; err != nil {
 		c.Logger().Error(err)
 		return Validations{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -27,9 +27,8 @@ func GetValidations(c echo.Context, questionID int) (Validations, error) {
 }
 
 func InsertValidations(c echo.Context, lastID int, validation Validations) error {
-	if _, err := db.Exec(
-		"INSERT INTO validations (question_id, regex_pattern, min_bound, max_bound) VALUES (?, ?, ?, ?)",
-		lastID, validation.RegexPattern, validation.MinBound, validation.MaxBound); err != nil {
+	validation.ID = lastID
+	if err := gormDB.Create(&validation).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -37,12 +36,17 @@ func InsertValidations(c echo.Context, lastID int, validation Validations) error
 }
 
 func UpdateValidations(c echo.Context, questionID int, validation Validations) error {
-	if _, err := db.Exec(
-		`INSERT INTO validations (question_id, regex_pattern, min_bound, max_bound) VALUES (?, ?, ?, ?)
-		ON DUPLICATE KEY UPDATE regex_pattern = ?, min_bound = ?, max_bound = ?`,
-		questionID,
-		validation.RegexPattern, validation.MinBound, validation.MaxBound,
-		validation.RegexPattern, validation.MinBound, validation.MaxBound); err != nil {
+	validationBefore := Validations{}
+
+	var err error
+	if validationBefore, err = GetValidations(c, questionID); gorm.IsRecordNotFoundError(err) {
+		return nil
+	} else if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if err := gormDB.Model(&validationBefore).Update(&validation).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -50,9 +54,7 @@ func UpdateValidations(c echo.Context, questionID int, validation Validations) e
 }
 
 func DeleteValidations(c echo.Context, questionID int) error {
-	if _, err := db.Exec(
-		"DELETE FROM validations WHERE question_id= ?",
-		questionID); err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).Delete(&Validations{}).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -133,4 +135,14 @@ func CheckTextValidation(c echo.Context, validation Validations, Response string
 	}
 
 	return nil
+}
+
+//debug用　後で消す
+func GetValidationLists(c echo.Context) ([]Validations, error) {
+	validations := []Validations{}
+	if err := gormDB.Find(&validations).Error; err != nil {
+		c.Logger().Error(err)
+		return []Validations{}, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return validations, nil
 }
