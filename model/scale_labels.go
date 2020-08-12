@@ -17,7 +17,9 @@ type ScaleLabels struct {
 
 func GetScaleLabels(c echo.Context, questionID int) (ScaleLabels, error) {
 	label := ScaleLabels{}
-	if err := gormDB.Where("question_id = ?", questionID).First(&label).Error; err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).First(&label).Error; gorm.IsRecordNotFoundError(err) {
+		return ScaleLabels{}, nil
+	} else if err != nil {
 		c.Logger().Error(err)
 		return ScaleLabels{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
