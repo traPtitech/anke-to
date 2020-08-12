@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +19,7 @@ type Questionnaire struct {
 	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
 	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
 	ResTimeLimit null.Time `json:"res_time_limit"  gorm:"type:timestamp;DEFAULT:NULL;"`
-	DeletedAt    null.Time `json:"deleted_at"      gorm:"type:timestamp;DEFAULT:NULL;"`
+	DeletedAt    null.Time `json:"deleted_at,omitempty"      gorm:"type:timestamp;DEFAULT:NULL;"`
 	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30);NOT NULL;DEFAULT:administrators;"`
 	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 	ModifiedAt   time.Time `json:"modified_at"     gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
@@ -38,14 +37,8 @@ type QuestionnairesInfo struct {
 }
 
 type TargettedQuestionnaires struct {
-	ID           int    `json:"questionnaireID"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	ResTimeLimit string `json:"res_time_limit"`
-	ResSharedTo  string `json:"res_shared_to"`
-	CreatedAt    string `json:"created_at"`
-	ModifiedAt   string `json:"modified_at"`
-	RespondedAt  string `json:"responded_at"`
+	Questionnaire
+	RespondedAt string `json:"responded_at"`
 }
 
 func SetQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
@@ -118,7 +111,9 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 
 	questionnaires := make([]QuestionnairesInfo, 0, 20)
 
-	query := gormDB.Table("questionnaires").Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
+	query := gormDB.
+		Table("questionnaires").
+		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
 	query, err = SetQuestionnairesOrder(query, sort)
 	if err != nil {
@@ -149,7 +144,9 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 	offset := (pageNum - 1) * 20
 	query = query.Limit(20).Offset(offset)
 
-	err = query.Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).Find(&questionnaires).Error
+	err = query.
+		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
+		Find(&questionnaires).Error
 	if gorm.IsRecordNotFoundError(err) {
 		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
 		return nil, 0, echo.NewHTTPError(http.StatusNotFound)
@@ -180,10 +177,56 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 	return questionnaires, pageMax, nil
 }
 
+func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) ([]TargettedQuestionnaires, error) {
+	sort := c.QueryParam("sort")
+	query := gormDB.
+		Table("questionnaires").
+		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
+		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
+		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
+		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
+		Where("respondents.user_traqid = ? OR respondents.user_traqid IS NULL", userID).
+		Group("questionnaires.id,respondents.user_traqid").
+		Select("questionnaires.*, MAX(respondents.submitted_at) AS responsed_at")
+
+	query, err := SetQuestionnairesOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
+	}
+
+	query = query.
+		Order("questionnaires.res_time_limit").
+		Order("questionnaires.modified_at desc")
+
+	switch answered {
+	case "answered":
+		query = query.Where("respondents.questionnaire_id IS NOT NULL")
+	case "unanswered":
+		query = query.Where("respondents.questionnaire_id IS NULL")
+	case "":
+	default:
+		return nil, fmt.Errorf("invalid answered parameter value(%s)", answered)
+	}
+
+	questionnaires := []TargettedQuestionnaires{}
+	err = query.Find(&questionnaires).Error
+	if gorm.IsRecordNotFoundError(err) {
+		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
+		return nil, echo.NewHTTPError(http.StatusNotFound)
+	} else if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return questionnaires, nil
+}
+
 func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaire, error) {
 	questionnaire := Questionnaire{}
 
-	err := gormDB.Where("id = ?", questionnaireID).First(&questionnaire).Error
+	err := gormDB.
+		Where("id = ?", questionnaireID).
+		First(&questionnaire).Error
 	if err != nil {
 		c.Logger().Error(err)
 		if gorm.IsRecordNotFoundError(err) {
@@ -225,7 +268,11 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		ResTimeLimit null.Time
 	}{}
 
-	err := gormDB.Table("questionnaires").Where("id = ?", questionnaireID).Select("res_time_limit").Scan(&res).Error
+	err := gormDB.
+		Table("questionnaires").
+		Where("id = ?", questionnaireID).
+		Select("res_time_limit").
+		Scan(&res).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return "", nil
@@ -243,7 +290,11 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 		ResTimeLimit null.Time
 	}{}
 
-	err := gormDB.Table("questionnaires").Where("id = ?").Select("title, res_time_limit").Scan(&res).Error
+	err := gormDB.
+		Table("questionnaires").
+		Where("id = ?").
+		Select("title, res_time_limit").
+		Scan(&res).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return "", "", nil
@@ -282,7 +333,10 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 			return fmt.Errorf("failed to insert a questionnaire: %w", err)
 		}
 
-		err = tx.Table("questionnaires").Select("id").Last(&res).Error
+		err = tx.
+			Table("questionnaires").
+			Select("id").
+			Last(&res).Error
 		if err != nil {
 			return fmt.Errorf("failed to get the last id: %w", err)
 		}
@@ -314,7 +368,10 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 		}
 	}
 
-	err := gormDB.Model(&questionnaire).Where("id = ?", questionnaireID).Update(&questionnaire).Error
+	err := gormDB.
+		Table("questionnaires").
+		Where("id = ?", questionnaireID).
+		Update(&questionnaire).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -334,11 +391,15 @@ func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 }
 
 func GetResShared(c echo.Context, questionnaireID int) (string, error) {
-	res := struct{
+	res := struct {
 		ResSharedTo string
 	}{}
 
-	err := gormDB.Table("questionnaires").Where("id = ?", questionnaireID).Select("res_shared_to").First(&res).Error
+	err := gormDB.
+		Table("questionnaires").
+		Where("id = ?", questionnaireID).
+		Select("res_shared_to").
+		First(&res).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
@@ -348,137 +409,4 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	}
 
 	return res.ResSharedTo, nil
-}
-
-func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, error) {
-	// 全てのアンケート
-	allquestionnaires, err := GetAllQuestionnaires(c)
-	if err != nil {
-		return nil, err
-	}
-
-	// 自分がtargetになっているアンケート
-	targetedQuestionnaireID, err := GetTargettedQuestionnaireID(c)
-	if err != nil {
-		return nil, err
-	}
-
-	ret := []TargettedQuestionnaires{}
-	for _, v := range allquestionnaires {
-		var targeted = false
-		for _, w := range targetedQuestionnaireID {
-			if w == v.ID {
-				targeted = true
-			}
-		}
-		if !targeted {
-			continue
-		}
-		respondedAt, err := RespondedAt(c, v.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		// アンケートの期限がNULLでなく期限を過ぎていたら次へ
-		if v.ResTimeLimit.Valid && time.Now().After(v.ResTimeLimit.Time) {
-			continue
-		}
-
-		ret = append(ret,
-			TargettedQuestionnaires{
-				ID:           v.ID,
-				Title:        v.Title,
-				Description:  v.Description,
-				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
-				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
-				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
-				RespondedAt:  respondedAt,
-			})
-	}
-
-	// アンケートが1つも無い場合
-	if len(ret) == 0 {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	// 回答期限が近い順に
-	sort.Slice(ret, func(i, j int) bool {
-		if ret[i].ResTimeLimit == "NULL" && ret[j].ResTimeLimit == "NULL" {
-			return ret[i].ModifiedAt > ret[j].ModifiedAt
-		} else if ret[i].ResTimeLimit == "NULL" {
-			return false
-		} else if ret[j].ResTimeLimit == "NULL" {
-			return true
-		} else {
-			return ret[i].ResTimeLimit < ret[j].ResTimeLimit
-		}
-	})
-
-	return ret, nil
-}
-
-func GetTargettedQuestionnairesBytraQID(c echo.Context, traQID string) ([]TargettedQuestionnaires, error) {
-	// 全てのアンケート
-	allquestionnaires, err := GetAllQuestionnaires(c)
-	if err != nil {
-		return nil, err
-	}
-
-	// 指定したtraQIDがtargetになっているアンケート
-	targetedQuestionnaireID, err := GetTargettedQuestionnaireIDBytraQID(c, traQID)
-	if err != nil {
-		return nil, err
-	}
-
-	ret := []TargettedQuestionnaires{}
-	for _, v := range allquestionnaires {
-		var targeted = false
-		for _, w := range targetedQuestionnaireID {
-			if w == v.ID {
-				targeted = true
-			}
-		}
-		if !targeted {
-			continue
-		}
-
-		// 回答済みなら次へ
-		respondedAt, err := RespondedAtBytraQID(c, v.ID, traQID)
-		if err != nil {
-			return nil, err
-		}
-		if respondedAt != "NULL" {
-			continue
-		}
-
-		// アンケートの期限がNULLまたは期限を過ぎていたら次へ
-		if !v.ResTimeLimit.Valid || time.Now().After(v.ResTimeLimit.Time) {
-			continue
-		}
-
-		ret = append(ret,
-			TargettedQuestionnaires{
-				ID:           v.ID,
-				Title:        v.Title,
-				Description:  v.Description,
-				ResTimeLimit: NullTimeToString(v.ResTimeLimit),
-				ResSharedTo:  v.ResSharedTo,
-				CreatedAt:    v.CreatedAt.Format(time.RFC3339),
-				ModifiedAt:   v.ModifiedAt.Format(time.RFC3339),
-				RespondedAt:  respondedAt,
-			})
-	}
-
-	// アンケートが1つも無い場合
-	if len(ret) == 0 {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	// 回答期限が近い順に
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].ResTimeLimit < ret[j].ResTimeLimit
-	})
-
-	return ret, nil
 }
