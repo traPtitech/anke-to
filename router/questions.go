@@ -279,5 +279,9 @@ func DeleteQuestion(c echo.Context) error {
 		return err
 	}
 
+	if err := model.DeleteValidations(c, questionID); err != nil {
+		return err
+	}
+
 	return c.NoContent(http.StatusOK)
 }
