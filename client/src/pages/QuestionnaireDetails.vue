@@ -331,10 +331,18 @@ export default {
             return this.sendQuestions(0)
           })
           .then(() => {
-            if (this.removedQuestionIds.length > 0) {
-              // 削除された質問がある場合、それを送信
-              return this.deleteRemovedQuestions(0)
-            }
+            // 削除された質問それぞれについてDELETEリクエストを送信
+            Promise.all(
+              this.removedQuestionIds.map(questionId =>
+                axios.delete('/questions/' + questionId)
+              )
+            )
+              .then(() => {
+                this.removedQuestionIds = []
+              })
+              .catch(err => {
+                console.error(err)
+              })
           })
           .then(this.getInformation) // 情報をアップデート
           .then(this.getQuestions) // 質問をアップデート
@@ -384,15 +392,6 @@ export default {
             console.log(err.response)
           })
       }
-    },
-    deleteRemovedQuestions(index) {
-      // removedQuestionIds配列の、index以降の質問について、DELETEリクエストを送る
-      const id = this.removedQuestionIds[index]
-      return axios.delete('/questions/' + id).then(() => {
-        if (index < this.removedQuestionIds.length - 1) {
-          return this.deleteRemovedQuestions(index + 1)
-        }
-      })
     },
     createQuestionData(index) {
       // 与えられた質問1つ分のデータをサーバーに送るフォーマットのquestionDataにして返す
