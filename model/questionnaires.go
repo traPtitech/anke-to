@@ -200,47 +200,62 @@ func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) 
 	return questionnaires, nil
 }
 
-//GetQuestionnaire アンケートの取得
-func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaire, error) {
+//GetQuestionnaireInfo アンケートの詳細な情報取得
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaire, []string, []string, []string, error) {
 	questionnaire := Questionnaire{}
+	targets := []string{}
+	administrators := []string{}
+	respondents := []string{}
 
 	err := gormDB.
-		Where("id = ?", questionnaireID).
+		Table("questionnaires").
+		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Error(fmt.Errorf("failed to get a questionnaire: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
-			return Questionnaire{}, echo.NewHTTPError(http.StatusNotFound)
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
 		}
-		return Questionnaire{}, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return questionnaire, nil
-}
-
-//GetQuestionnaireInfo アンケートの詳細な情報取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaire, []string, []string, []string, error) {
-	questionnaire, err := GetQuestionnaire(c, questionnaireID)
+	err = gormDB.
+		Table("targets").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		return Questionnaire{}, nil, nil, nil, err
+		c.Logger().Error(fmt.Errorf("failed to get targets: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	targets, err := GetTargets(c, questionnaireID)
+	err = gormDB.
+		Table("administrators").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		return Questionnaire{}, nil, nil, nil, err
+		c.Logger().Error(fmt.Errorf("failed to get administrators: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	administrators, err := GetAdministrators(c, questionnaireID)
+	err = gormDB.
+		Table("respondents").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		return Questionnaire{}, nil, nil, nil, err
+		c.Logger().Error(fmt.Errorf("failed to get respondents: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	respondents, err := GetRespondents(c, questionnaireID)
-	if err != nil {
-		return Questionnaire{}, nil, nil, nil, err
-	}
-
-	return questionnaire, targets, administrators, respondents, nil
+	return &questionnaire, targets, administrators, respondents, nil
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
