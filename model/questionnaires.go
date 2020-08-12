@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"database/sql"
-
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
@@ -336,18 +334,20 @@ func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 }
 
 func GetResShared(c echo.Context, questionnaireID int) (string, error) {
-	resSharedTo := ""
-	if err := db.Get(&resSharedTo,
-		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		if err == sql.ErrNoRows {
+	res := struct{
+		ResSharedTo string
+	}{}
+
+	err := gormDB.Table("questionnaires").Where("id = ?", questionnaireID).Select("res_shared_to").First(&res).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
 			return "", echo.NewHTTPError(http.StatusNotFound)
-		} else {
-			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
+		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return resSharedTo, nil
+
+	return res.ResSharedTo, nil
 }
 
 func GetTargettedQuestionnaires(c echo.Context) ([]TargettedQuestionnaires, error) {
