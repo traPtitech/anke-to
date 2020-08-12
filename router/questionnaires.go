@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -57,12 +58,12 @@ func GetQuestionnaire(c echo.Context) error {
 func PostQuestionnaire(c echo.Context) error {
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
 	}{}
 
 	// JSONを構造体につける
@@ -85,8 +86,8 @@ func PostQuestionnaire(c echo.Context) error {
 	}
 
 	time_limit := "なし"
-	if req.ResTimeLimit != "NULL" {
-		time_limit = req.ResTimeLimit
+	if req.ResTimeLimit.Valid {
+		time_limit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
 	}
 
 	targets_mention_text := "なし"

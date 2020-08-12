@@ -17,7 +17,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-type Questionnaires struct {
+type Questionnaire struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
 	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
 	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
@@ -29,7 +29,7 @@ type Questionnaires struct {
 }
 
 type QuestionnairesInfo struct {
-	Questionnaires
+	Questionnaire
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
@@ -68,12 +68,12 @@ func SetQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 
 // エラーが起きれば(nil, err)
 // 起こらなければ(allquestionnaires, nil)を返す
-func GetAllQuestionnaires(c echo.Context) ([]Questionnaires, error) {
+func GetAllQuestionnaires(c echo.Context) ([]Questionnaire, error) {
 	// query parametar
 	sort := c.QueryParam("sort")
 
 	// アンケート一覧の配列
-	allquestionnaires := []Questionnaires{}
+	allquestionnaires := []Questionnaire{}
 
 	query := gormDB.Where("deleted_at IS NULL")
 
@@ -172,54 +172,54 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnairesInfo, 
 	return questionnaires, pageMax, nil
 }
 
-func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaires, error) {
-	questionnaire := Questionnaires{}
+func GetQuestionnaire(c echo.Context, questionnaireID int) (Questionnaire, error) {
+	questionnaire := Questionnaire{}
 
 	err := gormDB.Where("id = ? AND deleted_at IS NULL", questionnaireID).First(&questionnaire).Error
 	if err != nil {
 		c.Logger().Error(err)
 		if gorm.IsRecordNotFoundError(err) {
-			return Questionnaires{}, echo.NewHTTPError(http.StatusNotFound)
+			return Questionnaire{}, echo.NewHTTPError(http.StatusNotFound)
 		} else {
-			return Questionnaires{}, echo.NewHTTPError(http.StatusInternalServerError)
+			return Questionnaire{}, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	return questionnaire, nil
 }
 
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaires, []string, []string, []string, error) {
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (Questionnaire, []string, []string, []string, error) {
 	questionnaire, err := GetQuestionnaire(c, questionnaireID)
 	if err != nil {
-		return Questionnaires{}, nil, nil, nil, err
+		return Questionnaire{}, nil, nil, nil, err
 	}
 
 	targets, err := GetTargets(c, questionnaireID)
 	if err != nil {
-		return Questionnaires{}, nil, nil, nil, err
+		return Questionnaire{}, nil, nil, nil, err
 	}
 
 	administrators, err := GetAdministrators(c, questionnaireID)
 	if err != nil {
-		return Questionnaires{}, nil, nil, nil, err
+		return Questionnaire{}, nil, nil, nil, err
 	}
 
 	respondents, err := GetRespondents(c, questionnaireID)
 	if err != nil {
-		return Questionnaires{}, nil, nil, nil, err
+		return Questionnaire{}, nil, nil, nil, err
 	}
+
 	return questionnaire, targets, administrators, respondents, nil
 }
 
 func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
 	res := struct {
-		Title        string    `db:"title"`
-		ResTimeLimit null.Time `db:"res_time_limit"`
+		ResTimeLimit null.Time
 	}{}
-	if err := db.Get(&res,
-		"SELECT res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
-		questionnaireID); err != nil {
-		if err == sql.ErrNoRows {
+
+	err := gormDB.Table("questionnaires").Where("id = ? AND deleted_at IS NULL", questionnaireID).Select("res_time_limit").Scan(&res).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
 			return "", nil
 		} else {
 			c.Logger().Error(err)
@@ -231,55 +231,62 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := struct {
-		Title        string    `db:"title"`
-		ResTimeLimit null.Time `db:"res_time_limit"`
+		Title        string
+		ResTimeLimit null.Time
 	}{}
-	if err := db.Get(&res,
-		"SELECT title, res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
-		questionnaireID); err != nil {
-		if err == sql.ErrNoRows {
+
+	err := gormDB.Table("questionnaires").Where("id = ? AND deleted_at IS NULL").Select("title, res_time_limit").Scan(&res).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
 			return "", "", nil
 		} else {
 			c.Logger().Error(err)
 			return "", "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+
 	return res.Title, NullTimeToString(res.ResTimeLimit), nil
 }
 
-func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string) (int, error) {
-	var result sql.Result
-
-	if resTimeLimit == "" || resTimeLimit == "NULL" {
-		resTimeLimit = "NULL"
-		var err error
-		result, err = db.Exec(
-			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
-			VALUES (?, ?, ?, ?, ?)`,
-			title, description, resSharedTo, time.Now(), time.Now())
-		if err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+	var questionnaire Questionnaire
+	if !resTimeLimit.Valid {
+		questionnaire = Questionnaire{
+			Title:       title,
+			Description: description,
+			ResSharedTo: resSharedTo,
 		}
 	} else {
-		var err error
-		result, err = db.Exec(
-			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
-			VALUES (?, ?, ?, ?, ?, ?)`,
-			title, description, resTimeLimit, resSharedTo, time.Now(), time.Now())
-		if err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		questionnaire = Questionnaire{
+			Title:        title,
+			Description:  description,
+			ResTimeLimit: resTimeLimit,
+			ResSharedTo:  resSharedTo,
 		}
 	}
 
-	lastID, err := result.LastInsertId()
+	res := struct {
+		ID int
+	}{}
+	err := gormDB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&questionnaire).Error
+		if err != nil {
+			return fmt.Errorf("failed to insert a questionnaire: %w", err)
+		}
+
+		err = tx.Table("questionnaires").Select("id").Last(&res).Error
+		if err != nil {
+			return fmt.Errorf("failed to get the last id: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Error(fmt.Errorf("failed in the transaction: %w", err))
 		return 0, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return int(lastID), nil
+	return res.ID, nil
 }
 
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID int) error {
