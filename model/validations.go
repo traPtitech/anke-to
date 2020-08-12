@@ -136,13 +136,3 @@ func CheckTextValidation(c echo.Context, validation Validations, Response string
 
 	return nil
 }
-
-//debug用　後で消す
-func GetValidationLists(c echo.Context) ([]Validations, error) {
-	validations := []Validations{}
-	if err := gormDB.Find(&validations).Error; err != nil {
-		c.Logger().Error(err)
-		return []Validations{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return validations, nil
-}
