@@ -58,13 +58,3 @@ func DeleteScaleLabels(c echo.Context, questionID int) error {
 	}
 	return nil
 }
-
-//debug用　後で消す
-func GetScaleLabelLists(c echo.Context) ([]ScaleLabels, error) {
-	lists := []ScaleLabels{}
-	if err := gormDB.Find(&lists).Error; err != nil {
-		c.Logger().Error(err)
-		return []ScaleLabels{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return lists, nil
-}
