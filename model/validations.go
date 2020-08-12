@@ -19,7 +19,9 @@ type Validations struct {
 
 func GetValidations(c echo.Context, questionID int) (Validations, error) {
 	validation := Validations{}
-	if err := gormDB.Where("question_id = ?", questionID).First(&validation).Error; err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).First(&validation).Error; gorm.IsRecordNotFoundError(err) {
+		return Validations{}, nil
+	} else if err != nil {
 		c.Logger().Error(err)
 		return Validations{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
