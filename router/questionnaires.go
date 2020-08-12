@@ -132,7 +132,7 @@ func EditQuestionnaire(c echo.Context) error {
 	req := struct {
 		Title          string   `json:"title"`
 		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
+		ResTimeLimit   null.Time   `json:"res_time_limit"`
 		ResSharedTo    string   `json:"res_shared_to"`
 		Targets        []string `json:"targets"`
 		Administrators []string `json:"administrators"`
