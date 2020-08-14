@@ -14,7 +14,7 @@ type Option struct {
 }
 
 func GetOptions(c echo.Context, questionID int) ([]string, error) {
-	var bodies []string
+	bodies := []string{}
 	options := []Option{}
 	err := gormDB.Order("option_num").Find(&options, "question_id = ?", questionID).Pluck("body", &bodies).Error
 	if err != nil {
@@ -39,15 +39,16 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 }
 
 func UpdateOptions(c echo.Context, options []string, questionID int) error {
+	var err error
+	option := Option{}
 	for i, v := range options {
-		option := Option{}
-		err := gormDB.Where(Option{QuestionId: questionID}).Assign(Option{OptionNum: i + 1, Body: v}).FirstOrCreate(&option).Error
+		err = gormDB.Where(Option{QuestionId: questionID}).Assign(Option{OptionNum: i + 1, Body: v}).FirstOrCreate(&option).Error
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	err := gormDB.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Option{}).Error
+	err = gormDB.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Option{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -56,7 +57,7 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 }
 
 func DeleteOptions(c echo.Context, questionID int) error {
-	err := gormDB.Delete(Option{}, "question_id", questionID).Error
+	err := gormDB.Where("question_id", questionID).Delete(Option{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
