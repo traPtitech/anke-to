@@ -6,9 +6,25 @@ import (
 	"time"
 
 	"database/sql"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 )
+
+//Response responseテーブルの構造体
+type Response struct {
+	ResponseID int `gorm:"type:int(11);NOT NULL;"`
+	QuestionID int `gorm:"type:int(11);NOT NULL;"`
+	Body null.String `gorm:"type:text;"`
+	ModifiedAt time.Time `gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	DeletedAt null.Time `gorm:"type:timestamp;"`
+}
+
+//TableName テーブル名が単数形なのでその対応
+func (*Response) TableName() string {
+	return "response"
+}
 
 type ResponseBody struct {
 	QuestionID     int      `json:"questionID"`

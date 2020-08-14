@@ -12,9 +12,7 @@ require (
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/mattn/go-colorable v0.1.7 // indirect
-	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
