@@ -9,9 +9,10 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-type Questions struct {
+//Question questionテーブルの構造体
+type Question struct {
 	ID              int            `json:"id"                  db:"id"`
-	QuestionnaireId int            `json:"questionnaireID"     db:"questionnaire_id"`
+	QuestionnaireID int            `json:"questionnaireID"     db:"questionnaire_id"`
 	PageNum         int            `json:"page_num"            db:"page_num"`
 	QuestionNum     int            `json:"question_num"        db:"question_num"`
 	Type            string         `json:"type"                db:"type"`
@@ -19,6 +20,11 @@ type Questions struct {
 	IsRequrired     bool           `json:"is_required"         db:"is_required"`
 	DeletedAt       mysql.NullTime `json:"deleted_at"          db:"deleted_at"`
 	CreatedAt       time.Time      `json:"created_at"          db:"created_at"`
+}
+
+//TableName テーブル名が単数形なのでその対応
+func (*Question) TableName() string {
+	return "question"
 }
 
 type QuestionIDType struct {
@@ -37,15 +43,15 @@ func GetQuestionsType(c echo.Context, questionnaireID int) ([]QuestionIDType, er
 	return ret, nil
 }
 
-func GetQuestions(c echo.Context, questionnaireID int) ([]Questions, error) {
-	allquestions := []Questions{}
+func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
+	allquestions := []Question{}
 
 	// アンケートidの一致する質問を取る
 	if err := db.Select(&allquestions,
 		"SELECT * FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
-		return []Questions{}, echo.NewHTTPError(http.StatusInternalServerError)
+		return []Question{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return allquestions, nil
 }
