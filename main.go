@@ -17,9 +17,13 @@ func main() {
 		panic(err)
 	}
 
-	err = model.EstablishConnection()
+	db, err := model.EstablishConnection()
 	if err != nil {
 		panic(err)
+	}
+
+	if logger == nil {
+		db.LogMode(true)
 	}
 
 	e := echo.New()
