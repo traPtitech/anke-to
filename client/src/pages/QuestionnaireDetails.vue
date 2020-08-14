@@ -284,7 +284,7 @@ export default {
         title: this.information.title,
         description: this.information.description,
         res_time_limit: this.noTimeLimit
-          ? 'NULL'
+          ? undefined
           : moment(
               this.information.res_time_limit,
               'YYYY-MM-DDTHH:mm'
