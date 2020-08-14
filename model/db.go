@@ -11,7 +11,7 @@ import (
 var db *sqlx.DB
 var gormDB *gorm.DB
 
-func EstablishConnection() error {
+func EstablishConnection() (*gorm.DB, error) {
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -36,5 +36,5 @@ func EstablishConnection() error {
 	gormDB = _db
 	db = sqlx.NewDb(_db.DB(), "mysql")
 
-	return err
+	return gormDB, err
 }
