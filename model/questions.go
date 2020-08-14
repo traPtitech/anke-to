@@ -19,7 +19,7 @@ type Question struct {
 	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);NOT NULL;"`
 	Type            string         `json:"type"                gorm:"type:char(20);NOT NULL;"`
 	Body            string         `json:"body"                gorm:"type:text;"`
-	IsRequired     bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
+	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
 	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp;"`
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 }
@@ -81,11 +81,11 @@ func InsertQuestion(
 	body string, isRequired bool) (int, error) {
 	question := Question{
 		QuestionnaireID: questionnaireID,
-		PageNum: pageNum,
-		QuestionNum: questionNum,
-		Type: questionType,
-		Body: body,
-		IsRequired: isRequired,
+		PageNum:         pageNum,
+		QuestionNum:     questionNum,
+		Type:            questionType,
+		Body:            body,
+		IsRequired:      isRequired,
 	}
 
 	err := gormDB.Transaction(func(tx *gorm.DB) error {
@@ -117,11 +117,11 @@ func UpdateQuestion(
 	body string, isRequired bool, questionID int) error {
 	question := Question{
 		QuestionnaireID: questionnaireID,
-		PageNum: pageNum,
-		QuestionNum: questionNum,
-		Type: questionType,
-		Body: body,
-		IsRequired: isRequired,
+		PageNum:         pageNum,
+		QuestionNum:     questionNum,
+		Type:            questionType,
+		Body:            body,
+		IsRequired:      isRequired,
 	}
 
 	err := gormDB.
