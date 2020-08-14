@@ -14,8 +14,8 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-//Questionnaire questionnairesテーブルの構造体
-type Questionnaire struct {
+//Questionnaires questionnairesテーブルの構造体
+type Questionnaires struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
 	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
 	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
@@ -27,7 +27,7 @@ type Questionnaire struct {
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaire) BeforeUpdate(scope *gorm.Scope) (err error) {
+func (questionnaire *Questionnaires) BeforeUpdate(scope *gorm.Scope) (err error) {
 	questionnaire.ModifiedAt = time.Now()
 
 	return nil
@@ -35,13 +35,13 @@ func (questionnaire *Questionnaire) BeforeUpdate(scope *gorm.Scope) (err error) 
 
 //QuestionnaireInfo Questionnaireにtargetかの情報追加
 type QuestionnaireInfo struct {
-	Questionnaire
+	Questionnaires
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
-	Questionnaire
+	Questionnaires
 	RespondedAt string `json:"responded_at"`
 }
 
@@ -201,8 +201,8 @@ func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) 
 }
 
 //GetQuestionnaireInfo アンケートの詳細な情報取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaire, []string, []string, []string, error) {
-	questionnaire := Questionnaire{}
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+	questionnaire := Questionnaires{}
 	targets := []string{}
 	administrators := []string{}
 	respondents := []string{}
@@ -326,15 +326,15 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 
 //InsertQuestionnaire アンケートの追加
 func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
-	var questionnaire Questionnaire
+	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
-		questionnaire = Questionnaire{
+		questionnaire = Questionnaires{
 			Title:       title,
 			Description: description,
 			ResSharedTo: resSharedTo,
 		}
 	} else {
-		questionnaire = Questionnaire{
+		questionnaire = Questionnaires{
 			Title:        title,
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
@@ -371,15 +371,15 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 
 //UpdateQuestionnaire アンケートの更新
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
-	var questionnaire Questionnaire
+	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
-		questionnaire = Questionnaire{
+		questionnaire = Questionnaires{
 			Title:       title,
 			Description: description,
 			ResSharedTo: resSharedTo,
 		}
 	} else {
-		questionnaire = Questionnaire{
+		questionnaire = Questionnaires{
 			Title:        title,
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
@@ -401,7 +401,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 
 //DeleteQuestionnaire アンケートの削除
 func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
-	err := gormDB.Delete(&Questionnaire{ID: questionnaireID}).Error
+	err := gormDB.Delete(&Questionnaires{ID: questionnaireID}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
