@@ -38,6 +38,7 @@ type QuestionIDType struct {
 //GetQuestionTypes 質問のIDと型の配列を取得
 func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
 	questionIDTypes := []QuestionIDType{}
+
 	err := gormDB.
 		Model(&Question{}).
 		Where("questionnaire_id = ?", questionnaireID).
@@ -58,6 +59,7 @@ func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, er
 //GetQuestions 質問のリストの取得
 func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 	questions := []Question{}
+
 	err := gormDB.
 		Where("questionnaire_id = ?", questionnaireID).
 		Find(&questions).Error
@@ -92,7 +94,9 @@ func InsertQuestion(
 			return fmt.Errorf("failed to insert a question record: %w", err)
 		}
 
-		err = tx.Select("id").Last(&question).Error
+		err = tx.
+			Select("id").
+			Last(&question).Error
 		if err != nil {
 			return fmt.Errorf("failed to get the last question record: %w", err)
 		}
@@ -120,7 +124,9 @@ func UpdateQuestion(
 		IsRequired: isRequired,
 	}
 
-	err := gormDB.Model(&Question{}).Update(&question).Error
+	err := gormDB.
+		Model(&Question{}).
+		Update(&question).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to update a question record: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -131,7 +137,9 @@ func UpdateQuestion(
 
 //DeleteQuestion 質問の削除
 func DeleteQuestion(c echo.Context, questionID int) error {
-	err := gormDB.Where("id = ?", questionID).Delete(&Question{}).Error
+	err := gormDB.
+		Where("id = ?", questionID).
+		Delete(&Question{}).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to delete a question record: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
