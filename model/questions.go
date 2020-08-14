@@ -11,15 +11,15 @@ import (
 
 //Question questionテーブルの構造体
 type Question struct {
-	ID              int            `json:"id"                  db:"id"`
-	QuestionnaireID int            `json:"questionnaireID"     db:"questionnaire_id"`
-	PageNum         int            `json:"page_num"            db:"page_num"`
-	QuestionNum     int            `json:"question_num"        db:"question_num"`
-	Type            string         `json:"type"                db:"type"`
-	Body            string         `json:"body"                db:"body"`
-	IsRequrired     bool           `json:"is_required"         db:"is_required"`
-	DeletedAt       mysql.NullTime `json:"deleted_at"          db:"deleted_at"`
-	CreatedAt       time.Time      `json:"created_at"          db:"created_at"`
+	ID              int            `json:"id"                  gorm:"type:int(11);PRIMARY_KEY;NOT NULL;AUTO_INCREMENT;"`
+	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);DEFAULT:NULL;"`
+	PageNum         int            `json:"page_num"            gorm:"type:int(11);NOT NULL;"`
+	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);NOT NULL;"`
+	Type            string         `json:"type"                gorm:"type:char(20);NOT NULL;"`
+	Body            string         `json:"body"                gorm:"type:text;"`
+	IsRequrired     bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
+	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp;"`
+	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 }
 
 //TableName テーブル名が単数形なのでその対応
@@ -29,8 +29,8 @@ func (*Question) TableName() string {
 
 //QuestionIDType 質問のIDと種類の構造体
 type QuestionIDType struct {
-	ID   int    `db:"id"`
-	Type string `db:"type"`
+	ID   int
+	Type string
 }
 
 func GetQuestionsType(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
