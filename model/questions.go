@@ -27,6 +27,7 @@ func (*Question) TableName() string {
 	return "question"
 }
 
+//QuestionIDType 質問のIDと種類の構造体
 type QuestionIDType struct {
 	ID   int    `db:"id"`
 	Type string `db:"type"`
