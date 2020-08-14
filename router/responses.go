@@ -49,7 +49,7 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := model.InsertRespondents(c, req)
+	responseID, err := model.InsertRespondent(c, req.ID, req.SubmittedAt)
 	if err != nil {
 		return err
 	}

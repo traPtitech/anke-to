@@ -35,7 +35,7 @@ type ResponseBody struct {
 
 type Responses struct {
 	ID          int            `json:"questionnaireID"`
-	SubmittedAt string         `json:"submitted_at"`
+	SubmittedAt null.Time         `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
 }
 
@@ -66,34 +66,6 @@ type ResponseID struct {
 	QuestionnaireID int            `db:"questionnaire_id"`
 	ModifiedAt      mysql.NullTime `db:"modified_at"`
 	SubmittedAt     mysql.NullTime `db:"submitted_at"`
-}
-
-func InsertRespondents(c echo.Context, req Responses) (int, error) {
-	var result sql.Result
-	var err error
-	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
-		req.SubmittedAt = "NULL"
-		if result, err = db.Exec(
-			`INSERT INTO respondents (questionnaire_id, user_traqid, modified_at) VALUES (?, ?, ?)`,
-			req.ID, GetUserID(c), time.Now()); err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	} else {
-		if result, err = db.Exec(
-			`INSERT INTO respondents
-				(questionnaire_id, user_traqid, submitted_at, modified_at) VALUES (?, ?, ?, ?)`,
-			req.ID, GetUserID(c), req.SubmittedAt, time.Now()); err != nil {
-			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return int(lastID), nil
 }
 
 func InsertResponse(c echo.Context, responseID int, req Responses, body ResponseBody, data string) error {
@@ -244,9 +216,8 @@ func GetRespondentByID(c echo.Context, responseID int) (ResponseID, error) {
 	return respondentInfo, nil
 }
 
-func UpdateRespondents(c echo.Context, questionnaireID int, responseID int, submittedAt string) error {
-	if submittedAt == "" || submittedAt == "NULL" {
-		submittedAt = "NULL"
+func UpdateRespondents(c echo.Context, questionnaireID int, responseID int, submittedAt null.Time) error {
+	if !submittedAt.Valid {
 		if _, err := db.Exec(
 			`UPDATE respondents
 			SET questionnaire_id = ?, submitted_at = NULL, modified_at = ? WHERE response_id = ?`,
