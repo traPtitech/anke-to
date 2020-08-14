@@ -285,9 +285,7 @@ export default {
         description: this.information.description,
         res_time_limit: this.noTimeLimit
           ? 'NULL'
-          : moment(this.information.res_time_limit, 'YYYY-MM-DDTHH:mm').format(
-              'YYYY/MM/DD HH:mm'
-            ),
+          : moment(this.information.res_time_limit, 'YYYY-MM-DDTHH:mm').toISOString(),
         res_shared_to: this.information.res_shared_to,
         targets: this.information.targets,
         administrators: this.information.administrators
