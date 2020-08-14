@@ -16,7 +16,7 @@ type ValidationTest struct {
 }
 
 func TestCheckNumberValid(t *testing.T) {
-	validation_tests := []ValidationTest{
+	validationTests := []ValidationTest{
 		{
 			validation: Validations{0, "", "1a", "10"},
 			body:       "",
@@ -29,9 +29,9 @@ func TestCheckNumberValid(t *testing.T) {
 		},
 	}
 
-	for _, validation_test := range validation_tests {
-		validation := validation_test.validation
-		result := validation_test.result
+	for _, validationTest := range validationTests {
+		validation := validationTest.validation
+		result := validationTest.result
 		if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
@@ -47,7 +47,7 @@ func TestCheckNumberValidation(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	validation_tests := []ValidationTest{
+	validationTests := []ValidationTest{
 		{
 			validation: Validations{0, "", "0", "10"},
 			body:       "5",
@@ -65,10 +65,10 @@ func TestCheckNumberValidation(t *testing.T) {
 		},
 	}
 
-	for _, validation_test := range validation_tests {
-		validation := validation_test.validation
-		body := validation_test.body
-		result := validation_test.result
+	for _, validationTest := range validationTests {
+		validation := validationTest.validation
+		body := validationTest.body
+		result := validationTest.result
 		if err := CheckNumberValidation(c, validation, body); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
@@ -83,7 +83,7 @@ func TestCheckTextValidation(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	validation_tests := []ValidationTest{
+	validationTests := []ValidationTest{
 		{
 			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
 			body:       "4.55",
@@ -100,10 +100,10 @@ func TestCheckTextValidation(t *testing.T) {
 			result:     "code=500, message=Internal Server Error",
 		},
 	}
-	for _, validation_test := range validation_tests {
-		validation := validation_test.validation
-		body := validation_test.body
-		result := validation_test.result
+	for _, validationTest := range validationTests {
+		validation := validationTest.validation
+		body := validationTest.body
+		result := validationTest.result
 		if err := CheckTextValidation(c, validation, body); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
