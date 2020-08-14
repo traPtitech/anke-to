@@ -107,15 +107,25 @@ func InsertQuestion(
 	return question.ID, nil
 }
 
+//UpdateQuestion 質問の修正
 func UpdateQuestion(
 	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool, questionID int) error {
-	if _, err := db.Exec(
-		"UPDATE question SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
-		questionnaireID, pageNum, questionNum, questionType, body, isRequired, questionID); err != nil {
-		c.Logger().Error(err)
+	question := Question{
+		QuestionnaireID: questionnaireID,
+		PageNum: pageNum,
+		QuestionNum: questionNum,
+		Type: questionType,
+		Body: body,
+		IsRequired: isRequired,
+	}
+
+	err := gormDB.Model(&Question{}).Update(&question).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to update a question record: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return nil
 }
 
