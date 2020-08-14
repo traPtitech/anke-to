@@ -55,17 +55,22 @@ func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, er
 	return questionIDTypes, nil
 }
 
+//GetQuestions 質問のリストの取得
 func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
-	allquestions := []Question{}
-
+	questions := []Question{}
+	err := gormDB.
+		Where("questionnaire_id = ?", questionnaireID).
+		Find(&questions).Error
 	// アンケートidの一致する質問を取る
-	if err := db.Select(&allquestions,
-		"SELECT * FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return []Question{}, echo.NewHTTPError(http.StatusInternalServerError)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get questions: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return allquestions, nil
+
+	return questions, nil
 }
 
 func InsertQuestion(
