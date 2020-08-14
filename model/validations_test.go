@@ -25,7 +25,7 @@ func TestCheckNumberValid(t *testing.T) {
 		{
 			validation: Validations{0, "", "10", "0"},
 			body:       "",
-			result:     "failed: min_bound is greater than max_bound",
+			result:     "failed: minBoundNum is greater than maxBoundNum",
 		},
 	}
 
