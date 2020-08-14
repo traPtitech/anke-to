@@ -208,7 +208,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 	respondents := []string{}
 
 	err := gormDB.
-		Table("questionnaires").
+		Model(&Questionnaires{}).
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
@@ -265,7 +265,7 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 	}{}
 
 	err := gormDB.
-		Table("questionnaires").
+		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
 		Scan(&res).Error
@@ -287,7 +287,7 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 	}{}
 
 	err := gormDB.
-		Table("questionnaires").
+		Model(&Questionnaires{}).
 		Where("id = ?").
 		Select("title, res_time_limit").
 		Scan(&res).Error
@@ -309,7 +309,7 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	}{}
 
 	err := gormDB.
-		Table("questionnaires").
+		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
 		First(&res).Error
@@ -342,9 +342,6 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		}
 	}
 
-	res := struct {
-		ID int
-	}{}
 	err := gormDB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&questionnaire).Error
 		if err != nil {
@@ -352,9 +349,8 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		}
 
 		err = tx.
-			Table("questionnaires").
 			Select("id").
-			Last(&res).Error
+			Last(&questionnaire).Error
 		if err != nil {
 			return fmt.Errorf("failed to get the last id: %w", err)
 		}
@@ -366,7 +362,7 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		return 0, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return res.ID, nil
+	return questionnaire.ID, nil
 }
 
 //UpdateQuestionnaire アンケートの更新
@@ -388,7 +384,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 	}
 
 	err := gormDB.
-		Table("questionnaires").
+		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Update(&questionnaire).Error
 	if err != nil {
