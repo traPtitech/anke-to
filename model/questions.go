@@ -129,12 +129,13 @@ func UpdateQuestion(
 	return nil
 }
 
+//DeleteQuestion 質問の削除
 func DeleteQuestion(c echo.Context, questionID int) error {
-	if _, err := db.Exec(
-		"UPDATE question SET deleted_at = ? WHERE id = ?",
-		time.Now(), questionID); err != nil {
-		c.Logger().Error(err)
+	err := gormDB.Where("id = ?", questionID).Delete(&Question{}).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to delete a question record: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return nil
 }
