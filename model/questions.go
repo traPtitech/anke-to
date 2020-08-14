@@ -1,9 +1,11 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 
 	"github.com/go-sql-driver/mysql"
@@ -33,15 +35,24 @@ type QuestionIDType struct {
 	Type string
 }
 
-func GetQuestionsType(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
-	ret := []QuestionIDType{}
-	if err := db.Select(&ret,
-		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num`,
-		questionnaireID); err != nil {
-		c.Logger().Error(err)
+//GetQuestionTypes 質問のIDと型の配列を取得
+func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
+	questionIDTypes := []QuestionIDType{}
+	err := gormDB.
+		Model(&Question{}).
+		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
+		Select("id, type").
+		Scan(&questionIDTypes).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get question`s ids and types: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound)
+		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return ret, nil
+
+	return questionIDTypes, nil
 }
 
 func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
