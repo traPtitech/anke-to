@@ -19,7 +19,7 @@ type Question struct {
 	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);NOT NULL;"`
 	Type            string         `json:"type"                gorm:"type:char(20);NOT NULL;"`
 	Body            string         `json:"body"                gorm:"type:text;"`
-	IsRequrired     bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
+	IsRequired     bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
 	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp;"`
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 }
@@ -73,24 +73,38 @@ func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 	return questions, nil
 }
 
+//InsertQuestion 質問の追加
 func InsertQuestion(
 	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool) (int, error) {
-	result, err := db.Exec(
-		`INSERT INTO question (questionnaire_id, page_num, question_num, type, body, is_required, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		questionnaireID, pageNum, questionNum, questionType, body, isRequired, time.Now())
+	question := Question{
+		QuestionnaireID: questionnaireID,
+		PageNum: pageNum,
+		QuestionNum: questionNum,
+		Type: questionType,
+		Body: body,
+		IsRequired: isRequired,
+	}
+
+	err := gormDB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&question).Error
+		if err != nil {
+			return fmt.Errorf("failed to insert a question record: %w", err)
+		}
+
+		err = tx.Select("id").Last(&question).Error
+		if err != nil {
+			return fmt.Errorf("failed to get the last question record: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Error(fmt.Errorf("failed in transaction: %w", err))
 		return 0, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return int(lastID), nil
+	return question.ID, nil
 }
 
 func UpdateQuestion(
