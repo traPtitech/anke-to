@@ -19,7 +19,7 @@ type Questionnaires struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
 	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
 	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
-	ResTimeLimit null.Time `json:"res_time_limit"  gorm:"type:timestamp;DEFAULT:NULL;"`
+	ResTimeLimit null.Time `json:"res_time_limit,omitempty"  gorm:"type:timestamp;DEFAULT:NULL;"`
 	DeletedAt    null.Time `json:"deleted_at,omitempty"      gorm:"type:timestamp;DEFAULT:NULL;"`
 	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30);NOT NULL;DEFAULT:administrators;"`
 	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
@@ -367,20 +367,31 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 
 //UpdateQuestionnaire アンケートの更新
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
-	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
-		questionnaire = Questionnaires{
-			Title:       title,
-			Description: description,
-			ResSharedTo: resSharedTo,
+		questionnaire := map[string]interface{}{
+			"title":       title,
+			"description": description,
+			"res_time_limit": gorm.Expr("NULL"),
+			"res_shared_to": resSharedTo,
 		}
-	} else {
-		questionnaire = Questionnaires{
-			Title:        title,
-			Description:  description,
-			ResTimeLimit: resTimeLimit,
-			ResSharedTo:  resSharedTo,
+
+		err := gormDB.
+			Model(&Questionnaires{}).
+			Where("id = ?", questionnaireID).
+			Update(questionnaire).Error
+		if err != nil {
+			c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+
+		return nil
+	}
+
+	questionnaire := Questionnaires{
+		Title:        title,
+		Description:  description,
+		ResTimeLimit: resTimeLimit,
+		ResSharedTo:  resSharedTo,
 	}
 
 	err := gormDB.

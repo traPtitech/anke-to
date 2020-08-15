@@ -12,7 +12,7 @@ func NullTimeToString(t null.Time) string {
 	if t.Valid {
 		return t.Time.Format(time.RFC3339)
 	} else {
-		return "NULL"
+		return "null"
 	}
 }
 
