@@ -1,10 +1,9 @@
 package model
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 )
 
 //ScaleLabels scale_labelsテーブルの構造体
@@ -17,41 +16,37 @@ type ScaleLabels struct {
 }
 
 // GetScaleLabels 指定されたquestionIDのlabelを取得する
-func GetScaleLabels(c echo.Context, questionID int) (ScaleLabels, error) {
+func GetScaleLabels(questionID int) (ScaleLabels, error) {
 	label := ScaleLabels{}
 	if err := gormDB.Where("question_id = ?", questionID).First(&label).Error; gorm.IsRecordNotFoundError(err) {
 		return ScaleLabels{}, nil
 	} else if err != nil {
-		c.Logger().Error(err)
-		return ScaleLabels{}, echo.NewHTTPError(http.StatusInternalServerError)
+		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
 	}
 	return label, nil
 }
 
 // InsertScaleLabels IDを指定してlabelを挿入する
-func InsertScaleLabels(c echo.Context, lastID int, label ScaleLabels) error {
+func InsertScaleLabels(lastID int, label ScaleLabels) error {
 	label.ID = lastID
 	if err := gormDB.Create(&label).Error; err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
 	return nil
 }
 
 // UpdateScaleLabels questionIDを指定してlabelを更新する
-func UpdateScaleLabels(c echo.Context, questionID int, label ScaleLabels) error {
+func UpdateScaleLabels(questionID int, label ScaleLabels) error {
 	if err := gormDB.Model(&ScaleLabels{}).Update(&label).Error; err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to update the scale labell (questionID: %d): %w", questionID, err)
 	}
 	return nil
 }
 
 // DeleteScaleLabels questionIDを指定してlabelを削除する
-func DeleteScaleLabels(c echo.Context, questionID int) error {
+func DeleteScaleLabels(questionID int) error {
 	if err := gormDB.Where("question_id = ?", questionID).Delete(&ScaleLabels{}).Error; err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete the scale labell (questionID: %d): %w", questionID, err)
 	}
 	return nil
 }
