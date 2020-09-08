@@ -1,11 +1,8 @@
 package model
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +17,12 @@ func TestCheckNumberValid(t *testing.T) {
 		{
 			validation: Validations{0, "", "1a", "10"},
 			body:       "",
-			result:     "strconv.Atoi: parsing \"1a\": invalid syntax",
+			result:     "MinBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
 		},
 		{
 			validation: Validations{0, "", "10", "0"},
 			body:       "",
-			result:     "failed: minBoundNum is greater than maxBoundNum",
+			result:     "MinBound 10 is greater than MaxBound 0",
 		},
 	}
 
@@ -41,12 +38,6 @@ func TestCheckNumberValid(t *testing.T) {
 }
 
 func TestCheckNumberValidation(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
 	validationTests := []ValidationTest{
 		{
 			validation: Validations{0, "", "0", "10"},
@@ -56,12 +47,12 @@ func TestCheckNumberValidation(t *testing.T) {
 		{
 			validation: Validations{0, "", "", "10"},
 			body:       "20",
-			result:     "code=400, message=Bad Request",
+			result:     "the number 20 is larger than MaxBound 10",
 		},
 		{
 			validation: Validations{0, "", "20", "10"},
 			body:       "20",
-			result:     "code=500, message=Internal Server Error",
+			result:     "MinBound 20 is greater than MaxBound 10",
 		},
 	}
 
@@ -69,7 +60,7 @@ func TestCheckNumberValidation(t *testing.T) {
 		validation := validationTest.validation
 		body := validationTest.body
 		result := validationTest.result
-		if err := CheckNumberValidation(c, validation, body); err != nil {
+		if err := CheckNumberValidation(validation, body); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
 			assert.NoError(t, nil)
@@ -78,11 +69,6 @@ func TestCheckNumberValidation(t *testing.T) {
 }
 
 func TestCheckTextValidation(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
 	validationTests := []ValidationTest{
 		{
 			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
@@ -92,19 +78,19 @@ func TestCheckTextValidation(t *testing.T) {
 		{
 			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
 			body:       "a4.55",
-			result:     "code=400, message=Bad Request",
+			result:     "a4.55 does not match the pattern ^\\d*\\.\\d*$",
 		},
 		{
 			validation: Validations{0, "*", "", ""},
 			body:       "hoge",
-			result:     "code=500, message=Internal Server Error",
+			result:     "error parsing regexp: missing argument to repetition operator: `*`",
 		},
 	}
 	for _, validationTest := range validationTests {
 		validation := validationTest.validation
 		body := validationTest.body
 		result := validationTest.result
-		if err := CheckTextValidation(c, validation, body); err != nil {
+		if err := CheckTextValidation(validation, body); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
 			assert.NoError(t, nil)
