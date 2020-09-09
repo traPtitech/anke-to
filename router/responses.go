@@ -33,18 +33,31 @@ func PostResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
+		validation, err := model.GetValidations(body.QuestionID)
 		if err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		switch body.QuestionType {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
-				return err
+			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
+				c.Logger()
+				switch err.(type) {
+				case *model.NumberValidError:
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				default:
+					return echo.NewHTTPError(http.StatusBadRequest)
+				}
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
-				return err
+			if err := model.CheckTextValidation(validation, body.Response); err != nil {
+				c.Logger().Error(err)
+				switch err.(type) {
+				case *model.TextMatchError:
+					return echo.NewHTTPError(http.StatusBadRequest)
+				default:
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
 			}
 		}
 	}
@@ -291,18 +304,31 @@ func EditResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
+		validation, err := model.GetValidations(body.QuestionID)
 		if err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		switch body.QuestionType {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
-				return err
+			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
+				c.Logger()
+				switch err.(type) {
+				case *model.NumberValidError:
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				default:
+					return echo.NewHTTPError(http.StatusBadRequest)
+				}
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
-				return err
+			if err := model.CheckTextValidation(validation, body.Response); err != nil {
+				c.Logger().Error(err)
+				switch err.(type) {
+				case *model.TextMatchError:
+					return echo.NewHTTPError(http.StatusBadRequest)
+				default:
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
 			}
 		}
 	}

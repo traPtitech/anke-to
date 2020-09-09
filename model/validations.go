@@ -76,20 +76,20 @@ func CheckNumberValid(MinBound, MaxBound string) error {
 		min, err := strconv.Atoi(MinBound)
 		minBoundNum = min
 		if err != nil {
-			return &NumberValidError{"MinBound is not a numerical value", err}
+			return &NumberValidError{"failed to check the boundary value. MinBound is not a numerical value", err}
 		}
 	}
 	if MaxBound != "" {
 		max, err := strconv.Atoi(MaxBound)
 		maxBoundNum = max
 		if err != nil {
-			return &NumberValidError{"MaxBound is not a numerical value", err}
+			return &NumberValidError{"failed to check the boundary value. MaxBound is not a numerical value", err}
 		}
 	}
 
 	if MinBound != "" && MaxBound != "" {
 		if minBoundNum > maxBoundNum {
-			return &NumberValidError{fmt.Sprintf("MinBound %d is greater than MaxBound %d", minBoundNum, maxBoundNum), nil}
+			return &NumberValidError{fmt.Sprintf("failed to check the boundary value. MinBound must be less than MaxBound (MinBound: %d, MaxBound: %d)", minBoundNum, maxBoundNum), nil}
 		}
 	}
 
@@ -122,13 +122,13 @@ func CheckNumberValidation(validation Validations, Body string) error {
 	if validation.MinBound != "" {
 		minBoundNum, _ := strconv.Atoi(validation.MinBound)
 		if minBoundNum > number {
-			return &NumberBoundaryError{fmt.Sprintf("the number %d is smaller than MinBound %d", number, minBoundNum)}
+			return &NumberBoundaryError{fmt.Sprintf("failed to meet the boundary value. the number must be greater than MinBound (number: %d, MinBound: %d)", number, minBoundNum)}
 		}
 	}
 	if validation.MaxBound != "" {
 		maxBoundNum, _ := strconv.Atoi(validation.MaxBound)
 		if maxBoundNum < number {
-			return &NumberBoundaryError{fmt.Sprintf("the number %d is larger than MaxBound %d", number, maxBoundNum)}
+			return &NumberBoundaryError{fmt.Sprintf("failed to meet the boundary value. the number must be less than MaxBound (number: %d, MaxBound: %d)", number, maxBoundNum)}
 		}
 	}
 
@@ -144,14 +144,14 @@ func (e *TextMatchError) Error() string {
 	return e.Msg
 }
 
-// CheckTextValidation BodyがRegexPatternにマッチしているか
+// CheckTextValidation ResponceがRegexPatternにマッチしているか
 func CheckTextValidation(validation Validations, Response string) error {
 	r, err := regexp.Compile(validation.RegexPattern)
 	if err != nil {
 		return err
 	}
 	if !r.MatchString(Response) && Response != "" {
-		return &TextMatchError{fmt.Sprintf("%s does not match the pattern %s", Response, r)}
+		return &TextMatchError{fmt.Sprintf("failed to match the pattern (Responce: %s, RegexPattern: %s)", Response, r)}
 	}
 
 	return nil

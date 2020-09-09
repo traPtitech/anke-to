@@ -58,10 +58,11 @@ func GetQuestions(c echo.Context) error {
 		case "LinearScale":
 			scalelabel, err = model.GetScaleLabels(c, v.ID)
 		case "Text", "Number":
-			validation, err = model.GetValidations(c, v.ID)
+			validation, err = model.GetValidations(v.ID)
 		}
 		if err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		ret = append(ret,
@@ -151,13 +152,14 @@ func PostQuestion(c echo.Context) error {
 			return err
 		}
 	case "Text", "Number":
-		if err := model.InsertValidations(c, lastID,
+		if err := model.InsertValidations(lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -247,13 +249,14 @@ func EditQuestion(c echo.Context) error {
 			return err
 		}
 	case "Text", "Number":
-		if err := model.UpdateValidations(c, questionID,
+		if err := model.UpdateValidations(questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -279,8 +282,9 @@ func DeleteQuestion(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteValidations(c, questionID); err != nil {
-		return err
+	if err := model.DeleteValidations(questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusOK)
