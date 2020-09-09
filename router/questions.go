@@ -56,12 +56,13 @@ func GetQuestions(c echo.Context) error {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			options, err = model.GetOptions(c, v.ID)
 		case "LinearScale":
-			scalelabel, err = model.GetScaleLabels(c, v.ID)
+			scalelabel, err = model.GetScaleLabels(v.ID)
 		case "Text", "Number":
 			validation, err = model.GetValidations(c, v.ID)
 		}
 		if err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		ret = append(ret,
@@ -141,14 +142,15 @@ func PostQuestion(c echo.Context) error {
 			}
 		}
 	case "LinearScale":
-		if err := model.InsertScaleLabels(c, lastID,
+		if err := model.InsertScaleLabels(lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	case "Text", "Number":
 		if err := model.InsertValidations(c, lastID,
@@ -237,14 +239,15 @@ func EditQuestion(c echo.Context) error {
 			return err
 		}
 	case "LinearScale":
-		if err := model.UpdateScaleLabels(c, questionID,
+		if err := model.UpdateScaleLabels(questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			return err
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	case "Text", "Number":
 		if err := model.UpdateValidations(c, questionID,
@@ -275,8 +278,9 @@ func DeleteQuestion(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteScaleLabels(c, questionID); err != nil {
-		return err
+	if err := model.DeleteScaleLabels(questionID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	if err := model.DeleteValidations(c, questionID); err != nil {
