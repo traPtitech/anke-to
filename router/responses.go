@@ -42,7 +42,7 @@ func PostResponse(c echo.Context) error {
 		switch body.QuestionType {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
-				c.Logger()
+				c.Logger().Error(err)
 				if errors.Is(err, &model.NumberValidError{}) {
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
@@ -309,7 +309,7 @@ func EditResponse(c echo.Context) error {
 		switch body.QuestionType {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
-				c.Logger()
+				c.Logger().Error(err)
 				if errors.Is(err, &model.NumberValidError{}) {
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
