@@ -1,6 +1,6 @@
 module github.com/traPtitech/anke-to
 
-go 1.12
+go 1.15
 
 require (
 	cloud.google.com/go/logging v1.0.0
