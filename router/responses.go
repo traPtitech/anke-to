@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -42,22 +43,18 @@ func PostResponse(c echo.Context) error {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
 				c.Logger()
-				switch err.(type) {
-				case *model.NumberValidError:
+				if errors.Is(err, &model.NumberValidError{}) {
 					return echo.NewHTTPError(http.StatusInternalServerError)
-				default:
-					return echo.NewHTTPError(http.StatusBadRequest)
 				}
+				return echo.NewHTTPError(http.StatusBadRequest)
 			}
 		case "Text":
 			if err := model.CheckTextValidation(validation, body.Response); err != nil {
 				c.Logger().Error(err)
-				switch err.(type) {
-				case *model.TextMatchError:
+				if errors.Is(err, &model.TextMatchError{}) {
 					return echo.NewHTTPError(http.StatusBadRequest)
-				default:
-					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 	}
@@ -313,22 +310,18 @@ func EditResponse(c echo.Context) error {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Response); err != nil {
 				c.Logger()
-				switch err.(type) {
-				case *model.NumberValidError:
+				if errors.Is(err, &model.NumberValidError{}) {
 					return echo.NewHTTPError(http.StatusInternalServerError)
-				default:
-					return echo.NewHTTPError(http.StatusBadRequest)
 				}
+				return echo.NewHTTPError(http.StatusBadRequest)
 			}
 		case "Text":
 			if err := model.CheckTextValidation(validation, body.Response); err != nil {
 				c.Logger().Error(err)
-				switch err.(type) {
-				case *model.TextMatchError:
+				if errors.Is(err, &model.TextMatchError{}) {
 					return echo.NewHTTPError(http.StatusBadRequest)
-				default:
-					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 	}
