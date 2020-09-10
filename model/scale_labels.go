@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/jinzhu/gorm"
 )
@@ -63,5 +64,24 @@ func DeleteScaleLabels(questionID int) error {
 		Error; err != nil {
 		return fmt.Errorf("failed to delete the scale labell (questionID: %d): %w", questionID, err)
 	}
+	return nil
+}
+
+// CheckScaleLabels responceがScaleMin,ScaleMaxを満たしているか
+func CheckScaleLabels(label ScaleLabels, responce string) error {
+	if responce == "" {
+		return nil
+	}
+
+	r, err := strconv.Atoi(responce)
+	if err != nil {
+		return err
+	}
+	if r < label.ScaleMin {
+		return fmt.Errorf("failed to meet the scale. the responce must be greater than ScaleMin (number: %d, ScaleMin: %d)", r, label.ScaleMin)
+	} else if r > label.ScaleMax {
+		return fmt.Errorf("failed to meet the scale. the responce must be less than ScaleMax (number: %d, ScaleMax: %d)", r, label.ScaleMax)
+	}
+
 	return nil
 }

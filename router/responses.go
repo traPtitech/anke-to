@@ -33,16 +33,30 @@ func PostResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
-		if err != nil {
-			return err
-		}
 		switch body.QuestionType {
+		case "LinearScale":
+			label, err := model.GetScaleLabels(body.QuestionID)
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+			if err := model.CheckScaleLabels(label, body.Response); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
 		case "Number":
+			validation, err := model.GetValidations(c, body.QuestionID)
+			if err != nil {
+				return err
+			}
 			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
 				return err
 			}
 		case "Text":
+			validation, err := model.GetValidations(c, body.QuestionID)
+			if err != nil {
+				return err
+			}
 			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
 				return err
 			}
@@ -291,16 +305,30 @@ func EditResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
-		if err != nil {
-			return err
-		}
 		switch body.QuestionType {
+		case "LinearScale":
+			label, err := model.GetScaleLabels(body.QuestionID)
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+			if err := model.CheckScaleLabels(label, body.Response); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
 		case "Number":
+			validation, err := model.GetValidations(c, body.QuestionID)
+			if err != nil {
+				return err
+			}
 			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
 				return err
 			}
 		case "Text":
+			validation, err := model.GetValidations(c, body.QuestionID)
+			if err != nil {
+				return err
+			}
 			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
 				return err
 			}
