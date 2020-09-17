@@ -19,10 +19,11 @@ type Validations struct {
 // GetValidations 指定されたquestionIDのvalidationを取得する
 func GetValidations(questionID int) (Validations, error) {
 	validation := Validations{}
-	if err := gormDB.
+	err := gormDB.
 		Where("question_id = ?", questionID).
 		First(&validation).
-		Error; gorm.IsRecordNotFoundError(err) {
+		Error
+	if gorm.IsRecordNotFoundError(err) {
 		return Validations{}, nil
 	} else if err != nil {
 		return Validations{}, fmt.Errorf("failed to get the validation (questionID: %d): %w", questionID, err)
@@ -41,7 +42,7 @@ func InsertValidations(lastID int, validation Validations) error {
 
 // UpdateValidations questionIDを指定してvalidationを更新する
 func UpdateValidations(questionID int, validation Validations) error {
-	if err := gormDB.
+	err := gormDB.
 		Model(&Validations{}).
 		Where("question_id = ?", questionID).
 		Update(map[string]interface{}{
@@ -49,7 +50,8 @@ func UpdateValidations(questionID int, validation Validations) error {
 			"regex_pattern": validation.RegexPattern,
 			"min_bound":     validation.MinBound,
 			"max_bound":     validation.MaxBound}).
-		Error; err != nil {
+		Error
+	if err != nil {
 		return fmt.Errorf("failed to update the validation (questionID: %d): %w", questionID, err)
 	}
 	return nil
@@ -57,10 +59,11 @@ func UpdateValidations(questionID int, validation Validations) error {
 
 // DeleteValidations questionIDを指定してvalidationを削除する
 func DeleteValidations(questionID int) error {
-	if err := gormDB.
+	err := gormDB.
 		Where("question_id = ?", questionID).
 		Delete(&Validations{}).
-		Error; err != nil {
+		Error
+	if err != nil {
 		return fmt.Errorf("failed to delete the validation (questionID: %d): %w", questionID, err)
 	}
 	return nil

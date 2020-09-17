@@ -61,8 +61,7 @@ func GetQuestions(c echo.Context) error {
 			validation, err = model.GetValidations(v.ID)
 		}
 		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
 		ret = append(ret,
@@ -122,8 +121,7 @@ func PostQuestion(c echo.Context) error {
 	case "Number":
 		//数字か，min<=maxになってるか
 		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
@@ -158,8 +156,7 @@ func PostQuestion(c echo.Context) error {
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
 
@@ -221,8 +218,7 @@ func EditQuestion(c echo.Context) error {
 	case "Number":
 		//数字か，min<=maxになってるか
 		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
@@ -255,8 +251,7 @@ func EditQuestion(c echo.Context) error {
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
 
@@ -283,8 +278,7 @@ func DeleteQuestion(c echo.Context) error {
 	}
 
 	if err := model.DeleteValidations(questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusOK)
