@@ -61,8 +61,7 @@ func GetQuestions(c echo.Context) error {
 			validation, err = model.GetValidations(c, v.ID)
 		}
 		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
 		ret = append(ret,
@@ -149,8 +148,7 @@ func PostQuestion(c echo.Context) error {
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
 		if err := model.InsertValidations(c, lastID,
@@ -246,8 +244,7 @@ func EditQuestion(c echo.Context) error {
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
 		if err := model.UpdateValidations(c, questionID,
@@ -279,8 +276,7 @@ func DeleteQuestion(c echo.Context) error {
 	}
 
 	if err := model.DeleteScaleLabels(questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteValidations(c, questionID); err != nil {

@@ -37,12 +37,10 @@ func PostResponse(c echo.Context) error {
 		case "LinearScale":
 			label, err := model.GetScaleLabels(body.QuestionID)
 			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckScaleLabels(label, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Number":
 			validation, err := model.GetValidations(c, body.QuestionID)
@@ -309,12 +307,10 @@ func EditResponse(c echo.Context) error {
 		case "LinearScale":
 			label, err := model.GetScaleLabels(body.QuestionID)
 			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckScaleLabels(label, body.Response); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusBadRequest)
+				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Number":
 			validation, err := model.GetValidations(c, body.QuestionID)

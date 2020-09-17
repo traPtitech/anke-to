@@ -19,10 +19,11 @@ type ScaleLabels struct {
 // GetScaleLabels 指定されたquestionIDのlabelを取得する
 func GetScaleLabels(questionID int) (ScaleLabels, error) {
 	label := ScaleLabels{}
-	if err := gormDB.
+	err := gormDB.
 		Where("question_id = ?", questionID).
 		First(&label).
-		Error; gorm.IsRecordNotFoundError(err) {
+		Error
+	if gorm.IsRecordNotFoundError(err) {
 		return ScaleLabels{}, nil
 	} else if err != nil {
 		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
@@ -41,7 +42,7 @@ func InsertScaleLabels(lastID int, label ScaleLabels) error {
 
 // UpdateScaleLabels questionIDを指定してlabelを更新する
 func UpdateScaleLabels(questionID int, label ScaleLabels) error {
-	if err := gormDB.
+	err := gormDB.
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
 		Update(map[string]interface{}{
@@ -50,7 +51,8 @@ func UpdateScaleLabels(questionID int, label ScaleLabels) error {
 			"scale_label_left":  label.ScaleLabelLeft,
 			"scale_min":         label.ScaleMin,
 			"scale_max":         label.ScaleMax}).
-		Error; err != nil {
+		Error
+	if err != nil {
 		return fmt.Errorf("failed to update the scale labell (questionID: %d): %w", questionID, err)
 	}
 	return nil
@@ -58,10 +60,11 @@ func UpdateScaleLabels(questionID int, label ScaleLabels) error {
 
 // DeleteScaleLabels questionIDを指定してlabelを削除する
 func DeleteScaleLabels(questionID int) error {
-	if err := gormDB.
+	err := gormDB.
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{}).
-		Error; err != nil {
+		Error
+	if err != nil {
 		return fmt.Errorf("failed to delete the scale labell (questionID: %d): %w", questionID, err)
 	}
 	return nil
