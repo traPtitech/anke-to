@@ -312,11 +312,10 @@ func EditResponse(c echo.Context) error {
 			}
 		case "Text":
 			if err := model.CheckTextValidation(validation, body.Response); err != nil {
-				c.Logger().Error(err)
 				if errors.Is(err, &model.TextMatchError{}) {
-					return echo.NewHTTPError(http.StatusBadRequest)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	}
