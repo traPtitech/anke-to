@@ -60,9 +60,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: '#/components/schemas/Questionnaire'
-                - $ref: '#/components/schemas/QuestionnaireUser'
+                $ref: '#/components/schemas/NewQuestionnaireResponse'
   '/questionnaires/{questionnaireID}':
     get:
       operationId: getQuestionnaire
@@ -429,6 +427,9 @@ components:
           $ref: '#/components/schemas/Users'
         administrators:
           $ref: '#/components/schemas/Users'
+    NewQuestionnaireResponse:
+      allOf:
+      - $ref: '#/components/schemas/QuestionnaireUser'
     Questionnaire:
       type: object
       properties:
@@ -467,7 +468,6 @@ components:
                 自分がターゲットになっているかどうか
     QuestionnaireByID:
       allOf:
-        - $ref: '#/components/schemas/Questionnaire'
         - $ref: '#/components/schemas/QuestionnaireUser'
         - type: object
           properties:
@@ -483,7 +483,6 @@ components:
             format: date-time
     QuestionnaireMyAdministrates:
         allOf:
-        - $ref: '#/components/schemas/Questionnaire'
         - $ref: '#/components/schemas/QuestionnaireUser'
         - type: object
         properties:
@@ -495,128 +494,14 @@ components:
           respondents:
             $ref: '#/components/schemas/Users'
     QuestionnaireUser:
-      type: object
+      allOf:
+      - $ref: '#/components/schemas/Questionnaire'
+      - type: object
       properties:
         targets:
           $ref: '#/components/schemas/Users'
         administrators:
           $ref: '#/components/schemas/Users'
-    Question:
-      type: object
-      properties:
-        questionID:
-          type: integer
-          example: 1
-        questionnaireID:
-          type: integer
-          example: 1
-        page_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの何ページ目の質問か
-        question_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの質問のうち、何問目か
-        question_type:
-          type: string
-          example: Text
-          description: |
-            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
-        body:
-          type: string
-          example: 質問文
-        is_required:
-          type: boolean
-          example: true
-          description: |
-            回答必須かどうか
-        options:
-          type: array
-          items:
-            type: string
-            example: 選択肢1
-        scale_label_right:
-          type: string
-          example: そう思わない
-        scale_label_left:
-          type: string
-          example: そう思う
-        scale_min:
-          type: integer
-          example: 1
-        scale_max:
-          type: integer
-          example: 5
-        regex_pattern:
-          type: string
-          example: ''
-        min_bound:
-          type: string
-          example: ''
-        max_bound:
-          type: string
-          example: ''
-    QuestionDetails:
-      type: object
-      properties:
-        questionID:
-          type: integer
-          example: 1
-        page_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの何ページ目の質問か
-        question_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの質問のうち、何問目か
-        question_type:
-          type: string
-          example: Text
-          description: |
-            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
-        body:
-          type: string
-          example: 質問文
-        is_required:
-          type: boolean
-          example: true
-          description: |
-            回答必須かどうか
-        created_at:
-          type: string
-          format: date-time
-        options:
-          type: array
-          items:
-            type: string
-            example: 選択肢1
-        scale_label_right:
-          type: string
-          example: そう思わない
-        scale_label_left:
-          type: string
-          example: そう思う
-        scale_min:
-          type: integer
-          example: 1
-        scale_max:
-          type: integer
-          example: 5
-        regex_pattern:
-          type: string
-          example: ''
-        min_bound:
-          type: string
-          example: ''
-        max_bound:
-          type: string
-          example: ''
     NewQuestion:
       type: object
       properties:
@@ -663,6 +548,31 @@ components:
         scale_max:
           type: integer
           example: 5
+        regex_pattern:
+          type: string
+          example: ''
+        min_bound:
+          type: string
+          example: ''
+        max_bound:
+          type: string
+          example: ''
+    Question:
+      allOf:
+      - $ref: '#/components/schemas/NewQuestion'
+      - type: object
+        properties:
+          questionID:
+            type: integer
+            example: 1
+    QuestionDetails:
+      allOf:
+      - $ref: '#/components/schemas/Question'
+      - type: object
+        properties:
+          created_at:
+            type: string
+            format: date-time
     NewResponse:
       type: object
       properties:
