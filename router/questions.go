@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -19,13 +20,12 @@ func GetQuestions(c echo.Context) error {
 		return err
 	}
 
-	allquestions, err := model.GetQuestions(c, questionnaireID)
+	allquestions, err := model.GetQuestions(questionnaireID)
 	if err != nil {
-		return err
-	}
-
-	if len(allquestions) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
+		if errors.Is(err, &model.QuestionNotFoundError{}) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	type questionInfo struct {
@@ -34,7 +34,7 @@ func GetQuestions(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
 		Body            string   `json:"body"`
-		IsRequired     bool     `json:"is_required"`
+		IsRequired      bool     `json:"is_required"`
 		CreatedAt       string   `json:"created_at"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
@@ -71,7 +71,7 @@ func GetQuestions(c echo.Context) error {
 				QuestionNum:     v.QuestionNum,
 				QuestionType:    v.Type,
 				Body:            v.Body,
-				IsRequired:     v.IsRequired,
+				IsRequired:      v.IsRequired,
 				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
 				Options:         options,
 				ScaleLabelRight: scalelabel.ScaleLabelRight,
@@ -127,10 +127,9 @@ func PostQuestion(c echo.Context) error {
 	}
 
 	lastID, err := model.InsertQuestion(
-		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
@@ -225,10 +224,9 @@ func EditQuestion(c echo.Context) error {
 	}
 
 	if err := model.UpdateQuestion(
-		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
+		req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
 		req.IsRequired, questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
@@ -267,8 +265,8 @@ func DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if err := model.DeleteQuestion(c, questionID); err != nil {
-		return err
+	if err := model.DeleteQuestion(questionID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteOptions(c, questionID); err != nil {

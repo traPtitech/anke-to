@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -155,9 +156,12 @@ func GetResponsesByID(c echo.Context) error {
 	}
 
 	// 質問IDと種類を取ってくる
-	questionTypeList, err := model.GetQuestionTypes(c, questionnaireID)
+	questionTypeList, err := model.GetQuestionTypes(questionnaireID)
 	if err != nil {
-		return err
+		if errors.Is(err, &model.QuestionNotFoundError{}) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 返す構造体
@@ -249,9 +253,12 @@ func GetResponse(c echo.Context) error {
 		[]model.ResponseBody{},
 	}
 
-	questionTypeList, err := model.GetQuestionTypes(c, responses.QuestionnaireID)
+	questionTypeList, err := model.GetQuestionTypes(responses.QuestionnaireID)
 	if err != nil {
-		return err
+		if errors.Is(err, &model.QuestionNotFoundError{}) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	bodyList := []model.ResponseBody{}
