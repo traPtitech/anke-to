@@ -42,7 +42,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireForList'
-              examples: {}
     post:
       operationId: postQuestionnaire
       tags:
@@ -362,6 +361,7 @@ components:
     sortInQuery:
       name: sort
       in: query
+      required: true
       description: |
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
@@ -371,12 +371,14 @@ components:
     pageInQuery:
       name: page
       in: query
+      required: true
       description: 何ページ目か (未定義の場合は1ページ目)
       schema:
         type: integer
     nontargetedInQuery:
       name: nontargeted
       in: query
+      required: true
       description: |
         自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
       schema:
@@ -421,12 +423,23 @@ components:
         res_shared_to:
           type: string
           example: public
+          enum:
+            - administrators
+            - respondents
+            - public
           description: |
             アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
         targets:
           $ref: '#/components/schemas/Users'
         administrators:
           $ref: '#/components/schemas/Users'
+      required:
+        - title
+        - description
+        - res_time_limit
+        - res_shared_to
+        - targets
+        - administrators
     NewQuestionnaireResponse:
       allOf:
       - $ref: '#/components/schemas/QuestionnaireUser'
@@ -454,8 +467,21 @@ components:
         res_shared_to:
           type: string
           example: public
+          enum:
+            - administrators
+            - respondents
+            - public
           description: |
             アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+      required:
+        - questionnaireID
+        - title
+        - description
+        - res_time_limit
+        - created_at
+        - modified_at
+        - res_shared_to
+        - targets
     QuestionnaireForList:
       allOf:
         - $ref: '#/components/schemas/Questionnaire'
@@ -466,6 +492,8 @@ components:
               example: true
               description: |
                 自分がターゲットになっているかどうか
+          required:
+            - is_targeted
     QuestionnaireByID:
       allOf:
         - $ref: '#/components/schemas/QuestionnaireUser'
@@ -473,6 +501,8 @@ components:
           properties:
             respondents:
               $ref: '#/components/schemas/Users'
+          required:
+            - respondents
     QuestionnaireMyTargeted:
       allOf:
       - $ref: '#/components/schemas/Questionnaire'
@@ -481,27 +511,35 @@ components:
           responded_at:
             type: string
             format: date-time
+        required:
+          - responded_at
     QuestionnaireMyAdministrates:
         allOf:
         - $ref: '#/components/schemas/QuestionnaireUser'
         - type: object
-        properties:
-          all_responded:
-            type: boolean
-            example: true
-            description: |
-              回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
-          respondents:
-            $ref: '#/components/schemas/Users'
+          properties:
+            all_responded:
+              type: boolean
+              example: true
+              description: |
+                回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
+            respondents:
+              $ref: '#/components/schemas/Users'
+          required:
+            - all_responded
+            - respondents
     QuestionnaireUser:
       allOf:
       - $ref: '#/components/schemas/Questionnaire'
       - type: object
-      properties:
-        targets:
-          $ref: '#/components/schemas/Users'
-        administrators:
-          $ref: '#/components/schemas/Users'
+        properties:
+          targets:
+            $ref: '#/components/schemas/Users'
+          administrators:
+            $ref: '#/components/schemas/Users'
+        required:
+          - targets
+          - administrators
     NewQuestion:
       type: object
       properties:
@@ -521,8 +559,17 @@ components:
         question_type:
           type: string
           example: Text
+          enum:
+            - Text
+            - TextArea
+            - MultipleChoice
+            - Checkbox
+            - Dropdown
+            - LinearScale
+            - Date
+            - Time
           description: |
-            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
         body:
           type: string
           example: 質問文
@@ -557,6 +604,21 @@ components:
         max_bound:
           type: string
           example: ''
+      required:
+        - questionnaireID
+        - page_num
+        - question_num
+        - question_type
+        - body
+        - is_required
+        - options
+        - scale_label_right
+        - scale_label_left
+        - scale_min
+        - scale_max
+        - regex_pattern
+        - min_bound
+        - max_bound
     Question:
       allOf:
       - $ref: '#/components/schemas/NewQuestion'
@@ -565,6 +627,8 @@ components:
           questionID:
             type: integer
             example: 1
+        required:
+          - questionID
     QuestionDetails:
       allOf:
       - $ref: '#/components/schemas/Question'
@@ -573,6 +637,8 @@ components:
           created_at:
             type: string
             format: date-time
+        required:
+          - created_at
     NewResponse:
       type: object
       properties:
@@ -583,6 +649,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ResponseBody'
+      required:
+        - questionnaireID
+        - body
     Response:
       allOf:
         - $ref: '#/components/schemas/NewResponse'
@@ -594,6 +663,9 @@ components:
             modified_at:
               type: string
               format: date-time
+          required:
+            - submitted_at
+            - modified_at
     ResponseDetails:
       allOf:
         - $ref: '#/components/schemas/Response'
@@ -602,6 +674,8 @@ components:
             responseID:
               type: integer
               example: 1
+          required:
+            - responseID
     ResponseSummary:
       type: object
       properties:
@@ -622,7 +696,14 @@ components:
           format: date-time
         modified_at:
           type: string
-          format: date-time
+          format: date-tie
+      required:
+        - responseID
+        - questionnaireID
+        - questionnaire_title
+        - res_time_limit
+        - submitted_at
+        - modified_at
     ResponseBody:
       type: object
       properties:
@@ -632,6 +713,15 @@ components:
         question_type:
           type: string
           example: Text
+          enum:
+            - Text
+            - TextArea
+            - MultipleChoice
+            - Checkbox
+            - Dropdown
+            - LinearScale
+            - Date
+            - Time
         response:
           type: string
           example: リマインダーBOTを作った話
@@ -640,14 +730,21 @@ components:
           items:
             type: string
             example: 選択肢1
+      required:
+        - questionID
+        - question_type
+        - response
+        - option_response
     ResponseResult:
       allOf:
       - $ref: '#/components/schemas/Response'
       - type: object
-      properties:
-        traqID:
-          type: string
-          example: lolico
+        properties:
+          traqID:
+            type: string
+            example: lolico
+        required:
+          - traqID
     Users:
       type: array
       items:
@@ -671,12 +768,20 @@ components:
         twitterId:
           type: string
           example: trapyojo
+      required:
+        - userId
+        - traqID
+        - displayName
+        - iconFileId
+        - twitterId
     Me:
       type: object
       properties:
         traqID:
           type: string
           example: lolico
+      required:
+        - traqID
     Group:
       type: object
       properties:
@@ -702,6 +807,14 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+        - groupId
+        - name
+        - description
+        - adminUser
+        - members
+        - createdAt
+        - updatedAt
   securitySchemes:
     application:
       type: oauth2
