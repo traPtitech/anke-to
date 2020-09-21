@@ -579,9 +579,6 @@ components:
         questionnaireID:
           type: integer
           example: 1
-        submitted_at:
-          type: string
-          format: date-time
         body:
           type: array
           items:
@@ -591,6 +588,9 @@ components:
         - $ref: '#/components/schemas/NewResponse'
         - type: object
           properties:
+            submitted_at:
+              type: string
+              format: date-time
             modified_at:
               type: string
               format: date-time
