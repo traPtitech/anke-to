@@ -15,11 +15,11 @@ import (
 
 //Response responseテーブルの構造体
 type Response struct {
-	ResponseID int `gorm:"type:int(11);NOT NULL;"`
-	QuestionID int `gorm:"type:int(11);NOT NULL;"`
-	Body null.String `gorm:"type:text;"`
-	ModifiedAt time.Time `gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt null.Time `gorm:"type:timestamp;"`
+	ResponseID int         `gorm:"type:int(11);NOT NULL;"`
+	QuestionID int         `gorm:"type:int(11);NOT NULL;"`
+	Body       null.String `gorm:"type:text;"`
+	ModifiedAt time.Time   `gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	DeletedAt  null.Time   `gorm:"type:timestamp;"`
 }
 
 //TableName テーブル名が単数形なのでその対応
@@ -36,7 +36,7 @@ type ResponseBody struct {
 
 type Responses struct {
 	ID          int            `json:"questionnaireID"`
-	SubmittedAt null.Time         `json:"submitted_at"`
+	SubmittedAt null.Time      `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
 }
 
@@ -64,7 +64,7 @@ func InsertResponse(c echo.Context, responseID int, req Responses, body Response
 	err := gormDB.Create(Response{
 		ResponseID: responseID,
 		QuestionID: body.QuestionID,
-		Body: null.NewString(data, true),
+		Body:       null.NewString(data, true),
 	}).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to insert response: %w", err))
