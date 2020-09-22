@@ -13,7 +13,6 @@ type Administrator struct {
 
 func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 	userTraqids := []string{}
-	administrators := []Administrator{}
 	err := gormDB.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
 	if err != nil {
 		c.Logger().Error(err)
@@ -50,7 +49,6 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	questionnaireIDs := []int{}
-	administrators := []Administrator{}
 	err := gormDB.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
 	if err != nil {
 		c.Logger().Error(err)

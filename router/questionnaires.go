@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -57,12 +58,12 @@ func GetQuestionnaire(c echo.Context) error {
 func PostQuestionnaire(c echo.Context) error {
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
 	}{}
 
 	// JSONを構造体につける
@@ -85,8 +86,8 @@ func PostQuestionnaire(c echo.Context) error {
 	}
 
 	time_limit := "なし"
-	if req.ResTimeLimit != "NULL" {
-		time_limit = req.ResTimeLimit
+	if req.ResTimeLimit.Valid {
+		time_limit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
 	}
 
 	targets_mention_text := "なし"
@@ -129,12 +130,12 @@ func EditQuestionnaire(c echo.Context) error {
 	}
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -260,7 +261,9 @@ func GetMyQuestionnaire(c echo.Context) error {
 
 // GetTargetedQuestionnaire GET /users/me/targeted
 func GetTargetedQuestionnaire(c echo.Context) error {
-	ret, err := model.GetTargettedQuestionnaires(c)
+	userID := model.GetUserID(c)
+
+	ret, err := model.GetTargettedQuestionnaires(c, userID, "")
 	if err != nil {
 		return err
 	}
@@ -271,7 +274,7 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 // GetTargetedQuestionnaire GET /users/:traQID/targeted
 func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
-	ret, err := model.GetTargettedQuestionnairesBytraQID(c, traQID)
+	ret, err := model.GetTargettedQuestionnaires(c, traQID, "unanswered")
 	if err != nil {
 		return err
 	}

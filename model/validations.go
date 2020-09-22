@@ -6,85 +6,86 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
 
+//Validations validationsテーブルの構造体
 type Validations struct {
-	ID           int    `json:"questionID" db:"question_id"`
-	RegexPattern string `json:"regex_pattern" db:"regex_pattern"`
-	MinBound     string `json:"min_bound"  db:"min_bound"`
-	MaxBound     string `json:"max_bound"  db:"max_bound"`
+	ID           int    `json:"questionID"    gorm:"column:question_id"`
+	RegexPattern string `json:"regex_pattern" gorm:"column:regex_pattern"`
+	MinBound     string `json:"min_bound"     gorm:"column:min_bound"`
+	MaxBound     string `json:"max_bound"     gorm:"column:max_bound"`
 }
 
+// GetValidations 指定されたquestionIDのvalidationを取得する
 func GetValidations(c echo.Context, questionID int) (Validations, error) {
 	validation := Validations{}
-	if err := db.Get(&validation, "SELECT * FROM validations WHERE question_id = ?",
-		questionID); err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).First(&validation).Error; gorm.IsRecordNotFoundError(err) {
+		return Validations{}, nil
+	} else if err != nil {
 		c.Logger().Error(err)
 		return Validations{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return validation, nil
 }
 
+// InsertValidations IDを指定してvalidationsを挿入する
 func InsertValidations(c echo.Context, lastID int, validation Validations) error {
-	if _, err := db.Exec(
-		"INSERT INTO validations (question_id, regex_pattern, min_bound, max_bound) VALUES (?, ?, ?, ?)",
-		lastID, validation.RegexPattern, validation.MinBound, validation.MaxBound); err != nil {
+	validation.ID = lastID
+	if err := gormDB.Create(&validation).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
 }
 
+// UpdateValidations questionIDを指定してvalidationを更新する
 func UpdateValidations(c echo.Context, questionID int, validation Validations) error {
-	if _, err := db.Exec(
-		`INSERT INTO validations (question_id, regex_pattern, min_bound, max_bound) VALUES (?, ?, ?, ?)
-		ON DUPLICATE KEY UPDATE regex_pattern = ?, min_bound = ?, max_bound = ?`,
-		questionID,
-		validation.RegexPattern, validation.MinBound, validation.MaxBound,
-		validation.RegexPattern, validation.MinBound, validation.MaxBound); err != nil {
+	if err := gormDB.Model(&Validations{}).Update(&validation).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
 }
 
+// DeleteValidations questionIDを指定してvalidationを削除する
 func DeleteValidations(c echo.Context, questionID int) error {
-	if _, err := db.Exec(
-		"DELETE FROM validations WHERE question_id= ?",
-		questionID); err != nil {
+	if err := gormDB.Where("question_id = ?", questionID).Delete(&Validations{}).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
 }
 
+// CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
 func CheckNumberValid(MinBound, MaxBound string) error {
-	var min_bound, max_bound int
+	var minBoundNum, maxBoundNum int
 	if MinBound != "" {
 		min, err := strconv.Atoi(MinBound)
-		min_bound = min
+		minBoundNum = min
 		if err != nil {
 			return err
 		}
 	}
 	if MaxBound != "" {
 		max, err := strconv.Atoi(MaxBound)
-		max_bound = max
+		maxBoundNum = max
 		if err != nil {
 			return err
 		}
 	}
 
 	if MinBound != "" && MaxBound != "" {
-		if min_bound > max_bound {
-			return fmt.Errorf("failed: min_bound is greater than max_bound")
+		if minBoundNum > maxBoundNum {
+			return fmt.Errorf("failed: minBoundNum is greater than maxBoundNum")
 		}
 	}
 
 	return nil
 }
 
+// CheckNumberValidation BodyがMinBound,MaxBoundを満たしているか
 func CheckNumberValidation(c echo.Context, validation Validations, Body string) error {
 	if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
 		c.Logger().Error(err)
@@ -100,16 +101,16 @@ func CheckNumberValidation(c echo.Context, validation Validations, Body string) 
 	}
 
 	if validation.MinBound != "" {
-		min_bound, _ := strconv.Atoi(validation.MinBound)
-		if min_bound > number {
+		minBoundNum, _ := strconv.Atoi(validation.MinBound)
+		if minBoundNum > number {
 			err := fmt.Errorf("failed: value too small")
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	}
 	if validation.MaxBound != "" {
-		max_bound, _ := strconv.Atoi(validation.MaxBound)
-		if max_bound < number {
+		maxBoundNum, _ := strconv.Atoi(validation.MaxBound)
+		if maxBoundNum < number {
 			err := fmt.Errorf("failed: value too large")
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusBadRequest)
@@ -119,6 +120,7 @@ func CheckNumberValidation(c echo.Context, validation Validations, Body string) 
 	return nil
 }
 
+// CheckTextValidation BodyがRegexPatternにマッチしているか
 func CheckTextValidation(c echo.Context, validation Validations, Response string) error {
 	if _, err := regexp.Compile(validation.RegexPattern); err != nil {
 		c.Logger().Error(err)
