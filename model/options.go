@@ -57,7 +57,7 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 }
 
 func DeleteOptions(c echo.Context, questionID int) error {
-	err := gormDB.Where("question_id", questionID).Delete(Option{}).Error
+	err := gormDB.Where("question_id = ?", questionID).Delete(Option{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
