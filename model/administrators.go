@@ -14,7 +14,7 @@ type Administrator struct {
 func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 	userTraqids := []string{}
 	administrators := []Administrator{}
-	err := gormDB.Where("questionnaire_id = ?", questionnaireID).Find(&administrators).Pluck("user_traqid", &userTraqids).Error
+	err := gormDB.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
