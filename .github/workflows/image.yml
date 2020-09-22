@@ -4,7 +4,6 @@ on:
   push:
     branches: 
       - master
-  pull_request:
 
 env:
   IMAGE_NAME: anke-to
@@ -21,4 +20,4 @@ jobs:
         run: docker build -t docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG}
-        
+
