@@ -51,7 +51,7 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	questionnaireIDs := []int{}
 	administrators := []Administrator{}
-	err := gormDB.Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT").Find(&administrators).Pluck("questionnaire_id", &questionnaireIDs).Error
+	err := gormDB.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
