@@ -155,7 +155,7 @@ func GetResponsesByID(c echo.Context) error {
 	}
 
 	// 質問IDと種類を取ってくる
-	questionTypeList, err := model.GetQuestionsType(c, questionnaireID)
+	questionTypeList, err := model.GetQuestionTypes(c, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func GetResponse(c echo.Context) error {
 		[]model.ResponseBody{},
 	}
 
-	questionTypeList, err := model.GetQuestionsType(c, responses.QuestionnaireID)
+	questionTypeList, err := model.GetQuestionTypes(c, responses.QuestionnaireID)
 	if err != nil {
 		return err
 	}

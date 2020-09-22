@@ -34,7 +34,7 @@ func GetQuestions(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
 		Body            string   `json:"body"`
-		IsRequrired     bool     `json:"is_required"`
+		IsRequired     bool     `json:"is_required"`
 		CreatedAt       string   `json:"created_at"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
@@ -71,7 +71,7 @@ func GetQuestions(c echo.Context) error {
 				QuestionNum:     v.QuestionNum,
 				QuestionType:    v.Type,
 				Body:            v.Body,
-				IsRequrired:     v.IsRequrired,
+				IsRequired:     v.IsRequired,
 				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
 				Options:         options,
 				ScaleLabelRight: scalelabel.ScaleLabelRight,
@@ -276,6 +276,10 @@ func DeleteQuestion(c echo.Context) error {
 	}
 
 	if err := model.DeleteScaleLabels(c, questionID); err != nil {
+		return err
+	}
+
+	if err := model.DeleteValidations(c, questionID); err != nil {
 		return err
 	}
 
