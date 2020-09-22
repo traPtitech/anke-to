@@ -47,15 +47,6 @@ type ResponseInfo struct {
 	SubmittedAt     null.Time `db:"submitted_at"`
 }
 
-type MyResponse struct {
-	ResponseID      int    `json:"responseID"`
-	QuestionnaireID int    `json:"questionnaireID"`
-	Title           string `json:"questionnaire_title"`
-	ResTimeLimit    string `json:"res_time_limit"`
-	SubmittedAt     string `json:"submitted_at"`
-	ModifiedAt      string `json:"modified_at"`
-}
-
 type UserResponse struct {
 	ResponseID  int       `db:"response_id"`
 	UserID      string    `db:"user_traqid"`
@@ -80,56 +71,6 @@ func InsertResponse(c echo.Context, responseID int, req Responses, body Response
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
-}
-
-func GetMyResponses(c echo.Context) ([]ResponseInfo, error) {
-	responsesinfo := []ResponseInfo{}
-
-	if err := db.Select(&responsesinfo,
-		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL ORDER BY modified_at DESC`,
-		GetUserID(c)); err != nil {
-		c.Logger().Error(err)
-		return []ResponseInfo{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return responsesinfo, nil
-}
-
-func GetMyResponsesByID(c echo.Context, questionnaireID int) ([]ResponseInfo, error) {
-	responsesinfo := []ResponseInfo{}
-
-	if err := db.Select(&responsesinfo,
-		`SELECT questionnaire_id, response_id, modified_at, submitted_at from respondents
-		WHERE user_traqid = ? AND deleted_at IS NULL AND questionnaire_id = ? ORDER BY modified_at DESC`,
-		GetUserID(c), questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return []ResponseInfo{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return responsesinfo, nil
-}
-
-func GetResponsesInfo(c echo.Context, responsesinfo []ResponseInfo) ([]MyResponse, error) {
-	myresponses := []MyResponse{}
-
-	for _, response := range responsesinfo {
-		title, resTimeLimit, err := GetTitleAndLimit(c, response.QuestionnaireID)
-		if title == "" {
-			continue
-		}
-		if err != nil {
-			return nil, err
-		}
-		myresponses = append(myresponses,
-			MyResponse{
-				ResponseID:      response.ResponseID,
-				QuestionnaireID: response.QuestionnaireID,
-				Title:           title,
-				ResTimeLimit:    resTimeLimit,
-				SubmittedAt:     NullTimeToString(response.SubmittedAt),
-				ModifiedAt:      response.ModifiedAt.Format(time.RFC3339),
-			})
-	}
-	return myresponses, nil
 }
 
 func GetResponseBody(c echo.Context, responseID int, questionID int, questionType string) (ResponseBody, error) {

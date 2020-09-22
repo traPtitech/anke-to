@@ -79,17 +79,12 @@ func PostResponse(c echo.Context) error {
 
 // GetMyResponses GET /users/me/responses
 func GetMyResponses(c echo.Context) error {
-	responsesinfo, err := model.GetMyResponses(c)
+	myResponses, err := model.GetRespondentDetails(c)
 	if err != nil {
 		return err
 	}
 
-	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, myresponses)
+	return c.JSON(http.StatusOK, myResponses)
 }
 
 // GetMyResponsesByID GET /users/me/responses/:questionnaireID
@@ -100,12 +95,7 @@ func GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	responsesinfo, err := model.GetMyResponsesByID(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	myresponses, err := model.GetResponsesInfo(c, responsesinfo)
+	myresponses, err := model.GetRespondentDetails(c, questionnaireID)
 	if err != nil {
 		return err
 	}
