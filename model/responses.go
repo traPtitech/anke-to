@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -69,10 +70,13 @@ type ResponseID struct {
 }
 
 func InsertResponse(c echo.Context, responseID int, req Responses, body ResponseBody, data string) error {
-	if _, err := db.Exec(
-		`INSERT INTO response (response_id, question_id, body, modified_at) VALUES (?, ?, ?, ?)`,
-		responseID, body.QuestionID, data, time.Now()); err != nil {
-		c.Logger().Error(err)
+	err := gormDB.Create(Response{
+		ResponseID: responseID,
+		QuestionID: body.QuestionID,
+		Body: null.NewString(data, true),
+	}).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to insert response: %w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
