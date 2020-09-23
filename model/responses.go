@@ -26,8 +26,8 @@ func (*Response) TableName() string {
 }
 
 type ResponseBody struct {
-	Question `gorm:"embedded"`
-	Body null.String
+	Question       `gorm:"embedded"`
+	Body           null.String
 	OptionResponse []string `json:"option_response"`
 }
 
@@ -164,10 +164,10 @@ func GetResponseBodyList(c echo.Context, questionTypeList []QuestionIDType, resp
 		bodyList = append(bodyList,
 			ResponseBody{
 				Question: Question{
-					ID: qType.ID,
+					ID:   qType.ID,
 					Type: qType.Type,
 				},
-				Body:       null.NewString(response, true),
+				Body:           null.NewString(response, true),
 				OptionResponse: optionResponse,
 			})
 	}

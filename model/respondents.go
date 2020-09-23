@@ -47,7 +47,7 @@ type RespondentInfo struct {
 
 type RespondentDetail struct {
 	Respondents `gorm:"embedded"`
-	Responses []ResponseBody `json:"body"`
+	Responses   []ResponseBody `json:"body"`
 }
 
 func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
@@ -266,7 +266,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 	responseBodyMap := map[int][]string{}
 	for rows.Next() {
 		res := struct {
-			Respondents `gorm:"embedded"`
+			Respondents  `gorm:"embedded"`
 			ResponseBody `gorm:"embedded"`
 		}{}
 		err := gormDB.ScanRows(rows, &res)
@@ -296,7 +296,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 			}
 			response.OptionResponse = responseBody
 		default:
-			if !ok || len(responseBody)==0 {
+			if !ok || len(responseBody) == 0 {
 				response.Body = null.NewString("", false)
 			}
 			response.Body = null.NewString(responseBody[0], true)
@@ -327,7 +327,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	responseBodyMap := map[int][]ResponseBody{}
 	for rows.Next() {
 		res := struct {
-			Respondents `gorm:"embedded"`
+			Respondents  `gorm:"embedded"`
 			ResponseBody `gorm:"embedded"`
 		}{}
 		err := gormDB.ScanRows(rows, &res)
@@ -335,7 +335,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}
 
-		if _, ok := responseBodyMap[res.ResponseID];!ok {
+		if _, ok := responseBodyMap[res.ResponseID]; !ok {
 			respondentDetails = append(respondentDetails, RespondentDetail{
 				Respondents: res.Respondents,
 			})
@@ -350,8 +350,8 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 		responseBodyList := []ResponseBody{}
 		bodyMap := map[int][]string{}
-		for _,v := range responseBodies {
-			if _,ok := bodyMap[v.Question.ID];!ok {
+		for _, v := range responseBodies {
+			if _, ok := bodyMap[v.Question.ID]; !ok {
 				responseBodyList = append(responseBodyList, ResponseBody{
 					Question: v.Question,
 				})
@@ -372,7 +372,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 				}
 				responseBody.OptionResponse = body
 			default:
-				if !ok || len(body)==0 {
+				if !ok || len(body) == 0 {
 					responseBody.Body = null.NewString("", false)
 				}
 				responseBody.Body = null.NewString(body[0], true)
