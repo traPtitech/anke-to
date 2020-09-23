@@ -1,8 +1,8 @@
 package router
 
 import (
+	"errors"
 	"net/http"
-	"sort"
 	"strconv"
 	"time"
 
@@ -33,17 +33,17 @@ func PostResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
+		validation, err := model.GetValidations(c, body.Question.ID)
 		if err != nil {
 			return err
 		}
-		switch body.QuestionType {
+		switch body.Question.Type {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+			if err := model.CheckNumberValidation(c, validation, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+			if err := model.CheckTextValidation(c, validation, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}
@@ -55,15 +55,15 @@ func PostResponse(c echo.Context) error {
 	}
 
 	for _, body := range req.Body {
-		switch body.QuestionType {
+		switch body.Question.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, req, body, option); err != nil {
+				if err := model.InsertResponse(c, responseID, body.Question.ID, option); err != nil {
 					return err
 				}
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, req, body, body.Response); err != nil {
+			if err := model.InsertResponse(c, responseID, body.Question.ID, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}
@@ -79,7 +79,8 @@ func PostResponse(c echo.Context) error {
 
 // GetMyResponses GET /users/me/responses
 func GetMyResponses(c echo.Context) error {
-	myResponses, err := model.GetRespondentDetails(c)
+	userID := model.GetUserID(c)
+	myResponses, err := model.GetRespondentInfos(c, userID)
 	if err != nil {
 		return err
 	}
@@ -89,13 +90,14 @@ func GetMyResponses(c echo.Context) error {
 
 // GetMyResponsesByID GET /users/me/responses/:questionnaireID
 func GetMyResponsesByID(c echo.Context) error {
+	userID := model.GetUserID(c)
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := model.GetRespondentDetails(c, questionnaireID)
+	myresponses, err := model.GetRespondentInfos(c, userID, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -105,114 +107,24 @@ func GetMyResponsesByID(c echo.Context) error {
 
 // GetResponsesByID GET /results/:questionnaireID
 func GetResponsesByID(c echo.Context) error {
+	sort := c.QueryParam("sort")
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	resSharedTo, err := model.GetResShared(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
 	// アンケートの回答を確認する権限が無ければエラーを返す
-	if err := model.CheckResponseConfirmable(c, resSharedTo, questionnaireID); err != nil {
+	if err := checkResponseConfirmable(c, questionnaireID); err != nil {
 		return err
 	}
 
-	sortQuery := c.QueryParam("sort")
-	// sortされた回答者の情報
-	respondents, sortNum, err := model.GetSortedRespondents(c, questionnaireID, sortQuery)
+	respondentDetails, err := model.GetRespondentDetails(c, questionnaireID, sort)
 	if err != nil {
 		return err
 	}
 
-	// 必要な回答を一気に持ってくる
-	responses, err := model.GetResponsesByID(questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	// 各回答者のアンケートIDと回答
-	resMap := map[int][]model.QIDandResponse{}
-	for _, resp := range responses {
-		resMap[resp.ResponseID] = append(resMap[resp.ResponseID],
-			model.QIDandResponse{
-				QuestionID: resp.QuestionID,
-				Response:   resp.Body,
-			})
-	}
-
-	// 質問IDと種類を取ってくる
-	questionTypeList, err := model.GetQuestionTypes(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	// 返す構造体
-	type ReturnInfo struct {
-		ResponseID  int                  `json:"responseID"`
-		UserID      string               `json:"traqID"`
-		SubmittedAt string               `json:"submitted_at"`
-		ModifiedAt  string               `json:"modified_at"`
-		Body        []model.ResponseBody `json:"response_body"`
-	}
-	returnInfo := []ReturnInfo{}
-
-	for _, respondent := range respondents {
-		bodyList := model.GetResponseBodyList(c, questionTypeList, resMap[respondent.ResponseID])
-		// 回答の配列に追加
-		returnInfo = append(returnInfo,
-			ReturnInfo{
-				ResponseID:  respondent.ResponseID,
-				UserID:      respondent.UserID,
-				SubmittedAt: model.NullTimeToString(respondent.SubmittedAt),
-				ModifiedAt:  respondent.ModifiedAt.Format(time.RFC3339),
-				Body:        bodyList,
-			})
-	}
-
-	// 昇順ソート
-	if sortNum > 0 {
-		sort.Slice(returnInfo, func(i, j int) bool {
-			bodyI := returnInfo[i].Body[sortNum-1]
-			bodyJ := returnInfo[j].Body[sortNum-1]
-			if bodyI.QuestionType == "Number" {
-				numi, err := strconv.Atoi(bodyI.Response)
-				if err != nil {
-					return true
-				}
-				numj, err := strconv.Atoi(bodyJ.Response)
-				if err != nil {
-					return true
-				}
-				return numi < numj
-			}
-			return bodyI.Response < bodyJ.Response
-		})
-	}
-	// 降順ソート
-	if sortNum < 0 {
-		sort.Slice(returnInfo, func(i, j int) bool {
-			bodyI := returnInfo[i].Body[-sortNum-1]
-			bodyJ := returnInfo[j].Body[-sortNum-1]
-			if bodyI.QuestionType == "Number" {
-				numi, err := strconv.Atoi(bodyI.Response)
-				if err != nil {
-					return true
-				}
-				numj, err := strconv.Atoi(bodyJ.Response)
-				if err != nil {
-					return true
-				}
-				return numi > numj
-			}
-			return bodyI.Response > bodyJ.Response
-		})
-	}
-
-	return c.JSON(http.StatusOK, returnInfo)
+	return c.JSON(http.StatusOK, respondentDetails)
 }
 
 // GetResponse GET /responses
@@ -222,38 +134,12 @@ func GetResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	respondentInfo, err := model.GetRespondentByID(c, responseID)
+	respondentDetail, err := model.GetRespondentDetail(c, responseID)
 	if err != nil {
 		return nil
 	}
 
-	responses := struct {
-		QuestionnaireID int                  `json:"questionnaireID"`
-		SubmittedAt     string               `json:"submitted_at"`
-		ModifiedAt      string               `json:"modified_at"`
-		Body            []model.ResponseBody `json:"body"`
-	}{
-		respondentInfo.QuestionnaireID,
-		model.NullTimeToString(respondentInfo.SubmittedAt),
-		model.NullTimeToString(respondentInfo.ModifiedAt),
-		[]model.ResponseBody{},
-	}
-
-	questionTypeList, err := model.GetQuestionTypes(c, responses.QuestionnaireID)
-	if err != nil {
-		return err
-	}
-
-	bodyList := []model.ResponseBody{}
-	for _, questionType := range questionTypeList {
-		body, err := model.GetResponseBody(c, responseID, questionType.ID, questionType.Type)
-		if err != nil {
-			return err
-		}
-		bodyList = append(bodyList, body)
-	}
-	responses.Body = bodyList
-	return c.JSON(http.StatusOK, responses)
+	return c.JSON(http.StatusOK, respondentDetail)
 }
 
 // EditResponse PATCH /responses/:id
@@ -281,23 +167,23 @@ func EditResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.QuestionID)
+		validation, err := model.GetValidations(c, body.Question.ID)
 		if err != nil {
 			return err
 		}
-		switch body.QuestionType {
+		switch body.Question.Type {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Response); err != nil {
+			if err := model.CheckNumberValidation(c, validation, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Response); err != nil {
+			if err := model.CheckTextValidation(c, validation, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := model.UpdateRespondents(c, req.ID, responseID, req.SubmittedAt); err != nil {
+	if err := model.UpdateRespondents(c, req.ID, responseID); err != nil {
 		return err
 	}
 
@@ -307,15 +193,15 @@ func EditResponse(c echo.Context) error {
 	}
 
 	for _, body := range req.Body {
-		switch body.QuestionType {
+		switch body.Question.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, req, body, option); err != nil {
+				if err := model.InsertResponse(c, responseID, body.Question.ID, option); err != nil {
 					return err
 				}
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, req, body, body.Response); err != nil {
+			if err := model.InsertResponse(c, responseID, body.Question.ID, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}
@@ -331,9 +217,43 @@ func DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if err := model.DeleteMyResponse(c, responseID); err != nil {
+	if err := model.DeleteRespondent(c, responseID); err != nil {
 		return err
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// アンケートの回答を確認できるか
+func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
+	resSharedTo, err := model.GetResShared(c, questionnaireID)
+	if err != nil {
+		return err
+	}
+
+	switch resSharedTo {
+	case "administrators":
+		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	case "respondents":
+		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		if err != nil {
+			return err
+		}
+		if !AmAdmin {
+			isRespondent, err := model.IsRespondent(c, questionnaireID)
+			if err != nil {
+				return err
+			}
+			if !isRespondent {
+				return echo.NewHTTPError(http.StatusUnauthorized, errors.New("only admins and respondents can see this responses"))
+			}
+		}
+	}
+	return nil
 }
