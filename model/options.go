@@ -6,21 +6,32 @@ import (
 	"github.com/labstack/echo"
 )
 
+type Option struct {
+	Id         int
+	QuestionId int
+	OptionNum  int
+	Body       string
+}
+
 func GetOptions(c echo.Context, questionID int) ([]string, error) {
-	options := []string{}
-	if err := db.Select(
-		&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
-		questionID); err != nil {
+	bodies := []string{}
+	options := []Option{}
+	err := gormDB.Order("option_num").Find(&options, "question_id = ?", questionID).Pluck("body", &bodies).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return options, nil
+	return bodies, nil
 }
 
 func InsertOption(c echo.Context, lastID int, num int, body string) error {
-	if _, err := db.Exec(
-		"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
-		lastID, num, body); err != nil {
+	option := Option{
+		QuestionId: lastID,
+		OptionNum:  num,
+		Body:       body,
+	}
+	err := gormDB.Create(&option).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -28,18 +39,17 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 }
 
 func UpdateOptions(c echo.Context, options []string, questionID int) error {
+	var err error
+	option := Option{}
 	for i, v := range options {
-		if _, err := db.Exec(
-			`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
-			ON DUPLICATE KEY UPDATE option_num = ?, body = ?`,
-			questionID, i+1, v, i+1, v); err != nil {
+		err = gormDB.Where(Option{QuestionId: questionID}).Assign(Option{OptionNum: i + 1, Body: v}).FirstOrCreate(&option).Error
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	if _, err := db.Exec(
-		"DELETE FROM options WHERE question_id= ? AND option_num > ?",
-		questionID, len(options)); err != nil {
+	err = gormDB.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Option{}).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -47,9 +57,8 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 }
 
 func DeleteOptions(c echo.Context, questionID int) error {
-	if _, err := db.Exec(
-		"DELETE FROM options WHERE question_id= ?",
-		questionID); err != nil {
+	err := gormDB.Where("question_id = ?", questionID).Delete(Option{}).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

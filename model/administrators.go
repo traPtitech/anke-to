@@ -6,20 +6,31 @@ import (
 	"github.com/labstack/echo"
 )
 
+type Administrator struct {
+	QuestionnaireID int `gorm:"primary_key"`
+	UserTraqid      string
+}
+
 func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
-	administrators := []string{}
-	if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
+	userTraqids := []string{}
+	err := gormDB.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return administrators, nil
+	return userTraqids, nil
 }
 
 func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
+	var administrator Administrator
+	var err error
 	for _, v := range administrators {
-		if _, err := db.Exec(
-			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			questionnaireID, v); err != nil {
+		administrator = Administrator{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      v,
+		}
+		err = gormDB.Create(&administrator).Error
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -28,9 +39,8 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 }
 
 func DeleteAdministrators(c echo.Context, questionnaireID int) error {
-	if _, err := db.Exec(
-		"DELETE from administrators WHERE questionnaire_id = ?",
-		questionnaireID); err != nil {
+	err := gormDB.Where("questionnaire_id = ?", questionnaireID).Delete(Administrator{}).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -38,14 +48,13 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 }
 
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
-	questionnaireID := []int{}
-	if err := db.Select(&questionnaireID,
-		`SELECT DISTINCT questionnaire_id FROM administrators WHERE user_traqid = ? OR user_traqid = 'traP'`,
-		user); err != nil {
+	questionnaireIDs := []int{}
+	err := gormDB.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return questionnaireID, nil
+	return questionnaireIDs, nil
 }
 
 // 自分がadminなら(true, nil)
