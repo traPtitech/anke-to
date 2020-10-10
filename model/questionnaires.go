@@ -281,7 +281,8 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 	res := Questionnaires{}
 
 	err := gormDB.
-		Where("id = ?").
+		Model(&Questionnaires{}).
+		Where("id = ?", questionnaireID).
 		Select("title, res_time_limit").
 		Scan(&res).Error
 	if err != nil {
@@ -302,7 +303,7 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	err := gormDB.
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
-		First(&res).Error
+		Scan(&res).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
@@ -359,10 +360,10 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
 	if !resTimeLimit.Valid {
 		questionnaire := map[string]interface{}{
-			"title":       title,
-			"description": description,
+			"title":          title,
+			"description":    description,
 			"res_time_limit": gorm.Expr("NULL"),
-			"res_shared_to": resSharedTo,
+			"res_shared_to":  resSharedTo,
 		}
 
 		err := gormDB.
