@@ -34,7 +34,7 @@ func GetQuestions(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
 		Body            string   `json:"body"`
-		IsRequrired     bool     `json:"is_required"`
+		IsRequired      bool     `json:"is_required"`
 		CreatedAt       string   `json:"created_at"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
@@ -58,7 +58,7 @@ func GetQuestions(c echo.Context) error {
 		case "LinearScale":
 			scalelabel, err = model.GetScaleLabels(v.ID)
 		case "Text", "Number":
-			validation, err = model.GetValidations(c, v.ID)
+			validation, err = model.GetValidations(v.ID)
 		}
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -71,7 +71,7 @@ func GetQuestions(c echo.Context) error {
 				QuestionNum:     v.QuestionNum,
 				QuestionType:    v.Type,
 				Body:            v.Body,
-				IsRequrired:     v.IsRequrired,
+				IsRequired:      v.IsRequired,
 				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
 				Options:         options,
 				ScaleLabelRight: scalelabel.ScaleLabelRight,
@@ -121,8 +121,7 @@ func PostQuestion(c echo.Context) error {
 	case "Number":
 		//数字か，min<=maxになってるか
 		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
@@ -151,13 +150,13 @@ func PostQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.InsertValidations(c, lastID,
+		if err := model.InsertValidations(lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
 
@@ -219,8 +218,7 @@ func EditQuestion(c echo.Context) error {
 	case "Number":
 		//数字か，min<=maxになってるか
 		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
@@ -247,13 +245,13 @@ func EditQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.UpdateValidations(c, questionID,
+		if err := model.UpdateValidations(questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
 
@@ -279,8 +277,8 @@ func DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteValidations(c, questionID); err != nil {
-		return err
+	if err := model.DeleteValidations(questionID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusOK)

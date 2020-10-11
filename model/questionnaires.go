@@ -260,12 +260,10 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
 func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
-	res := struct {
-		ResTimeLimit null.Time
-	}{}
+	res := Questionnaires{}
 
 	err := gormDB.
-		Model(&Questionnaires{}).
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
 		Scan(&res).Error
@@ -276,19 +274,17 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		c.Logger().Error(err)
 		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return NullTimeToString(res.ResTimeLimit), nil
 }
 
 //GetTitleAndLimit アンケートのタイトルと回答期限の取得
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
-	res := struct {
-		Title        string
-		ResTimeLimit null.Time
-	}{}
+	res := Questionnaires{}
 
 	err := gormDB.
 		Model(&Questionnaires{}).
-		Where("id = ?").
+		Where("id = ?", questionnaireID).
 		Select("title, res_time_limit").
 		Scan(&res).Error
 	if err != nil {
@@ -304,15 +300,13 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 
 //GetResShared アンケートの回答の公開範囲の取得
 func GetResShared(c echo.Context, questionnaireID int) (string, error) {
-	res := struct {
-		ResSharedTo string
-	}{}
+	res := Questionnaires{}
 
 	err := gormDB.
-		Model(&Questionnaires{}).
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
-		First(&res).Error
+		Scan(&res).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
@@ -369,10 +363,10 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
 	if !resTimeLimit.Valid {
 		questionnaire := map[string]interface{}{
-			"title":       title,
-			"description": description,
+			"title":          title,
+			"description":    description,
 			"res_time_limit": gorm.Expr("NULL"),
-			"res_shared_to": resSharedTo,
+			"res_shared_to":  resSharedTo,
 		}
 
 		err := gormDB.

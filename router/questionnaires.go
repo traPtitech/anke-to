@@ -271,7 +271,7 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-// GetTargetedQuestionnaire GET /users/:traQID/targeted
+// GetTargettedQuestionnairesBytraQID GET /users/:traQID/targeted
 func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	ret, err := model.GetTargettedQuestionnaires(c, traQID, "unanswered")
