@@ -34,7 +34,7 @@ func GetQuestions(c echo.Context) error {
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
 		Body            string   `json:"body"`
-		IsRequired     bool     `json:"is_required"`
+		IsRequired      bool     `json:"is_required"`
 		CreatedAt       string   `json:"created_at"`
 		Options         []string `json:"options"`
 		ScaleLabelRight string   `json:"scale_label_right"`
@@ -71,7 +71,7 @@ func GetQuestions(c echo.Context) error {
 				QuestionNum:     v.QuestionNum,
 				QuestionType:    v.Type,
 				Body:            v.Body,
-				IsRequired:     v.IsRequired,
+				IsRequired:      v.IsRequired,
 				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
 				Options:         options,
 				ScaleLabelRight: scalelabel.ScaleLabelRight,

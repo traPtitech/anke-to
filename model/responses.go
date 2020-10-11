@@ -24,10 +24,10 @@ func (*Response) TableName() string {
 }
 
 type ResponseBody struct {
-	QuestionID int `json:"questionID" gorm:"column:id"`
-	QuestionType string `json:"question_type" gorm:"column:type"`
+	QuestionID     int         `json:"questionID" gorm:"column:id"`
+	QuestionType   string      `json:"question_type" gorm:"column:type"`
 	Body           null.String `json:"response,omitempty"`
-	OptionResponse []string `json:"option_response"`
+	OptionResponse []string    `json:"option_response"`
 }
 
 type Responses struct {

@@ -47,11 +47,11 @@ type RespondentInfo struct {
 }
 
 type RespondentDetail struct {
-	ResponseID int `json:"-"`
-	QuestionnaireID int `json:"questionnaireID,omitempty"`
-	SubmittedAt     time.Time `json:"submitted_at,omitempty"`
-	ModifiedAt      time.Time `json:"modified_at,omitempty"`
-	Responses   []ResponseBody `json:"body"`
+	ResponseID      int            `json:"-"`
+	QuestionnaireID int            `json:"questionnaireID,omitempty"`
+	SubmittedAt     time.Time      `json:"submitted_at,omitempty"`
+	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
+	Responses       []ResponseBody `json:"body"`
 }
 
 func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
@@ -278,7 +278,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		}
 
 		respondentDetail.Responses = append(respondentDetail.Responses, ResponseBody{
-			QuestionID: res.ResponseBody.QuestionID,
+			QuestionID:   res.ResponseBody.QuestionID,
 			QuestionType: res.ResponseBody.QuestionType,
 		})
 
@@ -346,10 +346,10 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 				return nil, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
 			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
-				ResponseID: res.Respondents.ResponseID,
+				ResponseID:      res.Respondents.ResponseID,
 				QuestionnaireID: res.Respondents.QuestionnaireID,
-				SubmittedAt: res.Respondents.SubmittedAt.Time,
-				ModifiedAt: res.ModifiedAt,
+				SubmittedAt:     res.Respondents.SubmittedAt.Time,
+				ModifiedAt:      res.ModifiedAt,
 			})
 		}
 
@@ -365,7 +365,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 		for _, v := range responseBodies {
 			if _, ok := bodyMap[v.QuestionID]; !ok {
 				responseBodyList = append(responseBodyList, ResponseBody{
-					QuestionID: v.QuestionID,
+					QuestionID:   v.QuestionID,
 					QuestionType: v.QuestionType,
 				})
 			}
