@@ -39,6 +39,14 @@ func PostResponse(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		switch body.QuestionType {
+		case "LinearScale":
+			label, err := model.GetScaleLabels(body.QuestionID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckScaleLabels(label, body.Body.ValueOrZero()); err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, &model.NumberValidError{}) {
@@ -182,6 +190,14 @@ func EditResponse(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		switch body.QuestionType {
+		case "LinearScale":
+			label, err := model.GetScaleLabels(body.QuestionID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckScaleLabels(label, body.Body.ValueOrZero()); err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, &model.NumberValidError{}) {

@@ -56,7 +56,7 @@ func GetQuestions(c echo.Context) error {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			options, err = model.GetOptions(c, v.ID)
 		case "LinearScale":
-			scalelabel, err = model.GetScaleLabels(c, v.ID)
+			scalelabel, err = model.GetScaleLabels(v.ID)
 		case "Text", "Number":
 			validation, err = model.GetValidations(v.ID)
 		}
@@ -140,14 +140,14 @@ func PostQuestion(c echo.Context) error {
 			}
 		}
 	case "LinearScale":
-		if err := model.InsertScaleLabels(c, lastID,
+		if err := model.InsertScaleLabels(lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
 		if err := model.InsertValidations(lastID,
@@ -235,14 +235,14 @@ func EditQuestion(c echo.Context) error {
 			return err
 		}
 	case "LinearScale":
-		if err := model.UpdateScaleLabels(c, questionID,
+		if err := model.UpdateScaleLabels(questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
 		if err := model.UpdateValidations(questionID,
@@ -273,8 +273,8 @@ func DeleteQuestion(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteScaleLabels(c, questionID); err != nil {
-		return err
+	if err := model.DeleteScaleLabels(questionID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteValidations(questionID); err != nil {
