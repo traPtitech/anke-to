@@ -33,18 +33,24 @@ func PostResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.Question.ID)
+		validation, err := model.GetValidations(body.Question.ID)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		switch body.Question.Type {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Body.ValueOrZero()); err != nil {
-				return err
+			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.NumberValidError{}) {
+					return echo.NewHTTPError(http.StatusInternalServerError, err)
+				}
+				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Body.ValueOrZero()); err != nil {
-				return err
+			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.TextMatchError{}) {
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	}
@@ -167,18 +173,24 @@ func EditResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(c, body.Question.ID)
+		validation, err := model.GetValidations(body.Question.ID)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		switch body.Question.Type {
 		case "Number":
-			if err := model.CheckNumberValidation(c, validation, body.Body.ValueOrZero()); err != nil {
-				return err
+			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.NumberValidError{}) {
+					return echo.NewHTTPError(http.StatusInternalServerError, err)
+				}
+				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err := model.CheckTextValidation(c, validation, body.Body.ValueOrZero()); err != nil {
-				return err
+			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.TextMatchError{}) {
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	}
