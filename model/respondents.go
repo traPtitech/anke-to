@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -46,7 +47,10 @@ type RespondentInfo struct {
 }
 
 type RespondentDetail struct {
-	Respondents `gorm:"embedded"`
+	ResponseID int `json:"-"`
+	QuestionnaireID int `json:"questionnaireID,omitempty"`
+	SubmittedAt     time.Time `json:"submitted_at,omitempty"`
+	ModifiedAt      time.Time `json:"modified_at,omitempty"`
 	Responses   []ResponseBody `json:"body"`
 }
 
@@ -75,13 +79,13 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 
 func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
 	if sortNum == 0 {
-		return nil, errors.New("invalid sort num")
+		return respondentDetails, nil
 	}
 	sortNumAbs := int(math.Abs(float64(sortNum)))
 	sort.Slice(respondentDetails, func(i, j int) bool {
 		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
 		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
-		if bodyI.Question.Type == "Number" {
+		if bodyI.QuestionType == "Number" {
 			numi, err := strconv.Atoi(bodyI.Body.String)
 			if err != nil {
 				return true
@@ -148,9 +152,7 @@ func UpdateRespondents(c echo.Context, questionnaireID int, responseID int) erro
 	err := gormDB.
 		Model(&Respondents{}).
 		Where("user_traqid = ? AND response_id = ?", userID, responseID).
-		Update(map[string]interface{}{
-			"questionnaire_id": questionnaireID,
-		}).Error
+		Update("questionnaire_id", questionnaireID).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -162,13 +164,7 @@ func UpdateRespondents(c echo.Context, questionnaireID int, responseID int) erro
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
-	err := gormDB.
-		Model(&Respondents{}).
-		Joins("INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id").
-		Where("respondents.response_id = ? AND administrators.user_traqid = ? OR respondents.user_traqid = ?", responseID, userID, userID).
-		Update(map[string]interface{}{
-			"respondents.deleted_at": time.Now(),
-		}).Error
+	err := gormDB.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -211,7 +207,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 	query := gormDB.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
-		Where("user_traqid = ?", userID)
+		Where("user_traqid = ? AND respondents.deleted_at IS NULL", userID)
 
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
@@ -232,7 +228,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 			Respondents: Respondents{},
 		}
 
-		err := gormDB.ScanRows(rows, respondentInfo)
+		err := gormDB.ScanRows(rows, &respondentInfo)
 		if err != nil {
 			c.Logger().Error(fmt.Errorf("failed to scan responses: %w", err))
 			return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -250,21 +246,20 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 	rows, err := gormDB.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
-		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND respondents.question_id = response.question_id").
-		Where("respondents.response_id = ? AND respondents.user_traqid = ?", responseID, userID).
+		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
+		Where("respondents.response_id = ? AND respondents.user_traqid = ? AND respondents.deleted_at IS NULL", responseID, userID).
 		Select("respondents.questionnaire_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
-		if !gorm.IsRecordNotFoundError(err) {
-			c.Logger().Error(err)
-			return RespondentDetail{}, echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		return RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
+	isNoRows := true
 	isRespondentSetted := false
 	respondentDetail := RespondentDetail{}
 	responseBodyMap := map[int][]string{}
 	for rows.Next() {
+		isNoRows = false
 		res := struct {
 			Respondents  `gorm:"embedded"`
 			ResponseBody `gorm:"embedded"`
@@ -274,22 +269,31 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 			return RespondentDetail{}, fmt.Errorf("failed to scan response detail: %w", err)
 		}
 		if !isRespondentSetted {
-			respondentDetail.Respondents = res.Respondents
+			respondentDetail.QuestionnaireID = res.Respondents.QuestionnaireID
+			if !res.Respondents.SubmittedAt.Valid {
+				return RespondentDetail{}, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
+			}
+			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt.Time
+			respondentDetail.ModifiedAt = res.Respondents.ModifiedAt
 		}
 
 		respondentDetail.Responses = append(respondentDetail.Responses, ResponseBody{
-			Question: res.ResponseBody.Question,
+			QuestionID: res.ResponseBody.QuestionID,
+			QuestionType: res.ResponseBody.QuestionType,
 		})
 
 		if res.ResponseBody.Body.Valid {
-			responseBodyMap[res.ResponseBody.Question.ID] = append(responseBodyMap[res.ResponseBody.Question.ID], res.ResponseBody.Body.String)
+			responseBodyMap[res.ResponseBody.QuestionID] = append(responseBodyMap[res.ResponseBody.QuestionID], res.ResponseBody.Body.String)
 		}
+	}
+	if isNoRows {
+		return RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", gorm.ErrRecordNotFound)
 	}
 
 	for i := range respondentDetail.Responses {
 		response := &respondentDetail.Responses[i]
-		responseBody, ok := responseBodyMap[response.Question.ID]
-		switch response.Question.Type {
+		responseBody, ok := responseBodyMap[response.QuestionID]
+		switch response.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			if !ok {
 				return RespondentDetail{}, errors.New("unexpected no response")
@@ -298,8 +302,9 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		default:
 			if !ok || len(responseBody) == 0 {
 				response.Body = null.NewString("", false)
+			} else {
+				response.Body = null.NewString(responseBody[0], true)
 			}
-			response.Body = null.NewString(responseBody[0], true)
 		}
 	}
 
@@ -310,11 +315,11 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	query := gormDB.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
-		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND respondents.question_id = response.question_id")
+		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id")
 	query, sortNum, err := setRespondentsOrder(query, sort)
 
 	rows, err := query.
-		Where("respondents.questionnaire_id = ?", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
 		Select("respondents.response_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -335,9 +340,16 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}
 
+		log.Printf("%+v", res)
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
+			if !res.Respondents.SubmittedAt.Valid {
+				return nil, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
+			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
-				Respondents: res.Respondents,
+				ResponseID: res.Respondents.ResponseID,
+				QuestionnaireID: res.Respondents.QuestionnaireID,
+				SubmittedAt: res.Respondents.SubmittedAt.Time,
+				ModifiedAt: res.ModifiedAt,
 			})
 		}
 
@@ -351,21 +363,22 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 		responseBodyList := []ResponseBody{}
 		bodyMap := map[int][]string{}
 		for _, v := range responseBodies {
-			if _, ok := bodyMap[v.Question.ID]; !ok {
+			if _, ok := bodyMap[v.QuestionID]; !ok {
 				responseBodyList = append(responseBodyList, ResponseBody{
-					Question: v.Question,
+					QuestionID: v.QuestionID,
+					QuestionType: v.QuestionType,
 				})
 			}
 
 			if v.Body.Valid {
-				bodyMap[v.Question.ID] = append(bodyMap[v.Question.ID], v.Body.String)
+				bodyMap[v.QuestionID] = append(bodyMap[v.QuestionID], v.Body.String)
 			}
 		}
 
 		for i := range responseBodyList {
 			responseBody := &responseBodyList[i]
-			body, ok := bodyMap[responseBody.Question.ID]
-			switch responseBody.Question.Type {
+			body, ok := bodyMap[responseBody.QuestionID]
+			switch responseBody.QuestionType {
 			case "MultipleChoice", "Checkbox", "Dropdown":
 				if !ok {
 					return nil, errors.New("unexpected no response")

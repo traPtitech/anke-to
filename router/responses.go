@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 
 	"github.com/traPtitech/anke-to/model"
@@ -33,11 +34,11 @@ func PostResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(body.Question.ID)
+		validation, err := model.GetValidations(body.QuestionID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
-		switch body.Question.Type {
+		switch body.QuestionType {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, &model.NumberValidError{}) {
@@ -61,15 +62,15 @@ func PostResponse(c echo.Context) error {
 	}
 
 	for _, body := range req.Body {
-		switch body.Question.Type {
+		switch body.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, body.Question.ID, option); err != nil {
+				if err := model.InsertResponse(c, responseID, body.QuestionID, option); err != nil {
 					return err
 				}
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, body.Question.ID, body.Body.ValueOrZero()); err != nil {
+			if err := model.InsertResponse(c, responseID, body.QuestionID, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}
@@ -133,7 +134,7 @@ func GetResponsesByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, respondentDetails)
 }
 
-// GetResponse GET /responses
+// GetResponse GET /responses/:id
 func GetResponse(c echo.Context) error {
 	responseID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -142,7 +143,10 @@ func GetResponse(c echo.Context) error {
 
 	respondentDetail, err := model.GetRespondentDetail(c, responseID)
 	if err != nil {
-		return nil
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, respondentDetail)
@@ -173,11 +177,11 @@ func EditResponse(c echo.Context) error {
 
 	//パターンマッチ
 	for _, body := range req.Body {
-		validation, err := model.GetValidations(body.Question.ID)
+		validation, err := model.GetValidations(body.QuestionID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
-		switch body.Question.Type {
+		switch body.QuestionType {
 		case "Number":
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, &model.NumberValidError{}) {
@@ -205,15 +209,15 @@ func EditResponse(c echo.Context) error {
 	}
 
 	for _, body := range req.Body {
-		switch body.Question.Type {
+		switch body.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, body.Question.ID, option); err != nil {
+				if err := model.InsertResponse(c, responseID, body.QuestionID, option); err != nil {
 					return err
 				}
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, body.Question.ID, body.Body.ValueOrZero()); err != nil {
+			if err := model.InsertResponse(c, responseID, body.QuestionID, body.Body.ValueOrZero()); err != nil {
 				return err
 			}
 		}

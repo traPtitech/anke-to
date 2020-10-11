@@ -24,8 +24,9 @@ func (*Response) TableName() string {
 }
 
 type ResponseBody struct {
-	Question       `gorm:"embedded"`
-	Body           null.String
+	QuestionID int `json:"questionID" gorm:"column:id"`
+	QuestionType string `json:"question_type" gorm:"column:type"`
+	Body           null.String `json:"response,omitempty"`
 	OptionResponse []string `json:"option_response"`
 }
 
@@ -35,15 +36,8 @@ type Responses struct {
 	Body        []ResponseBody `json:"body"`
 }
 
-type UserResponse struct {
-	ResponseID  int       `db:"response_id"`
-	UserID      string    `db:"user_traqid"`
-	ModifiedAt  time.Time `db:"modified_at"`
-	SubmittedAt null.Time `db:"submitted_at"`
-}
-
 func InsertResponse(c echo.Context, responseID int, questionID int, data string) error {
-	err := gormDB.Create(Response{
+	err := gormDB.Create(&Response{
 		ResponseID: responseID,
 		QuestionID: questionID,
 		Body:       null.NewString(data, true),
