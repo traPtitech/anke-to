@@ -15,12 +15,17 @@ type Option struct {
 
 func GetOptions(c echo.Context, questionID int) ([]string, error) {
 	bodies := []string{}
-	options := []Option{}
-	err := gormDB.Order("option_num").Find(&options, "question_id = ?", questionID).Pluck("body", &bodies).Error
+
+	err := gormDB.
+		Model(Option{}).
+		Where("question_id = ?", questionID).
+		Order("option_num").
+		Pluck("body", &bodies).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return bodies, nil
 }
 

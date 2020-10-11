@@ -263,6 +263,7 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 	res := Questionnaires{}
 
 	err := gormDB.
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
 		Scan(&res).Error
@@ -273,6 +274,7 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		c.Logger().Error(err)
 		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return NullTimeToString(res.ResTimeLimit), nil
 }
 
@@ -301,6 +303,7 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	res := Questionnaires{}
 
 	err := gormDB.
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
 		Scan(&res).Error
