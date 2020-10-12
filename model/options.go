@@ -8,9 +8,9 @@ import (
 
 // Options optionsテーブルの構造体
 type Options struct {
-	ID         int `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
-	QuestionID int `gorm:"type:int(11) NOT NULL;"`
-	OptionNum  int `gorm:"type:int(11) NOT NULL;"`
+	ID         int    `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	QuestionID int    `gorm:"type:int(11) NOT NULL;"`
+	OptionNum  int    `gorm:"type:int(11) NOT NULL;"`
 	Body       string `gorm:"type:text;default:NULL;"`
 }
 

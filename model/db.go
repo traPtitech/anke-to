@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	db *gorm.DB
+	db        *gorm.DB
 	allTables = []interface{}{
 		Questionnaires{},
 		Question{},

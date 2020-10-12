@@ -8,7 +8,7 @@ import (
 
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
-	QuestionnaireID int `sql:"type:int(11);not null;primary_key;"`
+	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
 	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
 }
 

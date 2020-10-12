@@ -9,7 +9,7 @@ import (
 
 //ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
-	QuestionID              int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
+	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
 	ScaleLabelRight string `json:"scale_label_right" gorm:"type:text;default:NULL;"`
 	ScaleLabelLeft  string `json:"scale_label_left"  gorm:"type:text;default:NULL;"`
 	ScaleMin        int    `json:"scale_min"         gorm:"type:int(11);default:NULL;"`
