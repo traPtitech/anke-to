@@ -11,11 +11,11 @@ import (
 
 //Response responseテーブルの構造体
 type Response struct {
-	ResponseID int         `json:"-" gorm:"type:int(11);NOT NULL;"`
-	QuestionID int         `json:"-" gorm:"type:int(11);NOT NULL;"`
-	Body       null.String `json:"response" gorm:"type:text;"`
-	ModifiedAt time.Time   `json:"-" gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt  null.Time   `json:"-" gorm:"type:timestamp;"`
+	ResponseID int         `json:"-" gorm:"type:int(11) NOT NULL;"`
+	QuestionID int         `json:"-" gorm:"type:int(11) NOT NULL;"`
+	Body       null.String `json:"response" gorm:"type:text;default:NULL;"`
+	ModifiedAt time.Time   `json:"-" gorm:"type:timestamp NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	DeletedAt  null.Time   `json:"-" gorm:"type:timestamp NULL;default:NULL;"`
 }
 
 //TableName テーブル名が単数形なのでその対応

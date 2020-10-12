@@ -27,8 +27,6 @@ services:
       MYSQL_DATABASE: anke-to
       TZ: Asia/Tokyo
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
-    volumes:
-      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
     expose:
       - "3306"
     ports:
