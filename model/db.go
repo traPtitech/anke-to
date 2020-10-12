@@ -82,6 +82,9 @@ func Migrate() error {
 	err = db.
 		Model(&Question{}).
 		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
+	if err != nil {
+		return fmt.Errorf("failed to add foreingkey(question.questionnaire_id): %w", err)
+	}
 
 	err = db.
 		Model(&Respondents{}).
