@@ -7,7 +7,7 @@ import (
 )
 
 type Option struct {
-	Id         int
+	Id        int
 	QuestionId int
 	OptionNum  int
 	Body       string
