@@ -35,46 +35,6 @@ type QuestionIDType struct {
 	Type string
 }
 
-//GetQuestionTypes 質問のIDと型の配列を取得
-func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
-	questionIDTypes := []QuestionIDType{}
-
-	err := db.
-		Model(&Question{}).
-		Where("questionnaire_id = ?", questionnaireID).
-		Order("question_num").
-		Select("id, type").
-		Scan(&questionIDTypes).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get question`s ids and types: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return questionIDTypes, nil
-}
-
-//GetQuestions 質問のリストの取得
-func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
-	questions := []Question{}
-
-	err := db.
-		Where("questionnaire_id = ?", questionnaireID).
-		Find(&questions).Error
-	// アンケートidの一致する質問を取る
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get questions: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return questions, nil
-}
-
 //InsertQuestion 質問の追加
 func InsertQuestion(
 	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
@@ -146,4 +106,23 @@ func DeleteQuestion(c echo.Context, questionID int) error {
 	}
 
 	return nil
+}
+
+//GetQuestions 質問一覧の取得
+func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
+	questions := []Question{}
+
+	err := db.
+		Where("questionnaire_id = ?", questionnaireID).
+		Find(&questions).Error
+	// アンケートidの一致する質問を取る
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get questions: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return questions, nil
 }

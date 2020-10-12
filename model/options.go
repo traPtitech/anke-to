@@ -6,31 +6,17 @@ import (
 	"github.com/labstack/echo"
 )
 
-type Option struct {
+// Options optionsテーブルの構造体
+type Options struct {
 	ID         int
 	QuestionID int
 	OptionNum  int
 	Body       string
 }
 
-func GetOptions(c echo.Context, questionID int) ([]string, error) {
-	bodies := []string{}
-
-	err := db.
-		Model(Option{}).
-		Where("question_id = ?", questionID).
-		Order("option_num").
-		Pluck("body", &bodies).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return bodies, nil
-}
-
+// InsertOption 選択肢の追加
 func InsertOption(c echo.Context, lastID int, num int, body string) error {
-	option := Option{
+	option := Options{
 		QuestionID: lastID,
 		OptionNum:  num,
 		Body:       body,
@@ -43,17 +29,21 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 	return nil
 }
 
+// UpdateOptions 選択肢の修正
 func UpdateOptions(c echo.Context, options []string, questionID int) error {
 	var err error
-	option := Option{}
+	option := Options{}
 	for i, v := range options {
-		err = db.Where(Option{QuestionID: questionID}).Assign(Option{OptionNum: i + 1, Body: v}).FirstOrCreate(&option).Error
+		err = db.
+			Where(Options{QuestionID: questionID}).
+			Assign(Options{OptionNum: i + 1, Body: v}).
+			FirstOrCreate(&option).Error
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	err = db.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Option{}).Error
+	err = db.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Options{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -61,11 +51,31 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 	return nil
 }
 
+// DeleteOptions 選択肢の削除
 func DeleteOptions(c echo.Context, questionID int) error {
-	err := db.Where("question_id = ?", questionID).Delete(Option{}).Error
+	err := db.
+		Where("question_id = ?", questionID).
+		Delete(Options{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
+}
+
+// GetOptions 質問の選択肢の取得
+func GetOptions(c echo.Context, questionID int) ([]string, error) {
+	bodies := []string{}
+
+	err := db.
+		Model(Options{}).
+		Where("question_id = ?", questionID).
+		Order("option_num").
+		Pluck("body", &bodies).Error
+	if err != nil {
+		c.Logger().Error(err)
+		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return bodies, nil
 }

@@ -16,59 +16,6 @@ type Validations struct {
 	MaxBound     string `json:"max_bound"     gorm:"column:max_bound"`
 }
 
-// GetValidations 指定されたquestionIDのvalidationを取得する
-func GetValidations(questionID int) (Validations, error) {
-	validation := Validations{}
-	err := db.
-		Where("question_id = ?", questionID).
-		First(&validation).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		return Validations{}, nil
-	} else if err != nil {
-		return Validations{}, fmt.Errorf("failed to get the validation (questionID: %d): %w", questionID, err)
-	}
-	return validation, nil
-}
-
-// InsertValidations IDを指定してvalidationsを挿入する
-func InsertValidations(lastID int, validation Validations) error {
-	validation.ID = lastID
-	if err := db.Create(&validation).Error; err != nil {
-		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
-	}
-	return nil
-}
-
-// UpdateValidations questionIDを指定してvalidationを更新する
-func UpdateValidations(questionID int, validation Validations) error {
-	err := db.
-		Model(&Validations{}).
-		Where("question_id = ?", questionID).
-		Update(map[string]interface{}{
-			"question_id":   questionID,
-			"regex_pattern": validation.RegexPattern,
-			"min_bound":     validation.MinBound,
-			"max_bound":     validation.MaxBound}).
-		Error
-	if err != nil {
-		return fmt.Errorf("failed to update the validation (questionID: %d): %w", questionID, err)
-	}
-	return nil
-}
-
-// DeleteValidations questionIDを指定してvalidationを削除する
-func DeleteValidations(questionID int) error {
-	err := db.
-		Where("question_id = ?", questionID).
-		Delete(&Validations{}).
-		Error
-	if err != nil {
-		return fmt.Errorf("failed to delete the validation (questionID: %d): %w", questionID, err)
-	}
-	return nil
-}
-
 //NumberValidError MinBound,MaxBoundの指定が有効ではない
 type NumberValidError struct {
 	Msg string
@@ -86,33 +33,6 @@ func (e *NumberValidError) Unwrap() error {
 	return e.Err
 }
 
-// CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
-func CheckNumberValid(MinBound, MaxBound string) error {
-	var minBoundNum, maxBoundNum int
-	if MinBound != "" {
-		min, err := strconv.Atoi(MinBound)
-		minBoundNum = min
-		if err != nil {
-			return &NumberValidError{"failed to check the boundary value. MinBound is not a numerical value", err}
-		}
-	}
-	if MaxBound != "" {
-		max, err := strconv.Atoi(MaxBound)
-		maxBoundNum = max
-		if err != nil {
-			return &NumberValidError{"failed to check the boundary value. MaxBound is not a numerical value", err}
-		}
-	}
-
-	if MinBound != "" && MaxBound != "" {
-		if minBoundNum > maxBoundNum {
-			return &NumberValidError{fmt.Sprintf("failed to check the boundary value. MinBound must be less than MaxBound (MinBound: %d, MaxBound: %d)", minBoundNum, maxBoundNum), nil}
-		}
-	}
-
-	return nil
-}
-
 //NumberBoundaryError MinBound <= value <= MaxBound でない
 type NumberBoundaryError struct {
 	Msg string
@@ -120,6 +40,68 @@ type NumberBoundaryError struct {
 
 func (e *NumberBoundaryError) Error() string {
 	return e.Msg
+}
+
+//TextMatchError ResponceがRegexPatternにマッチしているか
+type TextMatchError struct {
+	Msg string
+}
+
+func (e *TextMatchError) Error() string {
+	return e.Msg
+}
+
+// InsertValidation IDを指定してvalidationsを挿入する
+func InsertValidation(lastID int, validation Validations) error {
+	validation.ID = lastID
+	if err := db.Create(&validation).Error; err != nil {
+		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
+	}
+	return nil
+}
+
+// UpdateValidation questionIDを指定してvalidationを更新する
+func UpdateValidation(questionID int, validation Validations) error {
+	err := db.
+		Model(&Validations{}).
+		Where("question_id = ?", questionID).
+		Update(map[string]interface{}{
+			"question_id":   questionID,
+			"regex_pattern": validation.RegexPattern,
+			"min_bound":     validation.MinBound,
+			"max_bound":     validation.MaxBound}).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to update the validation (questionID: %d): %w", questionID, err)
+	}
+	return nil
+}
+
+// DeleteValidation questionIDを指定してvalidationを削除する
+func DeleteValidation(questionID int) error {
+	err := db.
+		Where("question_id = ?", questionID).
+		Delete(&Validations{}).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to delete the validation (questionID: %d): %w", questionID, err)
+	}
+	return nil
+}
+
+// GetValidation 指定されたquestionIDのvalidationを取得する
+func GetValidation(questionID int) (Validations, error) {
+	validation := Validations{}
+	err := db.
+		Where("question_id = ?", questionID).
+		First(&validation).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return Validations{}, nil
+	} else if err != nil {
+		return Validations{}, fmt.Errorf("failed to get the validation (questionID: %d): %w", questionID, err)
+	}
+	return validation, nil
 }
 
 // CheckNumberValidation BodyがMinBound,MaxBoundを満たしているか
@@ -152,15 +134,6 @@ func CheckNumberValidation(validation Validations, Body string) error {
 	return nil
 }
 
-//TextMatchError ResponceがRegexPatternにマッチしているか
-type TextMatchError struct {
-	Msg string
-}
-
-func (e *TextMatchError) Error() string {
-	return e.Msg
-}
-
 // CheckTextValidation ResponceがRegexPatternにマッチしているか
 func CheckTextValidation(validation Validations, Response string) error {
 	r, err := regexp.Compile(validation.RegexPattern)
@@ -169,6 +142,33 @@ func CheckTextValidation(validation Validations, Response string) error {
 	}
 	if !r.MatchString(Response) && Response != "" {
 		return &TextMatchError{fmt.Sprintf("failed to match the pattern (Responce: %s, RegexPattern: %s)", Response, r)}
+	}
+
+	return nil
+}
+
+// CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
+func CheckNumberValid(MinBound, MaxBound string) error {
+	var minBoundNum, maxBoundNum int
+	if MinBound != "" {
+		min, err := strconv.Atoi(MinBound)
+		minBoundNum = min
+		if err != nil {
+			return &NumberValidError{"failed to check the boundary value. MinBound is not a numerical value", err}
+		}
+	}
+	if MaxBound != "" {
+		max, err := strconv.Atoi(MaxBound)
+		maxBoundNum = max
+		if err != nil {
+			return &NumberValidError{"failed to check the boundary value. MaxBound is not a numerical value", err}
+		}
+	}
+
+	if MinBound != "" && MaxBound != "" {
+		if minBoundNum > maxBoundNum {
+			return &NumberValidError{fmt.Sprintf("failed to check the boundary value. MinBound must be less than MaxBound (MinBound: %d, MaxBound: %d)", minBoundNum, maxBoundNum), nil}
+		}
 	}
 
 	return nil

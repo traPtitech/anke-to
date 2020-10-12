@@ -50,12 +50,14 @@ func (*Respondents) BeforeUpdate(scope *gorm.Scope) error {
 	return nil
 }
 
+// RespondentInfo 回答とその周辺情報の構造体
 type RespondentInfo struct {
 	Title        string `json:"questionnaire_title"`
 	ResTimeLimit string `json:"res_time_limit"`
 	Respondents
 }
 
+// RespondentDetail 回答の詳細情報の構造体
 type RespondentDetail struct {
 	ResponseID      int            `json:"-"`
 	QuestionnaireID int            `json:"questionnaireID,omitempty"`
@@ -64,58 +66,7 @@ type RespondentDetail struct {
 	Responses       []ResponseBody `json:"body"`
 }
 
-func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
-	var sortNum int
-	switch sort {
-	case "traqid":
-		query = query.Order("respondents.user_traqid")
-	case "-traqid":
-		query = query.Order("respondents.user_traqid DESC")
-	case "submitted_at":
-		query = query.Order("respondents.submitted_at")
-	case "-submitted_at":
-		query = query.Order("respondents.submitted_at DESC")
-	case "":
-	default:
-		var err error
-		sortNum, err = strconv.Atoi(sort)
-		if err != nil {
-			return nil, 0, fmt.Errorf("failed to convert sort param to int: %w", err)
-		}
-	}
-
-	return query, sortNum, nil
-}
-
-func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
-	if sortNum == 0 {
-		return respondentDetails, nil
-	}
-	sortNumAbs := int(math.Abs(float64(sortNum)))
-	sort.Slice(respondentDetails, func(i, j int) bool {
-		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
-		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
-		if bodyI.QuestionType == "Number" {
-			numi, err := strconv.Atoi(bodyI.Body.String)
-			if err != nil {
-				return true
-			}
-			numj, err := strconv.Atoi(bodyJ.Body.String)
-			if err != nil {
-				return true
-			}
-			return numi < numj
-		}
-		if sortNum < 0 {
-			return bodyI.Body.String > bodyJ.Body.String
-		}
-		return bodyI.Body.String < bodyJ.Body.String
-	})
-
-	return respondentDetails, nil
-}
-
-//InsertRespondent 回答者の追加
+//InsertRespondent 回答の追加
 func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time) (int, error) {
 	userID := GetUserID(c)
 
@@ -156,21 +107,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 	return respondent.ResponseID, nil
 }
 
-func UpdateRespondents(c echo.Context, questionnaireID int, responseID int) error {
-	userID := GetUserID(c)
-
-	err := db.
-		Model(&Respondents{}).
-		Where("user_traqid = ? AND response_id = ?", userID, responseID).
-		Update("questionnaire_id", questionnaireID).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return nil
-}
-
+// DeleteRespondent 回答の削除
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
@@ -194,23 +131,7 @@ func DeleteRespondent(c echo.Context, responseID int) error {
 	return nil
 }
 
-func IsRespondent(c echo.Context, questionnaireID int) (bool, error) {
-	userID := GetUserID(c)
-
-	err := db.
-		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
-		First(&Respondents{}).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return false, nil
-	}
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get response: %w", err))
-		return false, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return true, nil
-}
-
+// GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
 func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
 	respondentInfos := []RespondentInfo{}
 
@@ -250,6 +171,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 	return respondentInfos, nil
 }
 
+// GetRespondentDetail 回答のIDから回答の詳細情報を取得
 func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, error) {
 	userID := GetUserID(c)
 
@@ -321,6 +243,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 	return respondentDetail, nil
 }
 
+// GetRespondentDetails アンケートの回答の詳細情報一覧の取得
 func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
 	query := db.
 		Table("respondents").
@@ -411,6 +334,75 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to sort RespondentDetails: %w", err))
 	}
+
+	return respondentDetails, nil
+}
+
+// CheckRespondent 回答者かどうかの確認
+func CheckRespondent(c echo.Context, questionnaireID int) (bool, error) {
+	userID := GetUserID(c)
+
+	err := db.
+		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
+		First(&Respondents{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get response: %w", err))
+		return false, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return true, nil
+}
+
+func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
+	var sortNum int
+	switch sort {
+	case "traqid":
+		query = query.Order("respondents.user_traqid")
+	case "-traqid":
+		query = query.Order("respondents.user_traqid DESC")
+	case "submitted_at":
+		query = query.Order("respondents.submitted_at")
+	case "-submitted_at":
+		query = query.Order("respondents.submitted_at DESC")
+	case "":
+	default:
+		var err error
+		sortNum, err = strconv.Atoi(sort)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to convert sort param to int: %w", err)
+		}
+	}
+
+	return query, sortNum, nil
+}
+
+func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
+	if sortNum == 0 {
+		return respondentDetails, nil
+	}
+	sortNumAbs := int(math.Abs(float64(sortNum)))
+	sort.Slice(respondentDetails, func(i, j int) bool {
+		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
+		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
+		if bodyI.QuestionType == "Number" {
+			numi, err := strconv.Atoi(bodyI.Body.String)
+			if err != nil {
+				return true
+			}
+			numj, err := strconv.Atoi(bodyJ.Body.String)
+			if err != nil {
+				return true
+			}
+			return numi < numj
+		}
+		if sortNum < 0 {
+			return bodyI.Body.String > bodyJ.Body.String
+		}
+		return bodyI.Body.String < bodyJ.Body.String
+	})
 
 	return respondentDetails, nil
 }

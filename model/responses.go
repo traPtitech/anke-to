@@ -23,6 +23,7 @@ func (*Response) TableName() string {
 	return "response"
 }
 
+// ResponseBody 質問に対する回答の構造体
 type ResponseBody struct {
 	QuestionID     int         `json:"questionID" gorm:"column:id"`
 	QuestionType   string      `json:"question_type" gorm:"column:type"`
@@ -30,12 +31,14 @@ type ResponseBody struct {
 	OptionResponse []string    `json:"option_response"`
 }
 
+// Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int            `json:"questionnaireID"`
 	SubmittedAt null.Time      `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
 }
 
+// InsertResponse 質問に対する回答の追加
 func InsertResponse(c echo.Context, responseID int, questionID int, data string) error {
 	err := db.Create(&Response{
 		ResponseID: responseID,
@@ -50,6 +53,7 @@ func InsertResponse(c echo.Context, responseID int, questionID int, data string)
 	return nil
 }
 
+// DeleteResponse 質問に対する回答の削除
 func DeleteResponse(c echo.Context, responseID int) error {
 	err := db.
 		Where("response_id = ?", responseID).
