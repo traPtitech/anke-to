@@ -9,6 +9,7 @@ import (
 
 var db *gorm.DB
 
+// EstablishConnection DBと接続
 func EstablishConnection() (*gorm.DB, error) {
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {

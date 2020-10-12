@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// UserAuthenticate traPのメンバーかの認証
 func UserAuthenticate() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -21,8 +22,8 @@ func UserAuthenticate() echo.MiddlewareFunc {
 	}
 }
 
+// SetRouting ルーティングの設定
 func SetRouting(e *echo.Echo) {
-
 	api := e.Group("/api", UserAuthenticate())
 	{
 		apiQuestionnnaires := api.Group("/questionnaires")
@@ -69,8 +70,7 @@ func SetRouting(e *echo.Echo) {
 
 		apiResults := api.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", GetResponsesByID)
+			apiResults.GET("/:questionnaireID", GetResults)
 		}
-
 	}
 }

@@ -6,26 +6,18 @@ import (
 	"github.com/labstack/echo"
 )
 
-type Administrator struct {
+// Administrators administratorsテーブルの構造体
+type Administrators struct {
 	QuestionnaireID int `gorm:"primary_key"`
 	UserTraqid      string
 }
 
-func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
-	userTraqids := []string{}
-	err := db.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return userTraqids, nil
-}
-
+// InsertAdministrators アンケートの管理者を追加
 func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
-	var administrator Administrator
+	var administrator Administrators
 	var err error
 	for _, v := range administrators {
-		administrator = Administrator{
+		administrator = Administrators{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      v,
 		}
@@ -38,8 +30,11 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 	return nil
 }
 
+// DeleteAdministrators アンケートの管理者の削除
 func DeleteAdministrators(c echo.Context, questionnaireID int) error {
-	err := db.Where("questionnaire_id = ?", questionnaireID).Delete(Administrator{}).Error
+	err := db.
+		Where("questionnaire_id = ?", questionnaireID).
+		Delete(Administrators{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -47,9 +42,28 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 	return nil
 }
 
-func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
+// GetAdministrators アンケートの管理者を取得
+func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
+	userTraqids := []string{}
+	err := db.
+		Model(&Administrators{}).
+		Where("questionnaire_id = ?", questionnaireID).
+		Pluck("user_traqid", &userTraqids).Error
+	if err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return userTraqids, nil
+}
+
+// GetAdminQuestionnaireIDs 自分が管理者のアンケートの取得
+func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
 	questionnaireIDs := []int{}
-	err := db.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
+	err := db.
+		Model(&Administrators{}).
+		Where("user_traqid = ?", user).
+		Or("user_traqid = ?", "traP").
+		Pluck("DISTINCT questionnaire_id", &questionnaireIDs).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -57,7 +71,7 @@ func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	return questionnaireIDs, nil
 }
 
-// 自分がadminなら(true, nil)
+// CheckAdmin 自分がアンケートの管理者か判定
 func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
 	user := GetUserID(c)
 	administrators, err := GetAdministrators(c, questionnaireID)
