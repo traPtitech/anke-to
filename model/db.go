@@ -5,11 +5,9 @@ import (
 	"os"
 
 	"github.com/jinzhu/gorm"
-	"github.com/jmoiron/sqlx"
 )
 
-var db *sqlx.DB
-var gormDB *gorm.DB
+var db *gorm.DB
 
 func EstablishConnection() (*gorm.DB, error) {
 	user := os.Getenv("MARIADB_USERNAME")
@@ -33,9 +31,8 @@ func EstablishConnection() (*gorm.DB, error) {
 	}
 
 	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
-	gormDB = _db
-	gormDB = gormDB.BlockGlobalUpdate(true)
-	db = sqlx.NewDb(_db.DB(), "mysql")
+	db = _db
+	db = db.BlockGlobalUpdate(true)
 
-	return gormDB, err
+	return db, err
 }
