@@ -44,7 +44,10 @@ func PostMessage(c echo.Context, message string) error {
 	defer resp.Body.Close()
 
 	response := make([]byte, 512)
-	resp.Body.Read(response)
+	_, err = resp.Body.Read(response)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
 
 	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, response)
 

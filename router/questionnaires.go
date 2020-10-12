@@ -85,14 +85,14 @@ func PostQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	time_limit := "なし"
+	timeLimit := "なし"
 	if req.ResTimeLimit.Valid {
-		time_limit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
+		timeLimit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
 	}
 
-	targets_mention_text := "なし"
+	targetsMentionText := "なし"
 	if len(req.Targets) != 0 {
-		targets_mention_text = "@" + strings.Join(req.Targets, " @")
+		targetsMentionText = "@" + strings.Join(req.Targets, " @")
 	}
 
 	if err := model.PostMessage(c,
@@ -100,8 +100,8 @@ func PostQuestionnaire(c echo.Context) error {
 			strconv.Itoa(lastID)+")"+"』が作成されました\n"+
 			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
 			"#### 説明\n"+req.Description+"\n"+
-			"#### 回答期限\n"+time_limit+"\n"+
-			"#### 対象者\n"+targets_mention_text+"\n"+
+			"#### 回答期限\n"+timeLimit+"\n"+
+			"#### 対象者\n"+targetsMentionText+"\n"+
 			"#### 回答リンク\n"+
 			"https://anke-to.trap.jp/responses/new/"+strconv.Itoa(lastID)); err != nil {
 		c.Logger().Error(err)

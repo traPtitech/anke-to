@@ -27,15 +27,25 @@ type Respondents struct {
 
 //BeforeCreate insert時に自動でmodifiedAt更新
 func (*Respondents) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("ModifiedAt", time.Now())
-	scope.SetColumn("SubmittedAt", time.Now())
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
+
+	err = scope.SetColumn("SubmittedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set SubmitedAt: %w", err)
+	}
 
 	return nil
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (*Respondents) BeforeUpdate(scope *gorm.Scope) (err error) {
-	scope.SetColumn("ModifiedAt", time.Now())
+func (*Respondents) BeforeUpdate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
 
 	return nil
 }
@@ -317,6 +327,9 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id")
 	query, sortNum, err := setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to set order: %w", err))
+	}
 
 	rows, err := query.
 		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
