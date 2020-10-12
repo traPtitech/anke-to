@@ -4,88 +4,11 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo"
 
 	"github.com/traPtitech/anke-to/model"
 )
-
-// GetQuestions GET /questions
-func GetQuestions(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Logger().Error(err)
-		return err
-	}
-
-	allquestions, err := model.GetQuestions(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	if len(allquestions) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	type questionInfo struct {
-		QuestionID      int      `json:"questionID"`
-		PageNum         int      `json:"page_num"`
-		QuestionNum     int      `json:"question_num"`
-		QuestionType    string   `json:"question_type"`
-		Body            string   `json:"body"`
-		IsRequired      bool     `json:"is_required"`
-		CreatedAt       string   `json:"created_at"`
-		Options         []string `json:"options"`
-		ScaleLabelRight string   `json:"scale_label_right"`
-		ScaleLabelLeft  string   `json:"scale_label_left"`
-		ScaleMin        int      `json:"scale_min"`
-		ScaleMax        int      `json:"scale_max"`
-		RegexPattern    string   `json:"regex_pattern"`
-		MinBound        string   `json:"min_bound"`
-		MaxBound        string   `json:"max_bound"`
-	}
-	var ret []questionInfo
-
-	for _, v := range allquestions {
-		options := []string{}
-		scalelabel := model.ScaleLabels{}
-		validation := model.Validations{}
-		var err error
-		switch v.Type {
-		case "MultipleChoice", "Checkbox", "Dropdown":
-			options, err = model.GetOptions(c, v.ID)
-		case "LinearScale":
-			scalelabel, err = model.GetScaleLabels(v.ID)
-		case "Text", "Number":
-			validation, err = model.GetValidations(v.ID)
-		}
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-
-		ret = append(ret,
-			questionInfo{
-				QuestionID:      v.ID,
-				PageNum:         v.PageNum,
-				QuestionNum:     v.QuestionNum,
-				QuestionType:    v.Type,
-				Body:            v.Body,
-				IsRequired:      v.IsRequired,
-				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
-				Options:         options,
-				ScaleLabelRight: scalelabel.ScaleLabelRight,
-				ScaleLabelLeft:  scalelabel.ScaleLabelLeft,
-				ScaleMin:        scalelabel.ScaleMin,
-				ScaleMax:        scalelabel.ScaleMax,
-				RegexPattern:    validation.RegexPattern,
-				MinBound:        validation.MinBound,
-				MaxBound:        validation.MaxBound,
-			})
-	}
-
-	return c.JSON(http.StatusOK, ret)
-}
 
 // PostQuestion POST /questions
 func PostQuestion(c echo.Context) error {
@@ -140,7 +63,7 @@ func PostQuestion(c echo.Context) error {
 			}
 		}
 	case "LinearScale":
-		if err := model.InsertScaleLabels(lastID,
+		if err := model.InsertScaleLabel(lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -150,7 +73,7 @@ func PostQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.InsertValidations(lastID,
+		if err := model.InsertValidation(lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
@@ -235,7 +158,7 @@ func EditQuestion(c echo.Context) error {
 			return err
 		}
 	case "LinearScale":
-		if err := model.UpdateScaleLabels(questionID,
+		if err := model.UpdateScaleLabel(questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -245,7 +168,7 @@ func EditQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.UpdateValidations(questionID,
+		if err := model.UpdateValidation(questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
@@ -273,11 +196,11 @@ func DeleteQuestion(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteScaleLabels(questionID); err != nil {
+	if err := model.DeleteScaleLabel(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteValidations(questionID); err != nil {
+	if err := model.DeleteValidation(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

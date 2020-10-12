@@ -16,23 +16,8 @@ type ScaleLabels struct {
 	ScaleMax        int    `json:"scale_max"         gorm:"column:scale_max"`
 }
 
-// GetScaleLabels 指定されたquestionIDのlabelを取得する
-func GetScaleLabels(questionID int) (ScaleLabels, error) {
-	label := ScaleLabels{}
-	err := db.
-		Where("question_id = ?", questionID).
-		First(&label).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		return ScaleLabels{}, nil
-	} else if err != nil {
-		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
-	}
-	return label, nil
-}
-
-// InsertScaleLabels IDを指定してlabelを挿入する
-func InsertScaleLabels(lastID int, label ScaleLabels) error {
+// InsertScaleLabel IDを指定してlabelを挿入する
+func InsertScaleLabel(lastID int, label ScaleLabels) error {
 	label.ID = lastID
 	if err := db.Create(&label).Error; err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
@@ -40,8 +25,8 @@ func InsertScaleLabels(lastID int, label ScaleLabels) error {
 	return nil
 }
 
-// UpdateScaleLabels questionIDを指定してlabelを更新する
-func UpdateScaleLabels(questionID int, label ScaleLabels) error {
+// UpdateScaleLabel questionIDを指定してlabelを更新する
+func UpdateScaleLabel(questionID int, label ScaleLabels) error {
 	err := db.
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
@@ -58,8 +43,8 @@ func UpdateScaleLabels(questionID int, label ScaleLabels) error {
 	return nil
 }
 
-// DeleteScaleLabels questionIDを指定してlabelを削除する
-func DeleteScaleLabels(questionID int) error {
+// DeleteScaleLabel questionIDを指定してlabelを削除する
+func DeleteScaleLabel(questionID int) error {
 	err := db.
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{}).
@@ -70,8 +55,23 @@ func DeleteScaleLabels(questionID int) error {
 	return nil
 }
 
-// CheckScaleLabels responceがScaleMin,ScaleMaxを満たしているか
-func CheckScaleLabels(label ScaleLabels, responce string) error {
+// GetScaleLabel 指定されたquestionIDのlabelを取得する
+func GetScaleLabel(questionID int) (ScaleLabels, error) {
+	label := ScaleLabels{}
+	err := db.
+		Where("question_id = ?", questionID).
+		First(&label).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return ScaleLabels{}, nil
+	} else if err != nil {
+		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
+	}
+	return label, nil
+}
+
+// CheckScaleLabel responceがScaleMin,ScaleMaxを満たしているか
+func CheckScaleLabel(label ScaleLabels, responce string) error {
 	if responce == "" {
 		return nil
 	}

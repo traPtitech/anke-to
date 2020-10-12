@@ -12,31 +12,6 @@ type ValidationTest struct {
 	result     string
 }
 
-func TestCheckNumberValid(t *testing.T) {
-	validationTests := []ValidationTest{
-		{
-			validation: Validations{0, "", "1a", "10"},
-			body:       "",
-			result:     "failed to check the boundary value. MinBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
-		},
-		{
-			validation: Validations{0, "", "10", "0"},
-			body:       "",
-			result:     "failed to check the boundary value. MinBound must be less than MaxBound (MinBound: 10, MaxBound: 0)",
-		},
-	}
-
-	for _, validationTest := range validationTests {
-		validation := validationTest.validation
-		result := validationTest.result
-		if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
-			assert.EqualError(t, err, result)
-		} else {
-			assert.NoError(t, nil)
-		}
-	}
-}
-
 func TestCheckNumberValidation(t *testing.T) {
 	validationTests := []ValidationTest{
 		{
@@ -91,6 +66,31 @@ func TestCheckTextValidation(t *testing.T) {
 		body := validationTest.body
 		result := validationTest.result
 		if err := CheckTextValidation(validation, body); err != nil {
+			assert.EqualError(t, err, result)
+		} else {
+			assert.NoError(t, nil)
+		}
+	}
+}
+
+func TestCheckNumberValid(t *testing.T) {
+	validationTests := []ValidationTest{
+		{
+			validation: Validations{0, "", "1a", "10"},
+			body:       "",
+			result:     "failed to check the boundary value. MinBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
+		},
+		{
+			validation: Validations{0, "", "10", "0"},
+			body:       "",
+			result:     "failed to check the boundary value. MinBound must be less than MaxBound (MinBound: 10, MaxBound: 0)",
+		},
+	}
+
+	for _, validationTest := range validationTests {
+		validation := validationTest.validation
+		result := validationTest.result
+		if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
 			assert.EqualError(t, err, result)
 		} else {
 			assert.NoError(t, nil)

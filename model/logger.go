@@ -1,12 +1,14 @@
 package model
 
 import (
-	"cloud.google.com/go/logging"
-	"golang.org/x/net/context"
 	"log"
 	"os"
+
+	"cloud.google.com/go/logging"
+	"golang.org/x/net/context"
 )
 
+// GetLogger loggerの取得
 func GetLogger() (*logging.Logger, error) {
 
 	ctx := context.Background()
