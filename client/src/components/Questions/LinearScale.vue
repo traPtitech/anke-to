@@ -31,11 +31,9 @@
             :value="content.scaleRange.left"
             @input="setScaleRange('left', Number($event.target.value))"
           >
-            <option
-              v-for="(num, index) in progressiveArray(0, 1)"
-              :key="index"
-              >{{ num }}</option
-            >
+            <option v-for="(num, index) in progressiveArray(0, 1)" :key="index">
+              {{ num }}
+            </option>
           </select>
         </span>
         <span>to</span>
@@ -47,8 +45,9 @@
             <option
               v-for="(num, index) in progressiveArray(2, 10)"
               :key="index"
-              >{{ num }}</option
             >
+              {{ num }}
+            </option>
           </select>
         </span>
       </div>
@@ -91,9 +90,9 @@
             <label>
               {{ num }}
               <input
-                v-model="contentProps.selected"
                 :value="num"
                 type="radio"
+                @input="$emit('update:selected', $event)"
               />
             </label>
           </span>
