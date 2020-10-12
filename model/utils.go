@@ -11,17 +11,17 @@ import (
 func NullTimeToString(t null.Time) string {
 	if t.Valid {
 		return t.Time.Format(time.RFC3339)
-	} else {
-		return "null"
 	}
+
+	return "null"
 }
 
 func NullStringConvert(str sql.NullString) string {
 	if str.Valid {
 		return str.String
-	} else {
-		return "NULL"
 	}
+
+	return "NULL"
 }
 
 func GetUserID(c echo.Context) string {
@@ -30,5 +30,6 @@ func GetUserID(c echo.Context) string {
 	if res == "" {
 		return "mds_boy"
 	}
+
 	return res
 }

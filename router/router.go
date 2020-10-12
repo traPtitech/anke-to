@@ -14,9 +14,9 @@ func UserAuthenticate() echo.MiddlewareFunc {
 			// トークンを持たないユーザはアクセスできない
 			if model.GetUserID(c) == "-" {
 				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
-			} else {
-				return next(c)
 			}
+
+			return next(c)
 		}
 	}
 }
