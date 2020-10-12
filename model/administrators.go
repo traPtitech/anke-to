@@ -13,7 +13,7 @@ type Administrator struct {
 
 func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 	userTraqids := []string{}
-	err := gormDB.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
+	err := db.Model(&Administrator{}).Where("questionnaire_id = ?", questionnaireID).Pluck("user_traqid", &userTraqids).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -29,7 +29,7 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      v,
 		}
-		err = gormDB.Create(&administrator).Error
+		err = db.Create(&administrator).Error
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -39,7 +39,7 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 }
 
 func DeleteAdministrators(c echo.Context, questionnaireID int) error {
-	err := gormDB.Where("questionnaire_id = ?", questionnaireID).Delete(Administrator{}).Error
+	err := db.Where("questionnaire_id = ?", questionnaireID).Delete(Administrator{}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -49,7 +49,7 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 
 func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
 	questionnaireIDs := []int{}
-	err := gormDB.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
+	err := db.Model(&Administrator{}).Where("user_traqid = ?", user).Or("user_traqid = ?", "traP").Select("DISTINCT questionnaire_id").Pluck("questionnaire_id", &questionnaireIDs).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)

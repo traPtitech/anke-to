@@ -89,7 +89,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
-	query := gormDB.
+	query := db.
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
@@ -158,7 +158,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 //GetTargettedQuestionnaires targetになっているアンケートの取得
 func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) ([]TargettedQuestionnaire, error) {
 	sort := c.QueryParam("sort")
-	query := gormDB.
+	query := db.
 		Table("questionnaires").
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
 		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
@@ -207,7 +207,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 	administrators := []string{}
 	respondents := []string{}
 
-	err := gormDB.
+	err := db.
 		Model(&Questionnaires{}).
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
@@ -219,7 +219,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	err = gormDB.
+	err = db.
 		Table("targets").
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
@@ -231,7 +231,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	err = gormDB.
+	err = db.
 		Table("administrators").
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
@@ -243,7 +243,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	err = gormDB.
+	err = db.
 		Table("respondents").
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
@@ -262,7 +262,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
 	res := Questionnaires{}
 
-	err := gormDB.
+	err := db.
 		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
@@ -282,7 +282,7 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
 	res := Questionnaires{}
 
-	err := gormDB.
+	err := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("title, res_time_limit").
@@ -302,7 +302,7 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	res := Questionnaires{}
 
-	err := gormDB.
+	err := db.
 		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
@@ -336,7 +336,7 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		}
 	}
 
-	err := gormDB.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&questionnaire).Error
 		if err != nil {
 			return fmt.Errorf("failed to insert a questionnaire: %w", err)
@@ -369,7 +369,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 			"res_shared_to":  resSharedTo,
 		}
 
-		err := gormDB.
+		err := db.
 			Model(&Questionnaires{}).
 			Where("id = ?", questionnaireID).
 			Update(questionnaire).Error
@@ -388,7 +388,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 		ResSharedTo:  resSharedTo,
 	}
 
-	err := gormDB.
+	err := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Update(&questionnaire).Error
@@ -402,7 +402,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 
 //DeleteQuestionnaire アンケートの削除
 func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
-	err := gormDB.Delete(&Questionnaires{ID: questionnaireID}).Error
+	err := db.Delete(&Questionnaires{ID: questionnaireID}).Error
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

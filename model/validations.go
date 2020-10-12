@@ -19,7 +19,7 @@ type Validations struct {
 // GetValidations 指定されたquestionIDのvalidationを取得する
 func GetValidations(questionID int) (Validations, error) {
 	validation := Validations{}
-	err := gormDB.
+	err := db.
 		Where("question_id = ?", questionID).
 		First(&validation).
 		Error
@@ -34,7 +34,7 @@ func GetValidations(questionID int) (Validations, error) {
 // InsertValidations IDを指定してvalidationsを挿入する
 func InsertValidations(lastID int, validation Validations) error {
 	validation.ID = lastID
-	if err := gormDB.Create(&validation).Error; err != nil {
+	if err := db.Create(&validation).Error; err != nil {
 		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
 	}
 	return nil
@@ -42,7 +42,7 @@ func InsertValidations(lastID int, validation Validations) error {
 
 // UpdateValidations questionIDを指定してvalidationを更新する
 func UpdateValidations(questionID int, validation Validations) error {
-	err := gormDB.
+	err := db.
 		Model(&Validations{}).
 		Where("question_id = ?", questionID).
 		Update(map[string]interface{}{
@@ -59,7 +59,7 @@ func UpdateValidations(questionID int, validation Validations) error {
 
 // DeleteValidations questionIDを指定してvalidationを削除する
 func DeleteValidations(questionID int) error {
-	err := gormDB.
+	err := db.
 		Where("question_id = ?", questionID).
 		Delete(&Validations{}).
 		Error

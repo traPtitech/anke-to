@@ -24,7 +24,7 @@ func InsertTargets(c echo.Context, questionnaireID int, targets []string) error 
 		})
 	}
 
-	err := gormbulk.BulkInsert(gormDB, rowTargets, len(rowTargets))
+	err := gormbulk.BulkInsert(db, rowTargets, len(rowTargets))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert target: %w", err))
 	}
@@ -34,7 +34,7 @@ func InsertTargets(c echo.Context, questionnaireID int, targets []string) error 
 
 // DeleteTargets アンケートの対象を削除
 func DeleteTargets(c echo.Context, questionnaireID int) error {
-	err := gormDB.
+	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(&Targets{}).Error
 	if err != nil {

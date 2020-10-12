@@ -39,7 +39,7 @@ type QuestionIDType struct {
 func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, error) {
 	questionIDTypes := []QuestionIDType{}
 
-	err := gormDB.
+	err := db.
 		Model(&Question{}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
@@ -60,7 +60,7 @@ func GetQuestionTypes(c echo.Context, questionnaireID int) ([]QuestionIDType, er
 func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 	questions := []Question{}
 
-	err := gormDB.
+	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Find(&questions).Error
 	// アンケートidの一致する質問を取る
@@ -88,7 +88,7 @@ func InsertQuestion(
 		IsRequired:      isRequired,
 	}
 
-	err := gormDB.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&question).Error
 		if err != nil {
 			return fmt.Errorf("failed to insert a question record: %w", err)
@@ -124,7 +124,7 @@ func UpdateQuestion(
 		IsRequired:      isRequired,
 	}
 
-	err := gormDB.
+	err := db.
 		Model(&Question{}).
 		Update(&question).Error
 	if err != nil {
@@ -137,7 +137,7 @@ func UpdateQuestion(
 
 //DeleteQuestion 質問の削除
 func DeleteQuestion(c echo.Context, questionID int) error {
-	err := gormDB.
+	err := db.
 		Where("id = ?", questionID).
 		Delete(&Question{}).Error
 	if err != nil {

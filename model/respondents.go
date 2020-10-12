@@ -123,7 +123,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 		}
 	}
 
-	err := gormDB.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&respondent).Error
 		if err != nil {
 			c.Logger().Error(fmt.Errorf("failed to insert a respondent record: %w", err))
@@ -149,7 +149,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 func UpdateRespondents(c echo.Context, questionnaireID int, responseID int) error {
 	userID := GetUserID(c)
 
-	err := gormDB.
+	err := db.
 		Model(&Respondents{}).
 		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		Update("questionnaire_id", questionnaireID).Error
@@ -164,7 +164,7 @@ func UpdateRespondents(c echo.Context, questionnaireID int, responseID int) erro
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
-	err := gormDB.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
+	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -173,7 +173,7 @@ func DeleteRespondent(c echo.Context, responseID int) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	err = gormDB.
+	err = db.
 		Where("response_id = ?", responseID).
 		Delete(&Response{}).Error
 	if err != nil {
@@ -187,7 +187,7 @@ func DeleteRespondent(c echo.Context, responseID int) error {
 func IsRespondent(c echo.Context, questionnaireID int) (bool, error) {
 	userID := GetUserID(c)
 
-	err := gormDB.
+	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Respondents{}).Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -204,7 +204,7 @@ func IsRespondent(c echo.Context, questionnaireID int) (bool, error) {
 func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
 	respondentInfos := []RespondentInfo{}
 
-	query := gormDB.
+	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
 		Where("user_traqid = ? AND respondents.deleted_at IS NULL", userID)
@@ -228,7 +228,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 			Respondents: Respondents{},
 		}
 
-		err := gormDB.ScanRows(rows, &respondentInfo)
+		err := db.ScanRows(rows, &respondentInfo)
 		if err != nil {
 			c.Logger().Error(fmt.Errorf("failed to scan responses: %w", err))
 			return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -243,7 +243,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, error) {
 	userID := GetUserID(c)
 
-	rows, err := gormDB.
+	rows, err := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
@@ -264,7 +264,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 			Respondents  `gorm:"embedded"`
 			ResponseBody `gorm:"embedded"`
 		}{}
-		err := gormDB.ScanRows(rows, &res)
+		err := db.ScanRows(rows, &res)
 		if err != nil {
 			return RespondentDetail{}, fmt.Errorf("failed to scan response detail: %w", err)
 		}
@@ -312,7 +312,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 }
 
 func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
-	query := gormDB.
+	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id")
@@ -335,7 +335,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			Respondents  `gorm:"embedded"`
 			ResponseBody `gorm:"embedded"`
 		}{}
-		err := gormDB.ScanRows(rows, &res)
+		err := db.ScanRows(rows, &res)
 		if err != nil {
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}

@@ -19,7 +19,7 @@ type ScaleLabels struct {
 // GetScaleLabels 指定されたquestionIDのlabelを取得する
 func GetScaleLabels(questionID int) (ScaleLabels, error) {
 	label := ScaleLabels{}
-	err := gormDB.
+	err := db.
 		Where("question_id = ?", questionID).
 		First(&label).
 		Error
@@ -34,7 +34,7 @@ func GetScaleLabels(questionID int) (ScaleLabels, error) {
 // InsertScaleLabels IDを指定してlabelを挿入する
 func InsertScaleLabels(lastID int, label ScaleLabels) error {
 	label.ID = lastID
-	if err := gormDB.Create(&label).Error; err != nil {
+	if err := db.Create(&label).Error; err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
 	return nil
@@ -42,7 +42,7 @@ func InsertScaleLabels(lastID int, label ScaleLabels) error {
 
 // UpdateScaleLabels questionIDを指定してlabelを更新する
 func UpdateScaleLabels(questionID int, label ScaleLabels) error {
-	err := gormDB.
+	err := db.
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
 		Update(map[string]interface{}{
@@ -60,7 +60,7 @@ func UpdateScaleLabels(questionID int, label ScaleLabels) error {
 
 // DeleteScaleLabels questionIDを指定してlabelを削除する
 func DeleteScaleLabels(questionID int) error {
-	err := gormDB.
+	err := db.
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{}).
 		Error

@@ -37,7 +37,7 @@ type Responses struct {
 }
 
 func InsertResponse(c echo.Context, responseID int, questionID int, data string) error {
-	err := gormDB.Create(&Response{
+	err := db.Create(&Response{
 		ResponseID: responseID,
 		QuestionID: questionID,
 		Body:       null.NewString(data, true),
@@ -51,7 +51,7 @@ func InsertResponse(c echo.Context, responseID int, questionID int, data string)
 }
 
 func DeleteResponse(c echo.Context, responseID int) error {
-	err := gormDB.
+	err := db.
 		Where("response_id = ?", responseID).
 		Delete(&Response{}).Error
 	if err != nil {
