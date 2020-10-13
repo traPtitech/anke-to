@@ -1,23 +1,26 @@
-name: Build image
+name: Push Docker Image
 
-on: 
+on:
   push:
-    branches: 
-      - master
+    tags:
+      - v*
 
 env:
   IMAGE_NAME: anke-to
-  IMAGE_TAG: latest
 
 jobs:
-  build:
+  image:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
         run: docker build -t docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG}
-
+      - name: Push image to GitHub Registry (latest)
+        run: |
+          docker tag docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:$IMAGE_TAG docker.pkg.github.com/traptitech/booq/${IMAGE_NAME}:latest
+          docker push docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:latest
