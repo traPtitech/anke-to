@@ -1,8 +1,10 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
 
@@ -42,20 +44,6 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 	return nil
 }
 
-// GetAdministrators アンケートの管理者を取得
-func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
-	userTraqids := []string{}
-	err := db.
-		Model(&Administrators{}).
-		Where("questionnaire_id = ?", questionnaireID).
-		Pluck("user_traqid", &userTraqids).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return userTraqids, nil
-}
-
 // GetAdminQuestionnaireIDs 自分が管理者のアンケートの取得
 func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
 	questionnaireIDs := []int{}
@@ -72,23 +60,16 @@ func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
 }
 
 // CheckAdmin 自分がアンケートの管理者か判定
-func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
-	user := GetUserID(c)
-	administrators, err := GetAdministrators(c, questionnaireID)
-	if err != nil {
-		c.Logger().Error(err)
-		return false, err
-	}
-
-	found := false
-	for _, admin := range administrators {
-		if admin == user || admin == "traP" {
-			found = true
-			break
-		}
-	}
-	if !found {
+func CheckAdmin(userID string, questionnaireID int) (bool, error) {
+	err := db.
+		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
+		Find(&Administrators{}).Error
+	if gorm.IsRecordNotFoundError(err) {
 		return false, nil
 	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get a administrator: %w", err)
+	}
+
 	return true, nil
 }
