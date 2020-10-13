@@ -1,39 +1,21 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo"
-
-	"github.com/traPtitech/anke-to/model"
 )
-
-// UserAuthenticate traPのメンバーかの認証
-func UserAuthenticate() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// トークンを持たないユーザはアクセスできない
-			if model.GetUserID(c) == "-" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
-			}
-
-			return next(c)
-		}
-	}
-}
 
 // SetRouting ルーティングの設定
 func SetRouting(e *echo.Echo) {
-	api := e.Group("/api", UserAuthenticate())
+	api := e.Group("/api", UserAuthenticate)
 	{
 		apiQuestionnnaires := api.Group("/questionnaires")
 		{
 			apiQuestionnnaires.GET("", GetQuestionnaires)
 			apiQuestionnnaires.POST("", PostQuestionnaire)
-			apiQuestionnnaires.GET("/:id", GetQuestionnaire)
-			apiQuestionnnaires.PATCH("/:id", EditQuestionnaire)
-			apiQuestionnnaires.DELETE("/:id", DeleteQuestionnaire)
-			apiQuestionnnaires.GET("/:id/questions", GetQuestions)
+			apiQuestionnnaires.GET("/:questionnaireID", GetQuestionnaire)
+			apiQuestionnnaires.PATCH("/:questionnaireID", EditQuestionnaire, QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.DELETE("/:questionnaireID", DeleteQuestionnaire, QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.GET("/:questionnaireID/questions", GetQuestions)
 		}
 
 		apiQuestions := api.Group("/questions")
