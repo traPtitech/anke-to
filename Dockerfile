@@ -23,12 +23,14 @@ RUN npm run build
 # run
 FROM alpine:3.12.0
 WORKDIR /app
+ENV TZ Asia/Tokyo
 
 RUN apk --update --no-cache add tzdata \
   && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
   && apk del tzdata
-RUN apk add --no-cache --update ca-certificates \
-  && update-ca-certificates
+RUN apk --update --no-cache add ca-certificates \
+  && update-ca-certificates \
+  && rm -rf /usr/share/ca-certificates /etc/ssl/certs
 
 COPY --from=server-build /anke-to ./
 COPY --from=client-build /github.com/traPtitech/anke-to/client/dist ./client/dist/
