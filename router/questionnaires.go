@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 // GetQuestionnaires GET /questionnaires
 func GetQuestionnaires(c echo.Context) error {
-
 	questionnaires, pageMax, err := model.GetQuestionnaires(c, c.QueryParam("nontargeted") == "true")
 	if err != nil {
 		return err
@@ -28,7 +28,6 @@ func GetQuestionnaires(c echo.Context) error {
 
 // PostQuestionnaire POST /questionnaires
 func PostQuestionnaire(c echo.Context) error {
-
 	req := struct {
 		Title          string    `json:"title"`
 		Description    string    `json:"description"`
@@ -93,12 +92,12 @@ func PostQuestionnaire(c echo.Context) error {
 	})
 }
 
-// GetQuestionnaire GET /questionnaires/:id
+// GetQuestionnaire GET /questionnaires/:questionnaireID
 func GetQuestionnaire(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
 	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
@@ -120,12 +119,11 @@ func GetQuestionnaire(c echo.Context) error {
 	})
 }
 
-// EditQuestionnaire PATCH /questonnaires/:id
+// EditQuestionnaire PATCH /questonnaires/:questionnaireID
 func EditQuestionnaire(c echo.Context) error {
-
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
 	req := struct {
@@ -170,12 +168,11 @@ func EditQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// DeleteQuestionnaire DELETE /questonnaires/:id
+// DeleteQuestionnaire DELETE /questonnaires/:questionnaireID
 func DeleteQuestionnaire(c echo.Context) error {
-
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
 	if err := model.DeleteQuestionnaire(c, questionnaireID); err != nil {
@@ -193,12 +190,12 @@ func DeleteQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// GetQuestions GET /questionnaires/:id/questions
+// GetQuestions GET /questionnaires/:questionnaireID/questions
 func GetQuestions(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		c.Logger().Error(err)
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
 	allquestions, err := model.GetQuestions(c, questionnaireID)

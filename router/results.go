@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -40,19 +41,29 @@ func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
 
 	switch resSharedTo {
 	case "administrators":
-		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		userID, err := getUserID(c)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
-		if !AmAdmin {
+
+		isAdmin, err := model.CheckAdmin(userID, questionnaireID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+		}
+		if !isAdmin {
 			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
 	case "respondents":
-		AmAdmin, err := model.CheckAdmin(c, questionnaireID)
+		userID, err := getUserID(c)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
-		if !AmAdmin {
+
+		isAdmin, err := model.CheckAdmin(userID, questionnaireID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+		}
+		if !isAdmin {
 			isRespondent, err := model.CheckRespondent(c, questionnaireID)
 			if err != nil {
 				return err
