@@ -26,7 +26,6 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: anke-to
       TZ: Asia/Tokyo
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     expose:
       - "3306"
     ports:
