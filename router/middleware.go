@@ -70,6 +70,7 @@ func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	}
 }
 
+// RespondentAuthenticate 回答者かどうかの認証
 func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
@@ -110,6 +111,16 @@ func getUserID(c echo.Context) (string, error) {
 func getQuestionnaireID(c echo.Context) (int, error) {
 	rowQuestionnaireID := c.Get(questionnaireIDKey)
 	questionnaireID, ok := rowQuestionnaireID.(int)
+	if !ok {
+		return 0, errors.New("invalid context userID")
+	}
+
+	return questionnaireID, nil
+}
+
+func getResponseID(c echo.Context) (int, error) {
+	rowResponseID := c.Get(responseIDKey)
+	questionnaireID, ok := rowResponseID.(int)
 	if !ok {
 		return 0, errors.New("invalid context userID")
 	}
