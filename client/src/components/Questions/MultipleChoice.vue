@@ -70,15 +70,25 @@
         <label class="option-label">
           <input
             v-if="content.type === 'Checkbox'"
-            v-model="contentProps.isSelected[option.label]"
             :value="option.label"
             type="checkbox"
+            @input="
+              val => {
+                $emit('update:isSelected', { label: option.label, value: val })
+              }
+            "
           />
           <input
             v-if="content.type === 'MultipleChoice'"
-            v-model="contentProps.selected"
+            v-model="selected"
             :value="option.label"
             type="radio"
+            @input="
+              val => {
+                $emit('update:selected', option.label)
+                selected = option.label
+              }
+            "
           />
           {{ option.label }}
         </label>
@@ -109,10 +119,16 @@ export default {
       type: String,
       required: false,
       default: undefined
+    },
+    func: {
+      type: Function,
+      required: false,
+      default: undefined
     }
   },
   data() {
     return {
+      selected: undefined,
       newId: -1
     }
   },
@@ -132,7 +148,9 @@ export default {
     }
   },
   watch: {},
-  mounted() {},
+  mounted() {
+    this.content = this.contentProps
+  },
   methods: {
     swapOrder: common.swapOrder,
     setContent: question.setContent,
