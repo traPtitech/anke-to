@@ -1,9 +1,9 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 
 	"github.com/labstack/echo"
 
@@ -104,9 +104,9 @@ func PostQuestion(c echo.Context) error {
 
 // EditQuestion PATCH /questions/:id
 func EditQuestion(c echo.Context) error {
-	questionID, err := strconv.Atoi(c.Param("id"))
+	questionID, err := getQuestionID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
 	req := struct {
@@ -183,9 +183,9 @@ func EditQuestion(c echo.Context) error {
 
 // DeleteQuestion DELETE /questions/:id
 func DeleteQuestion(c echo.Context) error {
-	questionID, err := strconv.Atoi(c.Param("id"))
+	questionID, err := getQuestionID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
 	if err := model.DeleteQuestion(c, questionID); err != nil {
