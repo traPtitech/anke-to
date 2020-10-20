@@ -1,25 +1,30 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
 
-func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
-	administrators := []string{}
-	if err := db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return administrators, nil
+// Administrators administratorsテーブルの構造体
+type Administrators struct {
+	QuestionnaireID int `gorm:"primary_key"`
+	UserTraqid      string
 }
 
+// InsertAdministrators アンケートの管理者を追加
 func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
+	var administrator Administrators
+	var err error
 	for _, v := range administrators {
-		if _, err := db.Exec(
-			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			questionnaireID, v); err != nil {
+		administrator = Administrators{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      v,
+		}
+		err = db.Create(&administrator).Error
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -27,45 +32,44 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 	return nil
 }
 
+// DeleteAdministrators アンケートの管理者の削除
 func DeleteAdministrators(c echo.Context, questionnaireID int) error {
-	if _, err := db.Exec(
-		"DELETE from administrators WHERE questionnaire_id = ?",
-		questionnaireID); err != nil {
+	err := db.
+		Where("questionnaire_id = ?", questionnaireID).
+		Delete(Administrators{}).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return nil
 }
 
-func GetAdminQuestionnaires(c echo.Context, user string) ([]int, error) {
-	questionnaireID := []int{}
-	if err := db.Select(&questionnaireID,
-		`SELECT DISTINCT questionnaire_id FROM administrators WHERE user_traqid = ? OR user_traqid = 'traP'`,
-		user); err != nil {
+// GetAdminQuestionnaireIDs 自分が管理者のアンケートの取得
+func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
+	questionnaireIDs := []int{}
+	err := db.
+		Model(&Administrators{}).
+		Where("user_traqid = ?", user).
+		Or("user_traqid = ?", "traP").
+		Pluck("DISTINCT questionnaire_id", &questionnaireIDs).Error
+	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return questionnaireID, nil
+	return questionnaireIDs, nil
 }
 
-// 自分がadminなら(true, nil)
-func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
-	user := GetUserID(c)
-	administrators, err := GetAdministrators(c, questionnaireID)
-	if err != nil {
-		c.Logger().Error(err)
-		return false, err
-	}
-
-	found := false
-	for _, admin := range administrators {
-		if admin == user || admin == "traP" {
-			found = true
-			break
-		}
-	}
-	if !found {
+// CheckAdmin 自分がアンケートの管理者か判定
+func CheckAdmin(userID string, questionnaireID int) (bool, error) {
+	err := db.
+		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
+		Find(&Administrators{}).Error
+	if gorm.IsRecordNotFoundError(err) {
 		return false, nil
 	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get a administrator: %w", err)
+	}
+
 	return true, nil
 }
