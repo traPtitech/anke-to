@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -92,11 +93,12 @@ func PostResponse(c echo.Context) error {
 	})
 }
 
-// GetResponse GET /responses/:id
+// GetResponse GET /responses/:responseID
 func GetResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	strResponseID := c.Param("responseID")
+	responseID, err := strconv.Atoi(strResponseID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to parse responseID(%s) to integer: %w", strResponseID, err))
 	}
 
 	respondentDetail, err := model.GetRespondentDetail(c, responseID)
@@ -110,11 +112,11 @@ func GetResponse(c echo.Context) error {
 	return c.JSON(http.StatusOK, respondentDetail)
 }
 
-// EditResponse PATCH /responses/:id
+// EditResponse PATCH /responses/:responseID
 func EditResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	responseID, err := getResponseID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
 	req := model.Responses{}
@@ -188,11 +190,11 @@ func EditResponse(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// DeleteResponse DELETE /responses/:id
+// DeleteResponse DELETE /responses/:responseID
 func DeleteResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	responseID, err := getResponseID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
 	if err := model.DeleteRespondent(c, responseID); err != nil {

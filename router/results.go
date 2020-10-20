@@ -46,7 +46,7 @@ func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
-		isAdmin, err := model.CheckAdmin(userID, questionnaireID)
+		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
@@ -59,12 +59,12 @@ func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
-		isAdmin, err := model.CheckAdmin(userID, questionnaireID)
+		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
-			isRespondent, err := model.CheckRespondent(c, questionnaireID)
+			isRespondent, err := model.CheckRespondent(userID, questionnaireID)
 			if err != nil {
 				return err
 			}
