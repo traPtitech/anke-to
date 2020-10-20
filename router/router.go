@@ -1,53 +1,36 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo"
-
-	"github.com/traPtitech/anke-to/model"
 )
 
-func UserAuthenticate() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// トークンを持たないユーザはアクセスできない
-			if model.GetUserID(c) == "-" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
-			} else {
-				return next(c)
-			}
-		}
-	}
-}
-
+// SetRouting ルーティングの設定
 func SetRouting(e *echo.Echo) {
-
-	api := e.Group("/api", UserAuthenticate())
+	api := e.Group("/api", UserAuthenticate)
 	{
 		apiQuestionnnaires := api.Group("/questionnaires")
 		{
 			apiQuestionnnaires.GET("", GetQuestionnaires)
 			apiQuestionnnaires.POST("", PostQuestionnaire)
-			apiQuestionnnaires.GET("/:id", GetQuestionnaire)
-			apiQuestionnnaires.PATCH("/:id", EditQuestionnaire)
-			apiQuestionnnaires.DELETE("/:id", DeleteQuestionnaire)
-			apiQuestionnnaires.GET("/:id/questions", GetQuestions)
+			apiQuestionnnaires.GET("/:questionnaireID", GetQuestionnaire)
+			apiQuestionnnaires.PATCH("/:questionnaireID", EditQuestionnaire, QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.DELETE("/:questionnaireID", DeleteQuestionnaire, QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.GET("/:questionnaireID/questions", GetQuestions)
 		}
 
 		apiQuestions := api.Group("/questions")
 		{
 			apiQuestions.POST("", PostQuestion)
-			apiQuestions.PATCH("/:id", EditQuestion)
-			apiQuestions.DELETE("/:id", DeleteQuestion)
+			apiQuestions.PATCH("/:questionID", EditQuestion, QuestionAdministratorAuthenticate)
+			apiQuestions.DELETE("/:questionID", DeleteQuestion, QuestionAdministratorAuthenticate)
 		}
 
 		apiResponses := api.Group("/responses")
 		{
 			apiResponses.POST("", PostResponse)
-			apiResponses.GET("/:id", GetResponse)
-			apiResponses.PATCH("/:id", EditResponse)
-			apiResponses.DELETE("/:id", DeleteResponse)
+			apiResponses.GET("/:responseID", GetResponse)
+			apiResponses.PATCH("/:responseID", EditResponse, RespondentAuthenticate)
+			apiResponses.DELETE("/:responseID", DeleteResponse, RespondentAuthenticate)
 		}
 
 		apiUsers := api.Group("/users")
@@ -69,8 +52,7 @@ func SetRouting(e *echo.Echo) {
 
 		apiResults := api.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", GetResponsesByID)
+			apiResults.GET("/:questionnaireID", GetResults)
 		}
-
 	}
 }
