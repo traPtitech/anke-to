@@ -31,8 +31,9 @@
           </a>
         </li>
       </ul>
-    </div></div
-></template>
+    </div>
+  </div>
+</template>
 
 <script>
 import axios from '@/bin/axios'
