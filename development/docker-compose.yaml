@@ -10,6 +10,7 @@ services:
       MARIADB_PASSWORD: password
       MARIADB_HOSTNAME: mysql
       MARIADB_DATABASE: anke-to
+      TZ: Asia/Tokyo
       GO111MODULE: "on"
     ports:
       - "1323:1323"
@@ -24,6 +25,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: anke-to
+      TZ: Asia/Tokyo
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     volumes:
       - "./init.sql:/docker-entrypoint-initdb.d/init.sql"

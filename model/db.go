@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
 )
 
-var db *sqlx.DB
+var db *gorm.DB
 
-func EstablishConnection() error {
+// EstablishConnection DBと接続
+func EstablishConnection() (*gorm.DB, error) {
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -30,7 +31,9 @@ func EstablishConnection() error {
 		dbname = "anke-to"
 	}
 
-	_db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
+	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
 	db = _db
-	return err
+	db = db.BlockGlobalUpdate(true)
+
+	return db, err
 }
