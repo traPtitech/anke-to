@@ -60,7 +60,7 @@ type RespondentInfo struct {
 // RespondentDetail 回答の詳細情報の構造体
 type RespondentDetail struct {
 	ResponseID      int            `json:"responseID,omitempty"`
-	TraqID string `json:"traqID,omitempty"`
+	TraqID          string         `json:"traqID,omitempty"`
 	QuestionnaireID int            `json:"questionnaireID,omitempty"`
 	SubmittedAt     time.Time      `json:"submitted_at,omitempty"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
@@ -279,7 +279,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
 				ResponseID:      res.Respondents.ResponseID,
-				TraqID: res.UserTraqid,
+				TraqID:          res.UserTraqid,
 				QuestionnaireID: res.Respondents.QuestionnaireID,
 				SubmittedAt:     res.Respondents.SubmittedAt.Time,
 				ModifiedAt:      res.ModifiedAt,
