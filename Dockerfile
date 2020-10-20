@@ -26,7 +26,9 @@ WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
   && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
-  && apk del tzdata
+  && apk del tzdata \
+  && mkdir -p /usr/share/zoneinfo/Asia \
+  && ln -s /etc/localtime /usr/share/zoneinfo/Asia/Tokyo
 RUN apk --update --no-cache add ca-certificates \
   && update-ca-certificates \
   && rm -rf /usr/share/ca-certificates /etc/ssl/certs
