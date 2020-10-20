@@ -21,16 +21,16 @@ func SetRouting(e *echo.Echo) {
 		apiQuestions := api.Group("/questions")
 		{
 			apiQuestions.POST("", PostQuestion)
-			apiQuestions.PATCH("/:id", EditQuestion)
-			apiQuestions.DELETE("/:id", DeleteQuestion)
+			apiQuestions.PATCH("/:questionID", EditQuestion, QuestionAdministratorAuthenticate)
+			apiQuestions.DELETE("/:questionID", DeleteQuestion, QuestionAdministratorAuthenticate)
 		}
 
 		apiResponses := api.Group("/responses")
 		{
 			apiResponses.POST("", PostResponse)
-			apiResponses.GET("/:id", GetResponse)
-			apiResponses.PATCH("/:id", EditResponse)
-			apiResponses.DELETE("/:id", DeleteResponse)
+			apiResponses.GET("/:responseID", GetResponse)
+			apiResponses.PATCH("/:responseID", EditResponse, RespondentAuthenticate)
+			apiResponses.DELETE("/:responseID", DeleteResponse, RespondentAuthenticate)
 		}
 
 		apiUsers := api.Group("/users")

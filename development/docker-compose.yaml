@@ -6,6 +6,7 @@ services:
       context: ..
       dockerfile: development/Dockerfile
     environment:
+      PORT: :1323
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password
       MARIADB_HOSTNAME: mysql

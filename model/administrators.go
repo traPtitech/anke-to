@@ -59,8 +59,8 @@ func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
 	return questionnaireIDs, nil
 }
 
-// CheckAdmin 自分がアンケートの管理者か判定
-func CheckAdmin(userID string, questionnaireID int) (bool, error) {
+// CheckQuestionnaireAdmin 自分がアンケートの管理者か判定
+func CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		Find(&Administrators{}).Error

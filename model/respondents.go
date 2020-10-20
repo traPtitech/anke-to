@@ -173,13 +173,11 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 
 // GetRespondentDetail 回答のIDから回答の詳細情報を取得
 func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, error) {
-	userID := GetUserID(c)
-
 	rows, err := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
-		Where("respondents.response_id = ? AND respondents.user_traqid = ? AND respondents.deleted_at IS NULL", responseID, userID).
+		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
 		Select("respondents.questionnaire_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -323,8 +321,9 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			default:
 				if !ok || len(body) == 0 {
 					responseBody.Body = null.NewString("", false)
+				} else {
+					responseBody.Body = null.NewString(body[0], true)
 				}
-				responseBody.Body = null.NewString(body[0], true)
 			}
 		}
 		responseDetail.Responses = responseBodyList
@@ -339,9 +338,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 }
 
 // CheckRespondent 回答者かどうかの確認
-func CheckRespondent(c echo.Context, questionnaireID int) (bool, error) {
-	userID := GetUserID(c)
-
+func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Respondents{}).Error
@@ -349,8 +346,7 @@ func CheckRespondent(c echo.Context, questionnaireID int) (bool, error) {
 		return false, nil
 	}
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get response: %w", err))
-		return false, echo.NewHTTPError(http.StatusInternalServerError)
+		return false, fmt.Errorf("failed to get response: %w", err)
 	}
 
 	return true, nil
