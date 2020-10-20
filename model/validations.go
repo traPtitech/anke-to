@@ -10,10 +10,10 @@ import (
 
 //Validations validationsテーブルの構造体
 type Validations struct {
-	ID           int    `json:"questionID"    gorm:"column:question_id"`
-	RegexPattern string `json:"regex_pattern" gorm:"column:regex_pattern"`
-	MinBound     string `json:"min_bound"     gorm:"column:min_bound"`
-	MaxBound     string `json:"max_bound"     gorm:"column:max_bound"`
+	QuestionID   int    `json:"questionID"    gorm:"type:int(11) PRIMARY KEY;"`
+	RegexPattern string `json:"regex_pattern" gorm:"type:text;default:NULL;"`
+	MinBound     string `json:"min_bound"     gorm:"type:text;default:NULL;"`
+	MaxBound     string `json:"max_bound"     gorm:"type:text;default:NULL;"`
 }
 
 //NumberValidError MinBound,MaxBoundの指定が有効ではない
@@ -53,7 +53,7 @@ func (e *TextMatchError) Error() string {
 
 // InsertValidation IDを指定してvalidationsを挿入する
 func InsertValidation(lastID int, validation Validations) error {
-	validation.ID = lastID
+	validation.QuestionID = lastID
 	if err := db.Create(&validation).Error; err != nil {
 		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
 	}

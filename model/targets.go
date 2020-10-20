@@ -10,8 +10,8 @@ import (
 
 //Targets targetsテーブルの構造体
 type Targets struct {
-	QuestionnaireID int    `gorm:"type:int(11);primary_key;NOT NULL;"`
-	UserTraqID      string `gorm:"column:user_traqid;type:char(30);primary_key;NOT NULL;"`
+	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
+	UserTraqid      string `gorm:"type:char(30);not null;primary_key;"`
 }
 
 // InsertTargets アンケートの対象を追加
@@ -20,7 +20,7 @@ func InsertTargets(c echo.Context, questionnaireID int, targets []string) error 
 	for _, target := range targets {
 		rowTargets = append(rowTargets, Targets{
 			QuestionnaireID: questionnaireID,
-			UserTraqID:      target,
+			UserTraqid:      target,
 		})
 	}
 

@@ -13,15 +13,15 @@ import (
 
 //Question questionテーブルの構造体
 type Question struct {
-	ID              int            `json:"id"                  gorm:"type:int(11);PRIMARY_KEY;NOT NULL;AUTO_INCREMENT;"`
-	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);DEFAULT:NULL;"`
-	PageNum         int            `json:"page_num"            gorm:"type:int(11);NOT NULL;"`
-	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);NOT NULL;"`
-	Type            string         `json:"type"                gorm:"type:char(20);NOT NULL;"`
-	Body            string         `json:"body"                gorm:"type:text;"`
-	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);NOT NULL;"`
-	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp;"`
-	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);default:NULL;"`
+	PageNum         int            `json:"page_num"            gorm:"type:int(11) NOT NULL;"`
+	QuestionNum     int            `json:"question_num"        gorm:"type:int(11) NOT NULL;"`
+	Type            string         `json:"type"                gorm:"type:char(20) NOT NULL;"`
+	Body            string         `json:"body"                gorm:"type:text;default:NULL;"`
+	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4) NOT NULL;default:0;"`
+	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp NULL;default:NULL;"`
+	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
 }
 
 //TableName テーブル名が単数形なのでその対応

@@ -24,6 +24,11 @@ func main() {
 		panic(err)
 	}
 
+	err = model.Migrate()
+	if err != nil {
+		panic(err)
+	}
+
 	if logger == nil {
 		db.LogMode(true)
 	}

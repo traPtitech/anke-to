@@ -17,12 +17,12 @@ import (
 
 //Respondents respondentsテーブルの構造体
 type Respondents struct {
-	ResponseID      int       `json:"responseID" gorm:"type:int(11);NOT NULL;PRIMARY_KEY;AUTO_INCREMENT"`
-	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11);NOT NULL;"`
-	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30);NOT NULL;"`
-	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp;NOT NULL;DEFAULT CURRENT_TIMESTAMP;"`
-	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp;"`
-	DeletedAt       null.Time `json:"deleted_at,omitempty" gorm:"type:timestamp;"`
+	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11) NOT NULL;"`
+	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30) NOT NULL;"`
+	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	DeletedAt       null.Time `json:"deleted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
 }
 
 //BeforeCreate insert時に自動でmodifiedAt更新
