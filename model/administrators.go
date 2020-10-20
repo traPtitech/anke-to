@@ -10,8 +10,8 @@ import (
 
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
-	QuestionnaireID int `gorm:"primary_key"`
-	UserTraqid      string
+	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
+	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
 }
 
 // InsertAdministrators アンケートの管理者を追加

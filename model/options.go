@@ -8,10 +8,10 @@ import (
 
 // Options optionsテーブルの構造体
 type Options struct {
-	ID         int
-	QuestionID int
-	OptionNum  int
-	Body       string
+	ID         int    `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	QuestionID int    `gorm:"type:int(11) NOT NULL;"`
+	OptionNum  int    `gorm:"type:int(11) NOT NULL;"`
+	Body       string `gorm:"type:text;default:NULL;"`
 }
 
 // InsertOption 選択肢の追加

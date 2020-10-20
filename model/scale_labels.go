@@ -9,16 +9,16 @@ import (
 
 //ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
-	ID              int    `json:"questionID"        gorm:"column:question_id"`
-	ScaleLabelRight string `json:"scale_label_right" gorm:"column:scale_label_right"`
-	ScaleLabelLeft  string `json:"scale_label_left"  gorm:"column:scale_label_left"`
-	ScaleMin        int    `json:"scale_min"         gorm:"column:scale_min"`
-	ScaleMax        int    `json:"scale_max"         gorm:"column:scale_max"`
+	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
+	ScaleLabelRight string `json:"scale_label_right" gorm:"type:text;default:NULL;"`
+	ScaleLabelLeft  string `json:"scale_label_left"  gorm:"type:text;default:NULL;"`
+	ScaleMin        int    `json:"scale_min"         gorm:"type:int(11);default:NULL;"`
+	ScaleMax        int    `json:"scale_max"         gorm:"type:int(11);default:NULL;"`
 }
 
 // InsertScaleLabel IDを指定してlabelを挿入する
 func InsertScaleLabel(lastID int, label ScaleLabels) error {
-	label.ID = lastID
+	label.QuestionID = lastID
 	if err := db.Create(&label).Error; err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
