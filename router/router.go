@@ -21,8 +21,8 @@ func SetRouting(e *echo.Echo) {
 		apiQuestions := api.Group("/questions")
 		{
 			apiQuestions.POST("", PostQuestion)
-			apiQuestions.PATCH("/:id", EditQuestion)
-			apiQuestions.DELETE("/:id", DeleteQuestion)
+			apiQuestions.PATCH("/:questionID", EditQuestion, QuestionAdministratorAuthenticate)
+			apiQuestions.DELETE("/:questionID", DeleteQuestion, QuestionAdministratorAuthenticate)
 		}
 
 		apiResponses := api.Group("/responses")

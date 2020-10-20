@@ -13,7 +13,8 @@ import (
 const (
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
-	responseIDKey = "responseID"
+	responseIDKey      = "responseID"
+	questionIDKey      = "questionID"
 )
 
 /* 消せないアンケートの発生を防ぐための管理者
@@ -98,6 +99,41 @@ func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// QuestionAdministratorAuthenticate アンケートの管理者かどうかの認証
+func QuestionAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strQuestionID := c.Param("questionID")
+		questionID, err := strconv.Atoi(strQuestionID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionID:%s(error: %w)", strQuestionID, err))
+		}
+
+		for _, adminID := range adminUserIDs {
+			if userID == adminID {
+				c.Set(questionIDKey, questionID)
+
+				return next(c)
+			}
+		}
+		isAdmin, err := model.CheckQuestionAdmin(userID, questionID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+		}
+		if !isAdmin {
+			return c.String(http.StatusForbidden, "You are not a administrator of this questionnaire.")
+		}
+
+		c.Set(questionIDKey, questionID)
+
+		return next(c)
+	}
+}
+
 func getUserID(c echo.Context) (string, error) {
 	rowUserID := c.Get(userIDKey)
 	userID, ok := rowUserID.(string)
@@ -126,4 +162,14 @@ func getResponseID(c echo.Context) (int, error) {
 	}
 
 	return questionnaireID, nil
+}
+
+func getQuestionID(c echo.Context) (int, error) {
+	rowQuestionID := c.Get(questionIDKey)
+	questionID, ok := rowQuestionID.(int)
+	if !ok {
+		return 0, errors.New("invalid context userID")
+	}
+
+	return questionID, nil
 }
