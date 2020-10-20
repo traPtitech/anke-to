@@ -27,10 +27,9 @@ jobs:
     needs: [image]
     steps:
       - name: Install SSH key
-        uses: shimataro/ssh-key-action@v1
+        uses: shimataro/ssh-key-action@v2
         with:
-          private-key: ${{ secrets.STAGING_SSH_KEY }}
-          public-key: ${{ secrets.STAGING_SSH_KEY_PUBLIC }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
           known-hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
       - name: Deploy
         run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "sudo sh /srv/anke-to/deploy.sh"
