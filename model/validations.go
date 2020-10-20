@@ -11,9 +11,9 @@ import (
 //Validations validationsテーブルの構造体
 type Validations struct {
 	QuestionID   int    `json:"questionID"    gorm:"type:int(11) PRIMARY KEY;"`
-	RegexPattern string `json:"regex_pattern" gorm:"type:text;"`
-	MinBound     string `json:"min_bound"     gorm:"type:text;"`
-	MaxBound     string `json:"max_bound"     gorm:"type:text;"`
+	RegexPattern string `json:"regex_pattern" gorm:"type:text;default:NULL;"`
+	MinBound     string `json:"min_bound"     gorm:"type:text;default:NULL;"`
+	MaxBound     string `json:"max_bound"     gorm:"type:text;default:NULL;"`
 }
 
 //NumberValidError MinBound,MaxBoundの指定が有効ではない
