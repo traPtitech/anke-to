@@ -126,3 +126,20 @@ func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 
 	return questions, nil
 }
+
+func CheckQuestionAdmin(userID string, questionID int) (bool, error) {
+	err := db.
+		Table("question").
+		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
+		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
+		Select("question.id").
+		Find(&Question{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get question_id: %w", err)
+	}
+
+	return true, nil
+}
