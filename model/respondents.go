@@ -59,7 +59,8 @@ type RespondentInfo struct {
 
 // RespondentDetail 回答の詳細情報の構造体
 type RespondentDetail struct {
-	ResponseID      int            `json:"-"`
+	ResponseID      int            `json:"responseID,omitempty"`
+	TraqID          string         `json:"traqID,omitempty"`
 	QuestionnaireID int            `json:"questionnaireID,omitempty"`
 	SubmittedAt     time.Time      `json:"submitted_at,omitempty"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
@@ -91,7 +92,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		err = tx.Select("response_id").Last(&respondent).Error
+		err = tx.Select("response_id").Order("response_id DESC").Last(&respondent).Error
 		if err != nil {
 			c.Logger().Error(fmt.Errorf("failed to get the last respondent record: %w", err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -222,15 +223,12 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 
 	for i := range respondentDetail.Responses {
 		response := &respondentDetail.Responses[i]
-		responseBody, ok := responseBodyMap[response.QuestionID]
+		responseBody := responseBodyMap[response.QuestionID]
 		switch response.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			if !ok {
-				return RespondentDetail{}, errors.New("unexpected no response")
-			}
 			response.OptionResponse = responseBody
 		default:
-			if !ok || len(responseBody) == 0 {
+			if len(responseBody) == 0 {
 				response.Body = null.NewString("", false)
 			} else {
 				response.Body = null.NewString(responseBody[0], true)
@@ -254,7 +252,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 	rows, err := query.
 		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
-		Select("respondents.response_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
+		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
@@ -281,6 +279,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
 				ResponseID:      res.Respondents.ResponseID,
+				TraqID:          res.UserTraqid,
 				QuestionnaireID: res.Respondents.QuestionnaireID,
 				SubmittedAt:     res.Respondents.SubmittedAt.Time,
 				ModifiedAt:      res.ModifiedAt,
