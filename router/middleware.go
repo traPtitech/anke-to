@@ -13,6 +13,7 @@ import (
 const (
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
+	responseIDKey = "responseID"
 )
 
 /* 消せないアンケートの発生を防ぐための管理者
@@ -55,7 +56,7 @@ func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerF
 				return next(c)
 			}
 		}
-		isAdmin, err := model.CheckAdmin(userID, questionnaireID)
+		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
@@ -64,6 +65,33 @@ func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerF
 		}
 
 		c.Set(questionnaireIDKey, questionnaireID)
+
+		return next(c)
+	}
+}
+
+func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strResponseID := c.Param("responseID")
+		responseID, err := strconv.Atoi(strResponseID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
+		}
+
+		isRespondent, err := model.CheckRespondent(userID, responseID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
+		}
+		if !isRespondent {
+			return c.String(http.StatusForbidden, "You are not a respondent of this response.")
+		}
+
+		c.Set(responseIDKey, responseID)
 
 		return next(c)
 	}

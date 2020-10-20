@@ -92,9 +92,9 @@ func PostResponse(c echo.Context) error {
 	})
 }
 
-// GetResponse GET /responses/:id
+// GetResponse GET /responses/:responseID
 func GetResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	responseID, err := strconv.Atoi(c.Param("responseID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
@@ -110,9 +110,9 @@ func GetResponse(c echo.Context) error {
 	return c.JSON(http.StatusOK, respondentDetail)
 }
 
-// EditResponse PATCH /responses/:id
+// EditResponse PATCH /responses/:responseID
 func EditResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	responseID, err := strconv.Atoi(c.Param("responseID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
@@ -188,9 +188,9 @@ func EditResponse(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// DeleteResponse DELETE /responses/:id
+// DeleteResponse DELETE /responses/:responseID
 func DeleteResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
+	responseID, err := strconv.Atoi(c.Param("responseID"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
