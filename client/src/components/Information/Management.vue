@@ -48,6 +48,12 @@
         :questionnaire-information="questionnaireInformation"
         class="button-wrapper"
         type="closeQuestionnaire"
+        @update:res_time_limit="
+          $emit(
+            'update:res_time_limit',
+            questionnaireInformation.res_time_limit
+          )
+        "
       >
       </management-button>
 

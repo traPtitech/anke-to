@@ -1,20 +1,20 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
 )
 
 // GetQuestionnaires GET /questionnaires
 func GetQuestionnaires(c echo.Context) error {
-
 	questionnaires, pageMax, err := model.GetQuestionnaires(c, c.QueryParam("nontargeted") == "true")
 	if err != nil {
 		return err
@@ -26,43 +26,15 @@ func GetQuestionnaires(c echo.Context) error {
 	})
 }
 
-// GetQuestionnaire GET /questionnaires/:id
-func GetQuestionnaire(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"questionnaireID": questionnaire.ID,
-		"title":           questionnaire.Title,
-		"description":     questionnaire.Description,
-		"res_time_limit":  model.NullTimeToString(questionnaire.ResTimeLimit),
-		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
-		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
-		"res_shared_to":   questionnaire.ResSharedTo,
-		"targets":         targets,
-		"administrators":  administrators,
-		"respondents":     respondents,
-	})
-}
-
 // PostQuestionnaire POST /questionnaires
 func PostQuestionnaire(c echo.Context) error {
-
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
 	}{}
 
 	// JSONを構造体につける
@@ -84,14 +56,14 @@ func PostQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	time_limit := "なし"
-	if req.ResTimeLimit != "NULL" {
-		time_limit = req.ResTimeLimit
+	timeLimit := "なし"
+	if req.ResTimeLimit.Valid {
+		timeLimit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
 	}
 
-	targets_mention_text := "なし"
+	targetsMentionText := "なし"
 	if len(req.Targets) != 0 {
-		targets_mention_text = "@" + strings.Join(req.Targets, " @")
+		targetsMentionText = "@" + strings.Join(req.Targets, " @")
 	}
 
 	if err := model.PostMessage(c,
@@ -99,8 +71,8 @@ func PostQuestionnaire(c echo.Context) error {
 			strconv.Itoa(lastID)+")"+"』が作成されました\n"+
 			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
 			"#### 説明\n"+req.Description+"\n"+
-			"#### 回答期限\n"+time_limit+"\n"+
-			"#### 対象者\n"+targets_mention_text+"\n"+
+			"#### 回答期限\n"+timeLimit+"\n"+
+			"#### 対象者\n"+targetsMentionText+"\n"+
 			"#### 回答リンク\n"+
 			"https://anke-to.trap.jp/responses/new/"+strconv.Itoa(lastID)); err != nil {
 		c.Logger().Error(err)
@@ -120,21 +92,47 @@ func PostQuestionnaire(c echo.Context) error {
 	})
 }
 
-// EditQuestionnaire PATCH /questonnaires/:id
-func EditQuestionnaire(c echo.Context) error {
-
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+// GetQuestionnaire GET /questionnaires/:questionnaireID
+func GetQuestionnaire(c echo.Context) error {
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+	}
+
+	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"questionnaireID": questionnaire.ID,
+		"title":           questionnaire.Title,
+		"description":     questionnaire.Description,
+		"res_time_limit":  model.NullTimeToString(questionnaire.ResTimeLimit),
+		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
+		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
+		"res_shared_to":   questionnaire.ResSharedTo,
+		"targets":         targets,
+		"administrators":  administrators,
+		"respondents":     respondents,
+	})
+}
+
+// EditQuestionnaire PATCH /questonnaires/:questionnaireID
+func EditQuestionnaire(c echo.Context) error {
+	questionnaireID, err := getQuestionnaireID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -170,12 +168,11 @@ func EditQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// DeleteQuestionnaire DELETE /questonnaires/:id
+// DeleteQuestionnaire DELETE /questonnaires/:questionnaireID
 func DeleteQuestionnaire(c echo.Context) error {
-
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
 	if err := model.DeleteQuestionnaire(c, questionnaireID); err != nil {
@@ -193,87 +190,77 @@ func DeleteQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// GetMyQuestionnaire GET /users/me/administrates
-func GetMyQuestionnaire(c echo.Context) error {
-	// 自分が管理者になっているアンケート一覧
-	questionnaireIDs, err := model.GetAdminQuestionnaires(c, model.GetUserID(c))
+// GetQuestions GET /questionnaires/:questionnaireID/questions
+func GetQuestions(c echo.Context) error {
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	type QuestionnaireInfo struct {
-		ID             int      `json:"questionnaireID"`
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		CreatedAt      string   `json:"created_at"`
-		ModifiedAt     string   `json:"modified_at"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		AllResponded   bool     `json:"all_responded"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
-		Respondents    []string `json:"respondents"`
+	allquestions, err := model.GetQuestions(c, questionnaireID)
+	if err != nil {
+		return err
 	}
-	ret := []QuestionnaireInfo{}
 
-	for _, questionnaireID := range questionnaireIDs {
-		questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
+	if len(allquestions) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	type questionInfo struct {
+		QuestionID      int      `json:"questionID"`
+		PageNum         int      `json:"page_num"`
+		QuestionNum     int      `json:"question_num"`
+		QuestionType    string   `json:"question_type"`
+		Body            string   `json:"body"`
+		IsRequired      bool     `json:"is_required"`
+		CreatedAt       string   `json:"created_at"`
+		Options         []string `json:"options"`
+		ScaleLabelRight string   `json:"scale_label_right"`
+		ScaleLabelLeft  string   `json:"scale_label_left"`
+		ScaleMin        int      `json:"scale_min"`
+		ScaleMax        int      `json:"scale_max"`
+		RegexPattern    string   `json:"regex_pattern"`
+		MinBound        string   `json:"min_bound"`
+		MaxBound        string   `json:"max_bound"`
+	}
+	var ret []questionInfo
+
+	for _, v := range allquestions {
+		options := []string{}
+		scalelabel := model.ScaleLabels{}
+		validation := model.Validations{}
+		var err error
+		switch v.Type {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			options, err = model.GetOptions(c, v.ID)
+		case "LinearScale":
+			scalelabel, err = model.GetScaleLabel(v.ID)
+		case "Text", "Number":
+			validation, err = model.GetValidation(v.ID)
+		}
 		if err != nil {
-			return err
-		}
-		allresponded := true
-		for _, t := range targets {
-			found := false
-			for _, r := range respondents {
-				if t == r {
-					found = true
-					break
-				}
-			}
-			if !found {
-				allresponded = false
-				break
-			}
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
-		ret = append(ret, QuestionnaireInfo{
-			ID:             questionnaire.ID,
-			Title:          questionnaire.Title,
-			Description:    questionnaire.Description,
-			ResTimeLimit:   model.NullTimeToString(questionnaire.ResTimeLimit),
-			CreatedAt:      questionnaire.CreatedAt.Format(time.RFC3339),
-			ModifiedAt:     questionnaire.ModifiedAt.Format(time.RFC3339),
-			ResSharedTo:    questionnaire.ResSharedTo,
-			AllResponded:   allresponded,
-			Targets:        targets,
-			Administrators: administrators,
-			Respondents:    respondents,
-		})
-	}
-
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].ModifiedAt > ret[j].ModifiedAt
-	})
-
-	return c.JSON(http.StatusOK, ret)
-}
-
-// GetTargetedQuestionnaire GET /users/me/targeted
-func GetTargetedQuestionnaire(c echo.Context) error {
-	ret, err := model.GetTargettedQuestionnaires(c)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, ret)
-}
-
-// GetTargetedQuestionnaire GET /users/:traQID/targeted
-func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
-	traQID := c.Param("traQID")
-	ret, err := model.GetTargettedQuestionnairesBytraQID(c, traQID)
-	if err != nil {
-		return err
+		ret = append(ret,
+			questionInfo{
+				QuestionID:      v.ID,
+				PageNum:         v.PageNum,
+				QuestionNum:     v.QuestionNum,
+				QuestionType:    v.Type,
+				Body:            v.Body,
+				IsRequired:      v.IsRequired,
+				CreatedAt:       v.CreatedAt.Format(time.RFC3339),
+				Options:         options,
+				ScaleLabelRight: scalelabel.ScaleLabelRight,
+				ScaleLabelLeft:  scalelabel.ScaleLabelLeft,
+				ScaleMin:        scalelabel.ScaleMin,
+				ScaleMax:        scalelabel.ScaleMax,
+				RegexPattern:    validation.RegexPattern,
+				MinBound:        validation.MinBound,
+				MaxBound:        validation.MaxBound,
+			})
 	}
 
 	return c.JSON(http.StatusOK, ret)

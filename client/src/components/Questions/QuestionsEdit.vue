@@ -58,6 +58,7 @@
                   :question-index="index"
                   class="response-body"
                   @set-question-content="setQuestionContent"
+                  @update:selected="question.selected = $value"
                 ></component>
               </div>
             </div>

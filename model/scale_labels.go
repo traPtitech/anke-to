@@ -1,58 +1,90 @@
 package model
 
 import (
-	"net/http"
+	"fmt"
+	"strconv"
 
-	"github.com/labstack/echo"
+	"github.com/jinzhu/gorm"
 )
 
+//ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
-	ID              int    `json:"questionID" db:"question_id"`
-	ScaleLabelRight string `json:"scale_label_right" db:"scale_label_right"`
-	ScaleLabelLeft  string `json:"scale_label_left"  db:"scale_label_left"`
-	ScaleMin        int    `json:"scale_min" db:"scale_min"`
-	ScaleMax        int    `json:"scale_max" db:"scale_max"`
+	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
+	ScaleLabelRight string `json:"scale_label_right" gorm:"type:text;default:NULL;"`
+	ScaleLabelLeft  string `json:"scale_label_left"  gorm:"type:text;default:NULL;"`
+	ScaleMin        int    `json:"scale_min"         gorm:"type:int(11);default:NULL;"`
+	ScaleMax        int    `json:"scale_max"         gorm:"type:int(11);default:NULL;"`
 }
 
-func GetScaleLabels(c echo.Context, questionID int) (ScaleLabels, error) {
-	scalelabel := ScaleLabels{}
-	if err := db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?",
-		questionID); err != nil {
-		c.Logger().Error(err)
-		return ScaleLabels{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return scalelabel, nil
-}
-
-func InsertScaleLabels(c echo.Context, lastID int, label ScaleLabels) error {
-	if _, err := db.Exec(
-		"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
-		lastID, label.ScaleLabelLeft, label.ScaleLabelRight, label.ScaleMin, label.ScaleMax); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+// InsertScaleLabel IDを指定してlabelを挿入する
+func InsertScaleLabel(lastID int, label ScaleLabels) error {
+	label.QuestionID = lastID
+	if err := db.Create(&label).Error; err != nil {
+		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
 	return nil
 }
 
-func UpdateScaleLabels(c echo.Context, questionID int, label ScaleLabels) error {
-	if _, err := db.Exec(
-		`INSERT INTO scale_labels (question_id, scale_label_right, scale_label_left, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)
-		ON DUPLICATE KEY UPDATE scale_label_right = ?, scale_label_left = ?, scale_min = ?, scale_max = ?`,
-		questionID,
-		label.ScaleLabelRight, label.ScaleLabelLeft, label.ScaleMin, label.ScaleMax,
-		label.ScaleLabelRight, label.ScaleLabelLeft, label.ScaleMin, label.ScaleMax); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+// UpdateScaleLabel questionIDを指定してlabelを更新する
+func UpdateScaleLabel(questionID int, label ScaleLabels) error {
+	err := db.
+		Model(&ScaleLabels{}).
+		Where("question_id = ?", questionID).
+		Update(map[string]interface{}{
+			"question_id":       questionID,
+			"scale_label_right": label.ScaleLabelRight,
+			"scale_label_left":  label.ScaleLabelLeft,
+			"scale_min":         label.ScaleMin,
+			"scale_max":         label.ScaleMax}).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to update the scale labell (questionID: %d): %w", questionID, err)
 	}
 	return nil
 }
 
-func DeleteScaleLabels(c echo.Context, questionID int) error {
-	if _, err := db.Exec(
-		"DELETE FROM scale_labels WHERE question_id= ?",
-		questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+// DeleteScaleLabel questionIDを指定してlabelを削除する
+func DeleteScaleLabel(questionID int) error {
+	err := db.
+		Where("question_id = ?", questionID).
+		Delete(&ScaleLabels{}).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to delete the scale labell (questionID: %d): %w", questionID, err)
 	}
+	return nil
+}
+
+// GetScaleLabel 指定されたquestionIDのlabelを取得する
+func GetScaleLabel(questionID int) (ScaleLabels, error) {
+	label := ScaleLabels{}
+	err := db.
+		Where("question_id = ?", questionID).
+		First(&label).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return ScaleLabels{}, nil
+	} else if err != nil {
+		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
+	}
+	return label, nil
+}
+
+// CheckScaleLabel responceがScaleMin,ScaleMaxを満たしているか
+func CheckScaleLabel(label ScaleLabels, responce string) error {
+	if responce == "" {
+		return nil
+	}
+
+	r, err := strconv.Atoi(responce)
+	if err != nil {
+		return err
+	}
+	if r < label.ScaleMin {
+		return fmt.Errorf("failed to meet the scale. the responce must be greater than ScaleMin (number: %d, ScaleMin: %d)", r, label.ScaleMin)
+	} else if r > label.ScaleMax {
+		return fmt.Errorf("failed to meet the scale. the responce must be less than ScaleMax (number: %d, ScaleMax: %d)", r, label.ScaleMax)
+	}
+
 	return nil
 }

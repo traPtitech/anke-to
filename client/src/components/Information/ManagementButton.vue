@@ -133,7 +133,7 @@ export default {
       if (this.disabled || this.processing) return
       if (window.confirm('アンケートを今すぐ締め切りますか？')) {
         this.processing = true
-        const time_limit = moment().format('YYYY/MM/DD HH:mm')
+        const time_limit = moment().toISOString()
         axios
           .patch('/questionnaires/' + this.questionnaireId, {
             title: this.questionnaireInformation.title,
@@ -145,7 +145,7 @@ export default {
           })
           .then(() => {
             this.processing = false
-            this.questionnaireInformation.res_time_limit = time_limit
+            this.$emit('update:res_time_limit', time_limit)
           })
           .catch(error => {
             this.processing = false
