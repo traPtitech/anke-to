@@ -17,7 +17,8 @@ WORKDIR /github.com/traPtitech/anke-to/client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
 COPY client .
-RUN npm run build
+RUN npm run build \
+  && rm -f dist/js/*.js.map
 
 
 # run
