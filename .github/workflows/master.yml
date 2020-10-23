@@ -17,9 +17,9 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
-        path: |
-          /var/lib/docker/buildkit
-        key: ${{ runner.os }}-buildkit-${{ hashFiles('**/go.sum') }}
+          path: |
+            /var/lib/docker/buildkit
+          key: ${{ runner.os }}-buildkit-${{ hashFiles('**/go.sum') }}
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
