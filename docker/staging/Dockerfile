@@ -1,23 +1,30 @@
+# syntax = docker/dockerfile:1.0-experimental
+
 # build backend
 FROM golang:1.15.3-alpine as server-build
-RUN apk add --update --no-cache git
+RUN --mount=type=cache,id=aptgit,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+  apk add --update git
 
 WORKDIR /github.com/traPtitech/anke-to
 
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,id=gomod,target=/go/pkg/mod/cache \
+  go mod download
 
 COPY . .
 
-RUN go build -o /anke-to -ldflags "-s -w"
+RUN --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
+  go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
 FROM node:12-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 COPY client/package.json client/package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,id=npmci,target=/root/.npm \
+  npm ci --prefer-offline
 COPY client .
-RUN npm run staging-build
+RUN --mount=type=cache,id=vuebuild,target=/github.com/traPtitech/anke-to/client/node_modules/.cache \
+  npm run staging-build
 
 
 # run
