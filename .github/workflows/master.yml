@@ -26,8 +26,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: |
-          docker build \
-          --cache-from=docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG} --build-arg BUILDKIT_INLINE_CACHE=1 \
+          set -eux
+          DOCKER_ARG_CACHE_FROM=""
+          if [ -e buildx-cache/index.json ];then
+            DOCKER_ARG_CACHE_FROM="--cache-from type=local,src=buildx-cache"
+          fi
+          docker buildx build --progress=plain \
+          --cache-to type=local,dest=buildx-cache \
+          $DOCKER_ARG_CACHE_FROM
           -f docker/staging/Dockerfile -t docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:${IMAGE_TAG}
