@@ -161,7 +161,7 @@ export default {
           this.results.push({
             modifiedAt: this.getDateStr(data.modified_at),
             responseId: data.responseID,
-            responseBody: data.response_body,
+            responseBody: data.body,
             submittedAt: this.getDateStr(data.submitted_at),
             traqId: data.traqID
           })

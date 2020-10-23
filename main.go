@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -17,9 +19,18 @@ func main() {
 		panic(err)
 	}
 
-	err = model.EstablishConnection()
+	db, err := model.EstablishConnection()
 	if err != nil {
 		panic(err)
+	}
+
+	err = model.Migrate()
+	if err != nil {
+		panic(err)
+	}
+
+	if logger == nil {
+		db.LogMode(true)
 	}
 
 	e := echo.New()
@@ -53,6 +64,7 @@ func main() {
 
 	router.SetRouting(e)
 
+	port := os.Getenv("PORT")
 	// Start server
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(port))
 }

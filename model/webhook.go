@@ -14,12 +14,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func CalcHMACSHA1(message string) string {
-	mac := hmac.New(sha1.New, []byte(os.Getenv("TRAQ_WEBHOOK_SECRET")))
-	_, _ = mac.Write([]byte(message))
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
+// PostMessage Webhookでのメッセージの投稿
 func PostMessage(c echo.Context, message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
 	req, err := http.NewRequest("POST",
@@ -30,7 +25,7 @@ func PostMessage(c echo.Context, message string) error {
 	}
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
-	req.Header.Set("X-TRAQ-Signature", CalcHMACSHA1(message))
+	req.Header.Set("X-TRAQ-Signature", calcHMACSHA1(message))
 
 	query := netUrl.Values{}
 	query.Add("embed", "1")
@@ -44,9 +39,18 @@ func PostMessage(c echo.Context, message string) error {
 	defer resp.Body.Close()
 
 	response := make([]byte, 512)
-	resp.Body.Read(response)
+	_, err = resp.Body.Read(response)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
 
 	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, response)
 
 	return nil
+}
+
+func calcHMACSHA1(message string) string {
+	mac := hmac.New(sha1.New, []byte(os.Getenv("TRAQ_WEBHOOK_SECRET")))
+	_, _ = mac.Write([]byte(message))
+	return hex.EncodeToString(mac.Sum(nil))
 }

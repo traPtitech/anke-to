@@ -46,9 +46,7 @@
                     <thead>
                       <td>回答</td>
                       <td>回答数</td>
-                      <td v-if="isSelectType(question.type)">
-                        選択率
-                      </td>
+                      <td v-if="isSelectType(question.type)">選択率</td>
                       <td>その回答をした人</td>
                     </thead>
                     <tbody>
