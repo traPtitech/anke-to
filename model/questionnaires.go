@@ -16,19 +16,22 @@ import (
 
 //Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
-	ID           int       `json:"questionnaireID" gorm:"type:int(11);AUTO_INCREMENT;NOT NULL;"`
-	Title        string    `json:"title"           gorm:"type:char(50);NOT NULL;UNIQUE;"`
-	Description  string    `json:"description"     gorm:"type:text;NOT NULL;"`
-	ResTimeLimit null.Time `json:"res_time_limit,omitempty"  gorm:"type:timestamp;DEFAULT:NULL;"`
-	DeletedAt    null.Time `json:"deleted_at,omitempty"      gorm:"type:timestamp;DEFAULT:NULL;"`
-	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30);NOT NULL;DEFAULT:administrators;"`
-	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	ModifiedAt   time.Time `json:"modified_at"     gorm:"type:timestamp;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	ID           int       `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	Title        string    `json:"title"           gorm:"type:char(50) NOT NULL;"`
+	Description  string    `json:"description"     gorm:"type:text NOT NULL;"`
+	ResTimeLimit null.Time `json:"res_time_limit,omitempty"  gorm:"type:timestamp NULL;default:NULL;"`
+	DeletedAt    null.Time `json:"deleted_at,omitempty"      gorm:"type:timestamp NULL;default:NULL;"`
+	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30) NOT NULL;default:\"administrators\";"`
+	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	ModifiedAt   time.Time `json:"modified_at"     gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeUpdate(scope *gorm.Scope) (err error) {
-	questionnaire.ModifiedAt = time.Now()
+func (questionnaire *Questionnaires) BeforeUpdate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
 
 	return nil
 }
@@ -45,26 +48,97 @@ type TargettedQuestionnaire struct {
 	RespondedAt string `json:"responded_at"`
 }
 
-func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
-	switch sort {
-	case "created_at":
-		query = query.Order("questionnaires.created_at")
-	case "-created_at":
-		query = query.Order("questionnaires.created_at desc")
-	case "title":
-		query = query.Order("questionnaires.title")
-	case "-title":
-		query = query.Order("questionnaires.title desc")
-	case "modified_at":
-		query = query.Order("questionnaires.modified_at")
-	case "-modified_at":
-		query = query.Order("questionnaires.modified_at desc")
-	case "":
-	default:
-		return nil, errors.New("invalid sort type")
+//InsertQuestionnaire アンケートの追加
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+	var questionnaire Questionnaires
+	if !resTimeLimit.Valid {
+		questionnaire = Questionnaires{
+			Title:       title,
+			Description: description,
+			ResSharedTo: resSharedTo,
+		}
+	} else {
+		questionnaire = Questionnaires{
+			Title:        title,
+			Description:  description,
+			ResTimeLimit: resTimeLimit,
+			ResSharedTo:  resSharedTo,
+		}
 	}
 
-	return query, nil
+	err := db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&questionnaire).Error
+		if err != nil {
+			return fmt.Errorf("failed to insert a questionnaire: %w", err)
+		}
+
+		err = tx.
+			Select("id").
+			Last(&questionnaire).Error
+		if err != nil {
+			return fmt.Errorf("failed to get the last id: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed in the transaction: %w", err))
+		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return questionnaire.ID, nil
+}
+
+//UpdateQuestionnaire アンケートの更新
+func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+	if !resTimeLimit.Valid {
+		questionnaire := map[string]interface{}{
+			"title":          title,
+			"description":    description,
+			"res_time_limit": gorm.Expr("NULL"),
+			"res_shared_to":  resSharedTo,
+		}
+
+		err := db.
+			Model(&Questionnaires{}).
+			Where("id = ?", questionnaireID).
+			Update(questionnaire).Error
+		if err != nil {
+			c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		return nil
+	}
+
+	questionnaire := Questionnaires{
+		Title:        title,
+		Description:  description,
+		ResTimeLimit: resTimeLimit,
+		ResSharedTo:  resSharedTo,
+	}
+
+	err := db.
+		Model(&Questionnaires{}).
+		Where("id = ?", questionnaireID).
+		Update(&questionnaire).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
+//DeleteQuestionnaire アンケートの削除
+func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+	err := db.Delete(&Questionnaires{ID: questionnaireID}).Error
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return nil
 }
 
 /*GetQuestionnaires アンケートの一覧
@@ -89,7 +163,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
-	query := gormDB.
+	query := db.
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
@@ -155,10 +229,68 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 	return questionnaires, pageMax, nil
 }
 
+//GetQuestionnaireInfo アンケートの詳細な情報取得
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+	questionnaire := Questionnaires{}
+	targets := []string{}
+	administrators := []string{}
+	respondents := []string{}
+
+	err := db.
+		Model(&Questionnaires{}).
+		Where("questionnaires.id = ?", questionnaireID).
+		First(&questionnaire).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get a questionnaire: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = db.
+		Table("targets").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &targets).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get targets: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = db.
+		Table("administrators").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &administrators).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get administrators: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = db.
+		Table("respondents").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &respondents).Error
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get respondents: %w", err))
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
+		}
+		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return &questionnaire, targets, administrators, respondents, nil
+}
+
 //GetTargettedQuestionnaires targetになっているアンケートの取得
 func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) ([]TargettedQuestionnaire, error) {
 	sort := c.QueryParam("sort")
-	query := gormDB.
+	query := db.
 		Table("questionnaires").
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
 		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
@@ -200,72 +332,12 @@ func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) 
 	return questionnaires, nil
 }
 
-//GetQuestionnaireInfo アンケートの詳細な情報取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
-	questionnaire := Questionnaires{}
-	targets := []string{}
-	administrators := []string{}
-	respondents := []string{}
-
-	err := gormDB.
-		Model(&Questionnaires{}).
-		Where("questionnaires.id = ?", questionnaireID).
-		First(&questionnaire).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get a questionnaire: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	err = gormDB.
-		Table("targets").
-		Where("questionnaire_id = ?", questionnaire.ID).
-		Pluck("user_traqid", &targets).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get targets: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	err = gormDB.
-		Table("administrators").
-		Where("questionnaire_id = ?", questionnaire.ID).
-		Pluck("user_traqid", &administrators).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get administrators: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	err = gormDB.
-		Table("respondents").
-		Where("questionnaire_id = ?", questionnaire.ID).
-		Pluck("user_traqid", &respondents).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get respondents: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return &questionnaire, targets, administrators, respondents, nil
-}
-
 //GetQuestionnaireLimit アンケートの回答期限の取得
 func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
-	res := struct {
-		ResTimeLimit null.Time
-	}{}
+	res := Questionnaires{}
 
-	err := gormDB.
-		Model(&Questionnaires{}).
+	err := db.
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
 		Scan(&res).Error
@@ -276,43 +348,19 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		c.Logger().Error(err)
 		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	return NullTimeToString(res.ResTimeLimit), nil
-}
-
-//GetTitleAndLimit アンケートのタイトルと回答期限の取得
-func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
-	res := struct {
-		Title        string
-		ResTimeLimit null.Time
-	}{}
-
-	err := gormDB.
-		Model(&Questionnaires{}).
-		Where("id = ?").
-		Select("title, res_time_limit").
-		Scan(&res).Error
-	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", "", nil
-		}
-		c.Logger().Error(err)
-		return "", "", echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return res.Title, NullTimeToString(res.ResTimeLimit), nil
 }
 
 //GetResShared アンケートの回答の公開範囲の取得
 func GetResShared(c echo.Context, questionnaireID int) (string, error) {
-	res := struct {
-		ResSharedTo string
-	}{}
+	res := Questionnaires{}
 
-	err := gormDB.
-		Model(&Questionnaires{}).
+	err := db.
+		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_shared_to").
-		First(&res).Error
+		Scan(&res).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
@@ -324,95 +372,24 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 	return res.ResSharedTo, nil
 }
 
-//InsertQuestionnaire アンケートの追加
-func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
-	var questionnaire Questionnaires
-	if !resTimeLimit.Valid {
-		questionnaire = Questionnaires{
-			Title:       title,
-			Description: description,
-			ResSharedTo: resSharedTo,
-		}
-	} else {
-		questionnaire = Questionnaires{
-			Title:        title,
-			Description:  description,
-			ResTimeLimit: resTimeLimit,
-			ResSharedTo:  resSharedTo,
-		}
+func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
+	switch sort {
+	case "created_at":
+		query = query.Order("questionnaires.created_at")
+	case "-created_at":
+		query = query.Order("questionnaires.created_at desc")
+	case "title":
+		query = query.Order("questionnaires.title")
+	case "-title":
+		query = query.Order("questionnaires.title desc")
+	case "modified_at":
+		query = query.Order("questionnaires.modified_at")
+	case "-modified_at":
+		query = query.Order("questionnaires.modified_at desc")
+	case "":
+	default:
+		return nil, errors.New("invalid sort type")
 	}
 
-	err := gormDB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&questionnaire).Error
-		if err != nil {
-			return fmt.Errorf("failed to insert a questionnaire: %w", err)
-		}
-
-		err = tx.
-			Select("id").
-			Last(&questionnaire).Error
-		if err != nil {
-			return fmt.Errorf("failed to get the last id: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed in the transaction: %w", err))
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return questionnaire.ID, nil
-}
-
-//UpdateQuestionnaire アンケートの更新
-func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
-	if !resTimeLimit.Valid {
-		questionnaire := map[string]interface{}{
-			"title":       title,
-			"description": description,
-			"res_time_limit": gorm.Expr("NULL"),
-			"res_shared_to": resSharedTo,
-		}
-
-		err := gormDB.
-			Model(&Questionnaires{}).
-			Where("id = ?", questionnaireID).
-			Update(questionnaire).Error
-		if err != nil {
-			c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-		return nil
-	}
-
-	questionnaire := Questionnaires{
-		Title:        title,
-		Description:  description,
-		ResTimeLimit: resTimeLimit,
-		ResSharedTo:  resSharedTo,
-	}
-
-	err := gormDB.
-		Model(&Questionnaires{}).
-		Where("id = ?", questionnaireID).
-		Update(&questionnaire).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return nil
-}
-
-//DeleteQuestionnaire アンケートの削除
-func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
-	err := gormDB.Delete(&Questionnaires{ID: questionnaireID}).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return nil
+	return query, nil
 }

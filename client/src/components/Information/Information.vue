@@ -27,6 +27,7 @@
               canViewResults: canViewResults,
               administrates: administrates
             }"
+            @update:res_time_limit="information.res_time_limit = $event"
           ></management>
         </div>
 

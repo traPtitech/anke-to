@@ -58,6 +58,12 @@
                   :question-index="index"
                   class="response-body"
                   @set-question-content="setQuestionContent"
+                  @update:selected="question.selected = $event"
+                  @update:isSelected="
+                    ;(function ({ label: l, value: v }) {
+                      question.isSelected[l] = v
+                    })($event)
+                  "
                 ></component>
               </div>
             </div>

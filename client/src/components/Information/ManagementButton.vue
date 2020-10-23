@@ -145,7 +145,7 @@ export default {
           })
           .then(() => {
             this.processing = false
-            this.questionnaireInformation.res_time_limit = time_limit
+            this.$emit('update:res_time_limit', time_limit)
           })
           .catch(error => {
             this.processing = false

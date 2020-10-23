@@ -1,5 +1,6 @@
 # build backend
 FROM golang:1.15.3-alpine as server-build
+
 RUN apk add --update --no-cache git
 
 WORKDIR /github.com/traPtitech/anke-to
@@ -12,17 +13,16 @@ COPY . .
 RUN go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:15-alpine as client-build
+FROM node:12-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 COPY client/package.json client/package-lock.json ./
-RUN npm ci
+RUN npm ci --prefer-offline
 COPY client .
-RUN npm run build \
-  && rm -f dist/js/*.js.map
+RUN npm run staging-build
 
 
 # run
-FROM alpine:3.12.1
+FROM alpine:3.12.0
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \

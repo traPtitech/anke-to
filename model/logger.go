@@ -1,12 +1,14 @@
 package model
 
 import (
+	"log"
+	"os"
+
 	"cloud.google.com/go/logging"
 	"golang.org/x/net/context"
-	"os"
-	"log"
 )
 
+// GetLogger loggerの取得
 func GetLogger() (*logging.Logger, error) {
 
 	ctx := context.Background()
@@ -14,7 +16,7 @@ func GetLogger() (*logging.Logger, error) {
 	// Sets your Google Cloud Platform project ID.
 	projectID := os.Getenv("GCP_PROJECT_ID")
 	if projectID == "" {
-		log.Println("no GCP Project ID");
+		log.Println("no GCP Project ID")
 		return nil, nil
 	}
 

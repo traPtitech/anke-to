@@ -3,9 +3,10 @@ version: "3"
 services:
   anke-to:
     build:
-      context: ..
-      dockerfile: development/Dockerfile
+      context: ../..
+      dockerfile: docker/staging/Dockerfile
     environment:
+      PORT: :1323
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password
       MARIADB_HOSTNAME: mysql
@@ -14,8 +15,7 @@ services:
       GO111MODULE: "on"
     ports:
       - "1323:1323"
-    volumes:
-      - "../:/go/src/github.com/traPtitech/anke-to"
+    restart: always
     depends_on:
       - mysql
 
@@ -26,9 +26,6 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: anke-to
       TZ: Asia/Tokyo
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
-    volumes:
-      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
     expose:
       - "3306"
     ports:

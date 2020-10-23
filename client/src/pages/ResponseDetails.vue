@@ -295,7 +295,7 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.submitted_at = new Date().toLocaleString('ja-GB')
+      data.submitted_at = new Date().toISOString()
 
       this.isSubmitting = true
       this.sendResponse(data).then(() => {
