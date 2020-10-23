@@ -1,11 +1,9 @@
+.git*
+*docker*
 Dockerfile
-docker-compose.yml
-.dockerignore
-.git
-.gitignore
+README.md
 
-/vendor/
+buildx-cache
+client/node_modules/
+client/dist/
 anke-to
-showcase.yaml
-/client/node_modules/
-/client/dist/
