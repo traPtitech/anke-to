@@ -112,7 +112,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
-	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
+	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -351,6 +351,7 @@ func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	return true, nil
 }
 
+// CheckRespondentByResponseID 回答者かどうかの確認
 func CheckRespondentByResponseID(userID string, responseID int) (bool,error) {
 	err := db.
 		Where("user_traqid = ? AND response_id = ?", userID, responseID).
