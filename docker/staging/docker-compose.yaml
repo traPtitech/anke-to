@@ -13,6 +13,8 @@ services:
       MARIADB_DATABASE: anke-to
       TZ: Asia/Tokyo
       GO111MODULE: "on"
+      TRAQ_WEBHOOK_ID:
+      TRAQ_WEBHOOK_SECRET:
     ports:
       - "1323:1323"
     restart: always
