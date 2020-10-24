@@ -23,4 +23,6 @@ tmp
 # app
 anke-to
 
+.env
+
 # End of https://www.gitignore.io/api/go
