@@ -197,6 +197,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 	query = query.Limit(20).Offset(offset)
 
 	err = query.
+		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
 	if gorm.IsRecordNotFoundError(err) {
