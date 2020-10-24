@@ -352,7 +352,7 @@ func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 }
 
 // CheckRespondentByResponseID 回答者かどうかの確認
-func CheckRespondentByResponseID(userID string, responseID int) (bool,error) {
+func CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		First(&Respondents{}).Error
