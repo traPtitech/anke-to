@@ -21,7 +21,7 @@ type Respondents struct {
 	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11) NOT NULL;"`
 	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30) NOT NULL;"`
 	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
-	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt       null.Time `json:"deleted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
 }
 
