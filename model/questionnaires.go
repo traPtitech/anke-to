@@ -275,7 +275,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 
 	err = db.
 		Table("respondents").
-		Where("questionnaire_id = ?", questionnaire.ID).
+		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to get respondents: %w", err))
