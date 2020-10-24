@@ -73,6 +73,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 
 	var respondent Respondents
 	if submitedAt.Valid {
+		fmt.Println(submitedAt.Valid)
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      userID,
@@ -82,6 +83,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      userID,
+			SubmittedAt: null.NewTime(time.Time{},false),
 		}
 	}
 
@@ -178,7 +180,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
-		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
+		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL", responseID).
 		Select("respondents.questionnaire_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -251,7 +253,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	}
 
 	rows, err := query.
-		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL", questionnaireID).
 		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
