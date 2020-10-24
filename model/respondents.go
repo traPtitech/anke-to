@@ -351,6 +351,20 @@ func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	return true, nil
 }
 
+func CheckRespondentByResponseID(userID string, responseID int) (bool,error) {
+	err := db.
+		Where("user_traqid = ? AND response_id = ?", userID, responseID).
+		First(&Respondents{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get response: %w", err)
+	}
+
+	return true, nil
+}
+
 func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 	var sortNum int
 	switch sort {
