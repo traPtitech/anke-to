@@ -86,6 +86,7 @@ func UpdateQuestion(
 
 	err := db.
 		Model(&Question{}).
+		Where("id = ?", questionID).
 		Update(&question).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to update a question record: %w", err))
