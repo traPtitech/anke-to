@@ -6,6 +6,17 @@ import (
 
 // SetRouting ルーティングの設定
 func SetRouting(e *echo.Echo) {
+	// Static Files
+	e.Static("/", "client/dist")
+	e.Static("/js", "client/dist/js")
+	e.Static("/img", "client/dist/img")
+	e.Static("/fonts", "client/dist/fonts")
+	e.Static("/css", "client/dist/css")
+
+	e.File("/app.js", "client/dist/app.js")
+	e.File("/favicon.ico", "client/dist/favicon.ico")
+	e.File("*", "client/dist/index.html")
+
 	api := e.Group("/api", UserAuthenticate)
 	{
 		apiQuestionnnaires := api.Group("/questionnaires")

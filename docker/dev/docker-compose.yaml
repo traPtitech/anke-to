@@ -29,5 +29,3 @@ services:
       TZ: Asia/Tokyo
     expose:
       - "3306"
-    ports:
-      - "3306:3306"
