@@ -252,7 +252,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	}
 
 	rows, err := query.
-		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL", questionnaireID).
 		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -275,6 +275,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 		log.Printf("%+v", res)
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
+			// 下書きはWHERE句で取り除かれているはず
 			if !res.Respondents.SubmittedAt.Valid {
 				return nil, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
 			}
