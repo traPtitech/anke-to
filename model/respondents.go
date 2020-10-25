@@ -256,7 +256,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	}
 
 	rows, err := query.
-		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL AND question.deleted_at IS NULL AND response.deleted_at IS NULL", questionnaireID).
 		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
