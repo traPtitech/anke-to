@@ -101,6 +101,19 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 	return respondent.ResponseID, nil
 }
 
+// UpdateSubmittedAt 投稿日時更新
+func UpdateSubmittedAt(responseID int) error {
+	err := db.
+		Model(&Respondents{}).
+		Where("response_id = ?", responseID).
+		Update("submitted_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to update response's submitted_at: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteRespondent 回答の削除
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
@@ -197,6 +210,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 			respondentDetail.QuestionnaireID = res.Respondents.QuestionnaireID
 			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt
 			respondentDetail.ModifiedAt = res.Respondents.ModifiedAt
+			isRespondentSetted = true
 		}
 
 		respondentDetail.Responses = append(respondentDetail.Responses, ResponseBody{
