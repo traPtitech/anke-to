@@ -4,7 +4,6 @@ import moment from 'moment'
 export default {
   getDateStr: function (str) {
     if (str === null || str === 'null' || str === '') {
-      console.log("a")
       return 'なし'
     } else {
       return moment(str).format('YYYY/MM/DD HH:mm')
