@@ -75,7 +75,6 @@ jobs:
             ${{ runner.os }}-gomod-
       - run: go test ./... -coverprofile=coverage.txt -race -vet=off
         env:
-          CGO_ENABLED: 0
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
