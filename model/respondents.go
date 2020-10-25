@@ -105,7 +105,7 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
-	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
+	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -132,6 +132,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
+		Order("respondents.submitted_at DESC").
 		Where("user_traqid = ? AND respondents.deleted_at IS NULL", userID)
 
 	if len(questionnaireIDs) != 0 {
@@ -323,6 +324,21 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
+		First(&Respondents{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get response: %w", err)
+	}
+
+	return true, nil
+}
+
+// CheckRespondentByResponseID 回答者かどうかの確認
+func CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
+	err := db.
+		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		First(&Respondents{}).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return false, nil
