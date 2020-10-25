@@ -12,7 +12,7 @@ COPY . .
 RUN go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:15-alpine as client-build
+FROM node:12-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
@@ -32,7 +32,7 @@ RUN apk --update --no-cache add tzdata \
   && ln -s /etc/localtime /usr/share/zoneinfo/Asia/Tokyo
 RUN apk --update --no-cache add ca-certificates \
   && update-ca-certificates \
-  && rm -rf /usr/share/ca-certificates /etc/ssl/certs
+  && rm -rf /usr/share/ca-certificates
 
 COPY --from=server-build /anke-to ./
 COPY --from=client-build /github.com/traPtitech/anke-to/client/dist ./client/dist/

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 )
 
 // Options optionsテーブルの構造体
@@ -65,7 +66,7 @@ func DeleteOptions(c echo.Context, questionID int) error {
 
 // GetOptions 質問の選択肢の取得
 func GetOptions(c echo.Context, questionID int) ([]string, error) {
-	bodies := []string{}
+	bodies := []null.String{}
 
 	err := db.
 		Model(Options{}).
@@ -76,6 +77,14 @@ func GetOptions(c echo.Context, questionID int) ([]string, error) {
 		c.Logger().Error(err)
 		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	options := make([]string, 0, len(bodies))
+	for _, option := range bodies {
+		if option.Valid {
+			options = append(options, option.String)
+		} else {
+			options = append(options, "")
+		}
+	}
 
-	return bodies, nil
+	return options, nil
 }

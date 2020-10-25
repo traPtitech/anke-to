@@ -1,9 +1,7 @@
 package model
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -21,7 +19,7 @@ type Respondents struct {
 	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11) NOT NULL;"`
 	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30) NOT NULL;"`
 	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
-	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
 	DeletedAt       null.Time `json:"deleted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
 }
 
@@ -30,11 +28,6 @@ func (*Respondents) BeforeCreate(scope *gorm.Scope) error {
 	err := scope.SetColumn("ModifiedAt", time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to set ModifiedAt: %w", err)
-	}
-
-	err = scope.SetColumn("SubmittedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set SubmitedAt: %w", err)
 	}
 
 	return nil
@@ -62,7 +55,7 @@ type RespondentDetail struct {
 	ResponseID      int            `json:"responseID,omitempty"`
 	TraqID          string         `json:"traqID,omitempty"`
 	QuestionnaireID int            `json:"questionnaireID,omitempty"`
-	SubmittedAt     time.Time      `json:"submitted_at,omitempty"`
+	SubmittedAt     null.Time      `json:"submitted_at,omitempty"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
 	Responses       []ResponseBody `json:"body"`
 }
@@ -108,11 +101,24 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 	return respondent.ResponseID, nil
 }
 
+// UpdateSubmittedAt 投稿日時更新
+func UpdateSubmittedAt(responseID int) error {
+	err := db.
+		Model(&Respondents{}).
+		Where("response_id = ?", responseID).
+		Update("submitted_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to update response's submitted_at: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteRespondent 回答の削除
 func DeleteRespondent(c echo.Context, responseID int) error {
 	userID := GetUserID(c)
 
-	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE ((respondents.response_id = ? AND administrators.user_traqid = ?) OR respondents.user_traqid = ?)", time.Now(), responseID, userID, userID).Error
+	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -139,7 +145,8 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
-		Where("user_traqid = ? AND respondents.deleted_at IS NULL", userID)
+		Order("respondents.submitted_at DESC").
+		Where("user_traqid = ? AND respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL", userID)
 
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
@@ -201,11 +208,9 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		}
 		if !isRespondentSetted {
 			respondentDetail.QuestionnaireID = res.Respondents.QuestionnaireID
-			if !res.Respondents.SubmittedAt.Valid {
-				return RespondentDetail{}, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
-			}
-			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt.Time
+			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt
 			respondentDetail.ModifiedAt = res.Respondents.ModifiedAt
+			isRespondentSetted = true
 		}
 
 		respondentDetail.Responses = append(respondentDetail.Responses, ResponseBody{
@@ -251,7 +256,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 	}
 
 	rows, err := query.
-		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL AND question.deleted_at IS NULL AND response.deleted_at IS NULL", questionnaireID).
 		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -272,16 +277,12 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}
 
-		log.Printf("%+v", res)
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
-			if !res.Respondents.SubmittedAt.Valid {
-				return nil, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
-			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
 				ResponseID:      res.Respondents.ResponseID,
 				TraqID:          res.UserTraqid,
 				QuestionnaireID: res.Respondents.QuestionnaireID,
-				SubmittedAt:     res.Respondents.SubmittedAt.Time,
+				SubmittedAt:     res.Respondents.SubmittedAt,
 				ModifiedAt:      res.ModifiedAt,
 			})
 		}
@@ -310,15 +311,12 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 		for i := range responseBodyList {
 			responseBody := &responseBodyList[i]
-			body, ok := bodyMap[responseBody.QuestionID]
+			body := bodyMap[responseBody.QuestionID]
 			switch responseBody.QuestionType {
 			case "MultipleChoice", "Checkbox", "Dropdown":
-				if !ok {
-					return nil, errors.New("unexpected no response")
-				}
 				responseBody.OptionResponse = body
 			default:
-				if !ok || len(body) == 0 {
+				if len(body) == 0 {
 					responseBody.Body = null.NewString("", false)
 				} else {
 					responseBody.Body = null.NewString(body[0], true)
@@ -340,6 +338,21 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
+		First(&Respondents{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get response: %w", err)
+	}
+
+	return true, nil
+}
+
+// CheckRespondentByResponseID 回答者かどうかの確認
+func CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
+	err := db.
+		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		First(&Respondents{}).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return false, nil

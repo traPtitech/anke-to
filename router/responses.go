@@ -167,6 +167,13 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
+	if req.SubmittedAt.Valid {
+		err := model.UpdateSubmittedAt(responseID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))
+		}
+	}
+
 	//全消し&追加(レコード数爆発しそう)
 	if err := model.DeleteResponse(c, responseID); err != nil {
 		return err

@@ -295,7 +295,7 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.submitted_at = new Date().toISOString()
+      data.submitted_at = new Date()
 
       this.isSubmitting = true
       this.sendResponse(data).then(() => {
@@ -308,7 +308,6 @@ export default {
 
       // 回答の保存
       let data = this.createResponseData()
-      data.submitted_at = 'NULL'
 
       this.isSaving = true
       this.sendResponse(data).then(() => {

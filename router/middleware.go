@@ -85,7 +85,7 @@ func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := model.CheckRespondent(userID, responseID)
+		isRespondent, err := model.CheckRespondentByResponseID(userID, responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
