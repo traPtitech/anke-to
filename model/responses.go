@@ -27,7 +27,7 @@ func (*Response) TableName() string {
 type ResponseBody struct {
 	QuestionID     int         `json:"questionID" gorm:"column:id"`
 	QuestionType   string      `json:"question_type" gorm:"column:type"`
-	Body           null.String `json:"response,omitempty"`
+	Body           null.String `json:"response"`
 	OptionResponse []string    `json:"option_response"`
 }
 

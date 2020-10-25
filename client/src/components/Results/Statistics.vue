@@ -237,7 +237,7 @@ export default {
               ],
               data.map(
                 ([choice, ids]) =>
-                  `| ${choice} | ${ids.length} | ${(
+                  `| ${choice ? choice : ''} | ${ids.length} | ${(
                     (ids.length / question.length) *
                     100
                   ).toFixed(2)}% | ${ids.join(', ')} |`
@@ -246,14 +246,12 @@ export default {
           } else {
             res = res.concat(
               ['| 回答 | 回答数 | その回答をした人 |', '| - | - | - |'],
-              data.map(
-                ([choice, ids]) =>
-                  `| ${
-                    isNumberType(question.type)
-                      ? choice
-                      : choice.replace(/\n/g, '<br>')
-                  } | ${ids.length} | ${ids.join(', ')} |`
-              )
+              data.map(([choice, ids]) => {
+                const c = choice ? choice : ''
+                return `| ${
+                  isNumberType(question.type) ? c : c.replace(/\n/g, '<br>')
+                } | ${ids.length} | ${ids.join(', ')} |`
+              })
             )
           }
           return res.concat([''])
