@@ -146,7 +146,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
 		Order("respondents.submitted_at DESC").
-		Where("user_traqid = ? AND respondents.deleted_at IS NULL", userID)
+		Where("user_traqid = ? AND respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL", userID)
 
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
