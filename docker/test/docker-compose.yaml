@@ -2,22 +2,21 @@ version: "3"
 
 services:
   anke-to:
-    build:
-      context: ../..
-      dockerfile: docker/staging/Dockerfile
+    image: golang:1.15.3-alpine
     environment:
-      PORT: :1323
+      CGO_ENABLED: 0
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password
       MARIADB_HOSTNAME: mysql
       MARIADB_DATABASE: anke-to
       TZ: Asia/Tokyo
-      GO111MODULE: "on"
       TRAQ_WEBHOOK_ID:
       TRAQ_WEBHOOK_SECRET:
-    ports:
-      - "1323:1323"
-    restart: always
+    volumes:
+      - ../../:/go/src/github.com/traPtitech/anke-to
+    working_dir: /go/src/github.com/traPtitech/anke-to
+    command: go test ./...
+    restart: on-failure
     depends_on:
       - mysql
 

@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	logger, err := model.GetLogger()
 	if err != nil {
 		panic(err)
@@ -23,6 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer db.Close()
 
 	err = model.Migrate()
 	if err != nil {
@@ -50,17 +50,6 @@ func main() {
 	} else {
 		e.Use(middleware.Logger())
 	}
-
-	// Static Files
-	e.Static("/", "client/dist")
-	e.Static("/js", "client/dist/js")
-	e.Static("/img", "client/dist/img")
-	e.Static("/fonts", "client/dist/fonts")
-	e.Static("/css", "client/dist/css")
-
-	e.File("/app.js", "client/dist/app.js")
-	e.File("/favicon.ico", "client/dist/favicon.ico")
-	e.File("*", "client/dist/index.html")
 
 	router.SetRouting(e)
 
