@@ -1,9 +1,7 @@
 package model
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -32,11 +30,6 @@ func (*Respondents) BeforeCreate(scope *gorm.Scope) error {
 		return fmt.Errorf("failed to set ModifiedAt: %w", err)
 	}
 
-	err = scope.SetColumn("SubmittedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set SubmitedAt: %w", err)
-	}
-
 	return nil
 }
 
@@ -62,7 +55,7 @@ type RespondentDetail struct {
 	ResponseID      int            `json:"responseID,omitempty"`
 	TraqID          string         `json:"traqID,omitempty"`
 	QuestionnaireID int            `json:"questionnaireID,omitempty"`
-	SubmittedAt     time.Time      `json:"submitted_at,omitempty"`
+	SubmittedAt     null.Time      `json:"submitted_at,omitempty"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
 	Responses       []ResponseBody `json:"body"`
 }
@@ -73,7 +66,6 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 
 	var respondent Respondents
 	if submitedAt.Valid {
-		fmt.Println(submitedAt.Valid)
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      userID,
@@ -83,7 +75,6 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      userID,
-			SubmittedAt: null.NewTime(time.Time{},false),
 		}
 	}
 
@@ -180,7 +171,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
-		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL", responseID).
+		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
 		Select("respondents.questionnaire_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
 		Rows()
 	if err != nil {
@@ -203,10 +194,7 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 		}
 		if !isRespondentSetted {
 			respondentDetail.QuestionnaireID = res.Respondents.QuestionnaireID
-			if !res.Respondents.SubmittedAt.Valid {
-				return RespondentDetail{}, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
-			}
-			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt.Time
+			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt
 			respondentDetail.ModifiedAt = res.Respondents.ModifiedAt
 		}
 
@@ -274,16 +262,12 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}
 
-		log.Printf("%+v", res)
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
-			if !res.Respondents.SubmittedAt.Valid {
-				return nil, fmt.Errorf("unexpected null submited_at(response_id: %d)", res.ResponseID)
-			}
 			respondentDetails = append(respondentDetails, RespondentDetail{
 				ResponseID:      res.Respondents.ResponseID,
 				TraqID:          res.UserTraqid,
 				QuestionnaireID: res.Respondents.QuestionnaireID,
-				SubmittedAt:     res.Respondents.SubmittedAt.Time,
+				SubmittedAt:     res.Respondents.SubmittedAt,
 				ModifiedAt:      res.ModifiedAt,
 			})
 		}
@@ -312,15 +296,12 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 		for i := range responseBodyList {
 			responseBody := &responseBodyList[i]
-			body, ok := bodyMap[responseBody.QuestionID]
+			body := bodyMap[responseBody.QuestionID]
 			switch responseBody.QuestionType {
 			case "MultipleChoice", "Checkbox", "Dropdown":
-				if !ok {
-					return nil, errors.New("unexpected no response")
-				}
 				responseBody.OptionResponse = body
 			default:
-				if !ok || len(body) == 0 {
+				if len(body) == 0 {
 					responseBody.Body = null.NewString("", false)
 				} else {
 					responseBody.Body = null.NewString(body[0], true)
