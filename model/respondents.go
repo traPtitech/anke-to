@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -273,7 +272,6 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
 		}
 
-		log.Printf("%+v", res)
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
 			// 下書きはWHERE句で取り除かれているはず
 			if !res.Respondents.SubmittedAt.Valid {
