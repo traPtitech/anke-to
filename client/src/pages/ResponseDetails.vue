@@ -308,7 +308,6 @@ export default {
 
       // 回答の保存
       let data = this.createResponseData()
-      data.submitted_at = 'NULL'
 
       this.isSaving = true
       this.sendResponse(data).then(() => {
