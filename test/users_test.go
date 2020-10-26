@@ -17,7 +17,7 @@ func TestUsersMe(t *testing.T) {
 
 	u := userOne
 	expectBody := fmt.Sprintf(
-`{
+		`{
   "traqID": "%s"
 }`, u)
 	rec = createRecorder(u, methodGet, makePath("/users/me"), typeNone, "")
