@@ -17,18 +17,18 @@ type httpMethods string
 type contentTypes string
 
 const (
-	rootPath                      = "/api"
-	userHeader                    = "X-Showcase-User"
-	userUnAuthorized              = "-"
-	userOne          users        = "mazrean"
-	userTwo          users        = "ryoha"
-	userThree        users        = "YumizSui"
-	methodGet        httpMethods  = http.MethodGet
-	methodPost       httpMethods  = http.MethodPost
-	methodPatch      httpMethods  = http.MethodPatch
-	methodDelet      httpMethods  = http.MethodDelete
-	typeNone         contentTypes = ""
-	typeJSON         contentTypes = echo.MIMEApplicationJSON
+	rootPath               = "/api"
+	userHeader             = "X-Showcase-User"
+	userUnAuthorized       = "-"
+	userOne          users = "mazrean"
+	userTwo          users = "ryoha"
+	//userThree        users        = "YumizSui"
+	methodGet  httpMethods = http.MethodGet
+	methodPost httpMethods = http.MethodPost
+	//methodPatch      httpMethods  = http.MethodPatch
+	//methodDelete      httpMethods  = http.MethodDelete
+	typeNone contentTypes = ""
+	typeJSON contentTypes = echo.MIMEApplicationJSON
 )
 
 var e *echo.Echo
