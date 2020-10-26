@@ -17,6 +17,7 @@ type httpMethods string
 type contentTypes string
 
 const (
+	rootPath = "/api"
 	userHeader = "X-Showcase-User"
 	userUnAuthorized = "-"
 	userOne users = "mazrean"
@@ -55,7 +56,9 @@ func TestMain(m *testing.M) {
 
 func createRecorder(user users, method httpMethods, path string, contentType contentTypes, body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(string(method), path, strings.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, string(contentType))
+	if contentType != typeNone {
+		req.Header.Set(echo.HeaderContentType, string(contentType))
+	}
 	req.Header.Set(userHeader, string(user))
 
 	rec := httptest.NewRecorder()
@@ -63,4 +66,8 @@ func createRecorder(user users, method httpMethods, path string, contentType con
 	e.ServeHTTP(rec, req)
 
 	return rec
+}
+
+func makePath(path string) string {
+	return rootPath + path
 }
