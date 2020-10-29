@@ -314,7 +314,11 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 			body := bodyMap[responseBody.QuestionID]
 			switch responseBody.QuestionType {
 			case "MultipleChoice", "Checkbox", "Dropdown":
-				responseBody.OptionResponse = body
+				if body == nil {
+					responseBody.OptionResponse = []string{}
+				} else {
+					responseBody.OptionResponse = body
+				}
 			default:
 				if len(body) == 0 {
 					responseBody.Body = null.NewString("", false)
