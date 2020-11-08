@@ -33,12 +33,14 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 // UpdateOptions 選択肢の修正
 func UpdateOptions(c echo.Context, options []string, questionID int) error {
 	var err error
-	option := Options{}
-	for i, v := range options {
+	for i, optionLabel := range options {
+		option := Options{
+			Body: optionLabel,
+		}
 		err = db.
-			Where(Options{QuestionID: questionID}).
-			Assign(Options{OptionNum: i + 1, Body: v}).
-			FirstOrCreate(&option).Error
+			Model(Options{}).
+			Where("question_id = ? AND option_num = ?", questionID, i).
+			Update(&option).Error
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
