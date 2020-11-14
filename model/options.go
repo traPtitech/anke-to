@@ -1,8 +1,10 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 )
@@ -37,13 +39,27 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 		option := Options{
 			Body: optionLabel,
 		}
-		err = db.
+		query := db.
 			Model(Options{}).
-			Where("question_id = ? AND option_num = ?", questionID, i).
-			Update(&option).Error
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			Where("question_id = ? AND option_num = ?", questionID, i+1)
+		err := query.First(&Options{}).Error
+		if err != nil && !gorm.IsRecordNotFoundError(err) {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get option: %w", err))
+		}
+
+		if gorm.IsRecordNotFoundError(err) {
+			option.QuestionID = questionID
+			option.OptionNum = i + 1
+			err = db.Create(&option).Error
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert option: %w", err))
+			}
+		} else {
+			result := query.Update(&option)
+			err = result.Error
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update option: %w", err))
+			}
 		}
 	}
 	err = db.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Options{}).Error
