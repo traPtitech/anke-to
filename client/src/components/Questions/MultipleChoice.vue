@@ -86,11 +86,10 @@
             v-if="content.type === 'MultipleChoice'"
             :value="option.label"
             type="radio"
-            :checked="contentProps.selected"
+            :checked="contentProps.selected === option.label"
             @input="
-              val => {
+              e => {
                 $emit('update:selected', option.label)
-                selected = option.label
               }
             "
           />
