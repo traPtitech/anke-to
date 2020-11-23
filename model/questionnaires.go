@@ -296,8 +296,8 @@ func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) 
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
 		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
 		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
-		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
-		Where("respondents.user_traqid = ? OR respondents.user_traqid IS NULL", userID).
+		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ?", userID).
+		Where("respondents.user_traqid IS NULL").
 		Group("questionnaires.id,respondents.user_traqid").
 		Select("questionnaires.*, MAX(respondents.submitted_at) AS responsed_at")
 
