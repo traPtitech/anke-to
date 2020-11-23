@@ -90,9 +90,9 @@
             <label>
               {{ num }}
               <input
-                v-model="number"
                 :value="num"
                 type="radio"
+                :checked="number"
                 @input="
                   val => {
                     $emit('update:selected', num)
@@ -133,9 +133,7 @@ export default {
     }
   },
   data() {
-    return {
-      number: undefined
-    }
+    return {}
   },
   computed: {
     content() {
