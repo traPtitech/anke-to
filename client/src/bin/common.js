@@ -99,7 +99,7 @@ export default {
         break
       case 'Checkbox':
         question.isSelected = {}
-        responseData.option_response.forEach(selectedOption => {
+        responseData.option_response?.forEach(selectedOption => {
           question.isSelected[ selectedOption ] = true
         })
         break
