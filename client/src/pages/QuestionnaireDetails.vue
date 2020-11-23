@@ -217,7 +217,7 @@ export default {
       if (
         oldBool &&
         !newBool &&
-        (this.information.res_time_limit === 'NULL' ||
+        (this.information.res_time_limit === 'null' ||
           this.information.res_time_limit === '')
       ) {
         // 新しく回答期限を作ろうとしたとき
@@ -257,7 +257,7 @@ export default {
             }
             if (
               this.information.res_time_limit &&
-              this.information.res_time_limit !== 'NULL'
+              this.information.res_time_limit !== 'null'
             ) {
               this.noTimeLimit = false
             }

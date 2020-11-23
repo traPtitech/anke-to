@@ -213,7 +213,7 @@ export default {
       get: function () {
         if (
           !this.information.res_time_limit ||
-          this.information.res_time_limit === 'NULL'
+          this.information.res_time_limit === 'null'
         )
           return ''
         return this.information.res_time_limit.slice(0, 16)

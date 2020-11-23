@@ -150,7 +150,7 @@ export default {
         return undefined
       }
       switch (this.responseData.submitted_at) {
-        case 'NULL':
+        case null:
           return 'ti-save'
         default:
           return 'ti-check'
