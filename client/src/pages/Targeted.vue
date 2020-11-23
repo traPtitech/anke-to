@@ -84,7 +84,7 @@ export default {
     },
     getStatus() {
       for (let i = 0; i < this.questionnaires.length; i++) {
-        if (this.questionnaires[i].responded_at !== 'NULL') {
+        if (this.questionnaires[i].responded_at !== null) {
           // 回答送信済み
           this.setStatus(i, 'sent')
         } else {
