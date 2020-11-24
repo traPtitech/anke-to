@@ -33,6 +33,7 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
+	// validationsのパターンマッチ
 	questionIDs := make([]int, 0, len(req.Body))
 	QuestionTypes := make(map[int]model.ResponseBody)
 
@@ -43,7 +44,7 @@ func PostResponse(c echo.Context) error {
 
 	validations, err := model.GetValidations(questionIDs)
 
-	//パターンマッチしてエラーなら返す
+	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
@@ -70,20 +71,7 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	//パターンマッチ
-	for _, body := range req.Body {
-		switch body.QuestionType {
-		case "LinearScale":
-			label, err := model.GetScaleLabel(body.QuestionID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
-			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		}
-	}
-	//パターンマッチ
+	// LinearScaleのパターンマッチ
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
@@ -167,6 +155,7 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
+	// validationsのパターンマッチ
 	questionIDs := make([]int, 0, len(req.Body))
 	QuestionTypes := make(map[int]model.ResponseBody)
 
@@ -177,7 +166,7 @@ func EditResponse(c echo.Context) error {
 
 	validations, err := model.GetValidations(questionIDs)
 
-	//パターンマッチしてエラーなら返す
+	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
@@ -204,7 +193,7 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
-	//パターンマッチ
+	// LinearScaleのパターンマッチ
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
