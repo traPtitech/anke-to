@@ -177,7 +177,9 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 	}
 
 	count := 0
-	err = query.Count(&count).Error
+	err = query.
+		Group("questionnaires.id").
+		Count(&count).Error
 	if err != nil {
 		c.Logger().Error(fmt.Errorf("failed to retrieve the number of questionnaires: %w", err))
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
