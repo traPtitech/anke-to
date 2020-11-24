@@ -20,9 +20,24 @@ func TestCheckNumberValidation(t *testing.T) {
 			result:     "",
 		},
 		{
+			validation: Validations{0, "", "0", "10"},
+			body:       "",
+			result:     "",
+		},
+		{
+			validation: Validations{0, "", "0", "10"},
+			body:       "a",
+			result:     "strconv.Atoi: parsing \"a\": invalid syntax",
+		},
+		{
 			validation: Validations{0, "", "", "10"},
 			body:       "20",
 			result:     "failed to meet the boundary value. the number must be less than MaxBound (number: 20, MaxBound: 10)",
+		},
+		{
+			validation: Validations{0, "", "10", ""},
+			body:       "5",
+			result:     "failed to meet the boundary value. the number must be greater than MinBound (number: 5, MinBound: 10)",
 		},
 		{
 			validation: Validations{0, "", "20", "10"},
@@ -53,7 +68,7 @@ func TestCheckTextValidation(t *testing.T) {
 		{
 			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
 			body:       "a4.55",
-			result:     "failed to match the pattern (Responce: a4.55, RegexPattern: ^\\d*\\.\\d*$)",
+			result:     "failed to match the pattern (Response: a4.55, RegexPattern: ^\\d*\\.\\d*$)",
 		},
 		{
 			validation: Validations{0, "*", "", ""},
@@ -79,6 +94,11 @@ func TestCheckNumberValid(t *testing.T) {
 			validation: Validations{0, "", "1a", "10"},
 			body:       "",
 			result:     "failed to check the boundary value. MinBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
+		},
+		{
+			validation: Validations{0, "", "10", "1a"},
+			body:       "",
+			result:     "failed to check the boundary value. MaxBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
 		},
 		{
 			validation: Validations{0, "", "10", "0"},
