@@ -53,7 +53,7 @@ func TestCheckTextValidation(t *testing.T) {
 		{
 			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
 			body:       "a4.55",
-			result:     "failed to match the pattern (Responce: a4.55, RegexPattern: ^\\d*\\.\\d*$)",
+			result:     "failed to match the pattern (Response: a4.55, RegexPattern: ^\\d*\\.\\d*$)",
 		},
 		{
 			validation: Validations{0, "*", "", ""},
