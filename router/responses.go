@@ -157,7 +157,7 @@ func EditResponse(c echo.Context) error {
 
 	// validationsのパターンマッチ
 	questionIDs := make([]int, 0, len(req.Body))
-	QuestionTypes := make(map[int]model.ResponseBody)
+	QuestionTypes := make(map[int]model.ResponseBody, len(req.Body))
 
 	for _, body := range req.Body {
 		questionIDs = append(questionIDs, body.QuestionID)
