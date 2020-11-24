@@ -92,7 +92,7 @@
               <input
                 :value="num"
                 type="radio"
-                :checked="number"
+                :checked="contentProps.selected === num"
                 @input="
                   val => {
                     $emit('update:selected', num)
