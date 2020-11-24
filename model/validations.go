@@ -42,7 +42,7 @@ func (e *NumberBoundaryError) Error() string {
 	return e.Msg
 }
 
-//TextMatchError ResponceがRegexPatternにマッチしているか
+//TextMatchError ResponseがRegexPatternにマッチしているか
 type TextMatchError struct {
 	Msg string
 }
@@ -104,6 +104,21 @@ func GetValidation(questionID int) (Validations, error) {
 	return validation, nil
 }
 
+// GetValidations qustionIDのリストから対応するvalidationsのリストを取得する
+func GetValidations(qustionIDs []int) ([]Validations, error) {
+	validations := []Validations{}
+	err := db.
+		Where("question_id IN (?)", qustionIDs).
+		Find(&validations).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return []Validations{}, nil
+	} else if err != nil {
+		return []Validations{}, fmt.Errorf("failed to get the validations : %w", err)
+	}
+	return validations, nil
+}
+
 // CheckNumberValidation BodyがMinBound,MaxBoundを満たしているか
 func CheckNumberValidation(validation Validations, Body string) error {
 	if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
@@ -134,14 +149,14 @@ func CheckNumberValidation(validation Validations, Body string) error {
 	return nil
 }
 
-// CheckTextValidation ResponceがRegexPatternにマッチしているか
+// CheckTextValidation ResponseがRegexPatternにマッチしているか
 func CheckTextValidation(validation Validations, Response string) error {
 	r, err := regexp.Compile(validation.RegexPattern)
 	if err != nil {
 		return err
 	}
 	if !r.MatchString(Response) && Response != "" {
-		return &TextMatchError{fmt.Sprintf("failed to match the pattern (Responce: %s, RegexPattern: %s)", Response, r)}
+		return &TextMatchError{fmt.Sprintf("failed to match the pattern (Response: %s, RegexPattern: %s)", Response, r)}
 	}
 
 	return nil

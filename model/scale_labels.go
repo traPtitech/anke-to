@@ -70,20 +70,20 @@ func GetScaleLabel(questionID int) (ScaleLabels, error) {
 	return label, nil
 }
 
-// CheckScaleLabel responceがScaleMin,ScaleMaxを満たしているか
-func CheckScaleLabel(label ScaleLabels, responce string) error {
-	if responce == "" {
+// CheckScaleLabel responseがScaleMin,ScaleMaxを満たしているか
+func CheckScaleLabel(label ScaleLabels, response string) error {
+	if response == "" {
 		return nil
 	}
 
-	r, err := strconv.Atoi(responce)
+	r, err := strconv.Atoi(response)
 	if err != nil {
 		return err
 	}
 	if r < label.ScaleMin {
-		return fmt.Errorf("failed to meet the scale. the responce must be greater than ScaleMin (number: %d, ScaleMin: %d)", r, label.ScaleMin)
+		return fmt.Errorf("failed to meet the scale. the response must be greater than ScaleMin (number: %d, ScaleMin: %d)", r, label.ScaleMin)
 	} else if r > label.ScaleMax {
-		return fmt.Errorf("failed to meet the scale. the responce must be less than ScaleMax (number: %d, ScaleMax: %d)", r, label.ScaleMax)
+		return fmt.Errorf("failed to meet the scale. the response must be less than ScaleMax (number: %d, ScaleMax: %d)", r, label.ScaleMax)
 	}
 
 	return nil
