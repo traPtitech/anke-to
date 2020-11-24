@@ -33,12 +33,47 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
-	//パターンマッチ
+	// validationsのパターンマッチ
+
+	questionIDs := make([]int, 0, len(req.Body))
+	QuestionTypes := make(map[int]model.ResponseBody)
+
 	for _, body := range req.Body {
-		validation, err := model.GetValidation(body.QuestionID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		questionIDs = append(questionIDs, body.QuestionID)
+		QuestionTypes[body.QuestionID] = body
+	}
+
+	validations, err := model.GetValidations(questionIDs)
+
+	//パターンマッチしてエラーなら返す
+	for _, validation := range validations {
+		body := QuestionTypes[validation.QuestionID]
+		switch body.QuestionType {
+		case "Number":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.NumberValidError{}) {
+					return echo.NewHTTPError(http.StatusInternalServerError, err)
+				}
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Text":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.TextMatchError{}) {
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
 		}
+	}
+
+	// LinearScaleのチェック
+	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
 			label, err := model.GetScaleLabel(body.QuestionID)
@@ -47,20 +82,6 @@ func PostResponse(c echo.Context) error {
 			}
 			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		case "Number":
-			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.NumberValidError{}) {
-					return echo.NewHTTPError(http.StatusInternalServerError, err)
-				}
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		case "Text":
-			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.TextMatchError{}) {
-					return echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	}
@@ -135,12 +156,47 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
-	//パターンマッチ
+	// validationsのパターンマッチ
+
+	questionIDs := make([]int, 0, len(req.Body))
+	QuestionTypes := make(map[int]model.ResponseBody)
+
 	for _, body := range req.Body {
-		validation, err := model.GetValidation(body.QuestionID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		questionIDs = append(questionIDs, body.QuestionID)
+		QuestionTypes[body.QuestionID] = body
+	}
+
+	validations, err := model.GetValidations(questionIDs)
+
+	//パターンマッチしてエラーなら返す
+	for _, validation := range validations {
+		body := QuestionTypes[validation.QuestionID]
+		switch body.QuestionType {
+		case "Number":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.NumberValidError{}) {
+					return echo.NewHTTPError(http.StatusInternalServerError, err)
+				}
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Text":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+				if errors.Is(err, &model.TextMatchError{}) {
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
 		}
+	}
+
+	// LinearScaleのチェック
+	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
 			label, err := model.GetScaleLabel(body.QuestionID)
@@ -149,20 +205,6 @@ func EditResponse(c echo.Context) error {
 			}
 			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		case "Number":
-			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.NumberValidError{}) {
-					return echo.NewHTTPError(http.StatusInternalServerError, err)
-				}
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		case "Text":
-			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.TextMatchError{}) {
-					return echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	}
