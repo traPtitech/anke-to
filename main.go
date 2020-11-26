@@ -1,18 +1,34 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
+	"github.com/traPtitech/anke-to/tuning"
 
 	"cloud.google.com/go/logging"
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "init":
+			tuning.Inititial()
+			return
+		case "bench":
+			tuning.Bench()
+			return
+		}
+	}
+
 	logger, err := model.GetLogger()
 	if err != nil {
 		panic(err)
@@ -53,6 +69,12 @@ func main() {
 
 	router.SetRouting(e)
 
+	if os.Getenv("ANKE-TO_ENV") == "pprof" {
+		runtime.SetBlockProfileRate(1)
+		go func() {
+			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
 	port := os.Getenv("PORT")
 	// Start server
 	e.Logger.Fatal(e.Start(port))

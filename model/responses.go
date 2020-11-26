@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -36,6 +37,30 @@ type Responses struct {
 	ID          int            `json:"questionnaireID"`
 	SubmittedAt null.Time      `json:"submitted_at"`
 	Body        []ResponseBody `json:"body"`
+}
+
+// ResponseMeta 質問に対する回答の構造体
+type ResponseMeta struct {
+	QuestionID int
+	Data       string
+}
+
+// InsertResponses 質問に対する回答の追加
+func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
+	responses := make([]interface{}, 0, len(responseMetas))
+	for _, responseMeta := range responseMetas {
+		responses = append(responses, Response{
+			ResponseID: responseID,
+			QuestionID: responseMeta.QuestionID,
+			Body:       null.NewString(responseMeta.Data, true),
+		})
+	}
+	err := gormbulk.BulkInsert(db, responses, len(responses), "ModifiedAt", "DeletedAt")
+	if err != nil {
+		return fmt.Errorf("failed to insert response: %w", err)
+	}
+
+	return nil
 }
 
 // InsertResponse 質問に対する回答の追加
