@@ -1,0 +1,1051 @@
+openapi: 3.0.0
+info:
+  contact:
+    name: traP
+    url: https://github.com/traPtitech/anke-to
+  description: anke-to API
+  title: anke-to API
+  version: 1.0.0-oas3
+servers:
+- description: production
+  url: https://anke-to.trap.jp/api
+- description: local
+  url: http://localhost:8080/api
+security:
+- application:
+  - read
+  - write
+tags:
+- name: questionnaire
+- name: question
+- name: response
+- name: user
+- name: group
+- name: result
+paths:
+  /questionnaires:
+    get:
+      description: 与えられた条件を満たす20件以下のアンケートのリストを取得します．
+      operationId: getQuestionnaires
+      parameters:
+      - description: |
+          並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
+          タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+          "-modified_at" )
+        explode: true
+        in: query
+        name: sort
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: 何ページ目か (未定義の場合は1ページ目)
+        explode: true
+        in: query
+        name: page
+        required: true
+        schema:
+          type: integer
+        style: form
+      - description: |
+          自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
+        explode: true
+        in: query
+        name: nontargeted
+        required: true
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuestionnaireForList'
+                type: array
+          description: 正常に取得できました。アンケートの配列を返します。
+      tags:
+      - questionnaire
+    post:
+      description: 新しいアンケートを作成します．
+      operationId: postQuestionnaire
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestionnaire'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewQuestionnaireResponse'
+          description: 正常にアンケートを作成できました．作成されたアンケートを返します．
+      tags:
+      - questionnaire
+  /questionnaires/{questionnaireID}:
+    delete:
+      description: アンケートを削除します．
+      operationId: delteQuestionnaire
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: 正常にアンケートを削除できました．
+      tags:
+      - questionnaire
+    get:
+      description: アンケートの情報を取得します。
+      operationId: getQuestionnaire
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionnaireByID'
+          description: 正常に取得できました。
+      tags:
+      - questionnaire
+    patch:
+      description: アンケートの情報を変更します．
+      operationId: patchQuestionnaire
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestionnaire'
+        required: true
+      responses:
+        "200":
+          description: 正常にアンケートを変更できました．
+      tags:
+      - questionnaire
+  /questionnaires/{questionnaireID}/questions:
+    get:
+      description: アンケートに含まれる質問のリストを取得します。
+      operationId: getQuestions
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuestionDetails'
+                type: array
+          description: 正常に取得できました。
+      tags:
+      - questionnaire
+  /questions:
+    post:
+      description: 新しい質問を作成します．
+      operationId: postQuestion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestion'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: 正常に質問を作成できました．作成された質問を返します．
+        "400":
+          description: 正常に作成できませんでした。リクエストが不正です。
+      tags:
+      - question
+  /questions/{questionID}:
+    delete:
+      description: 質問を削除します．
+      operationId: deleteQuestion
+      parameters:
+      - description: |
+          質問ID
+        explode: false
+        in: path
+        name: questionID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: 正常に質問を削除できました。
+        "400":
+          description: 正常に削除できませんでした。存在しない質問です。
+      tags:
+      - question
+    patch:
+      description: 質問を変更します．
+      operationId: patchQuestion
+      parameters:
+      - description: |
+          質問ID
+        explode: false
+        in: path
+        name: questionID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestion'
+        required: true
+      responses:
+        "200":
+          description: 正常に質問を変更できました．
+        "400":
+          description: 正常に変更できませんでした。リクエストが不正です。
+      tags:
+      - question
+  /responses:
+    post:
+      description: 新しい回答を作成します．
+      operationId: postResponse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewResponse'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDetails'
+          description: 正常に回答を作成できました．作成された回答を返します．
+      tags:
+      - response
+  /responses/{responseID}:
+    delete:
+      description: 回答を削除します．
+      operationId: deleteResponse
+      parameters:
+      - description: |
+          回答ID
+        explode: false
+        in: path
+        name: responseID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: 正常に回答を削除できました．
+      tags:
+      - response
+    get:
+      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します
+      operationId: getResponses
+      parameters:
+      - description: |
+          回答ID
+        explode: false
+        in: path
+        name: responseID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          description: 正常に取得できました。
+      tags:
+      - response
+    patch:
+      description: 回答を変更します．
+      operationId: patchResponse
+      parameters:
+      - description: |
+          回答ID
+        explode: false
+        in: path
+        name: responseID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewResponse'
+        required: true
+      responses:
+        "200":
+          description: 正常に回答を変更できました．
+      tags:
+      - response
+  /users:
+    get:
+      description: (botおよび除名されたユーザーを除く、全ての) ユーザーのtraQIDのリストを取得します。
+      operationId: getUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/User'
+                type: array
+          description: 正常に取得できました．ユーザーの配列を返します．
+      summary: 未実装
+      tags:
+      - user
+  /users/me:
+    get:
+      description: 自分のユーザー情報を取得します
+      operationId: getMe
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: 正常に取得できました。
+      tags:
+      - user
+  /users/me/responses:
+    get:
+      description: 自分のすべての回答のリストを取得します。
+      operationId: getMyResponses
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseSummary'
+                type: array
+          description: 正常に取得できました。回答の配列を返します。
+      tags:
+      - user
+  /users/me/responses/{questionnaireID}:
+    get:
+      description: 特定のquestionnaireIdを持つアンケートに対する自分のすべての回答のリストを取得します。
+      operationId: getResponsesToQuestionnaire
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseSummary'
+                type: array
+          description: 正常に取得できました。回答の配列を返します。
+      tags:
+      - user
+  /users/me/targeted:
+    get:
+      description: 自分が対象になっている アンケートのリストを取得します。
+      operationId: getMyTargeted
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuestionnaireMyTargeted'
+                type: array
+          description: 正常に取得できました。アンケートの配列を返します。
+      tags:
+      - user
+  /users/me/administrates:
+    get:
+      description: 自分が管理者になっているアンケートのリストを取得します。
+      operationId: getMyAdministrates
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuestionnaireMyAdministrates'
+                type: array
+          description: 正常に取得できました。アンケートの配列を返します。
+      tags:
+      - user
+  /groups:
+    get:
+      description: (全ての) グループのリストを取得します
+      operationId: getGroups
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Group'
+                type: array
+          description: 正常に取得できました．グループの配列を返します．
+      summary: 未実装
+      tags:
+      - group
+  /results/{questionnaireID}:
+    get:
+      description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
+      operationId: getResults
+      parameters:
+      - description: |
+          アンケートID
+        explode: false
+        in: path
+        name: questionnaireID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseResult'
+                type: array
+          description: 正常に取得できました。アンケートの各質問に対する結果の配列を返します。
+        "403":
+          description: 結果を閲覧する権限がありません。
+      tags:
+      - result
+components:
+  parameters:
+    sortInQuery:
+      description: |
+        並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
+        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+        "-modified_at" )
+      explode: true
+      in: query
+      name: sort
+      required: true
+      schema:
+        type: string
+      style: form
+    pageInQuery:
+      description: 何ページ目か (未定義の場合は1ページ目)
+      explode: true
+      in: query
+      name: page
+      required: true
+      schema:
+        type: integer
+      style: form
+    nontargetedInQuery:
+      description: |
+        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
+      explode: true
+      in: query
+      name: nontargeted
+      required: true
+      schema:
+        type: boolean
+      style: form
+    questionnaireIDInPath:
+      description: |
+        アンケートID
+      explode: false
+      in: path
+      name: questionnaireID
+      required: true
+      schema:
+        type: integer
+      style: simple
+    questionIDInPath:
+      description: |
+        質問ID
+      explode: false
+      in: path
+      name: questionID
+      required: true
+      schema:
+        type: integer
+      style: simple
+    responseIDInPath:
+      description: |
+        回答ID
+      explode: false
+      in: path
+      name: responseID
+      required: true
+      schema:
+        type: integer
+      style: simple
+  schemas:
+    NewQuestionnaire:
+      example:
+        res_shared_to: public
+        res_time_limit: 2000-01-23T04:56:07.000+00:00
+        description: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
+        title: 第1回集会らん☆ぷろ募集アンケート
+        targets:
+        - lolico
+        - lolico
+        administrators:
+        - lolico
+        - lolico
+      properties:
+        title:
+          example: 第1回集会らん☆ぷろ募集アンケート
+          type: string
+        description:
+          example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
+          type: string
+        res_time_limit:
+          format: date-time
+          type: string
+        res_shared_to:
+          description: |
+            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          enum:
+          - administrators
+          - respondents
+          - public
+          example: public
+          type: string
+        targets:
+          items:
+            example: lolico
+            type: string
+          type: array
+        administrators:
+          items:
+            example: lolico
+            type: string
+          type: array
+      required:
+      - administrators
+      - description
+      - res_shared_to
+      - res_time_limit
+      - targets
+      - title
+      type: object
+    NewQuestionnaireResponse:
+      allOf:
+      - $ref: '#/components/schemas/QuestionnaireUser'
+    Questionnaire:
+      properties:
+        questionnaireID:
+          example: 1
+          type: integer
+        title:
+          example: 第1回集会らん☆ぷろ募集アンケート
+          type: string
+        description:
+          example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
+          type: string
+        res_time_limit:
+          format: date-time
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-time
+          type: string
+        res_shared_to:
+          description: |
+            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          enum:
+          - administrators
+          - respondents
+          - public
+          example: public
+          type: string
+      required:
+      - created_at
+      - description
+      - modified_at
+      - questionnaireID
+      - res_shared_to
+      - res_time_limit
+      - targets
+      - title
+      type: object
+    QuestionnaireForList:
+      allOf:
+      - $ref: '#/components/schemas/Questionnaire'
+      - $ref: '#/components/schemas/QuestionnaireForList_allOf'
+    QuestionnaireByID:
+      allOf:
+      - $ref: '#/components/schemas/QuestionnaireUser'
+      - $ref: '#/components/schemas/QuestionnaireByID_allOf'
+    QuestionnaireMyTargeted:
+      allOf:
+      - $ref: '#/components/schemas/Questionnaire'
+      - $ref: '#/components/schemas/QuestionnaireMyTargeted_allOf'
+    QuestionnaireMyAdministrates:
+      allOf:
+      - $ref: '#/components/schemas/QuestionnaireUser'
+      - $ref: '#/components/schemas/QuestionnaireMyAdministrates_allOf'
+    QuestionnaireUser:
+      allOf:
+      - $ref: '#/components/schemas/Questionnaire'
+      - $ref: '#/components/schemas/QuestionnaireUser_allOf'
+    NewQuestion:
+      example:
+        question_type: Text
+        page_num: 1
+        questionnaireID: 1
+        scale_label_right: そう思わない
+        scale_min: 1
+        body: 質問文
+        question_num: 1
+        min_bound: min_bound
+        regex_pattern: regex_pattern
+        is_required: true
+        max_bound: max_bound
+        scale_label_left: そう思う
+        options:
+        - 選択肢1
+        - 選択肢1
+        scale_max: 5
+      properties:
+        questionnaireID:
+          example: 1
+          type: integer
+        page_num:
+          description: |
+            アンケートの何ページ目の質問か
+          example: 1
+          type: integer
+        question_num:
+          description: |
+            アンケートの質問のうち、何問目か
+          example: 1
+          type: integer
+        question_type:
+          description: |
+            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+          enum:
+          - Text
+          - TextArea
+          - MultipleChoice
+          - Checkbox
+          - Dropdown
+          - LinearScale
+          - Date
+          - Time
+          example: Text
+          type: string
+        body:
+          example: 質問文
+          type: string
+        is_required:
+          description: |
+            回答必須かどうか
+          example: true
+          type: boolean
+        options:
+          items:
+            example: 選択肢1
+            type: string
+          type: array
+        scale_label_right:
+          example: そう思わない
+          type: string
+        scale_label_left:
+          example: そう思う
+          type: string
+        scale_min:
+          example: 1
+          type: integer
+        scale_max:
+          example: 5
+          type: integer
+        regex_pattern:
+          type: string
+        min_bound:
+          type: string
+        max_bound:
+          type: string
+      required:
+      - body
+      - is_required
+      - max_bound
+      - min_bound
+      - options
+      - page_num
+      - question_num
+      - question_type
+      - questionnaireID
+      - regex_pattern
+      - scale_label_left
+      - scale_label_right
+      - scale_max
+      - scale_min
+      type: object
+    Question:
+      allOf:
+      - $ref: '#/components/schemas/NewQuestion'
+      - $ref: '#/components/schemas/Question_allOf'
+    QuestionDetails:
+      allOf:
+      - $ref: '#/components/schemas/Question'
+      - $ref: '#/components/schemas/QuestionDetails_allOf'
+    NewResponse:
+      example:
+        questionnaireID: 1
+        body:
+        - option_response:
+          - 選択肢1
+          - 選択肢1
+          questionID: 1
+          question_type: Text
+          response: リマインダーBOTを作った話
+        - option_response:
+          - 選択肢1
+          - 選択肢1
+          questionID: 1
+          question_type: Text
+          response: リマインダーBOTを作った話
+      properties:
+        questionnaireID:
+          example: 1
+          type: integer
+        body:
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+          type: array
+      required:
+      - body
+      - questionnaireID
+      type: object
+    Response:
+      allOf:
+      - $ref: '#/components/schemas/NewResponse'
+      - $ref: '#/components/schemas/Response_allOf'
+    ResponseDetails:
+      allOf:
+      - $ref: '#/components/schemas/Response'
+      - $ref: '#/components/schemas/ResponseDetails_allOf'
+    ResponseSummary:
+      example:
+        submitted_at: 2000-01-23T04:56:07.000+00:00
+        res_time_limit: 2000-01-23T04:56:07.000+00:00
+        questionnaire_title: 第1回集会らん☆ぷろ募集アンケート
+        questionnaireID: 1
+        modified_at: modified_at
+        responseID: 1
+      properties:
+        responseID:
+          example: 1
+          type: integer
+        questionnaireID:
+          example: 1
+          type: integer
+        questionnaire_title:
+          example: 第1回集会らん☆ぷろ募集アンケート
+          type: string
+        res_time_limit:
+          format: date-time
+          type: string
+        submitted_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-tie
+          type: string
+      required:
+      - modified_at
+      - questionnaireID
+      - questionnaire_title
+      - res_time_limit
+      - responseID
+      - submitted_at
+      type: object
+    ResponseBody:
+      example:
+        option_response:
+        - 選択肢1
+        - 選択肢1
+        questionID: 1
+        question_type: Text
+        response: リマインダーBOTを作った話
+      properties:
+        questionID:
+          example: 1
+          type: integer
+        question_type:
+          enum:
+          - Text
+          - TextArea
+          - MultipleChoice
+          - Checkbox
+          - Dropdown
+          - LinearScale
+          - Date
+          - Time
+          example: Text
+          type: string
+        response:
+          example: リマインダーBOTを作った話
+          type: string
+        option_response:
+          items:
+            example: 選択肢1
+            type: string
+          type: array
+      required:
+      - option_response
+      - questionID
+      - question_type
+      - response
+      type: object
+    ResponseResult:
+      allOf:
+      - $ref: '#/components/schemas/Response'
+      - $ref: '#/components/schemas/ResponseResult_allOf'
+    Users:
+      items:
+        example: lolico
+        type: string
+      type: array
+    User:
+      example:
+        iconFileId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        displayName: ロリ子
+        userId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        twitterId: trapyojo
+        traqID: lolico
+      properties:
+        userId:
+          format: uuid
+          type: string
+        traqID:
+          example: lolico
+          type: string
+        displayName:
+          example: ロリ子
+          type: string
+        iconFileId:
+          format: uuid
+          type: string
+        twitterId:
+          example: trapyojo
+          type: string
+      required:
+      - displayName
+      - iconFileId
+      - traqID
+      - twitterId
+      - userId
+      type: object
+    Me:
+      example:
+        traqID: lolico
+      properties:
+        traqID:
+          example: lolico
+          type: string
+      required:
+      - traqID
+      type: object
+    Group:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        adminUser: lolico
+        groupId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        members:
+        - null
+        - null
+        name: 17B
+        description: 2017年度入学学部生
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        groupId:
+          format: uuid
+          type: string
+        name:
+          example: 17B
+          type: string
+        description:
+          example: 2017年度入学学部生
+          type: string
+        adminUser:
+          example: lolico
+          type: string
+        members:
+          items:
+            $ref: '#/components/schemas/Users'
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - adminUser
+      - createdAt
+      - description
+      - groupId
+      - members
+      - name
+      - updatedAt
+      type: object
+    QuestionnaireForList_allOf:
+      properties:
+        is_targeted:
+          description: |
+            自分がターゲットになっているかどうか
+          example: true
+          type: boolean
+      required:
+      - is_targeted
+    QuestionnaireByID_allOf:
+      properties:
+        respondents:
+          items:
+            example: lolico
+            type: string
+          type: array
+      required:
+      - respondents
+    QuestionnaireMyTargeted_allOf:
+      properties:
+        responded_at:
+          format: date-time
+          type: string
+      required:
+      - responded_at
+    QuestionnaireMyAdministrates_allOf:
+      properties:
+        all_responded:
+          description: |
+            回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
+          example: true
+          type: boolean
+        respondents:
+          items:
+            example: lolico
+            type: string
+          type: array
+      required:
+      - all_responded
+      - respondents
+    QuestionnaireUser_allOf:
+      properties:
+        targets:
+          items:
+            example: lolico
+            type: string
+          type: array
+        administrators:
+          items:
+            example: lolico
+            type: string
+          type: array
+      required:
+      - administrators
+      - targets
+    Question_allOf:
+      properties:
+        questionID:
+          example: 1
+          type: integer
+      required:
+      - questionID
+    QuestionDetails_allOf:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+      required:
+      - created_at
+    Response_allOf:
+      properties:
+        submitted_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-time
+          type: string
+      required:
+      - modified_at
+      - submitted_at
+    ResponseDetails_allOf:
+      properties:
+        responseID:
+          example: 1
+          type: integer
+      required:
+      - responseID
+    ResponseResult_allOf:
+      properties:
+        traqID:
+          example: lolico
+          type: string
+      required:
+      - traqID
+  securitySchemes:
+    application:
+      flows:
+        clientCredentials:
+          scopes:
+            write: allows modifying resources
+            read: allows reading resources
+          tokenUrl: http://example.com/oauth/token
+      type: oauth2
