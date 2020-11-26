@@ -90,19 +90,27 @@ func PostResponse(c echo.Context) error {
 		return err
 	}
 
+	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, body.QuestionID, option); err != nil {
-					return err
-				}
+				responseMetas = append(responseMetas, &model.ResponseMeta{
+					QuestionID: body.QuestionID,
+					Data:       option,
+				})
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, body.QuestionID, body.Body.ValueOrZero()); err != nil {
-				return err
-			}
+			responseMetas = append(responseMetas, &model.ResponseMeta{
+				QuestionID: body.QuestionID,
+				Data:       body.Body.ValueOrZero(),
+			})
 		}
+	}
+
+	err = model.InsertResponses(responseID, responseMetas)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
@@ -219,19 +227,27 @@ func EditResponse(c echo.Context) error {
 		return err
 	}
 
+	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			for _, option := range body.OptionResponse {
-				if err := model.InsertResponse(c, responseID, body.QuestionID, option); err != nil {
-					return err
-				}
+				responseMetas = append(responseMetas, &model.ResponseMeta{
+					QuestionID: body.QuestionID,
+					Data:       option,
+				})
 			}
 		default:
-			if err := model.InsertResponse(c, responseID, body.QuestionID, body.Body.ValueOrZero()); err != nil {
-				return err
-			}
+			responseMetas = append(responseMetas, &model.ResponseMeta{
+				QuestionID: body.QuestionID,
+				Data:       body.Body.ValueOrZero(),
+			})
 		}
+	}
+
+	err = model.InsertResponses(responseID, responseMetas)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
 
 	return c.NoContent(http.StatusOK)

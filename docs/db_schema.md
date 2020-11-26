@@ -24,17 +24,17 @@
 
 質問内容
 
-| Field            | Type       | Null | Key | Default           | Extra          | 説明など                                                                                                       |
-| ---------------- | ---------- | ---- | --- | ----------------- | -------------- | -------------------------------------------------------------------------------------------------------------- |
-| id               | int(11)    | NO   | PRI | _NULL_            | auto_increment |
-| questionnaire_id | int(11)    | YES  |     | _NULL_            |                | どのアンケートの質問か                                                                                         |
-| page_num         | int(11)    | NO   |     | _NULL_            |                | アンケートの何ページ目の質問か                                                                                 |
-| question_num     | int(11)    | NO   |     | _NULL_            |                | アンケートの質問のうち、何問目か                                                                               |
-| type             | char(20)   | NO   |     | _NULL_            |                | どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time") |
-| body             | text       | YES  |     | _NULL_            |                | 質問の内容                                                                                                     |
-| is_required      | tinyint(4) | NO   |     | 0                 |                | 回答が必須である (1) , ない(0)                                                                                 |
-| deleted_at       | timestamp  | YES  |     | _NULL_            |                | 質問が削除された日時 (削除されていない場合は NULL)                                                             |
-| created_at       | timestamp  | NO   |     | CURRENT_TIMESTAMP |                | 質問が作成された日時                                                                                           |
+| Field            | Type       | Null | Key  | Default           | Extra          | 説明など                                                     |
+| ---------------- | ---------- | ---- | ---- | ----------------- | -------------- | ------------------------------------------------------------ |
+| id               | int(11)    | NO   | PRI  | _NULL_            | auto_increment |                                                              |
+| questionnaire_id | int(11)    | YES  |      | _NULL_            |                | どのアンケートの質問か                                       |
+| page_num         | int(11)    | NO   |      | _NULL_            |                | アンケートの何ページ目の質問か                               |
+| question_num     | int(11)    | NO   |      | _NULL_            |                | アンケートの質問のうち、何問目か                             |
+| type             | char(20)   | NO   |      | _NULL_            |                | どのタイプの質問か ("Text","TextArea",  "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time") |
+| body             | text       | YES  |      | _NULL_            |                | 質問の内容                                                   |
+| is_required      | tinyint(4) | NO   |      | 0                 |                | 回答が必須である (1) , ない(0)                               |
+| deleted_at       | timestamp  | YES  |      | _NULL_            |                | 質問が削除された日時 (削除されていない場合は NULL)           |
+| created_at       | timestamp  | NO   |      | CURRENT_TIMESTAMP |                | 質問が作成された日時                                         |
 
 ### questionnaires
 
@@ -87,6 +87,17 @@
 | scale_label_right | text    | YES  |     | _NULL_  |       | 右側のラベル (ない場合は NULL) |
 | scale_min         | int(11) | YES  |     | _NULL_  |       | スケールの最小値               |
 | scale_max         | int(11) | YES  |     | _NULL_  |       | スケールの最大値               |
+
+### validations
+
+`Number`の値制限，`Text`の正規表現によるパターンマッチング．
+
+| Field         | Type    | Null | Key  | Default | Extra | 説明など           |
+| ------------- | ------- | ---- | ---- | ------- | ----- | ------------------ |
+| question_id   | int(11) | YES  | PRI  | _NULL_  |       | どの質問についてか |
+| regex_pattern | text    | YES  |      | _NULL_  |       | 正規表現           |
+| min_bound     | text    | YES  |      | _NULL_  |       | 数値の下界         |
+| max_bound     | text    | YES  |      | _NULL_  |       | 数値の上界         |
 
 ### targets
 
