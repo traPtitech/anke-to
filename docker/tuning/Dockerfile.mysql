@@ -1,0 +1,15 @@
+FROM mariadb:10.3.9
+
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends wget percona-toolkit && \
+  wget https://github.com/KLab/myprofiler/releases/download/0.2/myprofiler.linux_amd64.tar.gz && \
+  tar -xf myprofiler.linux_amd64.tar.gz && \
+  rm myprofiler.linux_amd64.tar.gz && \
+  mv myprofiler /usr/local/bin/ && \
+  chmod +x /usr/local/bin/myprofiler
+COPY mariadb.cnf /etc/mysql/conf.d/mariadb.cnf
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+EXPOSE 3306
+CMD ["mysqld"]

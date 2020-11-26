@@ -10,6 +10,28 @@ Docker, Goが必要です
 make dev
 ```
 
+#### ベンチマーク
+Docker,openapi-generator-cli,Goが必要です。
+```
+#ベンチマーク前のanke-to起動
+# make tuning
+
+#ベンチマーク
+$ make bench
+
+#750レコードinsert
+$ make bench-init
+
+#pprof
+$ make pprof
+
+#pt-query-digest
+# make slow
+
+#myprofiler
+# make myprof ARGS="{引数}"
+```
+
 ### クライアントサイド
 Node.js が必要です
 ```
