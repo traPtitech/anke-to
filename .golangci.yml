@@ -1,3 +1,7 @@
+run:
+  skip-dirs:
+    - tuning/openapi
+
 linters:
   enable:
     - govet
