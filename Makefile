@@ -20,7 +20,8 @@ myprof:
 
 .PHONY: build
 build:
-	openapi-generator-cli generate -g go -o tuning -i docs/swagger/swagger.yaml
+	openapi-generator-cli generate -g go -o tuning/openapi -i docs/swagger/swagger.yaml
+	rm tuning/openapi/go.*
 	go build -o anke-to
 
 .PHONY: bench

@@ -21,18 +21,6 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
       - run: go mod download
-  generate:
-    name: Generate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v1
-        with:
-          path: ./tuning
-          key: ${{ runner.os }}-openapi-${{ hashFiles('**/docs/swagger/swagger.yaml') }}
-      - uses: docker://openapitools/openapi-generator-cli
-        with:
-          args: generate -g go -o tuning -i docs/swagger/swagger.yaml
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -57,12 +45,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
-      - uses: actions/cache@v1
-        with:
-          path: ./tuning
-          key: ${{ runner.os }}-openapi-${{ hashFiles('**/docs/swagger/swagger.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-openapi-
       - run: go build -o anke-to
       - uses: actions/upload-artifact@v1
         with:
@@ -91,12 +73,6 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v1
-        with:
-          path: ./tuning
-          key: ${{ runner.os }}-openapi-${{ hashFiles('**/docs/swagger/swagger.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-openapi-
       - run: go test ./... -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root

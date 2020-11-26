@@ -24,8 +24,6 @@ tmp
 anke-to
 main
 
-openapi*
-
 .env
 *.png
 
