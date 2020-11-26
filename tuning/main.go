@@ -183,7 +183,10 @@ func Inititial() {
 	sem := semaphore.NewWeighted(routineNum)
 	for i := 0; i < 750; i++ {
 		var questionnaireID int32
-		sem.Acquire(c, 1)
+		err := sem.Acquire(c, 1)
+		if err != nil {
+			panic(err)
+		}
 		eg.Go(func() error {
 			defer sem.Release(1)
 			questionnaireRes, _, err := client.QuestionnaireApi.PostQuestionnaire(c, newQuestionnaire)
@@ -211,7 +214,10 @@ func Inititial() {
 
 		responseNum := 10
 		responseChan := make(chan openapi.NewResponse, responseNum)
-		sem.Acquire(c, 1)
+		err = sem.Acquire(c, 1)
+		if err != nil {
+			panic(err)
+		}
 		eg.Go(func(questionnaireID int32) func() error {
 			return func() error {
 				defer sem.Release(1)
@@ -240,7 +246,10 @@ func Inititial() {
 		}(questionnaireID))
 
 		for i := 0; i < responseNum; i++ {
-			sem.Acquire(c, 1)
+			err := sem.Acquire(c, 1)
+			if err != nil {
+				panic(err)
+			}
 			eg.Go(func(responseChan chan openapi.NewResponse) func() error {
 				return func() error {
 					defer sem.Release(1)
@@ -258,7 +267,6 @@ func Inititial() {
 	}
 
 	err := eg.Wait()
-	log.Println("hoge")
 	if err != nil {
 		panic(err)
 	}
