@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  anke-to:
+    build:
+      context: ../..
+      dockerfile: docker/tuning/Dockerfile.server
+    environment:
+      ANKE-TO_ENV: pprof
+      PORT: :1323
+      MARIADB_USERNAME: root
+      MARIADB_PASSWORD: password
+      MARIADB_HOSTNAME: mysql
+      MARIADB_DATABASE: anke-to
+      TZ: Asia/Tokyo
+      GO111MODULE: "on"
+    ports:
+      - "1323:1323"
+      - "6060:6060"
+    volumes:
+      - "../../:/go/src/github.com/traPtitech/anke-to"
+    depends_on:
+      - mysql
+
+  mysql:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: anke-to
+      TZ: Asia/Tokyo
+    expose:
+      - "3306"
