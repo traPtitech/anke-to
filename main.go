@@ -13,11 +13,12 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
 	"github.com/traPtitech/anke-to/tuning"
-
-	"cloud.google.com/go/logging"
 )
 
 func main() {
+	env := os.Getenv("ANKE-TO_ENV")
+	logOn := env == "pprof" || env == "dev"
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "init":
@@ -27,11 +28,6 @@ func main() {
 			tuning.Bench()
 			return
 		}
-	}
-
-	logger, err := model.GetLogger()
-	if err != nil {
-		panic(err)
 	}
 
 	db, err := model.EstablishConnection()
@@ -45,7 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	if logger == nil {
+	if logOn {
 		db.LogMode(true)
 	}
 
@@ -57,24 +53,17 @@ func main() {
 
 	// Middleware
 	e.Use(middleware.Recover())
-
-	if logger != nil {
-		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-			Output: logger.StandardLogger(logging.Info).Writer(),
-		}))
-		e.Logger.SetOutput(logger.StandardLogger(logging.Error).Writer())
-	} else {
-		e.Use(middleware.Logger())
-	}
+	e.Use(middleware.Logger())
 
 	router.SetRouting(e)
 
-	if os.Getenv("ANKE-TO_ENV") == "pprof" {
+	if env == "pprof" {
 		runtime.SetBlockProfileRate(1)
 		go func() {
 			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
 	}
+
 	port := os.Getenv("PORT")
 	// Start server
 	e.Logger.Fatal(e.Start(port))
