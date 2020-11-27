@@ -13,8 +13,6 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
 	"github.com/traPtitech/anke-to/tuning"
-
-	"cloud.google.com/go/logging"
 )
 
 func main() {
@@ -29,11 +27,6 @@ func main() {
 		}
 	}
 
-	logger, err := model.GetLogger()
-	if err != nil {
-		panic(err)
-	}
-
 	db, err := model.EstablishConnection()
 	if err != nil {
 		panic(err)
@@ -45,7 +38,7 @@ func main() {
 		panic(err)
 	}
 
-	if logger == nil {
+	if os.Getenv("DEV") == "true" {
 		db.LogMode(true)
 	}
 
@@ -57,15 +50,7 @@ func main() {
 
 	// Middleware
 	e.Use(middleware.Recover())
-
-	if logger != nil {
-		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-			Output: logger.StandardLogger(logging.Info).Writer(),
-		}))
-		e.Logger.SetOutput(logger.StandardLogger(logging.Error).Writer())
-	} else {
-		e.Use(middleware.Logger())
-	}
+	e.Use(middleware.Logger())
 
 	router.SetRouting(e)
 

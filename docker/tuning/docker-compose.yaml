@@ -6,6 +6,7 @@ services:
       context: ../..
       dockerfile: docker/tuning/Dockerfile.server
     environment:
+      DEV: "true"
       ANKE-TO_ENV: pprof
       PORT: :1323
       MARIADB_USERNAME: root
