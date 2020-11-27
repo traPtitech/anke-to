@@ -6,6 +6,7 @@ services:
       context: ../..
       dockerfile: docker/dev/Dockerfile
     environment:
+      ANKE-TO_ENV: dev
       PORT: :1323
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password
