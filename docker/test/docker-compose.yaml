@@ -4,7 +4,7 @@ services:
   anke-to:
     image: golang:1.15.3-alpine
     environment:
-      DEV: "true"
+      ANKE-TO_ENV: dev
       CGO_ENABLED: 0
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password

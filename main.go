@@ -16,6 +16,9 @@ import (
 )
 
 func main() {
+	env := os.Getenv("ANKE-TO_ENV")
+	logOn := env == "pprof" || env == "dev"
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "init":
@@ -38,7 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	if os.Getenv("DEV") == "true" {
+	if logOn {
 		db.LogMode(true)
 	}
 
@@ -54,12 +57,13 @@ func main() {
 
 	router.SetRouting(e)
 
-	if os.Getenv("ANKE-TO_ENV") == "pprof" {
+	if env == "pprof" {
 		runtime.SetBlockProfileRate(1)
 		go func() {
 			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
 	}
+
 	port := os.Getenv("PORT")
 	// Start server
 	e.Logger.Fatal(e.Start(port))
