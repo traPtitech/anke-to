@@ -223,8 +223,8 @@ func EditResponse(c echo.Context) error {
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := model.DeleteResponse(c, responseID); err != nil {
-		return err
+	if err := model.DeleteResponse(responseID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
