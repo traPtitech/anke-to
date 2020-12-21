@@ -74,8 +74,8 @@ func PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertAdministrators(c, lastID, req.Administrators); err != nil {
-		return err
+	if err := model.InsertAdministrators(lastID, req.Administrators); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	timeLimit := "なし"
@@ -182,12 +182,12 @@ func EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteAdministrators(c, questionnaireID); err != nil {
-		return err
+	if err := model.DeleteAdministrators(questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertAdministrators(c, questionnaireID, req.Administrators); err != nil {
-		return err
+	if err := model.InsertAdministrators(questionnaireID, req.Administrators); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -208,8 +208,8 @@ func DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteAdministrators(c, questionnaireID); err != nil {
-		return err
+	if err := model.DeleteAdministrators(questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusOK)

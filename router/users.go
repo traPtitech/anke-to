@@ -68,9 +68,9 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 // GetMyQuestionnaire GET /users/me/administrates
 func GetMyQuestionnaire(c echo.Context) error {
 	// 自分が管理者になっているアンケート一覧
-	questionnaireIDs, err := model.GetAdminQuestionnaireIDs(c, model.GetUserID(c))
+	questionnaireIDs, err := model.GetAdminQuestionnaireIDs(model.GetUserID(c))
 	if err != nil {
-		return nil
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	type QuestionnaireInfo struct {

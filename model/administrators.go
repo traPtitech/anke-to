@@ -2,10 +2,8 @@ package model
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 )
 
 // Administrators administratorsテーブルの構造体
@@ -15,7 +13,7 @@ type Administrators struct {
 }
 
 // InsertAdministrators アンケートの管理者を追加
-func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
+func InsertAdministrators(questionnaireID int, administrators []string) error {
 	var administrator Administrators
 	var err error
 	for _, v := range administrators {
@@ -25,27 +23,25 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 		}
 		err = db.Create(&administrator).Error
 		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return fmt.Errorf("failed to insert administrators: %w", err)
 		}
 	}
 	return nil
 }
 
 // DeleteAdministrators アンケートの管理者の削除
-func DeleteAdministrators(c echo.Context, questionnaireID int) error {
+func DeleteAdministrators(questionnaireID int) error {
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(Administrators{}).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete administrators: %w", err)
 	}
 	return nil
 }
 
 // GetAdminQuestionnaireIDs 自分が管理者のアンケートの取得
-func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
+func GetAdminQuestionnaireIDs(user string) ([]int, error) {
 	questionnaireIDs := []int{}
 	err := db.
 		Model(&Administrators{}).
@@ -53,8 +49,7 @@ func GetAdminQuestionnaireIDs(c echo.Context, user string) ([]int, error) {
 		Or("user_traqid = ?", "traP").
 		Pluck("DISTINCT questionnaire_id", &questionnaireIDs).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, fmt.Errorf("failed to get questionnaire_id: %w", err)
 	}
 	return questionnaireIDs, nil
 }
