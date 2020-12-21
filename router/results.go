@@ -24,9 +24,9 @@ func GetResults(c echo.Context) error {
 		return err
 	}
 
-	respondentDetails, err := model.GetRespondentDetails(c, questionnaireID, sort)
+	respondentDetails, err := model.GetRespondentDetails(questionnaireID, sort)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, respondentDetails)

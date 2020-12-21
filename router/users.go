@@ -22,9 +22,9 @@ func GetUsersMe(c echo.Context) error {
 func GetMyResponses(c echo.Context) error {
 	userID := model.GetUserID(c)
 
-	myResponses, err := model.GetRespondentInfos(c, userID)
+	myResponses, err := model.GetRespondentInfos(userID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, myResponses)
@@ -40,9 +40,9 @@ func GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := model.GetRespondentInfos(c, userID, questionnaireID)
+	myresponses, err := model.GetRespondentInfos(userID, questionnaireID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, myresponses)
