@@ -56,8 +56,8 @@ func PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if err := model.InsertOption(c, lastID, i+1, v); err != nil {
-				return err
+			if err := model.InsertOption(lastID, i+1, v); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	case "LinearScale":
@@ -150,8 +150,8 @@ func EditQuestion(c echo.Context) error {
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := model.UpdateOptions(c, req.Options, questionID); err != nil {
-			return err
+		if err := model.UpdateOptions(req.Options, questionID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
 		if err := model.UpdateScaleLabel(questionID,
@@ -188,8 +188,8 @@ func DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteOptions(c, questionID); err != nil {
-		return err
+	if err := model.DeleteOptions(questionID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteScaleLabel(questionID); err != nil {

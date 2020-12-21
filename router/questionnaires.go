@@ -88,15 +88,15 @@ func PostQuestionnaire(c echo.Context) error {
 		targetsMentionText = "@" + strings.Join(req.Targets, " @")
 	}
 
-	if err := model.PostMessage(c,
-		"### アンケート『"+"["+req.Title+"](https://anke-to.trap.jp/questionnaires/"+
-			strconv.Itoa(lastID)+")"+"』が作成されました\n"+
-			"#### 管理者\n"+strings.Join(req.Administrators, ",")+"\n"+
-			"#### 説明\n"+req.Description+"\n"+
-			"#### 回答期限\n"+timeLimit+"\n"+
-			"#### 対象者\n"+targetsMentionText+"\n"+
-			"#### 回答リンク\n"+
-			"https://anke-to.trap.jp/responses/new/"+strconv.Itoa(lastID)); err != nil {
+	if err := model.PostMessage(
+		"### アンケート『" + "[" + req.Title + "](https://anke-to.trap.jp/questionnaires/" +
+			strconv.Itoa(lastID) + ")" + "』が作成されました\n" +
+			"#### 管理者\n" + strings.Join(req.Administrators, ",") + "\n" +
+			"#### 説明\n" + req.Description + "\n" +
+			"#### 回答期限\n" + timeLimit + "\n" +
+			"#### 対象者\n" + targetsMentionText + "\n" +
+			"#### 回答リンク\n" +
+			"https://anke-to.trap.jp/responses/new/" + strconv.Itoa(lastID)); err != nil {
 		c.Logger().Error(err)
 	}
 
@@ -261,7 +261,7 @@ func GetQuestions(c echo.Context) error {
 		var err error
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			options, err = model.GetOptions(c, v.ID)
+			options, err = model.GetOptions(v.ID)
 		case "LinearScale":
 			scalelabel, err = model.GetScaleLabel(v.ID)
 		case "Text", "Number":
