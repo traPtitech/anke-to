@@ -223,9 +223,12 @@ func GetQuestions(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	allquestions, err := model.GetQuestions(c, questionnaireID)
+	allquestions, err := model.GetQuestions(questionnaireID)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if len(allquestions) == 0 {

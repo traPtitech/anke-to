@@ -48,11 +48,9 @@ func PostQuestion(c echo.Context) error {
 		}
 	}
 
-	lastID, err := model.InsertQuestion(
-		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	lastID, err := model.InsertQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
@@ -145,11 +143,9 @@ func EditQuestion(c echo.Context) error {
 		}
 	}
 
-	if err := model.UpdateQuestion(
-		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
+	if err := model.UpdateQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
 		req.IsRequired, questionID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
@@ -188,8 +184,8 @@ func DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	if err := model.DeleteQuestion(c, questionID); err != nil {
-		return err
+	if err := model.DeleteQuestion(questionID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteOptions(c, questionID); err != nil {

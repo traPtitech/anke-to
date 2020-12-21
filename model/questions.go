@@ -2,11 +2,9 @@ package model
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -36,8 +34,7 @@ type QuestionIDType struct {
 }
 
 //InsertQuestion 質問の追加
-func InsertQuestion(
-	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
+func InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool) (int, error) {
 	question := Question{
 		QuestionnaireID: questionnaireID,
@@ -64,16 +61,14 @@ func InsertQuestion(
 		return nil
 	})
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed in transaction: %w", err))
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		return 0, fmt.Errorf("failed in transaction: %w", err)
 	}
 
 	return question.ID, nil
 }
 
 //UpdateQuestion 質問の修正
-func UpdateQuestion(
-	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
+func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool, questionID int) error {
 	question := Question{
 		QuestionnaireID: questionnaireID,
@@ -89,28 +84,26 @@ func UpdateQuestion(
 		Where("id = ?", questionID).
 		Update(&question).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to update a question record: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to update a question record: %w", err)
 	}
 
 	return nil
 }
 
 //DeleteQuestion 質問の削除
-func DeleteQuestion(c echo.Context, questionID int) error {
+func DeleteQuestion(questionID int) error {
 	err := db.
 		Where("id = ?", questionID).
 		Delete(&Question{}).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to delete a question record: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete a question record: %w", err)
 	}
 
 	return nil
 }
 
 //GetQuestions 質問一覧の取得
-func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
+func GetQuestions(questionnaireID int) ([]Question, error) {
 	questions := []Question{}
 
 	err := db.
@@ -118,11 +111,10 @@ func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 		Find(&questions).Error
 	// アンケートidの一致する質問を取る
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get questions: %w", err))
 		if gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound)
+			return nil, fmt.Errorf("failed to get questions: %w", gorm.ErrRecordNotFound)
 		}
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, fmt.Errorf("failed to get questions: %w", err)
 	}
 
 	return questions, nil
