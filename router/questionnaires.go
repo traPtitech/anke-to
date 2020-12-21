@@ -48,8 +48,8 @@ func PostQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := model.InsertTargets(c, lastID, req.Targets); err != nil {
-		return err
+	if err := model.InsertTargets(lastID, req.Targets); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.InsertAdministrators(c, lastID, req.Administrators); err != nil {
@@ -149,12 +149,12 @@ func EditQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteTargets(c, questionnaireID); err != nil {
-		return err
+	if err := model.DeleteTargets(questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertTargets(c, questionnaireID, req.Targets); err != nil {
-		return err
+	if err := model.InsertTargets(questionnaireID, req.Targets); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteAdministrators(c, questionnaireID); err != nil {
@@ -179,8 +179,8 @@ func DeleteQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteTargets(c, questionnaireID); err != nil {
-		return err
+	if err := model.DeleteTargets(questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteAdministrators(c, questionnaireID); err != nil {

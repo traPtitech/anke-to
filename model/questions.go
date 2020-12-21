@@ -128,6 +128,7 @@ func GetQuestions(c echo.Context, questionnaireID int) ([]Question, error) {
 	return questions, nil
 }
 
+// CheckQuestionAdmin Questionの管理者か
 func CheckQuestionAdmin(userID string, questionID int) (bool, error) {
 	err := db.
 		Table("question").
