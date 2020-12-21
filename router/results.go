@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/anke-to/model"
 )
@@ -34,9 +35,12 @@ func GetResults(c echo.Context) error {
 
 // アンケートの回答を確認できるか
 func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
-	resSharedTo, err := model.GetResShared(c, questionnaireID)
+	resSharedTo, err := model.GetResShared(questionnaireID)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch resSharedTo {

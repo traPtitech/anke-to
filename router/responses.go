@@ -23,9 +23,9 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	limit, err := model.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない
@@ -154,9 +154,9 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	limit, err := model.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない

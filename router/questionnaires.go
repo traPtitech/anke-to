@@ -1,11 +1,14 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/gorm"
 
 	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
@@ -15,9 +18,28 @@ import (
 
 // GetQuestionnaires GET /questionnaires
 func GetQuestionnaires(c echo.Context) error {
-	questionnaires, pageMax, err := model.GetQuestionnaires(c, c.QueryParam("nontargeted") == "true")
+	userID := model.GetUserID(c)
+	sort := c.QueryParam("sort")
+	search := c.QueryParam("search")
+	page := c.QueryParam("page")
+	if len(page) == 0 {
+		page = "1"
+	}
+	pageNum, err := strconv.Atoi(page)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
+	}
+	if pageNum <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
+	}
+	questionnaires, pageMax, err := model.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		} else if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -43,7 +65,7 @@ func PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	lastID, err := model.InsertQuestionnaire(c, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+	lastID, err := model.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
 	}
@@ -100,9 +122,12 @@ func GetQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
+	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(questionnaireID)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -145,8 +170,8 @@ func EditQuestionnaire(c echo.Context) error {
 	}
 
 	if err := model.UpdateQuestionnaire(
-		c, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
-		return err
+		req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteTargets(questionnaireID); err != nil {
@@ -175,8 +200,8 @@ func DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
-	if err := model.DeleteQuestionnaire(c, questionnaireID); err != nil {
-		return err
+	if err := model.DeleteQuestionnaire(questionnaireID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := model.DeleteTargets(questionnaireID); err != nil {
