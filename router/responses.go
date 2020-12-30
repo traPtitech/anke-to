@@ -215,13 +215,26 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
+	scaleLabelIDs := []int{}
+	for _, body := range req.Body {
+		switch body.QuestionType {
+		case "LinearScale":
+			scaleLabelIDs = append(scaleLabelIDs, body.QuestionID)
+		}
+	}
+
+	scaleLabelMap, err := model.GetScaleLabels(scaleLabelIDs...)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
 	// LinearScaleのパターンマッチ
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
-			label, err := model.GetScaleLabel(body.QuestionID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			label, ok := scaleLabelMap[body.QuestionID]
+			if !ok {
+				label = model.ScaleLabels{}
 			}
 			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
