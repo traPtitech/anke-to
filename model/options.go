@@ -78,25 +78,31 @@ func DeleteOptions(questionID int) error {
 }
 
 // GetOptions 質問の選択肢の取得
-func GetOptions(questionID int) ([]string, error) {
-	bodies := []null.String{}
+func GetOptions(questionIDs ...int) (map[int][]string, error) {
+	type option struct {
+		QuestionID int         `gorm:"type:int(11) NOT NULL;"`
+		Body       null.String `gorm:"type:text;default:NULL;"`
+	}
+	options := []option{}
 
 	err := db.
 		Model(Options{}).
-		Where("question_id = ?", questionID).
+		Where("question_id IN (?)", questionIDs).
 		Order("option_num").
-		Pluck("body", &bodies).Error
+		Select("question_id, body").
+		Find(&options).Error
 	if err != nil {
-		return []string{}, fmt.Errorf("failed to get option: %w", err)
+		return nil, fmt.Errorf("failed to get option: %w", err)
 	}
-	options := make([]string, 0, len(bodies))
-	for _, option := range bodies {
-		if option.Valid {
-			options = append(options, option.String)
+
+	optionMap := make(map[int][]string, len(options))
+	for _, option := range options {
+		if option.Body.Valid {
+			optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body.String)
 		} else {
-			options = append(options, "")
+			optionMap[option.QuestionID] = append(optionMap[option.QuestionID], "")
 		}
 	}
 
-	return options, nil
+	return optionMap, nil
 }

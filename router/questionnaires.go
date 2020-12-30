@@ -254,21 +254,54 @@ func GetQuestions(c echo.Context) error {
 	}
 	var ret []questionInfo
 
+	optionIDs := []int{}
+	scaleLabelIDs := []int{}
+	validationIDs := []int{}
+	for _, question := range allquestions {
+		switch question.Type {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			optionIDs = append(optionIDs, question.ID)
+		case "LinearScale":
+			scaleLabelIDs = append(scaleLabelIDs, question.ID)
+		case "Text", "Number":
+			validationIDs = append(validationIDs, question.ID)
+		}
+	}
+
+	optionMap, err := model.GetOptions(optionIDs...)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap, err := model.GetScaleLabels(scaleLabelIDs...)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	validationMap, err := model.GetValidations(validationIDs...)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
 	for _, v := range allquestions {
+		ok := true
 		options := []string{}
 		scalelabel := model.ScaleLabels{}
 		validation := model.Validations{}
-		var err error
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			options, err = model.GetOptions(v.ID)
+			options, ok = optionMap[v.ID]
+			if !ok {
+				options = []string{}
+			}
 		case "LinearScale":
-			scalelabel, err = model.GetScaleLabel(v.ID)
+			scalelabel, ok = scaleLabelMap[v.ID]
+			if !ok {
+				scalelabel = model.ScaleLabels{}
+			}
 		case "Text", "Number":
-			validation, err = model.GetValidation(v.ID)
-		}
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+			validation, ok = validationMap[v.ID]
+			if !ok {
+				validation = model.Validations{}
+			}
 		}
 
 		ret = append(ret,

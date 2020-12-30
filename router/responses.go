@@ -42,7 +42,7 @@ func PostResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs)
+	validations, err := model.GetValidations(questionIDs...)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -173,7 +173,7 @@ func EditResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs)
+	validations, err := model.GetValidations(questionIDs...)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
