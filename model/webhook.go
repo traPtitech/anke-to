@@ -15,7 +15,7 @@ import (
 )
 
 // PostMessage Webhookでのメッセージの投稿
-func PostMessage(c echo.Context, message string) error {
+func PostMessage(message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
 	req, err := http.NewRequest("POST",
 		url,

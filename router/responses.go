@@ -23,9 +23,9 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	limit, err := model.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない
@@ -85,9 +85,10 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := model.InsertRespondent(c, req.ID, req.SubmittedAt)
+	userID := model.GetUserID(c)
+	responseID, err := model.InsertRespondent(userID, req.ID, req.SubmittedAt)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
@@ -129,7 +130,7 @@ func GetResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to parse responseID(%s) to integer: %w", strResponseID, err))
 	}
 
-	respondentDetail, err := model.GetRespondentDetail(c, responseID)
+	respondentDetail, err := model.GetRespondentDetail(responseID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -153,9 +154,9 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(c, req.ID)
+	limit, err := model.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない
@@ -223,8 +224,8 @@ func EditResponse(c echo.Context) error {
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := model.DeleteResponse(c, responseID); err != nil {
-		return err
+	if err := model.DeleteResponse(responseID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
@@ -260,8 +261,12 @@ func DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	if err := model.DeleteRespondent(c, responseID); err != nil {
-		return err
+	userID := model.GetUserID(c)
+	if err := model.DeleteRespondent(userID, responseID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusOK)

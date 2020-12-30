@@ -2,10 +2,8 @@ package model
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/labstack/echo"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 	"gopkg.in/guregu/null.v3"
 )
@@ -63,29 +61,13 @@ func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 	return nil
 }
 
-// InsertResponse 質問に対する回答の追加
-func InsertResponse(c echo.Context, responseID int, questionID int, data string) error {
-	err := db.Create(&Response{
-		ResponseID: responseID,
-		QuestionID: questionID,
-		Body:       null.NewString(data, true),
-	}).Error
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to insert response: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return nil
-}
-
 // DeleteResponse 質問に対する回答の削除
-func DeleteResponse(c echo.Context, responseID int) error {
+func DeleteResponse(responseID int) error {
 	err := db.
 		Where("response_id = ?", responseID).
 		Delete(&Response{}).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete response: %w", err)
 	}
 
 	return nil

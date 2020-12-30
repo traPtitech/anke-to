@@ -1,11 +1,13 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 
 	"github.com/traPtitech/anke-to/model"
@@ -22,9 +24,9 @@ func GetUsersMe(c echo.Context) error {
 func GetMyResponses(c echo.Context) error {
 	userID := model.GetUserID(c)
 
-	myResponses, err := model.GetRespondentInfos(c, userID)
+	myResponses, err := model.GetRespondentInfos(userID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, myResponses)
@@ -40,9 +42,9 @@ func GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := model.GetRespondentInfos(c, userID, questionnaireID)
+	myresponses, err := model.GetRespondentInfos(userID, questionnaireID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, myresponses)
@@ -51,10 +53,13 @@ func GetMyResponsesByID(c echo.Context) error {
 // GetTargetedQuestionnaire GET /users/me/targeted
 func GetTargetedQuestionnaire(c echo.Context) error {
 	userID := model.GetUserID(c)
-
-	ret, err := model.GetTargettedQuestionnaires(c, userID, "")
+	sort := c.QueryParam("sort")
+	ret, err := model.GetTargettedQuestionnaires(userID, "", sort)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, ret)
@@ -63,9 +68,9 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 // GetMyQuestionnaire GET /users/me/administrates
 func GetMyQuestionnaire(c echo.Context) error {
 	// 自分が管理者になっているアンケート一覧
-	questionnaireIDs, err := model.GetAdminQuestionnaireIDs(c, model.GetUserID(c))
+	questionnaireIDs, err := model.GetAdminQuestionnaireIDs(model.GetUserID(c))
 	if err != nil {
-		return nil
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	type QuestionnaireInfo struct {
@@ -84,9 +89,12 @@ func GetMyQuestionnaire(c echo.Context) error {
 	ret := []QuestionnaireInfo{}
 
 	for _, questionnaireID := range questionnaireIDs {
-		questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(c, questionnaireID)
+		questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(questionnaireID)
 		if err != nil {
-			return err
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return echo.NewHTTPError(http.StatusNotFound, err)
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		allresponded := true
 		for _, t := range targets {
@@ -128,10 +136,13 @@ func GetMyQuestionnaire(c echo.Context) error {
 // GetTargettedQuestionnairesBytraQID GET /users/:traQID/targeted
 func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
-
-	ret, err := model.GetTargettedQuestionnaires(c, traQID, "unanswered")
+	sort := c.QueryParam("sort")
+	ret, err := model.GetTargettedQuestionnaires(traQID, "unanswered", sort)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, ret)
