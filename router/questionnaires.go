@@ -296,22 +296,24 @@ func GetQuestions(c echo.Context) error {
 	}
 
 	for _, v := range allquestions {
-		ok := true
 		options := []string{}
 		scalelabel := &model.ScaleLabels{}
 		validation := &model.Validations{}
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
+			var ok bool
 			options, ok = optionMap[v.ID]
 			if !ok {
 				options = []string{}
 			}
 		case "LinearScale":
+			var ok bool
 			scalelabel, ok = scaleLabelMap[v.ID]
 			if !ok {
 				scalelabel = &model.ScaleLabels{}
 			}
 		case "Text", "Number":
+			var ok bool
 			validation, ok = validationMap[v.ID]
 			if !ok {
 				validation = &model.Validations{}
