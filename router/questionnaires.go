@@ -254,21 +254,70 @@ func GetQuestions(c echo.Context) error {
 	}
 	var ret []questionInfo
 
+	optionIDs := []int{}
+	scaleLabelIDs := []int{}
+	validationIDs := []int{}
+	for _, question := range allquestions {
+		switch question.Type {
+		case "MultipleChoice", "Checkbox", "Dropdown":
+			optionIDs = append(optionIDs, question.ID)
+		case "LinearScale":
+			scaleLabelIDs = append(scaleLabelIDs, question.ID)
+		case "Text", "Number":
+			validationIDs = append(validationIDs, question.ID)
+		}
+	}
+
+	options, err := model.GetOptions(optionIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	optionMap := make(map[int][]string, len(options))
+	for _, option := range options {
+		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body)
+	}
+
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
+	}
+
+	validations, err := model.GetValidations(validationIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	validationMap := make(map[int]*model.Validations, len(validations))
+	for _, validation := range validations {
+		validationMap[validation.QuestionID] = &validation
+	}
+
 	for _, v := range allquestions {
 		options := []string{}
-		scalelabel := model.ScaleLabels{}
-		validation := model.Validations{}
-		var err error
+		scalelabel := &model.ScaleLabels{}
+		validation := &model.Validations{}
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			options, err = model.GetOptions(v.ID)
+			var ok bool
+			options, ok = optionMap[v.ID]
+			if !ok {
+				options = []string{}
+			}
 		case "LinearScale":
-			scalelabel, err = model.GetScaleLabel(v.ID)
+			var ok bool
+			scalelabel, ok = scaleLabelMap[v.ID]
+			if !ok {
+				scalelabel = &model.ScaleLabels{}
+			}
 		case "Text", "Number":
-			validation, err = model.GetValidation(v.ID)
-		}
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+			var ok bool
+			validation, ok = validationMap[v.ID]
+			if !ok {
+				validation = &model.Validations{}
+			}
 		}
 
 		ret = append(ret,

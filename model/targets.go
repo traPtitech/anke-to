@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 
+	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 )
 
@@ -40,4 +41,17 @@ func DeleteTargets(questionnaireID int) error {
 	}
 
 	return nil
+}
+
+// GetTargets アンケートの対象一覧を取得
+func GetTargets(questionnaireIDs []int) ([]Targets, error) {
+	targets := []Targets{}
+	err := db.
+		Where("questionnaire_id IN (?)", questionnaireIDs).
+		Find(&targets).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, fmt.Errorf("failed to get targets: %w", err)
+	}
+
+	return targets, nil
 }

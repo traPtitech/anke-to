@@ -326,6 +326,20 @@ func GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail,
 	return respondentDetails, nil
 }
 
+// GetRespondentsUserIDs 回答者のユーザーID取得
+func GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
+	respondents := []Respondents{}
+	err := db.
+		Where("questionnaire_id IN (?)", questionnaireIDs).
+		Select("questionnaire_id, user_traqid").
+		Find(&respondents).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get respondents: %w", err)
+	}
+
+	return respondents, nil
+}
+
 // CheckRespondent 回答者かどうかの確認
 func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.

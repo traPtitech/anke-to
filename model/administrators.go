@@ -37,21 +37,21 @@ func DeleteAdministrators(questionnaireID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete administrators: %w", err)
 	}
+
 	return nil
 }
 
-// GetAdminQuestionnaireIDs 自分が管理者のアンケートの取得
-func GetAdminQuestionnaireIDs(user string) ([]int, error) {
-	questionnaireIDs := []int{}
+// GetAdministrators アンケートの管理者を取得
+func GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
+	administrators := []Administrators{}
 	err := db.
-		Model(&Administrators{}).
-		Where("user_traqid = ?", user).
-		Or("user_traqid = ?", "traP").
-		Pluck("DISTINCT questionnaire_id", &questionnaireIDs).Error
+		Where("questionnaire_id IN (?)", questionnaireIDs).
+		Find(&administrators).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get questionnaire_id: %w", err)
+		return nil, fmt.Errorf("failed to get administrators: %w", err)
 	}
-	return questionnaireIDs, nil
+
+	return administrators, nil
 }
 
 // CheckQuestionnaireAdmin 自分がアンケートの管理者か判定

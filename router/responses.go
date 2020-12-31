@@ -71,15 +71,32 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
+	scaleLabelIDs := []int{}
+	for _, body := range req.Body {
+		switch body.QuestionType {
+		case "LinearScale":
+			scaleLabelIDs = append(scaleLabelIDs, body.QuestionID)
+		}
+	}
+
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
+	}
+
 	// LinearScaleのパターンマッチ
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
-			label, err := model.GetScaleLabel(body.QuestionID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			label, ok := scaleLabelMap[body.QuestionID]
+			if !ok {
+				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
+			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
@@ -202,15 +219,32 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
+	scaleLabelIDs := []int{}
+	for _, body := range req.Body {
+		switch body.QuestionType {
+		case "LinearScale":
+			scaleLabelIDs = append(scaleLabelIDs, body.QuestionID)
+		}
+	}
+
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
+	}
+
 	// LinearScaleのパターンマッチ
 	for _, body := range req.Body {
 		switch body.QuestionType {
 		case "LinearScale":
-			label, err := model.GetScaleLabel(body.QuestionID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			label, ok := scaleLabelMap[body.QuestionID]
+			if !ok {
+				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
+			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}

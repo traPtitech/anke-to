@@ -55,19 +55,19 @@ func DeleteScaleLabel(questionID int) error {
 	return nil
 }
 
-// GetScaleLabel 指定されたquestionIDのlabelを取得する
-func GetScaleLabel(questionID int) (ScaleLabels, error) {
-	label := ScaleLabels{}
+// GetScaleLabels 指定されたquestionIDの配列のlabelを取得する
+func GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
+	labels := []ScaleLabels{}
 	err := db.
-		Where("question_id = ?", questionID).
-		First(&label).
-		Error
+		Where("question_id IN (?)", questionIDs).
+		Find(&labels).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return ScaleLabels{}, nil
+		return []ScaleLabels{}, nil
 	} else if err != nil {
-		return ScaleLabels{}, fmt.Errorf("failed to get the scale label (questionID: %d): %w", questionID, err)
+		return nil, fmt.Errorf("failed to get the scale label: %w", err)
 	}
-	return label, nil
+
+	return labels, nil
 }
 
 // CheckScaleLabel responseがScaleMin,ScaleMaxを満たしているか

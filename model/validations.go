@@ -114,8 +114,9 @@ func GetValidations(qustionIDs []int) ([]Validations, error) {
 	if gorm.IsRecordNotFoundError(err) {
 		return []Validations{}, nil
 	} else if err != nil {
-		return []Validations{}, fmt.Errorf("failed to get the validations : %w", err)
+		return nil, fmt.Errorf("failed to get the validations : %w", err)
 	}
+
 	return validations, nil
 }
 
