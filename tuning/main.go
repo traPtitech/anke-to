@@ -27,7 +27,7 @@ func Inititial() {
 		ResTimeLimit:   time.Now().AddDate(0, 0, 7),
 		ResSharedTo:    "public",
 		Targets:        []string{"mds_boy"},
-		Administrators: []string{"mdsboy"},
+		Administrators: []string{"mds_boy"},
 	}
 	newQuestions := []openapi.NewQuestion{
 		{

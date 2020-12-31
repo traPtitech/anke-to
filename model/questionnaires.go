@@ -46,6 +46,13 @@ type QuestionnaireInfo struct {
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
+type QuestionnaireDetail struct {
+	Targets        []string
+	Respondents    []string
+	Administrators []string
+	Questionnaires
+}
+
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
@@ -207,6 +214,25 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	}
 
 	return questionnaires, pageMax, nil
+}
+
+// GetAdminQuestionnaires 自分が管理者のアンケートの取得
+func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
+	questionnaires := []Questionnaires{}
+	err := db.
+		Table("questionnaires").
+		Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
+		Where("administrators.user_traqid = ?", userID).
+		Order("questionnaires.modified_at DESC").
+		Find(&questionnaires).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return []Questionnaires{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+	}
+
+	return questionnaires, nil
 }
 
 //GetQuestionnaireInfo アンケートの詳細な情報取得
