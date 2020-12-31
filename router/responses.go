@@ -42,7 +42,7 @@ func PostResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs...)
+	validations, err := model.GetValidations(questionIDs)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -79,9 +79,13 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabelMap, err := model.GetScaleLabels(scaleLabelIDs...)
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
 	}
 
 	// LinearScaleのパターンマッチ
@@ -90,9 +94,9 @@ func PostResponse(c echo.Context) error {
 		case "LinearScale":
 			label, ok := scaleLabelMap[body.QuestionID]
 			if !ok {
-				label = model.ScaleLabels{}
+				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
+			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
@@ -186,7 +190,7 @@ func EditResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs...)
+	validations, err := model.GetValidations(questionIDs)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -223,9 +227,13 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabelMap, err := model.GetScaleLabels(scaleLabelIDs...)
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
 	}
 
 	// LinearScaleのパターンマッチ
@@ -234,9 +242,9 @@ func EditResponse(c echo.Context) error {
 		case "LinearScale":
 			label, ok := scaleLabelMap[body.QuestionID]
 			if !ok {
-				label = model.ScaleLabels{}
+				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
+			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}

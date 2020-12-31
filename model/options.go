@@ -78,7 +78,7 @@ func DeleteOptions(questionID int) error {
 }
 
 // GetOptions 質問の選択肢の取得
-func GetOptions(questionIDs ...int) (map[int][]string, error) {
+func GetOptions(questionIDs []int) ([]Options, error) {
 	type option struct {
 		QuestionID int         `gorm:"type:int(11) NOT NULL;"`
 		Body       null.String `gorm:"type:text;default:NULL;"`
@@ -95,14 +95,13 @@ func GetOptions(questionIDs ...int) (map[int][]string, error) {
 		return nil, fmt.Errorf("failed to get option: %w", err)
 	}
 
-	optionMap := make(map[int][]string, len(options))
-	for _, option := range options {
-		if option.Body.Valid {
-			optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body.String)
-		} else {
-			optionMap[option.QuestionID] = append(optionMap[option.QuestionID], "")
-		}
+	optns := make([]Options, 0, len(options))
+	for _, optn := range options {
+		optns = append(optns, Options{
+			QuestionID: optn.QuestionID,
+			Body:       optn.Body.ValueOrZero(),
+		})
 	}
 
-	return optionMap, nil
+	return optns, nil
 }

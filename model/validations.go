@@ -105,24 +105,19 @@ func GetValidation(questionID int) (Validations, error) {
 }
 
 // GetValidations qustionIDのリストから対応するvalidationsのリストを取得する
-func GetValidations(qustionIDs ...int) (map[int]Validations, error) {
+func GetValidations(qustionIDs []int) ([]Validations, error) {
 	validations := []Validations{}
 	err := db.
 		Where("question_id IN (?)", qustionIDs).
 		Find(&validations).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		return nil, nil
+		return []Validations{}, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get the validations : %w", err)
 	}
 
-	validationMap := make(map[int]Validations, len(validations))
-	for _, validation := range validations {
-		validationMap[validation.QuestionID] = validation
-	}
-
-	return validationMap, nil
+	return validations, nil
 }
 
 // CheckNumberValidation BodyがMinBound,MaxBoundを満たしているか

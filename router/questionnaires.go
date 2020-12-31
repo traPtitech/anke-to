@@ -268,24 +268,38 @@ func GetQuestions(c echo.Context) error {
 		}
 	}
 
-	optionMap, err := model.GetOptions(optionIDs...)
+	options, err := model.GetOptions(optionIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	scaleLabelMap, err := model.GetScaleLabels(scaleLabelIDs...)
+	optionMap := make(map[int][]string, len(options))
+	for _, option := range options {
+		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body)
+	}
+
+	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	validationMap, err := model.GetValidations(validationIDs...)
+	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	for _, label := range scaleLabels {
+		scaleLabelMap[label.QuestionID] = &label
+	}
+
+	validations, err := model.GetValidations(validationIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	validationMap := make(map[int]*model.Validations, len(validations))
+	for _, validation := range validations {
+		validationMap[validation.QuestionID] = &validation
 	}
 
 	for _, v := range allquestions {
 		ok := true
 		options := []string{}
-		scalelabel := model.ScaleLabels{}
-		validation := model.Validations{}
+		scalelabel := &model.ScaleLabels{}
+		validation := &model.Validations{}
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			options, ok = optionMap[v.ID]
@@ -295,12 +309,12 @@ func GetQuestions(c echo.Context) error {
 		case "LinearScale":
 			scalelabel, ok = scaleLabelMap[v.ID]
 			if !ok {
-				scalelabel = model.ScaleLabels{}
+				scalelabel = &model.ScaleLabels{}
 			}
 		case "Text", "Number":
 			validation, ok = validationMap[v.ID]
 			if !ok {
-				validation = model.Validations{}
+				validation = &model.Validations{}
 			}
 		}
 
