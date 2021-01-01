@@ -1,4 +1,6 @@
 # anke-to
+[![codecov](https://codecov.io/gh/traPtitech/anke-to/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/anke-to)
+[![swagger](https://img.shields.io/badge/swagger-docs-brightgreen)](https://traptitech.github.io/anke-to/swagger/)
 
 部内アンケートシステム
 
