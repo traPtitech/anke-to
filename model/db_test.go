@@ -1,0 +1,24 @@
+package model
+
+import (
+	"os"
+	"testing"
+)
+
+//TestMain テストのmain
+func TestMain(m *testing.M) {
+	db, err := EstablishConnection()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	err = Migrate()
+	if err != nil {
+		panic(err)
+	}
+
+	code := m.Run()
+
+	os.Exit(code)
+}

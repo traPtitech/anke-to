@@ -46,6 +46,7 @@ type QuestionnaireInfo struct {
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
+//QuestionnaireDetail Questionnaireの詳細
 type QuestionnaireDetail struct {
 	Targets        []string
 	Respondents    []string
