@@ -111,7 +111,7 @@ func TestGetValidations(t *testing.T) {
 		require.NoError(t, err)
 		validations, err := GetValidations([]int{questionID})
 		assert.NoError(err)
-		assert.Equal(validations, []Validations{Validations{QuestionID: questionID, MinBound: "0", MaxBound: "10"}})
+		assert.Equal(validations, []Validations{{QuestionID: questionID, MinBound: "0", MaxBound: "10"}})
 	})
 }
 func TestCheckNumberValidation(t *testing.T) {
