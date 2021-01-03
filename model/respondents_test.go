@@ -37,12 +37,9 @@ func TestUpdateSubmittedAt(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		questionnaireID, _, responseID := insertTestRespondents(t)
+		_, _, responseID := insertTestRespondents(t)
 
-		responseID, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
-		require.NoError(t, err)
-
-		err = UpdateSubmittedAt(responseID)
+		err := UpdateSubmittedAt(responseID)
 		assert.NoError(err)
 	})
 }
@@ -53,12 +50,9 @@ func TestDeleteRespondent(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		questionnaireID, _, responseID := insertTestRespondents(t)
+		_, _, responseID := insertTestRespondents(t)
 
-		responseID, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
-		require.NoError(t, err)
-
-		err = DeleteRespondent(userOne, responseID)
+		err := DeleteRespondent(userOne, responseID)
 		assert.NoError(err)
 	})
 }
