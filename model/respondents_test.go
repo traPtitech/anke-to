@@ -198,7 +198,7 @@ func insertTestRespondents(t *testing.T, nowTime null.Time) (int, int, int) {
 	responseID, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
-	err = InsertResponses(responseID, []*ResponseMeta{&ResponseMeta{QuestionID: questionID, Data: "リマインダーBOTを作った話"}})
+	err = InsertResponses(responseID, []*ResponseMeta{{QuestionID: questionID, Data: "リマインダーBOTを作った話"}})
 	require.NoError(t, err)
 
 	return questionnaireID, questionID, responseID
