@@ -205,9 +205,7 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", gorm.ErrRecordNotFound)
-	} else if err != nil {
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 

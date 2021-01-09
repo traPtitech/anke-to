@@ -631,20 +631,14 @@ func TestGetQuestionnaires(t *testing.T) {
 		}
 	}
 
-	questionnaireIDs := []int{}
 	deletedQuestionnaireIDs := []int{}
 	targettedQuestionnaireIDs := []int{}
-	nontargetedQuestionnaireIDs := []int{}
 	for _, data := range datas {
-		if !data.Questionnaires.DeletedAt.Valid {
-			questionnaireIDs = append(questionnaireIDs, data.Questionnaires.ID)
-		} else {
+		if data.Questionnaires.DeletedAt.Valid {
 			deletedQuestionnaireIDs = append(deletedQuestionnaireIDs, data.Questionnaires.ID)
 		}
 
-		if !data.IsTargeted {
-			nontargetedQuestionnaireIDs = append(nontargetedQuestionnaireIDs, data.Questionnaires.ID)
-		} else {
+		if data.IsTargeted {
 			targettedQuestionnaireIDs = append(targettedQuestionnaireIDs, data.Questionnaires.ID)
 		}
 	}
