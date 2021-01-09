@@ -171,7 +171,7 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	if nontargeted {
 		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
 	}
-	if search != "" {
+	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
 		_, err := regexp.Compile(search)
 		if err != nil {
