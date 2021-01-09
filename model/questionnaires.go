@@ -1,7 +1,6 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -381,7 +380,7 @@ func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 		query = query.Order("questionnaires.modified_at desc")
 	case "":
 	default:
-		return nil, errors.New("invalid sort type")
+		return nil, ErrInvalidSortParam
 	}
 
 	return query, nil

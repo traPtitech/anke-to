@@ -136,11 +136,11 @@ func TestInsertQuestionnaire(t *testing.T) {
 
 		assertion.Equal(testCase.args.title, questionnaire.Title, testCase.description, "title")
 		assertion.Equal(testCase.args.description, questionnaire.Description, testCase.description, "description")
-		assertion.WithinDuration(testCase.args.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), time.Second, testCase.description, "res_time_limit")
+		assertion.WithinDuration(testCase.args.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(testCase.args.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
 
-		assertion.WithinDuration(time.Now(), questionnaire.CreatedAt, time.Second, testCase.description, "created_at")
-		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, time.Second, testCase.description, "modified_at")
+		assertion.WithinDuration(time.Now(), questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
+		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
 	}
 }
 
@@ -340,11 +340,11 @@ func TestUpdateQuestionnaire(t *testing.T) {
 
 		assertion.Equal(after.title, questionnaire.Title, testCase.description, "title")
 		assertion.Equal(after.description, questionnaire.Description, testCase.description, "description")
-		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), time.Second, testCase.description, "res_time_limit")
+		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(after.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
 
-		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, time.Second, testCase.description, "created_at")
-		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, time.Second, testCase.description, "modified_at")
+		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
+		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
 	}
 
 	invalidQuestionnaireID := 1000
