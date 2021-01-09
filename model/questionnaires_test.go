@@ -762,6 +762,20 @@ func TestGetQuestionnaires(t *testing.T) {
 				nontargeted: true,
 			},
 		},
+		{
+			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
+			args: args{
+				userID:      testUserID,
+				sort:        "",
+				search:      "notFoundQuestionnaire",
+				pageNum:     1,
+				nontargeted: true,
+			},
+			expect: expect{
+				isCheckLen: false,
+				length:     0,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

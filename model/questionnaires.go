@@ -189,8 +189,9 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
+
 	if count == 0 {
-		return questionnaires, 0, nil
+		return []QuestionnaireInfo{}, 0, nil
 	}
 	pageMax := (count + 19) / 20
 
