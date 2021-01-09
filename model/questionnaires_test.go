@@ -1,10 +1,12 @@
 package model
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v3"
 )
@@ -296,5 +298,36 @@ func TestUpdateQuestionnaire(t *testing.T) {
 
 		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, time.Second, testCase.description, "modified_at")
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	arg := args{
+		title:        "第1回集会らん☆ぷろ募集アンケート",
+		description:  "第1回集会らん☆ぷろ参加者募集",
+		resTimeLimit: null.NewTime(time.Time{}, false),
+		resSharedTo:  "public",
+	}
+
+	t.Log(invalidQuestionnaireID)
+	err := UpdateQuestionnaire(arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+	if !errors.Is(err, ErrNoRecordUpdated) {
+		if err == nil {
+			t.Errorf("Succeeded with invalid questionnaireID")
+		} else {
+			t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+		}
 	}
 }

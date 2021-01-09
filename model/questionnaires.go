@@ -103,12 +103,16 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 			"res_shared_to":  resSharedTo,
 		}
 
-		err := db.
+		result := db.
 			Model(&Questionnaires{}).
 			Where("id = ?", questionnaireID).
-			Update(questionnaire).Error
+			Update(questionnaire)
+		err := result.Error
 		if err != nil {
 			return fmt.Errorf("failed to update a questionnaire record: %w", err)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 		}
 
 		return nil
@@ -121,12 +125,16 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 		ResSharedTo:  resSharedTo,
 	}
 
-	err := db.
+	result := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
-		Update(&questionnaire).Error
+		Update(&questionnaire)
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update a questionnaire record: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 	}
 
 	return nil
