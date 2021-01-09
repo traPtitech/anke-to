@@ -212,7 +212,52 @@ func TestUpdateQuestionnaire(t *testing.T) {
 			},
 		},
 		{
-			description: "set res_time_limit",
+			description: "update res_shared_to(res_time_limit is valid)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "respondents",
+			},
+		},
+		{
+			description: "update title(res_time_limit is valid)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第2回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "update description(res_time_limit is valid)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第2回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "update res_time_limit(null->time)",
 			before: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
@@ -314,20 +359,29 @@ func TestUpdateQuestionnaire(t *testing.T) {
 		invalidQuestionnaireID *= 10
 	}
 
-	arg := args{
-		title:        "第1回集会らん☆ぷろ募集アンケート",
-		description:  "第1回集会らん☆ぷろ参加者募集",
-		resTimeLimit: null.NewTime(time.Time{}, false),
-		resSharedTo:  "public",
+	invalidTestCases := []args{
+		{
+			title:        "第1回集会らん☆ぷろ募集アンケート",
+			description:  "第1回集会らん☆ぷろ参加者募集",
+			resTimeLimit: null.NewTime(time.Time{}, false),
+			resSharedTo:  "public",
+		},
+		{
+			title:        "第1回集会らん☆ぷろ募集アンケート",
+			description:  "第1回集会らん☆ぷろ参加者募集",
+			resTimeLimit: null.NewTime(time.Now(), true),
+			resSharedTo:  "public",
+		},
 	}
 
-	t.Log(invalidQuestionnaireID)
-	err := UpdateQuestionnaire(arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
-	if !errors.Is(err, ErrNoRecordUpdated) {
-		if err == nil {
-			t.Errorf("Succeeded with invalid questionnaireID")
-		} else {
-			t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+	for _, arg := range invalidTestCases {
+		err := UpdateQuestionnaire(arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+		if !errors.Is(err, ErrNoRecordUpdated) {
+			if err == nil {
+				t.Errorf("Succeeded with invalid questionnaireID")
+			} else {
+				t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+			}
 		}
 	}
 }
