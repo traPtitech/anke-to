@@ -385,3 +385,94 @@ func TestUpdateQuestionnaire(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteQuestionnaire(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		title        string
+		description  string
+		resTimeLimit null.Time
+		resSharedTo  string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			args: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		questionnaire := Questionnaires{
+			Title:        testCase.args.title,
+			Description:  testCase.args.description,
+			ResTimeLimit: testCase.args.resTimeLimit,
+			ResSharedTo:  testCase.args.resSharedTo,
+		}
+		err := db.Create(&questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
+		}
+
+		questionnaireID := questionnaire.ID
+		err = DeleteQuestionnaire(questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		questionnaire = Questionnaires{}
+		err = db.
+			Unscoped().
+			Where("id = ?", questionnaireID).
+			Find(&questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+		}
+
+		assertion.WithinDuration(time.Now(), questionnaire.DeletedAt.ValueOrZero(), time.Second)
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	err := DeleteQuestionnaire(invalidQuestionnaireID)
+	if !errors.Is(err, ErrNoRecordDeleted) {
+		if err == nil {
+			t.Errorf("Succeeded with invalid questionnaireID")
+		} else {
+			t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+		}
+	}
+}

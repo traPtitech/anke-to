@@ -142,9 +142,13 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 
 //DeleteQuestionnaire アンケートの削除
 func DeleteQuestionnaire(questionnaireID int) error {
-	err := db.Delete(&Questionnaires{ID: questionnaireID}).Error
+	result := db.Delete(&Questionnaires{ID: questionnaireID})
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete questionnaire: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to delete questionnaire: %w", ErrNoRecordDeleted)
 	}
 
 	return nil
