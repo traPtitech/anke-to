@@ -6,6 +6,7 @@ dev:
 test:
 	-docker-compose -f docker/test/docker-compose.yaml down
 	docker-compose -f docker/test/docker-compose.yaml up --build
+	docker-compose -f docker/test/docker-compose.yaml down
 
 .PHONY: tuning
 tuning:
