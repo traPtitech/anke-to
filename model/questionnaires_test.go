@@ -776,6 +776,20 @@ func TestGetQuestionnaires(t *testing.T) {
 				length:     0,
 			},
 		},
+		{
+			description: "userID:valid, sort:invalid, search:no, page:1",
+			args: args{
+				userID:      testUserID,
+				sort:        "hogehoge",
+				search:      "",
+				pageNum:     1,
+				nontargeted: false,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidSortParam,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
