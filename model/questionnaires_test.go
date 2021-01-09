@@ -139,3 +139,162 @@ func TestInsertQuestionnaire(t *testing.T) {
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, time.Second, testCase.description, "modified_at")
 	}
 }
+
+func TestUpdateQuestionnaire(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		title        string
+		description  string
+		resTimeLimit null.Time
+		resSharedTo  string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		before      args
+		after       args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "update res_shared_to",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "respondents",
+			},
+		},
+		{
+			description: "update title",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第2回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "update description",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第2回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "set res_time_limit",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "update res_time_limit(time->time)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now().Add(time.Minute), true),
+				resSharedTo:  "public",
+			},
+		},
+		{
+			description: "update res_time_limit(time->null)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Now(), true),
+				resSharedTo:  "public",
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		before := &testCase.before
+		questionnaire := Questionnaires{
+			Title:        before.title,
+			Description:  before.description,
+			ResTimeLimit: before.resTimeLimit,
+			ResSharedTo:  before.resSharedTo,
+		}
+		err := db.Create(&questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
+		}
+
+		createdAt := questionnaire.CreatedAt
+		questionnaireID := questionnaire.ID
+		after := &testCase.after
+		err = UpdateQuestionnaire(after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		questionnaire = Questionnaires{}
+		err = db.Where("id = ?", questionnaireID).First(&questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+		}
+
+		assertion.Equal(after.title, questionnaire.Title, testCase.description, "title")
+		assertion.Equal(after.description, questionnaire.Description, testCase.description, "description")
+		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), time.Second, testCase.description, "res_time_limit")
+		assertion.Equal(after.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
+
+		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, time.Second, testCase.description, "created_at")
+		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, time.Second, testCase.description, "modified_at")
+	}
+}
