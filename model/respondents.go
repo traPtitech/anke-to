@@ -110,10 +110,17 @@ func UpdateSubmittedAt(responseID int) error {
 // DeleteRespondent 回答の削除
 func DeleteRespondent(userID string, responseID int) error {
 
-	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
+	err := db.
+		Where("response_id = ?", responseID).
+		First(&Respondents{}).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return fmt.Errorf("failed to delete respondents: %w", gorm.ErrRecordNotFound)
+		return fmt.Errorf("failed to get response: %w", gorm.ErrRecordNotFound)
 	}
+	if err != nil {
+		return fmt.Errorf("failed to get response: %w", err)
+	}
+
+	err = db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
 	if err != nil {
 		return fmt.Errorf("failed to delete respondents: %w", err)
 	}

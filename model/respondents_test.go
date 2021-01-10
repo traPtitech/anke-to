@@ -46,14 +46,38 @@ func TestUpdateSubmittedAt(t *testing.T) {
 
 func TestDeleteRespondent(t *testing.T) {
 	t.Parallel()
-	t.Run("success", func(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
 		_, _, responseID := insertTestRespondents(t)
 
-		err := DeleteRespondent(userOne, responseID)
+		err := DeleteRespondent(userThree, responseID)
 		assert.NoError(err)
+		_, err = GetRespondentDetail(responseID)
+		assert.NoError(err)
+
+		err = DeleteRespondent(userThree, -1)
+		assert.Error(err)
+	})
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		questionnaireID, _, responseID1 := insertTestRespondents(t)
+
+		responseID2, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
+
+		err = DeleteRespondent(userOne, responseID1)
+		assert.NoError(err)
+		_, err = GetRespondentDetail(responseID1)
+		assert.Error(err)
+
+		err = DeleteRespondent(userTwo, responseID2)
+		assert.NoError(err)
+		_, err = GetRespondentDetail(responseID2)
+		assert.Error(err)
 	})
 }
 
@@ -64,7 +88,7 @@ func TestGetRespondentInfos(t *testing.T) {
 		assert := assert.New(t)
 		questionnaireID, _, responseID := insertTestRespondents(t)
 
-		respondentInfos, err := GetRespondentInfos(userOne, questionnaireID)
+		respondentInfos, err := GetRespondentInfos(userTwo, questionnaireID)
 		assert.NoError(err)
 		assert.Equal(1, len(respondentInfos))
 		respondentInfo := respondentInfos[0]
@@ -296,7 +320,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 		assert.Equal(1, len(respondents))
 		respondent := respondents[0]
 		assert.Equal(questionnaireID, respondent.QuestionnaireID)
-		assert.Equal(userOne, respondent.UserTraqid)
+		assert.Equal(userTwo, respondent.UserTraqid)
 	})
 }
 
@@ -308,7 +332,11 @@ func TestCheckRespondent(t *testing.T) {
 
 		questionnaireID, _, _ := insertTestRespondents(t)
 
-		isRespondent, err := CheckRespondent(userTwo, questionnaireID)
+		isRespondent, err := CheckRespondent(userThree, questionnaireID)
+		assert.NoError(err)
+		assert.Equal(false, isRespondent)
+
+		_, err = CheckRespondent(userThree, -1)
 		assert.NoError(err)
 		assert.Equal(false, isRespondent)
 	})
@@ -318,7 +346,35 @@ func TestCheckRespondent(t *testing.T) {
 
 		questionnaireID, _, _ := insertTestRespondents(t)
 
-		isRespondent, err := CheckRespondent(userOne, questionnaireID)
+		isRespondent, err := CheckRespondent(userTwo, questionnaireID)
+		assert.NoError(err)
+		assert.Equal(true, isRespondent)
+	})
+}
+
+func TestCheckRespondentByResponseID(t *testing.T) {
+	t.Parallel()
+	t.Run("failure", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		_, _, responseID := insertTestRespondents(t)
+
+		isRespondent, err := CheckRespondentByResponseID(userThree, responseID)
+		assert.NoError(err)
+		assert.Equal(false, isRespondent)
+
+		_, err = CheckRespondentByResponseID(userTwo, -1)
+		assert.NoError(err)
+		assert.Equal(false, isRespondent)
+	})
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		_, _, responseID := insertTestRespondents(t)
+
+		isRespondent, err := CheckRespondentByResponseID(userTwo, responseID)
 		assert.NoError(err)
 		assert.Equal(true, isRespondent)
 	})
@@ -341,7 +397,7 @@ func insertTestRespondents(t *testing.T) (int, []int, int) {
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
-	responseID, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
+	responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
 	err = InsertResponses(responseID, []*ResponseMeta{
