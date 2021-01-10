@@ -3,8 +3,6 @@ package model
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/jinzhu/gorm"
 )
 
 //ScaleLabels scale_labelsテーブルの構造体
@@ -67,9 +65,7 @@ func GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
 	err := db.
 		Where("question_id IN (?)", questionIDs).
 		Find(&labels).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return []ScaleLabels{}, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get the scale label: %w", err)
 	}
 
