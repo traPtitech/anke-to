@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -13,10 +14,10 @@ func TestInsertResponses(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
-	_, questionID, responseID := insertTestResponses(t)
+	questionnaireID, questionID, _ := insertTestResponses(t)
 
 	type args struct {
-		responseID    int
+		validID       bool
 		responseMetas []*ResponseMeta
 	}
 	type expect struct {
@@ -34,16 +35,49 @@ func TestInsertResponses(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				responseID: responseID,
+				validID: true,
 				responseMetas: []*ResponseMeta{
 					{QuestionID: questionID, Data: "リマインダーBOTを作った話"},
 				},
 			},
 		},
 		{
+			description: "long Data",
+			args: args{
+				validID: true,
+				responseMetas: []*ResponseMeta{
+					{QuestionID: questionID, Data: strings.Repeat("a", 200)},
+				},
+			},
+		},
+		{
+			description: "too long Data",
+			args: args{
+				validID: true,
+				responseMetas: []*ResponseMeta{
+					{QuestionID: questionID, Data: strings.Repeat("a", 200000)},
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "questionID not exist",
+			args: args{
+				validID: true,
+				responseMetas: []*ResponseMeta{
+					{QuestionID: -1, Data: "リマインダーBOTを作った話"},
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
 			description: "responseID not exist",
 			args: args{
-				responseID: -1,
+				validID: false,
 				responseMetas: []*ResponseMeta{
 					{QuestionID: questionID, Data: "リマインダーBOTを作った話"},
 				},
@@ -54,7 +88,12 @@ func TestInsertResponses(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		err := InsertResponses(testCase.args.responseID, testCase.args.responseMetas)
+		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
+		if !testCase.args.validID {
+			responseID = -1
+		}
+		err = InsertResponses(responseID, testCase.args.responseMetas)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -71,7 +110,7 @@ func TestInsertResponses(t *testing.T) {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
 		}
 
-		assertion.Equal(testCase.args.responseID, response.ResponseID, testCase.description, "responseID")
+		assertion.Equal(responseID, response.ResponseID, testCase.description, "responseID")
 		assertion.Equal(questionID, response.QuestionID, testCase.description, "questionID")
 		assertion.Equal(testCase.args.responseMetas[0].Data, response.Body.ValueOrZero(), testCase.description, "Body")
 		assertion.WithinDuration(time.Now(), response.ModifiedAt, 2*time.Second, testCase.description, "ModifiedAt")
