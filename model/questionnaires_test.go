@@ -916,8 +916,10 @@ func getAdminQuestionnairesTest(t *testing.T) {
 		userID string
 	}
 	type expect struct {
-		isErr bool
-		err   error
+		isCheckLen bool
+		length     int
+		isErr      bool
+		err        error
 	}
 	type test struct {
 		description string
@@ -936,6 +938,10 @@ func getAdminQuestionnairesTest(t *testing.T) {
 			description: "empty response",
 			args: args{
 				userID: invalidQuestionnairesTestUserID,
+			},
+			expect: expect{
+				isCheckLen: true,
+				length:     0,
 			},
 		},
 	}
@@ -959,6 +965,10 @@ func getAdminQuestionnairesTest(t *testing.T) {
 		for _, questionnaire := range questionnaires {
 			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
 			actualIDQuestionnaireMap[questionnaire.ID] = questionnaire
+		}
+
+		if testCase.expect.isCheckLen {
+			assertion.Len(questionnaires, testCase.expect.length, testCase.description, "length")
 		}
 
 		assertion.Subset(userAdministratorMap[testCase.args.userID], actualQuestionnaireIDs, testCase.description, "administrate")
