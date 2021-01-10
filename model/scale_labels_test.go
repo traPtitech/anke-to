@@ -369,10 +369,9 @@ func TestGetScaleLabels(t *testing.T) {
 		questionIDs []int
 	}
 	type expect struct {
-		isErr      bool
-		err        error
-		isCheckLen bool
-		length     int
+		isErr  bool
+		err    error
+		length int
 	}
 	type test struct {
 		description string
