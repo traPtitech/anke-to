@@ -87,17 +87,28 @@ func TestGetRespondentDetail(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		questionnaireID, questionID, responseID := insertTestRespondents(t)
+		questionnaireID, questionIDs, responseID := insertTestRespondents(t)
 
 		respondentDetail, err := GetRespondentDetail(responseID)
 		assert.NoError(err)
 		assert.Equal(questionnaireID, respondentDetail.QuestionnaireID)
 
-		assert.Equal(1, len(respondentDetail.Responses))
+		assert.Equal(2, len(respondentDetail.Responses))
+
+		questionID := questionIDs[0]
 		responseBody := respondentDetail.Responses[0]
 		assert.Equal(questionID, responseBody.QuestionID)
 		assert.Equal("Text", responseBody.QuestionType)
 		assert.Equal("リマインダーBOTを作った話", responseBody.Body.String)
+
+		questionID = questionIDs[1]
+		responseBody = respondentDetail.Responses[1]
+		assert.Equal(1, len(responseBody.OptionResponse))
+		optionResponse := responseBody.OptionResponse[0]
+		assert.Equal(questionID, responseBody.QuestionID)
+		assert.Equal("MultipleChoice", responseBody.QuestionType)
+		assert.Equal("選択肢1", optionResponse)
+
 	})
 }
 
@@ -114,7 +125,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		questionnaireID, questionID, responseID := insertTestRespondents(t)
+		questionnaireID, questionIDs, responseID := insertTestRespondents(t)
 
 		respondentDetails, err := GetRespondentDetails(questionnaireID, "traqid")
 		assert.NoError(err)
@@ -122,11 +133,22 @@ func TestGetRespondentDetails(t *testing.T) {
 		respondentDetail := respondentDetails[0]
 		assert.Equal(responseID, respondentDetail.ResponseID)
 
-		assert.Equal(1, len(respondentDetail.Responses))
+		assert.Equal(2, len(respondentDetail.Responses))
+
+		questionID := questionIDs[0]
 		responseBody := respondentDetail.Responses[0]
 		assert.Equal(questionID, responseBody.QuestionID)
 		assert.Equal("Text", responseBody.QuestionType)
 		assert.Equal("リマインダーBOTを作った話", responseBody.Body.String)
+
+		questionID = questionIDs[1]
+		responseBody = respondentDetail.Responses[1]
+		assert.Equal(1, len(responseBody.OptionResponse))
+		optionResponse := responseBody.OptionResponse[0]
+		assert.Equal(questionID, responseBody.QuestionID)
+		assert.Equal("MultipleChoice", responseBody.QuestionType)
+		assert.Equal("選択肢1", optionResponse)
+
 	})
 }
 
@@ -171,18 +193,30 @@ func TestCheckRespondent(t *testing.T) {
 	})
 }
 
-func insertTestRespondents(t *testing.T) (int, int, int) {
+func insertTestRespondents(t *testing.T) (int, []int, int) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	questionIDs := make([]int, 0, 4)
+
 	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
+	questionIDs = append(questionIDs, questionID)
+
+	questionID, err = InsertQuestion(questionnaireID, 1, 3, "MultipleChoice", "radio", true)
+	require.NoError(t, err)
+	questionIDs = append(questionIDs, questionID)
 
 	responseID, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
-	err = InsertResponses(responseID, []*ResponseMeta{{QuestionID: questionID, Data: "リマインダーBOTを作った話"}})
+	err = InsertResponses(responseID, []*ResponseMeta{
+		{QuestionID: questionIDs[0], Data: "リマインダーBOTを作った話"},
+		{QuestionID: questionIDs[1], Data: "選択肢1"},
+	})
 	require.NoError(t, err)
-
-	return questionnaireID, questionID, responseID
+	return questionnaireID, questionIDs, responseID
 }
