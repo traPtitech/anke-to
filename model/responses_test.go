@@ -185,6 +185,7 @@ func TestDeleteResponse(t *testing.T) {
 
 	for _, testCase := range testCases {
 		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
 		err = InsertResponses(responseID, testCase.args.responseMetas)
 		require.NoError(t, err)
 		if !testCase.args.validID {
