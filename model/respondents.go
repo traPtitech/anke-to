@@ -249,7 +249,7 @@ func GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail,
 		Rows()
 	if err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
-			return nil, fmt.Errorf("failed to get respondents: %w", err)
+			return []RespondentDetail{}, nil
 		}
 	}
 
@@ -334,7 +334,7 @@ func GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
 		Select("questionnaire_id, user_traqid").
 		Find(&respondents).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get respondents: %w", err)
+		return []Respondents{}, nil
 	}
 
 	return respondents, nil

@@ -148,7 +148,94 @@ func TestGetRespondentDetails(t *testing.T) {
 		assert.Equal(questionID, responseBody.QuestionID)
 		assert.Equal("MultipleChoice", responseBody.QuestionType)
 		assert.Equal("選択肢1", optionResponse)
+	})
+	t.Run("success_sort", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
 
+		questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+		require.NoError(t, err)
+
+		err = InsertAdministrators(questionnaireID, []string{userOne})
+		require.NoError(t, err)
+
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+		require.NoError(t, err)
+
+		responseID1, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
+
+		err = InsertResponses(responseID1, []*ResponseMeta{
+			{QuestionID: questionID, Data: "リマインダーBOTを作った話1"},
+		})
+		time.Sleep(time.Millisecond * 1000)
+
+		responseID2, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
+
+		err = InsertResponses(responseID2, []*ResponseMeta{
+			{QuestionID: questionID, Data: "リマインダーBOTを作った話2"},
+		})
+		time.Sleep(time.Millisecond * 1000)
+
+		responseID3, err := InsertRespondent(userThree, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
+
+		err = InsertResponses(responseID3, []*ResponseMeta{
+			{QuestionID: questionID, Data: "リマインダーBOTを作った話3"},
+		})
+
+		respondentDetails, err := GetRespondentDetails(questionnaireID, "traqid")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail := respondentDetails[0]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "-traqid")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "submitted_at")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "-submitted_at")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
 	})
 }
 
@@ -200,7 +287,7 @@ func insertTestRespondents(t *testing.T) (int, []int, int) {
 	err = InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionIDs := make([]int, 0, 4)
+	questionIDs := make([]int, 0, 2)
 
 	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)

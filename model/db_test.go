@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	userOne = "mazrean"
-	userTwo = "ryoha"
-	// userThree = "YumizSui"
+	userOne   = "mazrean"
+	userTwo   = "ryoha"
+	userThree = "YumizSui"
 )
 
 //TestMain テストのmain
