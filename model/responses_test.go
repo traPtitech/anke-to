@@ -110,6 +110,8 @@ func TestInsertResponses(t *testing.T) {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
 			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
 		}
 		if err != nil {
 			continue
@@ -199,6 +201,8 @@ func TestDeleteResponse(t *testing.T) {
 		} else if testCase.expect.err != nil {
 			fmt.Println(err)
 			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
 		}
 		if err != nil {
 			continue
