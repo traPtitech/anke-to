@@ -192,6 +192,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		err = InsertResponses(responseID1, []*ResponseMeta{
 			{QuestionID: questionID, Data: "10"},
 		})
+		require.NoError(t, err)
 		time.Sleep(time.Millisecond * 1000)
 
 		responseID2, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
