@@ -159,14 +159,14 @@ func TestGetRespondentDetails(t *testing.T) {
 		err = InsertAdministrators(questionnaireID, []string{userOne})
 		require.NoError(t, err)
 
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, "Number", "質問文", true)
 		require.NoError(t, err)
 
 		responseID1, err := InsertRespondent(userOne, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
 
 		err = InsertResponses(responseID1, []*ResponseMeta{
-			{QuestionID: questionID, Data: "リマインダーBOTを作った話1"},
+			{QuestionID: questionID, Data: "10"},
 		})
 		time.Sleep(time.Millisecond * 1000)
 
@@ -174,16 +174,18 @@ func TestGetRespondentDetails(t *testing.T) {
 		require.NoError(t, err)
 
 		err = InsertResponses(responseID2, []*ResponseMeta{
-			{QuestionID: questionID, Data: "リマインダーBOTを作った話2"},
+			{QuestionID: questionID, Data: "5"},
 		})
+		require.NoError(t, err)
 		time.Sleep(time.Millisecond * 1000)
 
 		responseID3, err := InsertRespondent(userThree, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
 
 		err = InsertResponses(responseID3, []*ResponseMeta{
-			{QuestionID: questionID, Data: "リマインダーBOTを作った話3"},
+			{QuestionID: questionID, Data: "15"},
 		})
+		require.NoError(t, err)
 
 		respondentDetails, err := GetRespondentDetails(questionnaireID, "traqid")
 		assert.NoError(err)
@@ -214,12 +216,12 @@ func TestGetRespondentDetails(t *testing.T) {
 		respondentDetails, err = GetRespondentDetails(questionnaireID, "submitted_at")
 		assert.NoError(err)
 		assert.Equal(3, len(respondentDetails))
-		respondentDetail = respondentDetails[0]
-		assert.Equal(responseID1, respondentDetail.ResponseID)
-		assert.Equal(userOne, respondentDetail.TraqID)
 		respondentDetail = respondentDetails[1]
 		assert.Equal(responseID2, respondentDetail.ResponseID)
 		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
 		respondentDetail = respondentDetails[2]
 		assert.Equal(responseID3, respondentDetail.ResponseID)
 		assert.Equal(userThree, respondentDetail.TraqID)
@@ -233,6 +235,48 @@ func TestGetRespondentDetails(t *testing.T) {
 		respondentDetail = respondentDetails[1]
 		assert.Equal(responseID2, respondentDetail.ResponseID)
 		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "1")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+
+		err = UpdateQuestion(questionnaireID, 1, 1, "Text", "質問文", true, questionID)
+		require.NoError(t, err)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "1")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID1, respondentDetail.ResponseID)
+		assert.Equal(userOne, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[2]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+
+		respondentDetails, err = GetRespondentDetails(questionnaireID, "-1")
+		assert.NoError(err)
+		assert.Equal(3, len(respondentDetails))
+		respondentDetail = respondentDetails[0]
+		assert.Equal(responseID2, respondentDetail.ResponseID)
+		assert.Equal(userTwo, respondentDetail.TraqID)
+		respondentDetail = respondentDetails[1]
+		assert.Equal(responseID3, respondentDetail.ResponseID)
+		assert.Equal(userThree, respondentDetail.TraqID)
 		respondentDetail = respondentDetails[2]
 		assert.Equal(responseID1, respondentDetail.ResponseID)
 		assert.Equal(userOne, respondentDetail.TraqID)
