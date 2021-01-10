@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +16,15 @@ func TestInsertResponses(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
-	questionnaireID, questionID, _ := insertTestResponses(t)
+
+	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	require.NoError(t, err)
+
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	require.NoError(t, err)
 
 	type args struct {
 		validID       bool
@@ -87,6 +97,7 @@ func TestInsertResponses(t *testing.T) {
 			},
 		},
 	}
+
 	for _, testCase := range testCases {
 		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
@@ -98,7 +109,7 @@ func TestInsertResponses(t *testing.T) {
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
-			assertion.EqualError(err, testCase.expect.err.Error(), testCase.description, "error")
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
 		}
 		if err != nil {
 			continue
@@ -118,7 +129,11 @@ func TestInsertResponses(t *testing.T) {
 	}
 }
 
-func insertTestResponses(t *testing.T) (int, int, int) {
+func TestDeleteResponse(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
@@ -128,7 +143,75 @@ func insertTestResponses(t *testing.T) (int, int, int) {
 	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 
-	responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
-	require.NoError(t, err)
-	return questionnaireID, questionID, responseID
+	type args struct {
+		validID       bool
+		responseMetas []*ResponseMeta
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				validID: true,
+				responseMetas: []*ResponseMeta{
+					{QuestionID: questionID, Data: "リマインダーBOTを作った話"},
+				},
+			},
+		},
+		{
+			description: "responseID not exist",
+			args: args{
+				validID: false,
+				responseMetas: []*ResponseMeta{
+					{QuestionID: questionID, Data: "リマインダーBOTを作った話"},
+				},
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNoRecordDeleted,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		err = InsertResponses(responseID, testCase.args.responseMetas)
+		require.NoError(t, err)
+		if !testCase.args.validID {
+			responseID = -1
+		}
+
+		err = DeleteResponse(responseID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			fmt.Println(err)
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		}
+		if err != nil {
+			continue
+		}
+
+		response := Response{}
+		err = db.
+			Unscoped().
+			Where("response_id = ?", responseID).
+			First(&response).Error
+		if err != nil {
+			t.Errorf("failed to get responses(%s): %w", testCase.description, err)
+		}
+
+		assertion.WithinDuration(time.Now(), response.DeletedAt.ValueOrZero(), 2*time.Second)
+	}
 }
