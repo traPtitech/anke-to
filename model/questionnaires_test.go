@@ -14,6 +14,7 @@ import (
 )
 
 const questionnairesTestUserID = "questionnairesUser"
+const invalidQuestionnairesTestUserID = "invalidQuestionnairesUser"
 
 var questionnairesNow = time.Now()
 
@@ -24,10 +25,10 @@ type QuestionnairesTestData struct {
 }
 
 var (
-	datas                     = []QuestionnairesTestData{}
-	deletedQuestionnaireIDs   = []int{}
-	targettedQuestionnaireIDs = []int{}
-	userTargetMap             = map[string][]int{}
+	datas                   = []QuestionnairesTestData{}
+	deletedQuestionnaireIDs = []int{}
+	userTargetMap           = map[string][]int{}
+	userAdministratorMap    = map[string][]int{}
 )
 
 func TestQuestionnaires(t *testing.T) {
@@ -39,6 +40,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("UpdateQuestionnaire", updateQuestionnaireTest)
 	t.Run("DeleteQuestionnaire", deleteQuestionnaireTest)
 	t.Run("GetQuestionnaires", getQuestionnairesTest)
+	t.Run("GetAdminQuestionnaires", getAdminQuestionnairesTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -52,7 +54,8 @@ func setupQuestionnairesTest(t *testing.T) {
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
-			targets: []string{},
+			targets:        []string{},
+			administrators: []string{},
 		},
 		{
 			questionnaire: Questionnaires{
@@ -63,7 +66,8 @@ func setupQuestionnairesTest(t *testing.T) {
 				CreatedAt:    questionnairesNow.Add(time.Second),
 				ModifiedAt:   questionnairesNow.Add(2 * time.Second),
 			},
-			targets: []string{},
+			targets:        []string{},
+			administrators: []string{questionnairesTestUserID},
 		},
 		{
 			questionnaire: Questionnaires{
@@ -74,7 +78,8 @@ func setupQuestionnairesTest(t *testing.T) {
 				CreatedAt:    questionnairesNow.Add(2 * time.Second),
 				ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 			},
-			targets: []string{questionnairesTestUserID},
+			targets:        []string{questionnairesTestUserID},
+			administrators: []string{questionnairesTestUserID},
 		},
 		{
 			questionnaire: Questionnaires{
@@ -86,7 +91,8 @@ func setupQuestionnairesTest(t *testing.T) {
 				ModifiedAt:   questionnairesNow,
 				DeletedAt:    null.NewTime(questionnairesNow, true),
 			},
-			targets: []string{},
+			targets:        []string{},
+			administrators: []string{},
 		},
 	}
 	for i := 0; i < 20; i++ {
@@ -99,7 +105,8 @@ func setupQuestionnairesTest(t *testing.T) {
 				CreatedAt:    questionnairesNow.Add(time.Duration(len(datas)) * time.Second),
 				ModifiedAt:   questionnairesNow,
 			},
-			targets: []string{},
+			targets:        []string{},
+			administrators: []string{},
 		})
 	}
 	datas = append(datas, QuestionnairesTestData{
@@ -111,7 +118,8 @@ func setupQuestionnairesTest(t *testing.T) {
 			CreatedAt:    questionnairesNow.Add(2 * time.Second),
 			ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 		},
-		targets: []string{questionnairesTestUserID},
+		targets:        []string{questionnairesTestUserID},
+		administrators: []string{questionnairesTestUserID},
 	})
 
 	for i, data := range datas {
@@ -131,9 +139,25 @@ func setupQuestionnairesTest(t *testing.T) {
 			}
 			userTargetMap[target] = append(questionnaires, data.questionnaire.ID)
 
-			err := db.Create(Targets{
+			err := db.Create(&Targets{
 				QuestionnaireID: datas[i].questionnaire.ID,
 				UserTraqid:      target,
+			}).Error
+			if err != nil {
+				t.Errorf("failed to create target: %w", err)
+			}
+		}
+
+		for _, administrator := range data.administrators {
+			questionnaires, ok := userAdministratorMap[administrator]
+			if !ok {
+				questionnaires = []int{}
+			}
+			userAdministratorMap[administrator] = append(questionnaires, datas[i].questionnaire.ID)
+
+			err := db.Create(&Administrators{
+				QuestionnaireID: datas[i].questionnaire.ID,
+				UserTraqid:      administrator,
 			}).Error
 			if err != nil {
 				t.Errorf("failed to create target: %w", err)
@@ -850,7 +874,7 @@ func getQuestionnairesTest(t *testing.T) {
 			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
 		}
 		if testCase.args.nontargeted {
-			for _, targettedQuestionnaireID := range targettedQuestionnaireIDs {
+			for _, targettedQuestionnaireID := range userTargetMap[questionnairesTestUserID] {
 				assertion.NotContains(actualQuestionnaireIDs, targettedQuestionnaireID, testCase.description, "not contain(targetted)")
 			}
 		}
@@ -879,5 +903,78 @@ func getQuestionnairesTest(t *testing.T) {
 			expectQuestionnaireIDs = append(expectQuestionnaireIDs, questionnaire.ID)
 		}
 		assertion.ElementsMatch(expectQuestionnaireIDs, actualQuestionnaireIDs, testCase.description, "sort")
+	}
+}
+
+func getAdminQuestionnairesTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "user:valid",
+			args: args{
+				userID: questionnairesTestUserID,
+			},
+		},
+		{
+			description: "empty response",
+			args: args{
+				userID: invalidQuestionnairesTestUserID,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		questionnaires, err := GetAdminQuestionnaires(testCase.userID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		actualQuestionnaireIDs := make([]int, 0, len(questionnaires))
+		actualIDQuestionnaireMap := make(map[int]Questionnaires, len(questionnaires))
+		for _, questionnaire := range questionnaires {
+			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
+			actualIDQuestionnaireMap[questionnaire.ID] = questionnaire
+		}
+
+		assertion.Subset(userAdministratorMap[testCase.args.userID], actualQuestionnaireIDs, testCase.description, "administrate")
+
+		expectQuestionnaires := []Questionnaires{}
+		err = db.
+			Where("id IN (?)", actualQuestionnaireIDs).
+			Find(&expectQuestionnaires).Error
+		if err != nil {
+			t.Errorf("failed to get questionnaires(%s): %w", testCase.description, err)
+		}
+
+		for _, expectQuestionnaire := range expectQuestionnaires {
+			actualQuestionnaire := actualIDQuestionnaireMap[expectQuestionnaire.ID]
+
+			assertion.Equal(expectQuestionnaire, actualQuestionnaire, testCase.description, "questionnaire")
+		}
 	}
 }
