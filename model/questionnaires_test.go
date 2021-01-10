@@ -13,7 +13,137 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-func TestInsertQuestionnaire(t *testing.T) {
+const questionnairesTestUserID = "questionnairesUser"
+
+var questionnairesNow = time.Now()
+
+type QuestionnairesTestData struct {
+	questionnaire  Questionnaires
+	targets        []string
+	administrators []string
+}
+
+var (
+	datas                     = []QuestionnairesTestData{}
+	deletedQuestionnaireIDs   = []int{}
+	targettedQuestionnaireIDs = []int{}
+	userTargetMap             = map[string][]int{}
+)
+
+func TestQuestionnaires(t *testing.T) {
+	t.Parallel()
+
+	setupQuestionnairesTest(t)
+
+	t.Run("InsertQuestionnaire", insertQuestionnaireTest)
+	t.Run("UpdateQuestionnaire", updateQuestionnaireTest)
+	t.Run("DeleteQuestionnaire", deleteQuestionnaireTest)
+	t.Run("GetQuestionnaires", getQuestionnairesTest)
+}
+
+func setupQuestionnairesTest(t *testing.T) {
+	datas = []QuestionnairesTestData{
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow,
+				ModifiedAt:   questionnairesNow,
+			},
+			targets: []string{},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow.Add(time.Second),
+				ModifiedAt:   questionnairesNow.Add(2 * time.Second),
+			},
+			targets: []string{},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow.Add(2 * time.Second),
+				ModifiedAt:   questionnairesNow.Add(3 * time.Second),
+			},
+			targets: []string{questionnairesTestUserID},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow,
+				ModifiedAt:   questionnairesNow,
+				DeletedAt:    null.NewTime(questionnairesNow, true),
+			},
+			targets: []string{},
+		},
+	}
+	for i := 0; i < 20; i++ {
+		datas = append(datas, QuestionnairesTestData{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケート",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow.Add(time.Duration(len(datas)) * time.Second),
+				ModifiedAt:   questionnairesNow,
+			},
+			targets: []string{},
+		})
+	}
+	datas = append(datas, QuestionnairesTestData{
+		questionnaire: Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(time.Time{}, false),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow.Add(2 * time.Second),
+			ModifiedAt:   questionnairesNow.Add(3 * time.Second),
+		},
+		targets: []string{questionnairesTestUserID},
+	})
+
+	for i, data := range datas {
+		if data.questionnaire.DeletedAt.Valid {
+			deletedQuestionnaireIDs = append(deletedQuestionnaireIDs, data.questionnaire.ID)
+		}
+
+		err := db.Create(&datas[i].questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to create questionnaire(%+v): %w", data, err)
+		}
+
+		for _, target := range data.targets {
+			questionnaires, ok := userTargetMap[target]
+			if !ok {
+				questionnaires = []int{}
+			}
+			userTargetMap[target] = append(questionnaires, data.questionnaire.ID)
+
+			err := db.Create(Targets{
+				QuestionnaireID: datas[i].questionnaire.ID,
+				UserTraqid:      target,
+			}).Error
+			if err != nil {
+				t.Errorf("failed to create target: %w", err)
+			}
+		}
+	}
+}
+
+func insertQuestionnaireTest(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -144,7 +274,8 @@ func TestInsertQuestionnaire(t *testing.T) {
 	}
 }
 
-func TestUpdateQuestionnaire(t *testing.T) {
+func updateQuestionnaireTest(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -388,7 +519,8 @@ func TestUpdateQuestionnaire(t *testing.T) {
 	}
 }
 
-func TestDeleteQuestionnaire(t *testing.T) {
+func deleteQuestionnaireTest(t *testing.T) {
+	t.Helper()
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -479,7 +611,9 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	}
 }
 
-func TestGetQuestionnaires(t *testing.T) {
+func getQuestionnairesTest(t *testing.T) {
+	t.Helper()
+
 	assertion := assert.New(t)
 
 	sortFuncMap := map[string]func(questionnaires []QuestionnaireInfo) func(i, j int) bool{
@@ -539,115 +673,11 @@ func TestGetQuestionnaires(t *testing.T) {
 		expect
 	}
 
-	testUserID := "mds_boy"
-
-	now := time.Now()
-	datas := []QuestionnaireInfo{
-		{
-			Questionnaires: Questionnaires{
-				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
-				Description:  "第1回集会らん☆ぷろ参加者募集",
-				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
-				CreatedAt:    now,
-				ModifiedAt:   now,
-			},
-			IsTargeted: false,
-		},
-		{
-			Questionnaires: Questionnaires{
-				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
-				Description:  "第1回集会らん☆ぷろ参加者募集",
-				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
-				CreatedAt:    now.Add(time.Second),
-				ModifiedAt:   now.Add(2 * time.Second),
-			},
-			IsTargeted: false,
-		},
-		{
-			Questionnaires: Questionnaires{
-				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
-				Description:  "第1回集会らん☆ぷろ参加者募集",
-				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
-				CreatedAt:    now.Add(2 * time.Second),
-				ModifiedAt:   now.Add(3 * time.Second),
-			},
-			IsTargeted: true,
-		},
-		{
-			Questionnaires: Questionnaires{
-				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
-				Description:  "第1回集会らん☆ぷろ参加者募集",
-				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
-				CreatedAt:    now,
-				ModifiedAt:   now,
-				DeletedAt:    null.NewTime(now, true),
-			},
-			IsTargeted: false,
-		},
-	}
-	for i := 0; i < 20; i++ {
-		datas = append(datas, QuestionnaireInfo{
-			Questionnaires: Questionnaires{
-				Title:        "第1回集会らん☆ぷろ募集アンケート",
-				Description:  "第1回集会らん☆ぷろ参加者募集",
-				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
-				CreatedAt:    now.Add(time.Duration(len(datas)) * time.Second),
-				ModifiedAt:   now,
-			},
-			IsTargeted: false,
-		})
-	}
-	datas = append(datas, QuestionnaireInfo{
-		Questionnaires: Questionnaires{
-			Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
-			Description:  "第1回集会らん☆ぷろ参加者募集",
-			ResTimeLimit: null.NewTime(time.Time{}, false),
-			ResSharedTo:  "public",
-			CreatedAt:    now.Add(2 * time.Second),
-			ModifiedAt:   now.Add(3 * time.Second),
-		},
-		IsTargeted: true,
-	})
-
-	for i, data := range datas {
-		err := db.Create(&datas[i].Questionnaires).Error
-		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", data, err)
-		}
-
-		if data.IsTargeted {
-			err := db.Create(Targets{
-				QuestionnaireID: datas[i].Questionnaires.ID,
-				UserTraqid:      testUserID,
-			}).Error
-			if err != nil {
-				t.Errorf("failed to create target: %w", err)
-			}
-		}
-	}
-
-	deletedQuestionnaireIDs := []int{}
-	targettedQuestionnaireIDs := []int{}
-	for _, data := range datas {
-		if data.Questionnaires.DeletedAt.Valid {
-			deletedQuestionnaireIDs = append(deletedQuestionnaireIDs, data.Questionnaires.ID)
-		}
-
-		if data.IsTargeted {
-			targettedQuestionnaireIDs = append(targettedQuestionnaireIDs, data.Questionnaires.ID)
-		}
-	}
-
 	testCases := []test{
 		{
 			description: "userID:valid, sort:no, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "",
 				pageNum:     1,
@@ -657,7 +687,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:created_at, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "created_at",
 				search:      "",
 				pageNum:     1,
@@ -667,7 +697,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:-created_at, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "-created_at",
 				search:      "",
 				pageNum:     1,
@@ -677,7 +707,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:title, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "title",
 				search:      "",
 				pageNum:     1,
@@ -687,7 +717,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:-title, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "-title",
 				search:      "",
 				pageNum:     1,
@@ -697,7 +727,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:modified_at, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "modified_at",
 				search:      "",
 				pageNum:     1,
@@ -707,7 +737,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:-modified_at, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "-modified_at",
 				search:      "",
 				pageNum:     1,
@@ -717,7 +747,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:GetQuestionnaireTest$, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "GetQuestionnaireTest$",
 				pageNum:     1,
@@ -731,7 +761,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:no, page:2",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "",
 				pageNum:     2,
@@ -741,7 +771,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "too large page",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "",
 				pageNum:     100000,
@@ -755,7 +785,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:no, page:1, nontargetted",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "",
 				pageNum:     1,
@@ -765,7 +795,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "",
 				search:      "notFoundQuestionnaire",
 				pageNum:     1,
@@ -779,7 +809,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "userID:valid, sort:invalid, search:no, page:1",
 			args: args{
-				userID:      testUserID,
+				userID:      questionnairesTestUserID,
 				sort:        "hogehoge",
 				search:      "",
 				pageNum:     1,
