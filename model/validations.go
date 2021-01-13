@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"github.com/jinzhu/gorm"
 )
 
 //Validations validationsテーブルの構造体
@@ -67,9 +65,7 @@ func GetValidations(qustionIDs []int) ([]Validations, error) {
 		Where("question_id IN (?)", qustionIDs).
 		Find(&validations).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
-		return []Validations{}, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get the validations : %w", err)
 	}
 
