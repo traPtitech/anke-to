@@ -106,7 +106,7 @@ func CheckNumberValidation(validation Validations, Body string) error {
 func CheckTextValidation(validation Validations, Response string) error {
 	r, err := regexp.Compile(validation.RegexPattern)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to compile the pattern (RegexPattern: %s): %w", r, ErrInvalidRegex)
 	}
 	if !r.MatchString(Response) && Response != "" {
 		return fmt.Errorf("failed to match the pattern (Response: %s, RegexPattern: %s): %w", Response, r, ErrTextMatching)

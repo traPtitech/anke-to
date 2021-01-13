@@ -718,7 +718,7 @@ func TestCheckTextValidation(t *testing.T) {
 			description: "not match",
 			args: args{
 				validation: Validations{
-					RegexPattern: "^_^",
+					RegexPattern: "*",
 				},
 				response: "",
 			},
