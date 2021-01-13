@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+const (
+	userOne = "mazrean"
+	// userTwo = "ryoha"
+	// userThree = "YumizSui"
+)
+
 //TestMain テストのmain
 func TestMain(m *testing.M) {
 	db, err := EstablishConnection()

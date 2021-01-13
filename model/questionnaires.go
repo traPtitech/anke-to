@@ -11,13 +11,6 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-var (
-	// ErrTooLargePageNum too large page number
-	ErrTooLargePageNum = errors.New("too large page number")
-	// ErrInvalidRegex invalid regexp
-	ErrInvalidRegex = errors.New("invalid regexp")
-)
-
 //Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
