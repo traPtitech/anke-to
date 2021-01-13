@@ -16,7 +16,7 @@ services:
     volumes:
       - ../../:/go/src/github.com/traPtitech/anke-to
     working_dir: /go/src/github.com/traPtitech/anke-to
-    command: go test ./... -v -cover
+    command: go test ./model ./router -v -cover
     restart: on-failure
     depends_on:
       - mysql
