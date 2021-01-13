@@ -715,6 +715,19 @@ func TestCheckTextValidation(t *testing.T) {
 			},
 		},
 		{
+			description: "not match",
+			args: args{
+				validation: Validations{
+					RegexPattern: "^_^",
+				},
+				response: "",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidRegex,
+			},
+		},
+		{
 			description: "empty pattern",
 			args: args{
 				validation: Validations{
