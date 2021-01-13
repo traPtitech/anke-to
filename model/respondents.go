@@ -43,8 +43,8 @@ func (*Respondents) BeforeUpdate(scope *gorm.Scope) error {
 
 // RespondentInfo 回答とその周辺情報の構造体
 type RespondentInfo struct {
-	Title        string `json:"questionnaire_title"`
-	ResTimeLimit string `json:"res_time_limit"`
+	Title        string    `json:"questionnaire_title"`
+	ResTimeLimit null.Time `json:"res_time_limit"`
 	Respondents
 }
 
@@ -109,30 +109,24 @@ func UpdateSubmittedAt(responseID int) error {
 
 // DeleteRespondent 回答の削除
 func DeleteRespondent(userID string, responseID int) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		result := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
+		err := result.Error
+		if err != nil {
+			return fmt.Errorf("failed to delete respondents: %w", err)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("failed to delete respondents : %w", ErrNoRecordDeleted)
+		}
 
-	err := db.
-		Where("response_id = ?", responseID).
-		First(&Respondents{}).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return fmt.Errorf("failed to get response: %w", gorm.ErrRecordNotFound)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get response: %w", err)
-	}
-
-	err = db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
-	if err != nil {
-		return fmt.Errorf("failed to delete respondents: %w", err)
-	}
-
-	err = db.
-		Where("response_id = ?", responseID).
-		Delete(&Response{}).Error
-	if err != nil {
-		return fmt.Errorf("failed to delete response: %w", err)
-	}
-
-	return nil
+		err = db.
+			Where("response_id = ?", responseID).
+			Delete(&Response{}).Error
+		if err != nil {
+			return fmt.Errorf("failed to delete response: %w", err)
+		}
+		return nil
+	})
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
@@ -148,6 +142,9 @@ func GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInf
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
 		query = query.Where("questionnaire_id = ?", questionnaireID)
+	} else if len(questionnaireIDs) > 1 {
+		// 空配列か1要素の取得にしか用いない
+		return nil, fmt.Errorf("ilegal function usase")
 	}
 
 	rows, err := query.
@@ -416,6 +413,9 @@ func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]
 			numj, err := strconv.Atoi(bodyJ.Body.String)
 			if err != nil {
 				return true
+			}
+			if sortNum < 0 {
+				return numi > numj
 			}
 			return numi < numj
 		}

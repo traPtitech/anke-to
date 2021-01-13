@@ -297,7 +297,7 @@ func DeleteResponse(c echo.Context) error {
 
 	userID := model.GetUserID(c)
 	if err := model.DeleteRespondent(userID, responseID); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrNoRecordDeleted) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
