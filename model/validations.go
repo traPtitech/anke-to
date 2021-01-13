@@ -60,21 +60,6 @@ func DeleteValidation(questionID int) error {
 	return nil
 }
 
-// GetValidation 指定されたquestionIDのvalidationを取得する
-func GetValidation(questionID int) (Validations, error) {
-	validation := Validations{}
-	err := db.
-		Where("question_id = ?", questionID).
-		First(&validation).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		return Validations{}, nil
-	} else if err != nil {
-		return Validations{}, fmt.Errorf("failed to get the validation (questionID: %d): %w", questionID, err)
-	}
-	return validation, nil
-}
-
 // GetValidations qustionIDのリストから対応するvalidationsのリストを取得する
 func GetValidations(qustionIDs []int) ([]Validations, error) {
 	validations := []Validations{}
@@ -102,7 +87,7 @@ func CheckNumberValidation(validation Validations, Body string) error {
 	}
 	number, err := strconv.Atoi(Body)
 	if err != nil {
-		return err
+		return ErrInvalidNumber
 	}
 
 	if validation.MinBound != "" {
