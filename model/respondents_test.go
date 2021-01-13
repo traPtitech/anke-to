@@ -157,6 +157,7 @@ func TestUpdateSubmittedAt(t *testing.T) {
 
 	for _, testCase := range testCases {
 		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
@@ -258,6 +259,7 @@ func TestDeleteRespondent(t *testing.T) {
 
 	for _, testCase := range testCases {
 		responseID, err := InsertRespondent(testCase.args.insertUserID, questionnaireID, null.NewTime(time.Now(), true))
+		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
@@ -329,15 +331,14 @@ func TestGetRespondentInfos(t *testing.T) {
 		},
 	}
 
-	responseIDs := make([]int, 0, 3)
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
 		responseID, err := InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
-		responseIDs = append(responseIDs, responseID)
 		respondentMap[responseID] = respondent
 	}
+
 	testCases := []test{
 		{
 			description: "valid",
@@ -349,17 +350,17 @@ func TestGetRespondentInfos(t *testing.T) {
 				length: 2,
 			},
 		},
-		// {
-		// 	// downしてから
-		// 	description: "empty questionnaireIDs",
-		// 	args: args{
-		// 		userID:           "TestGetRespondentInfos",
-		// 		questionnaireIDs: []int{},
-		// 	},
-		// 	expect: expect{
-		// 		length: 1,
-		// 	},
-		// },
+		{
+			// downしてから
+			description: "empty questionnaireIDs",
+			args: args{
+				userID:           "TestGetRespondentInfos",
+				questionnaireIDs: []int{},
+			},
+			expect: expect{
+				length: 1,
+			},
+		},
 		{
 			description: "no user",
 			args: args{
@@ -439,13 +440,11 @@ func TestGetRespondentDetail(t *testing.T) {
 
 	type args struct {
 		validresponseID bool
-		questionIDs     []int
 		responseMetas   []*ResponseMeta
 	}
 	type expect struct {
-		isErr  bool
-		err    error
-		length int
+		isErr bool
+		err   error
 	}
 	type test struct {
 		description string
@@ -816,13 +815,11 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 		},
 	}
 
-	responseIDs := make([]int, 0, 3)
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
 		responseID, err := InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
-		responseIDs = append(responseIDs, responseID)
 		respondentMap[responseID] = respondent
 	}
 
