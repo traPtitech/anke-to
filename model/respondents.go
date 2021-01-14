@@ -110,7 +110,7 @@ func UpdateSubmittedAt(responseID int) error {
 // DeleteRespondent 回答の削除
 func DeleteRespondent(userID string, responseID int) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-		result := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
+		result := tx.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
 		err := result.Error
 		if err != nil {
 			return fmt.Errorf("failed to delete respondents: %w", err)
@@ -119,7 +119,7 @@ func DeleteRespondent(userID string, responseID int) error {
 			return fmt.Errorf("failed to delete respondents : %w", ErrNoRecordDeleted)
 		}
 
-		err = db.
+		err = tx.
 			Where("response_id = ?", responseID).
 			Delete(&Response{}).Error
 		if err != nil {
