@@ -22,6 +22,12 @@ type QuestionnairesTestData struct {
 	questionnaire  Questionnaires
 	targets        []string
 	administrators []string
+	respondents    []QuestionnairesTestRespondent
+}
+
+type QuestionnairesTestRespondent struct {
+	userID      string
+	isSubmitted bool
 }
 
 var (
@@ -41,6 +47,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("DeleteQuestionnaire", deleteQuestionnaireTest)
 	t.Run("GetQuestionnaires", getQuestionnairesTest)
 	t.Run("GetAdminQuestionnaires", getAdminQuestionnairesTest)
+	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -56,10 +63,24 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
+			respondents:    []QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow,
+				ModifiedAt:   questionnairesNow,
+			},
+			targets:        []string{questionnairesTestUserID},
+			administrators: []string{},
+			respondents:    []QuestionnairesTestRespondent{},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
@@ -68,6 +89,42 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{questionnairesTestUserID},
+			respondents:    []QuestionnairesTestRespondent{},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケート",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow,
+				ModifiedAt:   questionnairesNow,
+			},
+			targets:        []string{},
+			administrators: []string{},
+			respondents: []QuestionnairesTestRespondent{
+				{
+					userID:      questionnairesTestUserID,
+					isSubmitted: true,
+				},
+			},
+		},
+		{
+			questionnaire: Questionnaires{
+				Title:        "第1回集会らん☆ぷろ募集アンケート",
+				Description:  "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit: null.NewTime(time.Time{}, false),
+				ResSharedTo:  "public",
+				CreatedAt:    questionnairesNow,
+				ModifiedAt:   questionnairesNow,
+			},
+			targets:        []string{},
+			administrators: []string{},
+			respondents: []QuestionnairesTestRespondent{
+				{
+					userID: questionnairesTestUserID,
+				},
+			},
 		},
 		{
 			questionnaire: Questionnaires{
@@ -80,6 +137,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{questionnairesTestUserID},
 			administrators: []string{questionnairesTestUserID},
+			respondents:    []QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: Questionnaires{
@@ -93,6 +151,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
+			respondents:    []QuestionnairesTestRespondent{},
 		},
 	}
 	for i := 0; i < 20; i++ {
@@ -107,6 +166,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
+			respondents:    []QuestionnairesTestRespondent{},
 		})
 	}
 	datas = append(datas, QuestionnairesTestData{
@@ -120,6 +180,7 @@ func setupQuestionnairesTest(t *testing.T) {
 		},
 		targets:        []string{questionnairesTestUserID},
 		administrators: []string{questionnairesTestUserID},
+		respondents:    []QuestionnairesTestRespondent{},
 	})
 
 	for i, data := range datas {
@@ -161,6 +222,20 @@ func setupQuestionnairesTest(t *testing.T) {
 			}).Error
 			if err != nil {
 				t.Errorf("failed to create target: %w", err)
+			}
+		}
+
+		for _, respondentData := range data.respondents {
+			respondent := Respondents{
+				QuestionnaireID: datas[i].questionnaire.ID,
+				UserTraqid:      respondentData.userID,
+			}
+			if respondentData.isSubmitted {
+				respondent.SubmittedAt = null.NewTime(time.Now(), true)
+			}
+			err := db.Create(&respondent).Error
+			if err != nil {
+				t.Error("failed to create respondent: %w", err)
 			}
 		}
 	}
@@ -986,5 +1061,152 @@ func getAdminQuestionnairesTest(t *testing.T) {
 
 			assertion.Equal(expectQuestionnaire, actualQuestionnaire, testCase.description, "questionnaire")
 		}
+	}
+}
+
+func getQuestionnaireInfoTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		questionnaireID int
+	}
+	type expect struct {
+		questionnaire  Questionnaires
+		targets        []string
+		administrators []string
+		respondents    []string
+		isErr          bool
+		err            error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	testCases := []test{
+		{
+			description: "respondents: no, targets: no, administrator: no",
+			args: args{
+				questionnaireID: datas[0].questionnaire.ID,
+			},
+			expect: expect{
+				questionnaire:  datas[0].questionnaire,
+				targets:        []string{},
+				administrators: []string{},
+				respondents:    []string{},
+			},
+		},
+		{
+			description: "respondents: no, targets: valid, administrator: no",
+			args: args{
+				questionnaireID: datas[1].questionnaire.ID,
+			},
+			expect: expect{
+				questionnaire:  datas[1].questionnaire,
+				targets:        []string{questionnairesTestUserID},
+				administrators: []string{},
+				respondents:    []string{},
+			},
+		},
+		{
+			description: "respondents: no, targets: no, administrator: valid",
+			args: args{
+				questionnaireID: datas[2].questionnaire.ID,
+			},
+			expect: expect{
+				questionnaire:  datas[2].questionnaire,
+				targets:        []string{},
+				administrators: []string{questionnairesTestUserID},
+				respondents:    []string{},
+			},
+		},
+		{
+			description: "respondents: submitted, targets: no, administrator: no",
+			args: args{
+				questionnaireID: datas[3].questionnaire.ID,
+			},
+			expect: expect{
+				questionnaire:  datas[3].questionnaire,
+				targets:        []string{},
+				administrators: []string{},
+				respondents:    []string{questionnairesTestUserID},
+			},
+		},
+		{
+			description: "respondents: saved, targets: no, administrator: no",
+			args: args{
+				questionnaireID: datas[4].questionnaire.ID,
+			},
+			expect: expect{
+				questionnaire:  datas[4].questionnaire,
+				targets:        []string{},
+				administrators: []string{},
+				respondents:    []string{},
+			},
+		},
+		{
+			description: "questionnaireID: invalid",
+			args: args{
+				questionnaireID: invalidQuestionnaireID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   gorm.ErrRecordNotFound,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := GetQuestionnaireInfo(testCase.questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.questionnaire.ID, actualQuestionnaire.ID, testCase.description, "questionnaire(ID)")
+		assertion.Equal(testCase.expect.questionnaire.Title, actualQuestionnaire.Title, testCase.description, "questionnaire(Title)")
+		assertion.Equal(testCase.expect.questionnaire.Description, actualQuestionnaire.Description, testCase.description, "questionnaire(Description)")
+		assertion.Equal(testCase.expect.questionnaire.ResSharedTo, actualQuestionnaire.ResSharedTo, testCase.description, "questionnaire(ResSharedTo)")
+		assertion.WithinDuration(testCase.expect.questionnaire.ResTimeLimit.ValueOrZero(), actualQuestionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(ResTimeLimit)")
+		assertion.WithinDuration(testCase.expect.questionnaire.CreatedAt, actualQuestionnaire.CreatedAt, 2*time.Second, testCase.description, "questionnaire(CreatedAt)")
+		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
+		assertion.WithinDuration(testCase.expect.questionnaire.DeletedAt.ValueOrZero(), actualQuestionnaire.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(DeletedAt)")
+
+		sort.SliceStable(testCase.targets, func(i, j int) bool { return testCase.targets[i] < testCase.targets[j] })
+		sort.SliceStable(actualTargets, func(i, j int) bool { return actualTargets[i] < actualTargets[j] })
+		assertion.ElementsMatch(testCase.targets, actualTargets, testCase.description, "targets")
+
+		sort.SliceStable(testCase.administrators, func(i, j int) bool { return testCase.administrators[i] < testCase.administrators[j] })
+		sort.SliceStable(actualAdministrators, func(i, j int) bool { return actualAdministrators[i] < actualAdministrators[j] })
+		assertion.ElementsMatch(testCase.administrators, actualAdministrators, testCase.description, "administrators")
+
+		sort.SliceStable(testCase.respondents, func(i, j int) bool { return testCase.respondents[i] < testCase.respondents[j] })
+		sort.SliceStable(actualRespondents, func(i, j int) bool { return actualRespondents[i] < actualRespondents[j] })
+		assertion.ElementsMatch(testCase.respondents, actualRespondents, testCase.description, "respondents")
 	}
 }
