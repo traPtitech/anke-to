@@ -336,16 +336,17 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
-	err := db.
+	result := db.
 		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
-		Scan(&res).Error
+		Scan(&res)
+	err := result.Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return null.NewTime(time.Time{}, false), nil
-		}
 		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", gorm.ErrRecordNotFound)
 	}
 
 	return res.ResTimeLimit, nil

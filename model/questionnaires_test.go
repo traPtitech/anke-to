@@ -50,6 +50,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetAdminQuestionnaires", getAdminQuestionnairesTest)
 	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
+	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
