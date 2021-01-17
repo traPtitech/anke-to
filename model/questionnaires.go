@@ -1,12 +1,18 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
+)
+
+var (
+	// ErrInvalidAnsweredParam invalid sort param
+	ErrInvalidAnsweredParam = errors.New("invalid answered param")
 )
 
 //Questionnaires questionnairesテーブルの構造体
@@ -48,8 +54,8 @@ type QuestionnaireDetail struct {
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
-	RespondedAt *string `json:"responded_at"`
-	HasResponse bool    `json:"has_response"`
+	RespondedAt null.Time `json:"responded_at"`
+	HasResponse bool      `json:"has_response"`
 }
 
 //InsertQuestionnaire アンケートの追加
@@ -312,7 +318,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 		query = query.Where("respondents.questionnaire_id IS NULL")
 	case "":
 	default:
-		return nil, fmt.Errorf("invalid answered parameter value(%s)", answered)
+		return nil, fmt.Errorf("invalid answered parameter value(%s): %w", answered, ErrInvalidAnsweredParam)
 	}
 
 	questionnaires := []TargettedQuestionnaire{}
@@ -382,6 +388,7 @@ func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 	default:
 		return nil, ErrInvalidSortParam
 	}
+	query = query.Order("questionnaires.id desc")
 
 	return query, nil
 }

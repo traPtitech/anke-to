@@ -35,6 +35,7 @@ var (
 	deletedQuestionnaireIDs = []int{}
 	userTargetMap           = map[string][]int{}
 	userAdministratorMap    = map[string][]int{}
+	userRespondentMap       = map[string][]int{}
 )
 
 func TestQuestionnaires(t *testing.T) {
@@ -48,6 +49,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetQuestionnaires", getQuestionnairesTest)
 	t.Run("GetAdminQuestionnaires", getAdminQuestionnairesTest)
 	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
+	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -198,7 +200,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			if !ok {
 				questionnaires = []int{}
 			}
-			userTargetMap[target] = append(questionnaires, data.questionnaire.ID)
+			userTargetMap[target] = append(questionnaires, datas[i].questionnaire.ID)
 
 			err := db.Create(&Targets{
 				QuestionnaireID: datas[i].questionnaire.ID,
@@ -226,6 +228,14 @@ func setupQuestionnairesTest(t *testing.T) {
 		}
 
 		for _, respondentData := range data.respondents {
+			if respondentData.isSubmitted {
+				questionnaires, ok := userRespondentMap[respondentData.userID]
+				if !ok {
+					questionnaires = []int{}
+				}
+				userRespondentMap[respondentData.userID] = append(questionnaires, datas[i].questionnaire.ID)
+			}
+
 			respondent := Respondents{
 				QuestionnaireID: datas[i].questionnaire.ID,
 				UserTraqid:      respondentData.userID,
@@ -718,37 +728,37 @@ func getQuestionnairesTest(t *testing.T) {
 	sortFuncMap := map[string]func(questionnaires []QuestionnaireInfo) func(i, j int) bool{
 		"created_at": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].CreatedAt.After(questionnaires[j].CreatedAt)
+				return questionnaires[i].CreatedAt.Before(questionnaires[j].CreatedAt) || (questionnaires[i].CreatedAt.Equal(questionnaires[j].CreatedAt) && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"-created_at": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].CreatedAt.Before(questionnaires[j].CreatedAt)
+				return questionnaires[i].CreatedAt.After(questionnaires[j].CreatedAt) || (questionnaires[i].CreatedAt.Equal(questionnaires[j].CreatedAt) && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"title": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].Title < questionnaires[j].Title
+				return questionnaires[i].Title < questionnaires[j].Title || (questionnaires[i].Title == questionnaires[j].Title && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"-title": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].Title > questionnaires[j].Title
+				return questionnaires[i].Title > questionnaires[j].Title || (questionnaires[i].Title == questionnaires[j].Title && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"modified_at": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].ModifiedAt.After(questionnaires[j].ModifiedAt)
+				return questionnaires[i].ModifiedAt.Before(questionnaires[j].ModifiedAt) || (questionnaires[i].ModifiedAt.Equal(questionnaires[j].ModifiedAt) && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"-modified_at": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].CreatedAt.After(questionnaires[j].CreatedAt)
+				return questionnaires[i].ModifiedAt.After(questionnaires[j].ModifiedAt) || (questionnaires[i].ModifiedAt.Equal(questionnaires[j].ModifiedAt) && questionnaires[i].ID > questionnaires[j].ID)
 			}
 		},
 		"": func(questionnaires []QuestionnaireInfo) func(i, j int) bool {
 			return func(i, j int) bool {
-				return questionnaires[i].ID < questionnaires[j].ID
+				return questionnaires[i].ID > questionnaires[j].ID
 			}
 		},
 	}
@@ -972,12 +982,12 @@ func getQuestionnairesTest(t *testing.T) {
 
 		copyQuestionnaires := make([]QuestionnaireInfo, len(questionnaires))
 		copy(copyQuestionnaires, questionnaires)
-		sort.SliceStable(copyQuestionnaires, sortFuncMap[testCase.args.sort](questionnaires))
-		expectQuestionnaireIDs := []int{}
+		sort.Slice(copyQuestionnaires, sortFuncMap[testCase.args.sort](copyQuestionnaires))
+		expectQuestionnaireIDs := make([]int, 0, len(copyQuestionnaires))
 		for _, questionnaire := range copyQuestionnaires {
 			expectQuestionnaireIDs = append(expectQuestionnaireIDs, questionnaire.ID)
 		}
-		assertion.ElementsMatch(expectQuestionnaireIDs, actualQuestionnaireIDs, testCase.description, "sort")
+		assertion.Equal(expectQuestionnaireIDs, actualQuestionnaireIDs, testCase.description, "sort")
 	}
 }
 
@@ -1197,16 +1207,213 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
 		assertion.WithinDuration(testCase.expect.questionnaire.DeletedAt.ValueOrZero(), actualQuestionnaire.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(DeletedAt)")
 
-		sort.SliceStable(testCase.targets, func(i, j int) bool { return testCase.targets[i] < testCase.targets[j] })
-		sort.SliceStable(actualTargets, func(i, j int) bool { return actualTargets[i] < actualTargets[j] })
-		assertion.ElementsMatch(testCase.targets, actualTargets, testCase.description, "targets")
+		sort.Slice(testCase.targets, func(i, j int) bool { return testCase.targets[i] < testCase.targets[j] })
+		sort.Slice(actualTargets, func(i, j int) bool { return actualTargets[i] < actualTargets[j] })
+		assertion.Equal(testCase.targets, actualTargets, testCase.description, "targets")
 
-		sort.SliceStable(testCase.administrators, func(i, j int) bool { return testCase.administrators[i] < testCase.administrators[j] })
-		sort.SliceStable(actualAdministrators, func(i, j int) bool { return actualAdministrators[i] < actualAdministrators[j] })
-		assertion.ElementsMatch(testCase.administrators, actualAdministrators, testCase.description, "administrators")
+		sort.Slice(testCase.administrators, func(i, j int) bool { return testCase.administrators[i] < testCase.administrators[j] })
+		sort.Slice(actualAdministrators, func(i, j int) bool { return actualAdministrators[i] < actualAdministrators[j] })
+		assertion.Equal(testCase.administrators, actualAdministrators, testCase.description, "administrators")
 
-		sort.SliceStable(testCase.respondents, func(i, j int) bool { return testCase.respondents[i] < testCase.respondents[j] })
-		sort.SliceStable(actualRespondents, func(i, j int) bool { return actualRespondents[i] < actualRespondents[j] })
-		assertion.ElementsMatch(testCase.respondents, actualRespondents, testCase.description, "respondents")
+		sort.Slice(testCase.respondents, func(i, j int) bool { return testCase.respondents[i] < testCase.respondents[j] })
+		sort.Slice(actualRespondents, func(i, j int) bool { return actualRespondents[i] < actualRespondents[j] })
+		assertion.Equal(testCase.respondents, actualRespondents, testCase.description, "respondents")
+	}
+}
+
+func getTargettedQuestionnairesTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	sortFuncMap := map[string]func(questionnaires []TargettedQuestionnaire) func(i, j int) bool{
+		"created_at": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].CreatedAt.Before(questionnaires[j].CreatedAt) || (questionnaires[i].CreatedAt.Equal(questionnaires[j].CreatedAt) && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"-created_at": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].CreatedAt.After(questionnaires[j].CreatedAt) || (questionnaires[i].CreatedAt.Equal(questionnaires[j].CreatedAt) && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"title": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].Title < questionnaires[j].Title || (questionnaires[i].Title == questionnaires[j].Title && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"-title": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].Title > questionnaires[j].Title || (questionnaires[i].Title == questionnaires[j].Title && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"modified_at": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].ModifiedAt.Before(questionnaires[j].ModifiedAt) || (questionnaires[i].ModifiedAt.Equal(questionnaires[j].ModifiedAt) && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"-modified_at": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].ModifiedAt.After(questionnaires[j].ModifiedAt) || (questionnaires[i].ModifiedAt.Equal(questionnaires[j].ModifiedAt) && questionnaires[i].ID > questionnaires[j].ID)
+			}
+		},
+		"": func(questionnaires []TargettedQuestionnaire) func(i, j int) bool {
+			return func(i, j int) bool {
+				return questionnaires[i].ID > questionnaires[j].ID
+			}
+		},
+	}
+
+	type args struct {
+		userID   string
+		answered string
+		sort     string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "userID: valid, answered: no, sort: no",
+			args: args{
+				userID: questionnairesTestUserID,
+			},
+		},
+		{
+			description: "userID: valid, answered: answered, sort: no",
+			args: args{
+				userID:   questionnairesTestUserID,
+				answered: "answered",
+			},
+		},
+		{
+			description: "userID: valid, answered: unanswered, sort: no",
+			args: args{
+				userID:   questionnairesTestUserID,
+				answered: "unanswered",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: created_at",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "created_at",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: -created_at",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "-created_at",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: title",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "title",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: -title",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "-title",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: modified_at",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "modified_at",
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: -modified_at",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "-modified_at",
+			},
+		},
+		{
+			description: "userID: valid, answered: invalid, sort: no",
+			args: args{
+				userID:   questionnairesTestUserID,
+				answered: "invalidAnswered",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidAnsweredParam,
+			},
+		},
+		{
+			description: "userID: valid, answered: no, sort: invalid",
+			args: args{
+				userID: questionnairesTestUserID,
+				sort:   "invalidSort",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidSortParam,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		questionnaires, err := GetTargettedQuestionnaires(testCase.args.userID, testCase.args.answered, testCase.args.sort)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		actualQuestionnaireIDs := []int{}
+		for _, questionnaire := range questionnaires {
+			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
+		}
+		assertion.Subset(userTargetMap[questionnairesTestUserID], actualQuestionnaireIDs, testCase.description, "contain(targetted)")
+		for _, deletedQuestionnaireID := range deletedQuestionnaireIDs {
+			assertion.NotContains(actualQuestionnaireIDs, deletedQuestionnaireID, testCase.description, "not contain(deleted)")
+		}
+		for _, deletedQuestionnaireID := range deletedQuestionnaireIDs {
+			assertion.NotContains(actualQuestionnaireIDs, deletedQuestionnaireID, testCase.description, "not contain(deleted)")
+		}
+
+		switch testCase.args.answered {
+		case "answered":
+			for _, questionnaire := range questionnaires {
+				assertion.True(questionnaire.RespondedAt.Valid, testCase.description, "answered")
+			}
+			assertion.Subset(userRespondentMap[questionnairesTestUserID], actualQuestionnaireIDs, testCase.description, "contain(responded)")
+		case "unanswered":
+			for _, questionnaire := range questionnaires {
+				assertion.True(!questionnaire.RespondedAt.Valid, testCase.description, "unanswered")
+			}
+			for _, respondedQuestionnaireID := range userRespondentMap[questionnairesTestUserID] {
+				assertion.NotContains(actualQuestionnaireIDs, respondedQuestionnaireID, testCase.description, "not contain(deleted)")
+			}
+		}
+
+		copyQuestionnaires := make([]TargettedQuestionnaire, len(questionnaires))
+		copy(copyQuestionnaires, questionnaires)
+		sort.Slice(copyQuestionnaires, sortFuncMap[testCase.args.sort](copyQuestionnaires))
+		expectQuestionnaireIDs := []int{}
+		for _, questionnaire := range copyQuestionnaires {
+			expectQuestionnaireIDs = append(expectQuestionnaireIDs, questionnaire.ID)
+		}
+		assertion.Equal(expectQuestionnaireIDs, actualQuestionnaireIDs, testCase.description, "sort")
 	}
 }
