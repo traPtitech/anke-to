@@ -51,6 +51,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
+	t.Run("GetResShared", getResSharedTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -73,7 +74,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
+				ResSharedTo:  "respondents",
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
@@ -86,7 +87,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
-				ResSharedTo:  "public",
+				ResSharedTo:  "administrators",
 				CreatedAt:    questionnairesNow.Add(time.Second),
 				ModifiedAt:   questionnairesNow.Add(2 * time.Second),
 			},
@@ -1498,5 +1499,97 @@ func getQuestionnaireLimitTest(t *testing.T) {
 		}
 
 		assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+	}
+}
+
+func getResSharedTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	type args struct {
+		questionnaireID int
+	}
+	type expect struct {
+		resSharedTo string
+		isErr       bool
+		err         error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "res_shared_to: public",
+			args: args{
+				questionnaireID: datas[0].questionnaire.ID,
+			},
+			expect: expect{
+				resSharedTo: "public",
+			},
+		},
+		{
+			description: "res_shared_to: respondents",
+			args: args{
+				questionnaireID: datas[1].questionnaire.ID,
+			},
+			expect: expect{
+				resSharedTo: "respondents",
+			},
+		},
+		{
+			description: "res_shared_to: administrators",
+			args: args{
+				questionnaireID: datas[2].questionnaire.ID,
+			},
+			expect: expect{
+				resSharedTo: "administrators",
+			},
+		},
+		{
+			description: "questionnaireID: invalid",
+			args: args{
+				questionnaireID: invalidQuestionnaireID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   gorm.ErrRecordNotFound,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualResSharedTo, err := GetResShared(testCase.args.questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.resSharedTo, actualResSharedTo, testCase.description, "res_shared_to")
 	}
 }

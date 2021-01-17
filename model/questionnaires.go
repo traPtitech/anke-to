@@ -341,9 +341,6 @@ func GetResShared(questionnaireID int) (string, error) {
 		Select("res_shared_to").
 		Scan(&res).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", fmt.Errorf("failed to get resShared: %w", gorm.ErrRecordNotFound)
-		}
 		return "", fmt.Errorf("failed to get resShared: %w", err)
 	}
 
