@@ -333,7 +333,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
-func GetQuestionnaireLimit(questionnaireID int) (string, error) {
+func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
 	err := db.
@@ -343,12 +343,12 @@ func GetQuestionnaireLimit(questionnaireID int) (string, error) {
 		Scan(&res).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return "", nil
+			return null.NewTime(time.Time{}, false), nil
 		}
-		return "", fmt.Errorf("failed to get the questionnaires: %w", err)
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
-	return NullTimeToString(res.ResTimeLimit), nil
+	return res.ResTimeLimit, nil
 }
 
 //GetResShared アンケートの回答の公開範囲の取得

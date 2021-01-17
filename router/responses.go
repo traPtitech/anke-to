@@ -29,7 +29,7 @@ func PostResponse(c echo.Context) error {
 	}
 
 	// 回答期限を過ぎた回答は許可しない
-	if limit != "NULL" && limit < time.Now().Format(time.RFC3339) {
+	if limit.Valid && limit.Time.Before(time.Now()) {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
@@ -177,7 +177,7 @@ func EditResponse(c echo.Context) error {
 	}
 
 	// 回答期限を過ぎた回答は許可しない
-	if limit != "NULL" && limit < time.Now().Format(time.RFC3339) {
+	if limit.Valid && limit.Time.Before(time.Now()) {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
