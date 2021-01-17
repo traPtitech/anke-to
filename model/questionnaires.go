@@ -227,9 +227,6 @@ func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
 		Where("administrators.user_traqid = ?", userID).
 		Order("questionnaires.modified_at DESC").
 		Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return []Questionnaires{}, nil
-	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
@@ -249,9 +246,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
 
@@ -260,9 +254,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
@@ -271,9 +262,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
 	}
 
@@ -282,9 +270,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
@@ -323,9 +308,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 
 	questionnaires := []TargettedQuestionnaire{}
 	err = query.Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", gorm.ErrRecordNotFound)
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
@@ -336,17 +319,13 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
-	result := db.
+	err := db.
 		Model(Questionnaires{}).
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
-		Scan(&res)
-	err := result.Error
+		Scan(&res).Error
 	if err != nil {
 		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
-	}
-	if result.RowsAffected == 0 {
-		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", gorm.ErrRecordNotFound)
 	}
 
 	return res.ResTimeLimit, nil
