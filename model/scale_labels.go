@@ -3,8 +3,6 @@ package model
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/jinzhu/gorm"
 )
 
 //ScaleLabels scale_labelsテーブルの構造体
@@ -27,7 +25,7 @@ func InsertScaleLabel(lastID int, label ScaleLabels) error {
 
 // UpdateScaleLabel questionIDを指定してlabelを更新する
 func UpdateScaleLabel(questionID int, label ScaleLabels) error {
-	err := db.
+	result := db.
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
 		Update(map[string]interface{}{
@@ -35,22 +33,28 @@ func UpdateScaleLabel(questionID int, label ScaleLabels) error {
 			"scale_label_right": label.ScaleLabelRight,
 			"scale_label_left":  label.ScaleLabelLeft,
 			"scale_min":         label.ScaleMin,
-			"scale_max":         label.ScaleMax}).
-		Error
+			"scale_max":         label.ScaleMax})
+	err := result.Error
 	if err != nil {
-		return fmt.Errorf("failed to update the scale labell (questionID: %d): %w", questionID, err)
+		return fmt.Errorf("failed to update the scale label (questionID: %d): %w", questionID, err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to update a scale label record: %w", ErrNoRecordUpdated)
 	}
 	return nil
 }
 
 // DeleteScaleLabel questionIDを指定してlabelを削除する
 func DeleteScaleLabel(questionID int) error {
-	err := db.
+	result := db.
 		Where("question_id = ?", questionID).
-		Delete(&ScaleLabels{}).
-		Error
+		Delete(&ScaleLabels{})
+	err := result.Error
 	if err != nil {
-		return fmt.Errorf("failed to delete the scale labell (questionID: %d): %w", questionID, err)
+		return fmt.Errorf("failed to delete the scale label (questionID: %d): %w", questionID, err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to delete a scale label : %w", ErrNoRecordDeleted)
 	}
 	return nil
 }
@@ -61,9 +65,7 @@ func GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
 	err := db.
 		Where("question_id IN (?)", questionIDs).
 		Find(&labels).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return []ScaleLabels{}, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get the scale label: %w", err)
 	}
 
