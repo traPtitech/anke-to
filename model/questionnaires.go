@@ -297,7 +297,6 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
 		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
 		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ?", userID).
-		Where("respondents.user_traqid IS NULL").
 		Group("questionnaires.id,respondents.user_traqid").
 		Select("questionnaires.*, MAX(respondents.submitted_at) AS responsed_at")
 
