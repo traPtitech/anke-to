@@ -63,11 +63,15 @@ func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 
 // DeleteResponse 質問に対する回答の削除
 func DeleteResponse(responseID int) error {
-	err := db.
+	result := db.
 		Where("response_id = ?", responseID).
-		Delete(&Response{}).Error
+		Delete(&Response{})
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete response: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to delete response: %w", ErrNoRecordDeleted)
 	}
 
 	return nil
