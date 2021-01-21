@@ -56,7 +56,7 @@ type QuestionnaireDetail struct {
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
-	RespondedAt string `json:"responded_at"`
+	RespondedAt *string `json:"responded_at"`
 }
 
 //InsertQuestionnaire アンケートの追加
@@ -298,7 +298,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
 		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ?", userID).
 		Group("questionnaires.id,respondents.user_traqid").
-		Select("questionnaires.*, MAX(respondents.submitted_at) AS responsed_at")
+		Select("questionnaires.*, MAX(respondents.submitted_at) AS responded_at")
 
 	query, err := setQuestionnairesOrder(query, sort)
 	if err != nil {
