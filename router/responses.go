@@ -53,7 +53,7 @@ func PostResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.NumberValidError{}) {
+				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
 				return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -63,7 +63,7 @@ func PostResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.TextMatchError{}) {
+				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -201,7 +201,7 @@ func EditResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.NumberValidError{}) {
+				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
 				return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -211,7 +211,7 @@ func EditResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
-				if errors.Is(err, &model.TextMatchError{}) {
+				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
 				return echo.NewHTTPError(http.StatusInternalServerError, err)

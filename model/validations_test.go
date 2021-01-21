@@ -1,119 +1,841 @@
+// validations test
 package model
 
 import (
+	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/guregu/null.v3"
 )
 
-type ValidationTest struct {
-	validation Validations
-	body       string
-	result     string
-}
+func TestInsertValidation(t *testing.T) {
+	t.Parallel()
 
-func TestCheckNumberValidation(t *testing.T) {
-	validationTests := []ValidationTest{
+	assertion := assert.New(t)
+
+	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	require.NoError(t, err)
+
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		validID      bool
+		QuestionType string
+		RegexPattern string
+		MinBound     string
+		MaxBound     string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
 		{
-			validation: Validations{0, "", "0", "10"},
-			body:       "5",
-			result:     "",
+			description: "valid Text(pattern not empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: "^\\d*\\.\\d*$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
 		},
 		{
-			validation: Validations{0, "", "0", "10"},
-			body:       "",
-			result:     "",
+			description: "valid Text(pattern empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: "",
+				MinBound:     "",
+				MaxBound:     "",
+			},
 		},
 		{
-			validation: Validations{0, "", "0", "10"},
-			body:       "a",
-			result:     "strconv.Atoi: parsing \"a\": invalid syntax",
+			description: "long regexpattern",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: strings.Repeat("a", 2000),
+				MinBound:     "",
+				MaxBound:     "",
+			},
 		},
 		{
-			validation: Validations{0, "", "", "10"},
-			body:       "20",
-			result:     "failed to meet the boundary value. the number must be less than MaxBound (number: 20, MaxBound: 10)",
+			description: "too long regexpattern",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: strings.Repeat("a", 200000),
+				MinBound:     "",
+				MaxBound:     "",
+			},
+			expect: expect{
+				isErr: true,
+			},
 		},
 		{
-			validation: Validations{0, "", "10", ""},
-			body:       "5",
-			result:     "failed to meet the boundary value. the number must be greater than MinBound (number: 5, MinBound: 10)",
+			description: "valid Number(no bound empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "0",
+				MaxBound:     "10",
+			},
 		},
 		{
-			validation: Validations{0, "", "20", "10"},
-			body:       "20",
-			result:     "failed to check the boundary value. MinBound must be less than MaxBound (MinBound: 20, MaxBound: 10)",
+			description: "valid Number(min bound empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "",
+				MaxBound:     "10",
+			},
+		},
+		{
+			description: "valid Number(max bound empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "0",
+				MaxBound:     "",
+			},
+		},
+		{
+			description: "valid Number(all bound empty)",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+		},
+		{
+			description: "long bounds",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     strings.Repeat("1", 2000),
+				MaxBound:     strings.Repeat("1", 2000),
+			},
+		},
+		{
+			description: "too long bounds",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     strings.Repeat("1", 200000),
+				MaxBound:     strings.Repeat("1", 200000),
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "question does not exist",
+			args: args{
+				validID:      false,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+			expect: expect{
+				isErr: true,
+			},
 		},
 	}
 
-	for _, validationTest := range validationTests {
-		validation := validationTest.validation
-		body := validationTest.body
-		result := validationTest.result
-		if err := CheckNumberValidation(validation, body); err != nil {
-			assert.EqualError(t, err, result)
+	for _, testCase := range testCases {
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
+		require.NoError(t, err)
+		if !testCase.args.validID {
+			questionID = -1
+		}
+
+		validation := Validations{
+			QuestionID:   questionID,
+			RegexPattern: testCase.args.RegexPattern,
+			MinBound:     testCase.args.MinBound,
+			MaxBound:     testCase.args.MaxBound,
+		}
+
+		err = InsertValidation(questionID, validation)
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		validation = Validations{}
+		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		assertion.NoError(err, testCase.description, "get validations")
+
+		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
+		assertion.Equal(testCase.args.RegexPattern, validation.RegexPattern, testCase.description, "RegexPattern")
+		assertion.Equal(testCase.args.MinBound, validation.MinBound, testCase.description, "MinBound")
+		assertion.Equal(testCase.args.MaxBound, validation.MaxBound, testCase.description, "MaxBound")
+	}
+}
+
+func TestUpdateValidation(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	require.NoError(t, err)
+
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		validID      bool
+		QuestionType string
+		RegexPattern string
+		MinBound     string
+		MaxBound     string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "valid updated",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: "^(updated)+$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+		},
+		{
+			description: "Text no updated",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: "^(original)+$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+		},
+		{
+			description: "Number updated",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "-100",
+				MaxBound:     "100",
+			},
+		},
+		{
+			description: "Number no updated",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "",
+				MinBound:     "0",
+				MaxBound:     "10",
+			},
+		},
+		{
+			description: "question does not exist",
+			args: args{
+				validID:      false,
+				QuestionType: "Text",
+				RegexPattern: "^(updated)+$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNoRecordUpdated,
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		require.NoError(t, err)
+
+		validation := Validations{}
+
+		if testCase.args.QuestionType == "Text" {
+			validation = Validations{
+				QuestionID:   questionID,
+				RegexPattern: "^(original)+$",
+				MinBound:     "",
+				MaxBound:     "",
+			}
 		} else {
-			assert.NoError(t, nil)
+			validation = Validations{
+				QuestionID:   questionID,
+				RegexPattern: "",
+				MinBound:     "0",
+				MaxBound:     "10",
+			}
+		}
+
+		err = InsertValidation(questionID, validation)
+		require.NoError(t, err)
+
+		if !testCase.args.validID {
+			questionID = -1
+		}
+
+		validation = Validations{
+			QuestionID:   questionID,
+			RegexPattern: testCase.args.RegexPattern,
+			MinBound:     testCase.args.MinBound,
+			MaxBound:     testCase.args.MaxBound,
+		}
+
+		err = UpdateValidation(questionID, validation)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		validation = Validations{}
+		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		assertion.NoError(err, testCase.description, "get validations")
+
+		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
+		assertion.Equal(testCase.args.RegexPattern, validation.RegexPattern, testCase.description, "RegexPattern")
+		assertion.Equal(testCase.args.MinBound, validation.MinBound, testCase.description, "MinBound")
+		assertion.Equal(testCase.args.MaxBound, validation.MaxBound, testCase.description, "MaxBound")
+	}
+}
+
+func TestDeleteValidation(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	require.NoError(t, err)
+
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		validID      bool
+		QuestionType string
+		RegexPattern string
+		MinBound     string
+		MaxBound     string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "Text delete",
+			args: args{
+				validID:      true,
+				QuestionType: "Text",
+				RegexPattern: "^\\d*\\.\\d*$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+		},
+		{
+			description: "Number delete",
+			args: args{
+				validID:      true,
+				QuestionType: "Number",
+				RegexPattern: "^\\d*\\.\\d*$",
+				MinBound:     "0",
+				MaxBound:     "10",
+			},
+		},
+		{
+			description: "question does not exist",
+			args: args{
+				validID:      false,
+				QuestionType: "Text",
+				RegexPattern: "^\\d*\\.\\d*$",
+				MinBound:     "",
+				MaxBound:     "",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNoRecordDeleted,
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		require.NoError(t, err)
+
+		validation := Validations{
+			QuestionID:   questionID,
+			RegexPattern: testCase.args.RegexPattern,
+			MinBound:     testCase.args.MinBound,
+			MaxBound:     testCase.args.MaxBound,
+		}
+
+		err = InsertValidation(questionID, validation)
+		require.NoError(t, err)
+
+		if !testCase.args.validID {
+			questionID = -1
+		}
+
+		err = DeleteValidation(questionID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+	}
+}
+
+func TestGetValidations(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	require.NoError(t, err)
+
+	err = InsertAdministrators(questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		questionIDs []int
+	}
+	type expect struct {
+		isErr  bool
+		err    error
+		length int
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	validations := []Validations{
+		{
+			RegexPattern: "valid1",
+			MinBound:     "",
+			MaxBound:     "",
+		},
+		{
+			RegexPattern: "valid2",
+			MinBound:     "",
+			MaxBound:     "",
+		},
+		{
+			RegexPattern: "valid2",
+			MinBound:     "",
+			MaxBound:     "",
+		},
+	}
+
+	questionIDs := make([]int, 0, 3)
+	validationMap := make(map[int]Validations)
+	for _, validation := range validations {
+		questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
+		require.NoError(t, err)
+		err = InsertValidation(questionID, validation)
+		require.NoError(t, err)
+		validation.QuestionID = questionID
+		questionIDs = append(questionIDs, questionID)
+		validationMap[questionID] = validation
+	}
+
+	testCases := []test{
+		{
+			description: "Text",
+			args: args{
+				questionIDs: questionIDs,
+			},
+			expect: expect{
+				length: len(questionIDs),
+			},
+		},
+		{
+			description: "empty list",
+			args: args{
+				questionIDs: []int{},
+			},
+			expect: expect{
+				length: 0,
+			},
+		},
+		{
+			description: "not exist",
+			args: args{
+				questionIDs: []int{-1},
+			},
+			expect: expect{
+				length: 0,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+
+		validations, err := GetValidations(testCase.args.questionIDs)
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+		assertion.Equal(testCase.expect.length, len(validations), testCase.description, "length")
+		if len(validations) < 1 {
+			continue
+		}
+
+		for _, validation := range validations {
+			expectValidation, ok := validationMap[validation.QuestionID]
+			require.Equal(t, true, ok)
+
+			assertion.Equal(expectValidation.QuestionID, validation.QuestionID, testCase.description, "questionID")
+			assertion.Equal(expectValidation.RegexPattern, validation.RegexPattern, testCase.description, "RegexPattern")
+			assertion.Equal(expectValidation.MinBound, validation.MinBound, testCase.description, "MinBound")
+			assertion.Equal(expectValidation.MaxBound, validation.MaxBound, testCase.description, "MaxBound")
+		}
+	}
+}
+
+func TestCheckNumberValidation(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		validation Validations
+		response   string
+	}
+
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+				response: "5",
+			},
+		},
+		{
+			description: "no response",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+				response: "",
+			},
+		},
+		{
+			description: "invalid response",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+				response: "a",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidNumber,
+			},
+		},
+		{
+			description: "maxBound over",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+				response: "20",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNumberBoundary,
+			},
+		},
+		{
+			description: "minBound over",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+				response: "-10",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNumberBoundary,
+			},
+		},
+		{
+			description: "invalid bounds",
+			args: args{
+				validation: Validations{
+					MinBound: "20",
+					MaxBound: "10",
+				},
+				response: "",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidNumber,
+			},
+		},
+	}
+	for _, testCase := range testCases {
+
+		err := CheckNumberValidation(testCase.args.validation, testCase.args.response)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
 		}
 	}
 }
 
 func TestCheckTextValidation(t *testing.T) {
-	validationTests := []ValidationTest{
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		validation Validations
+		response   string
+	}
+
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
 		{
-			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
-			body:       "4.55",
-			result:     "",
+			description: "valid",
+			args: args{
+				validation: Validations{
+					RegexPattern: "^\\d*\\.\\d*$",
+				},
+				response: "4.55",
+			},
 		},
 		{
-			validation: Validations{0, "^\\d*\\.\\d*$", "", ""},
-			body:       "a4.55",
-			result:     "failed to match the pattern (Response: a4.55, RegexPattern: ^\\d*\\.\\d*$)",
+			description: "not match",
+			args: args{
+				validation: Validations{
+					RegexPattern: "^\\d*\\.\\d*$",
+				},
+				response: "a4.55",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrTextMatching,
+			},
 		},
 		{
-			validation: Validations{0, "*", "", ""},
-			body:       "hoge",
-			result:     "error parsing regexp: missing argument to repetition operator: `*`",
+			description: "not match",
+			args: args{
+				validation: Validations{
+					RegexPattern: "*",
+				},
+				response: "",
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidRegex,
+			},
+		},
+		{
+			description: "empty pattern",
+			args: args{
+				validation: Validations{
+					RegexPattern: "",
+				},
+				response: "4.55",
+			},
 		},
 	}
-	for _, validationTest := range validationTests {
-		validation := validationTest.validation
-		body := validationTest.body
-		result := validationTest.result
-		if err := CheckTextValidation(validation, body); err != nil {
-			assert.EqualError(t, err, result)
-		} else {
-			assert.NoError(t, nil)
+	for _, testCase := range testCases {
+
+		err := CheckTextValidation(testCase.args.validation, testCase.args.response)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
 		}
 	}
 }
 
 func TestCheckNumberValid(t *testing.T) {
-	validationTests := []ValidationTest{
-		{
-			validation: Validations{0, "", "1a", "10"},
-			body:       "",
-			result:     "failed to check the boundary value. MinBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
-		},
-		{
-			validation: Validations{0, "", "10", "1a"},
-			body:       "",
-			result:     "failed to check the boundary value. MaxBound is not a numerical value: strconv.Atoi: parsing \"1a\": invalid syntax",
-		},
-		{
-			validation: Validations{0, "", "10", "0"},
-			body:       "",
-			result:     "failed to check the boundary value. MinBound must be less than MaxBound (MinBound: 10, MaxBound: 0)",
-		},
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		validation Validations
 	}
 
-	for _, validationTest := range validationTests {
-		validation := validationTest.validation
-		result := validationTest.result
-		if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
-			assert.EqualError(t, err, result)
-		} else {
-			assert.NoError(t, nil)
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				validation: Validations{
+					MinBound: "0",
+					MaxBound: "10",
+				},
+			},
+		},
+		{
+			description: "invalid min bound",
+			args: args{
+				validation: Validations{
+					MinBound: "1a",
+					MaxBound: "10",
+				},
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidNumber,
+			},
+		},
+		{
+			description: "invalid max bound",
+			args: args{
+				validation: Validations{
+					MinBound: "10",
+					MaxBound: "1a",
+				},
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidNumber,
+			},
+		},
+		{
+			description: "min exceeds max",
+			args: args{
+				validation: Validations{
+					MinBound: "10",
+					MaxBound: "0",
+				},
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidNumber,
+			},
+		},
+	}
+	for _, testCase := range testCases {
+
+		err := CheckNumberValid(testCase.args.validation.MinBound, testCase.args.validation.MaxBound)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
 		}
 	}
 }
