@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -165,6 +164,16 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	if nontargeted {
 		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
 	}
+	if search != "" {
+		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
+		_, err := regexp.Compile(search)
+		if err != nil {
+			return nil, 0, fmt.Errorf("invalid search param: %w", ErrInvalidRegex)
+		}
+
+		// BINARYをつけていないので大文字小文字区別しない
+		query = query.Where("questionnaires.title REGEXP ?", search)
+	}
 
 	count := 0
 	err = query.
@@ -193,24 +202,6 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", gorm.ErrRecordNotFound)
 	} else if err != nil {
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
-	}
-
-	if len(search) != 0 {
-		r, err := regexp.Compile(strings.ToLower(search))
-		if err != nil {
-			return nil, 0, fmt.Errorf("invalid search param: %w", ErrInvalidRegex)
-		}
-
-		retQuestionnaires := make([]QuestionnaireInfo, 0, len(questionnaires))
-		for _, q := range questionnaires {
-			if search != "" && !r.MatchString(strings.ToLower(q.Title)) {
-				continue
-			}
-
-			retQuestionnaires = append(retQuestionnaires, q)
-		}
-
-		questionnaires = retQuestionnaires
 	}
 
 	return questionnaires, pageMax, nil
