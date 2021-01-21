@@ -1,18 +1,12 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
-)
-
-var (
-	// ErrInvalidAnsweredParam invalid sort param
-	ErrInvalidAnsweredParam = errors.New("invalid answered param")
 )
 
 //Questionnaires questionnairesテーブルの構造体
