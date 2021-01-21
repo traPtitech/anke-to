@@ -1,7 +1,6 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -49,8 +48,8 @@ type QuestionnaireDetail struct {
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
-	RespondedAt *string `json:"responded_at"`
-	HasResponse bool    `json:"has_response"`
+	RespondedAt null.Time `json:"responded_at"`
+	HasResponse bool      `json:"has_response"`
 }
 
 //InsertQuestionnaire アンケートの追加
@@ -103,12 +102,16 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 			"res_shared_to":  resSharedTo,
 		}
 
-		err := db.
+		result := db.
 			Model(&Questionnaires{}).
 			Where("id = ?", questionnaireID).
-			Update(questionnaire).Error
+			Update(questionnaire)
+		err := result.Error
 		if err != nil {
 			return fmt.Errorf("failed to update a questionnaire record: %w", err)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 		}
 
 		return nil
@@ -121,12 +124,16 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 		ResSharedTo:  resSharedTo,
 	}
 
-	err := db.
+	result := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
-		Update(&questionnaire).Error
+		Update(&questionnaire)
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update a questionnaire record: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 	}
 
 	return nil
@@ -134,9 +141,13 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 
 //DeleteQuestionnaire アンケートの削除
 func DeleteQuestionnaire(questionnaireID int) error {
-	err := db.Delete(&Questionnaires{ID: questionnaireID}).Error
+	result := db.Delete(&Questionnaires{ID: questionnaireID})
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete questionnaire: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to delete questionnaire: %w", ErrNoRecordDeleted)
 	}
 
 	return nil
@@ -159,7 +170,7 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	if nontargeted {
 		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
 	}
-	if search != "" {
+	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
 		_, err := regexp.Compile(search)
 		if err != nil {
@@ -177,8 +188,9 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
+
 	if count == 0 {
-		return questionnaires, 0, nil
+		return []QuestionnaireInfo{}, 0, nil
 	}
 	pageMax := (count + 19) / 20
 
@@ -193,9 +205,7 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", gorm.ErrRecordNotFound)
-	} else if err != nil {
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
@@ -211,9 +221,6 @@ func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
 		Where("administrators.user_traqid = ?", userID).
 		Order("questionnaires.modified_at DESC").
 		Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return []Questionnaires{}, nil
-	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
@@ -233,9 +240,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
 
@@ -244,9 +248,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
@@ -255,9 +256,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
 	}
 
@@ -266,9 +264,6 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
@@ -302,14 +297,12 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 		query = query.Where("respondents.questionnaire_id IS NULL")
 	case "":
 	default:
-		return nil, fmt.Errorf("invalid answered parameter value(%s)", answered)
+		return nil, fmt.Errorf("invalid answered parameter value(%s): %w", answered, ErrInvalidAnsweredParam)
 	}
 
 	questionnaires := []TargettedQuestionnaire{}
 	err = query.Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", gorm.ErrRecordNotFound)
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
@@ -317,7 +310,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
-func GetQuestionnaireLimit(questionnaireID int) (string, error) {
+func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
 	err := db.
@@ -326,13 +319,10 @@ func GetQuestionnaireLimit(questionnaireID int) (string, error) {
 		Select("res_time_limit").
 		Scan(&res).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", nil
-		}
-		return "", fmt.Errorf("failed to get the questionnaires: %w", err)
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
-	return NullTimeToString(res.ResTimeLimit), nil
+	return res.ResTimeLimit, nil
 }
 
 //GetResShared アンケートの回答の公開範囲の取得
@@ -345,9 +335,6 @@ func GetResShared(questionnaireID int) (string, error) {
 		Select("res_shared_to").
 		Scan(&res).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", fmt.Errorf("failed to get resShared: %w", gorm.ErrRecordNotFound)
-		}
 		return "", fmt.Errorf("failed to get resShared: %w", err)
 	}
 
@@ -370,8 +357,9 @@ func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 		query = query.Order("questionnaires.modified_at desc")
 	case "":
 	default:
-		return nil, errors.New("invalid sort type")
+		return nil, ErrInvalidSortParam
 	}
+	query = query.Order("questionnaires.id desc")
 
 	return query, nil
 }

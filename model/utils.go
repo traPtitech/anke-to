@@ -25,6 +25,8 @@ var (
 	ErrNumberBoundary = errors.New("the number is out of bounds")
 	// ErrTextMatching RegexPatternにマッチしていない
 	ErrTextMatching = errors.New("failed to match the pattern")
+	// ErrInvalidAnsweredParam invalid sort param
+	ErrInvalidAnsweredParam = errors.New("invalid answered param")
 )
 
 // NullTimeToString null許容の時間のStringへの変換
