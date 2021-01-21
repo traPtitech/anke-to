@@ -57,6 +57,7 @@ type QuestionnaireDetail struct {
 type TargettedQuestionnaire struct {
 	Questionnaires
 	RespondedAt *string `json:"responded_at"`
+	HasResponse bool    `json:"has_response"`
 }
 
 //InsertQuestionnaire アンケートの追加
@@ -298,7 +299,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
 		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ?", userID).
 		Group("questionnaires.id,respondents.user_traqid").
-		Select("questionnaires.*, MAX(respondents.submitted_at) AS responded_at")
+		Select("questionnaires.*, MAX(respondents.submitted_at) AS responded_at, COUNT(respondents.response_id) != 0 AS has_response")
 
 	query, err := setQuestionnairesOrder(query, sort)
 	if err != nil {

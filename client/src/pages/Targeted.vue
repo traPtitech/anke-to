@@ -87,20 +87,12 @@ export default {
         if (this.questionnaires[i].responded_at !== null) {
           // 回答送信済み
           this.setStatus(i, 'sent')
+        } else if (this.questionnaires[i].has_response) {
+          // 保存済み
+          this.setStatus(i, 'saved')
         } else {
-          axios
-            .get(
-              '/users/me/responses/' + this.questionnaires[i].questionnaireID
-            )
-            .then(resp => {
-              if (resp.data.length > 0) {
-                // 保存済み
-                this.setStatus(i, 'saved')
-              } else {
-                // 回答が存在しない
-                this.setStatus(i, 'not-created')
-              }
-            })
+          // 回答が存在しない
+          this.setStatus(i, 'not-created')
         }
       }
     },

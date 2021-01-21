@@ -511,8 +511,12 @@ components:
           responded_at:
             type: string
             format: date-time
+          has_response:
+            type: boolean
+            description: 回答済みあるいは下書きが存在する
         required:
           - responded_at
+          - has_response
     QuestionnaireMyAdministrates:
         allOf:
         - $ref: '#/components/schemas/QuestionnaireUser'
