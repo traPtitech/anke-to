@@ -168,7 +168,8 @@ export default {
     return (
       information.res_shared_to === 'public' ||
       (information.res_shared_to === 'administrators' && administrates) ||
-      (information.res_shared_to === 'respondents' && hasResponded)
+      (information.res_shared_to === 'respondents' && hasResponded) ||
+      (information.res_shared_to === 'respondents' && administrates)
     )
   },
   getUserLists (targets, respondents, administrators) {
