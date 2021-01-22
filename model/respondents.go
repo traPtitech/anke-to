@@ -3,13 +3,11 @@ package model
 import (
 	"fmt"
 	"math"
-	"net/http"
 	"sort"
 	"strconv"
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -45,8 +43,8 @@ func (*Respondents) BeforeUpdate(scope *gorm.Scope) error {
 
 // RespondentInfo 回答とその周辺情報の構造体
 type RespondentInfo struct {
-	Title        string `json:"questionnaire_title"`
-	ResTimeLimit string `json:"res_time_limit"`
+	Title        string    `json:"questionnaire_title"`
+	ResTimeLimit null.Time `json:"res_time_limit"`
 	Respondents
 }
 
@@ -61,9 +59,7 @@ type RespondentDetail struct {
 }
 
 //InsertRespondent 回答の追加
-func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time) (int, error) {
-	userID := GetUserID(c)
-
+func InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error) {
 	var respondent Respondents
 	if submitedAt.Valid {
 		respondent = Respondents{
@@ -81,21 +77,18 @@ func InsertRespondent(c echo.Context, questionnaireID int, submitedAt null.Time)
 	err := db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&respondent).Error
 		if err != nil {
-			c.Logger().Error(fmt.Errorf("failed to insert a respondent record: %w", err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return fmt.Errorf("failed to insert a respondent record: %w", err)
 		}
 
 		err = tx.Select("response_id").Order("response_id DESC").Last(&respondent).Error
 		if err != nil {
-			c.Logger().Error(fmt.Errorf("failed to get the last respondent record: %w", err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return fmt.Errorf("failed to get the last respondent record: %w", err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed in transaction: %w", err))
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		return 0, fmt.Errorf("failed in transaction: %w", err)
 	}
 
 	return respondent.ResponseID, nil
@@ -115,31 +108,29 @@ func UpdateSubmittedAt(responseID int) error {
 }
 
 // DeleteRespondent 回答の削除
-func DeleteRespondent(c echo.Context, responseID int) error {
-	userID := GetUserID(c)
+func DeleteRespondent(userID string, responseID int) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
+		err := result.Error
+		if err != nil {
+			return fmt.Errorf("failed to delete respondents: %w", err)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("failed to delete respondents : %w", ErrNoRecordDeleted)
+		}
 
-	err := db.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	err = db.
-		Where("response_id = ?", responseID).
-		Delete(&Response{}).Error
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return nil
+		err = tx.
+			Where("response_id = ?", responseID).
+			Delete(&Response{}).Error
+		if err != nil {
+			return fmt.Errorf("failed to delete response: %w", err)
+		}
+		return nil
+	})
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
-func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
+func GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
 	respondentInfos := []RespondentInfo{}
 
 	query := db.
@@ -151,6 +142,9 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
 		query = query.Where("questionnaire_id = ?", questionnaireID)
+	} else if len(questionnaireIDs) > 1 {
+		// 空配列か1要素の取得にしか用いない
+		return nil, fmt.Errorf("ilegal function usase")
 	}
 
 	rows, err := query.
@@ -158,8 +152,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 			"questionnaires.res_time_limit").
 		Rows()
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get my responses: %w", err))
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, fmt.Errorf("failed to get my responses: %w", err)
 	}
 
 	for rows.Next() {
@@ -169,8 +162,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 
 		err := db.ScanRows(rows, &respondentInfo)
 		if err != nil {
-			c.Logger().Error(fmt.Errorf("failed to scan responses: %w", err))
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
+			return nil, fmt.Errorf("failed to scan responses: %w", err)
 		}
 
 		respondentInfos = append(respondentInfos, respondentInfo)
@@ -180,7 +172,7 @@ func GetRespondentInfos(c echo.Context, userID string, questionnaireIDs ...int) 
 }
 
 // GetRespondentDetail 回答のIDから回答の詳細情報を取得
-func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, error) {
+func GetRespondentDetail(responseID int) (RespondentDetail, error) {
 	rows, err := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
@@ -245,14 +237,14 @@ func GetRespondentDetail(c echo.Context, responseID int) (RespondentDetail, erro
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
+func GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
 	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
 		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id")
 	query, sortNum, err := setRespondentsOrder(query, sort)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to set order: %w", err))
+		return nil, fmt.Errorf("failed to set order: %w", err)
 	}
 
 	rows, err := query.
@@ -261,7 +253,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 		Rows()
 	if err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondents: %w", err))
+			return []RespondentDetail{}, nil
 		}
 	}
 
@@ -274,7 +266,7 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 		}{}
 		err := db.ScanRows(rows, &res)
 		if err != nil {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to scan response detail: %w", err))
+			return nil, fmt.Errorf("failed to scan response detail: %w", err)
 		}
 
 		if _, ok := responseBodyMap[res.ResponseID]; !ok {
@@ -332,10 +324,24 @@ func GetRespondentDetails(c echo.Context, questionnaireID int, sort string) ([]R
 
 	respondentDetails, err = sortRespondentDetail(sortNum, respondentDetails)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to sort RespondentDetails: %w", err))
+		return nil, fmt.Errorf("failed to sort RespondentDetails: %w", err)
 	}
 
 	return respondentDetails, nil
+}
+
+// GetRespondentsUserIDs 回答者のユーザーID取得
+func GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
+	respondents := []Respondents{}
+	err := db.
+		Where("questionnaire_id IN (?)", questionnaireIDs).
+		Select("questionnaire_id, user_traqid").
+		Find(&respondents).Error
+	if err != nil {
+		return []Respondents{}, nil
+	}
+
+	return respondents, nil
 }
 
 // CheckRespondent 回答者かどうかの確認
@@ -407,6 +413,9 @@ func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]
 			numj, err := strconv.Atoi(bodyJ.Body.String)
 			if err != nil {
 				return true
+			}
+			if sortNum < 0 {
+				return numi > numj
 			}
 			return numi < numj
 		}

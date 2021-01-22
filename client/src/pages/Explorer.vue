@@ -331,6 +331,7 @@ export default {
     },
     searchQuestionnaires(searchQuery) {
       this.searchQuery = searchQuery
+      this.pageNumber = 1
       this.getQuestionnaires()
     }
   }

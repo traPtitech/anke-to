@@ -2,10 +2,8 @@ package model
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -18,7 +16,7 @@ type Options struct {
 }
 
 // InsertOption 選択肢の追加
-func InsertOption(c echo.Context, lastID int, num int, body string) error {
+func InsertOption(lastID int, num int, body string) error {
 	option := Options{
 		QuestionID: lastID,
 		OptionNum:  num,
@@ -26,14 +24,13 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 	}
 	err := db.Create(&option).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to insert a option: %w", err)
 	}
 	return nil
 }
 
 // UpdateOptions 選択肢の修正
-func UpdateOptions(c echo.Context, options []string, questionID int) error {
+func UpdateOptions(options []string, questionID int) error {
 	var err error
 	for i, optionLabel := range options {
 		option := Options{
@@ -44,7 +41,7 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 			Where("question_id = ? AND option_num = ?", questionID, i+1)
 		err := query.First(&Options{}).Error
 		if err != nil && !gorm.IsRecordNotFoundError(err) {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get option: %w", err))
+			return fmt.Errorf("failed to get option: %w", err)
 		}
 
 		if gorm.IsRecordNotFoundError(err) {
@@ -52,57 +49,59 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 			option.OptionNum = i + 1
 			err = db.Create(&option).Error
 			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert option: %w", err))
+				return fmt.Errorf("failed to insert option: %w", err)
 			}
 		} else {
 			result := query.Update(&option)
 			err = result.Error
 			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update option: %w", err))
+				return fmt.Errorf("failed to update option: %w", err)
 			}
 		}
 	}
 	err = db.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Options{}).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to update option: %w", err)
 	}
 	return nil
 }
 
 // DeleteOptions 選択肢の削除
-func DeleteOptions(c echo.Context, questionID int) error {
+func DeleteOptions(questionID int) error {
 	err := db.
 		Where("question_id = ?", questionID).
 		Delete(Options{}).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete option: %w", err)
 	}
 	return nil
 }
 
 // GetOptions 質問の選択肢の取得
-func GetOptions(c echo.Context, questionID int) ([]string, error) {
-	bodies := []null.String{}
+func GetOptions(questionIDs []int) ([]Options, error) {
+	type option struct {
+		QuestionID int         `gorm:"type:int(11) NOT NULL;"`
+		Body       null.String `gorm:"type:text;default:NULL;"`
+	}
+	options := []option{}
 
 	err := db.
 		Model(Options{}).
-		Where("question_id = ?", questionID).
+		Where("question_id IN (?)", questionIDs).
 		Order("option_num").
-		Pluck("body", &bodies).Error
+		Select("question_id, body").
+		Find(&options).Error
 	if err != nil {
-		c.Logger().Error(err)
-		return []string{}, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	options := make([]string, 0, len(bodies))
-	for _, option := range bodies {
-		if option.Valid {
-			options = append(options, option.String)
-		} else {
-			options = append(options, "")
-		}
+		return nil, fmt.Errorf("failed to get option: %w", err)
 	}
 
-	return options, nil
+	optns := make([]Options, 0, len(options))
+	for _, optn := range options {
+		optns = append(optns, Options{
+			QuestionID: optn.QuestionID,
+			Body:       optn.Body.ValueOrZero(),
+		})
+	}
+
+	return optns, nil
 }

@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/traPtitech/anke-to/tuning/openapi"
 
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/sync/semaphore"
 )
 
 func Inititial() {
@@ -19,8 +17,8 @@ func Inititial() {
 	config.BasePath = "http://localhost:1323/api"
 	client := openapi.NewAPIClient(config)
 
-	c := context.Background()
-	c, cancel := context.WithCancel(c)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	newQuestionnaire := openapi.NewQuestionnaire{
@@ -29,7 +27,7 @@ func Inititial() {
 		ResTimeLimit:   time.Now().AddDate(0, 0, 7),
 		ResSharedTo:    "public",
 		Targets:        []string{"mds_boy"},
-		Administrators: []string{"mdsboy"},
+		Administrators: []string{"mds_boy"},
 	}
 	newQuestions := []openapi.NewQuestion{
 		{
@@ -178,93 +176,113 @@ func Inititial() {
 		},
 	}
 
-	routineNum := int64(3)
-	eg, c := errgroup.WithContext(c)
-	sem := semaphore.NewWeighted(routineNum)
-	for i := 0; i < 750; i++ {
-		var questionnaireID int32
-		err := sem.Acquire(c, 1)
-		if err != nil {
-			panic(err)
-		}
-		eg.Go(func() error {
-			defer sem.Release(1)
-			questionnaireRes, _, err := client.QuestionnaireApi.PostQuestionnaire(c, newQuestionnaire)
-			if err != nil {
-				return fmt.Errorf("failed to make a questionnaire: %w", err)
-			}
+	routineNum := 3
+	eg, ctx := errgroup.WithContext(ctx)
+	reqFuncChan := make(chan func() error, 1)
 
-			for i := 0; i < len(newQuestions); i++ {
-				questionnaireID = questionnaireRes.QuestionnaireID
+	wg := sync.WaitGroup{}
+	for i := 0; i < routineNum; i++ {
+		wg.Add(1)
+		eg.Go(func() error {
+			wg.Done()
+		L:
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				case reqFunc, ok := <-reqFuncChan:
+					if !ok {
+						break L
+					}
+					err := reqFunc()
+					if err != nil {
+						return fmt.Errorf("failed to send request: %w", err)
+					}
+				}
 			}
 
 			return nil
 		})
-		sm := sync.Map{}
-		for i, question := range newQuestions {
-			question.QuestionnaireID = questionnaireID
-			questionRes, _, err := client.QuestionApi.PostQuestion(c, question)
-			if err != nil {
-				log.Println(fmt.Errorf("failed to make question: %w", err))
-				return
-			}
+	}
+	wg.Wait()
 
-			sm.Store(i, questionRes.QuestionID)
-		}
-
-		responseNum := 10
-		responseChan := make(chan openapi.NewResponse, responseNum)
-		err = sem.Acquire(c, 1)
-		if err != nil {
-			panic(err)
-		}
-		eg.Go(func(questionnaireID int32) func() error {
-			return func() error {
-				defer sem.Release(1)
-				response := newResponse
-				log.Println(questionnaireID)
-				response.QuestionnaireID = questionnaireID
-				for j := range response.Body {
-					iQuestionID, ok := sm.Load(j)
-					if !ok {
-						log.Println("No questionID")
-						return errors.New("No questionID")
-					}
-
-					response.Body[j].QuestionID, ok = iQuestionID.(int32)
-					if !ok {
-						log.Println("invalid questionID")
-						return errors.New("invalid questionID")
-					}
-				}
-				for i := 0; i < responseNum; i++ {
-					responseChan <- response
-				}
-
-				return nil
-			}
-		}(questionnaireID))
-
-		for i := 0; i < responseNum; i++ {
-			err := sem.Acquire(c, 1)
-			if err != nil {
-				panic(err)
-			}
-			eg.Go(func(responseChan chan openapi.NewResponse) func() error {
+	for i := 0; i < 750; i++ {
+		wg.Add(1)
+		eg.Go(func() error {
+			defer wg.Done()
+			questionnaireIDChan := make(chan int32, 1)
+			reqFuncChan <- func(questinnaireIDChan chan int32) func() error {
 				return func() error {
-					defer sem.Release(1)
-					response := <-responseChan
-					_, _, err := client.ResponseApi.PostResponse(c, response)
+					questionnaireRes, _, err := client.QuestionnaireApi.PostQuestionnaire(ctx, newQuestionnaire)
 					if err != nil {
-						log.Println(fmt.Errorf("failed to make response: %w", err))
-						return fmt.Errorf("failed to make response: %w", err)
+						return fmt.Errorf("failed to make a questionnaire: %w", err)
+					}
+
+					questionnaireIDChan <- questionnaireRes.QuestionnaireID
+
+					return nil
+				}
+			}(questionnaireIDChan)
+			questionnaireID := <-questionnaireIDChan
+
+			sm := sync.Map{}
+			questionChan := make(chan struct{}, 1)
+			reqFuncChan <- func(questionnaireID int32, sm *sync.Map, questionChan chan struct{}) func() error {
+				return func() error {
+					defer func() {
+						questionChan <- struct{}{}
+					}()
+					for i, question := range newQuestions {
+						question.QuestionnaireID = questionnaireID
+						questionRes, _, err := client.QuestionApi.PostQuestion(ctx, question)
+						if err != nil {
+							return fmt.Errorf("failed to make question: %w", err)
+						}
+
+						sm.Store(i, questionRes.QuestionID)
 					}
 
 					return nil
 				}
-			}(responseChan))
-		}
+			}(questionnaireID, &sm, questionChan)
+			<-questionChan
+
+			responseNum := 10
+			for i := 0; i < responseNum; i++ {
+				reqFuncChan <- func(questionnaireID int32, sm *sync.Map) func() error {
+					return func() error {
+						response := newResponse
+						response.QuestionnaireID = questionnaireID
+						for j := range response.Body {
+							iQuestionID, ok := sm.Load(j)
+							if !ok {
+								return errors.New("No questionID")
+							}
+
+							response.Body[j].QuestionID, ok = iQuestionID.(int32)
+							if !ok {
+								return errors.New("invalid questionID")
+							}
+						}
+
+						_, _, err := client.ResponseApi.PostResponse(ctx, response)
+						if err != nil {
+							return fmt.Errorf("failed to make response: %w", err)
+						}
+
+						return nil
+					}
+				}(questionnaireID, &sm)
+			}
+
+			return nil
+		})
 	}
+
+	go func() {
+		wg.Wait()
+		close(reqFuncChan)
+	}()
 
 	err := eg.Wait()
 	if err != nil {
@@ -277,17 +295,18 @@ func Bench() {
 	config.BasePath = "http://localhost:1323/api"
 	client := openapi.NewAPIClient(config)
 
-	c := context.Background()
-	c, cancel := context.WithCancel(c)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	questionnaireID := int32(0)
-	questionDetails, _, err := client.QuestionnaireApi.GetQuestions(c, questionnaireID)
+	questionnaireID := int32(1)
+	questionDetails, _, err := client.QuestionnaireApi.GetQuestions(ctx, questionnaireID)
 	if err != nil {
 		panic(fmt.Errorf("failed to get questions: %w", err))
 	}
 
 	newResponse := openapi.NewResponse{
+		QuestionnaireID: 1,
 		Body: []openapi.ResponseBody{
 			{
 				QuestionID:   questionDetails[0].QuestionID,
@@ -353,22 +372,31 @@ func Bench() {
 	}
 
 	routineNum := 3
-	c, cancel = context.WithTimeout(c, 40*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
 	defer cancel()
-	eg, c := errgroup.WithContext(c)
+	eg, ctx := errgroup.WithContext(ctx)
 	for i := 0; i < routineNum; i++ {
 		eg.Go(func() error {
 			for {
 				select {
-				case <-c.Done():
+				case <-ctx.Done():
 					return nil
 				default:
-					_, _, err := client.ResponseApi.PostResponse(c, newResponse)
+					_, _, err := client.ResponseApi.PostResponse(ctx, newResponse)
 					if err != nil {
+						if errors.Is(err, context.DeadlineExceeded) {
+							return nil
+						}
+
 						return fmt.Errorf("failed to make a response: %w", err)
 					}
 				}
 			}
 		})
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		panic(err)
 	}
 }

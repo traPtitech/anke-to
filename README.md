@@ -1,4 +1,8 @@
 # anke-to
+[![codecov](https://codecov.io/gh/traPtitech/anke-to/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/anke-to)
+[![](https://github.com/traPtitech/anke-to/workflows/Release/badge.svg?branch=release)](https://github.com/traPtitech/anke-to/actions)
+[![swagger](https://img.shields.io/badge/swagger-docs-brightgreen)](https://traptitech.github.io/anke-to/swagger/)
+[![go report](https://goreportcard.com/badge/traPtitech/anke-to)](https://goreportcard.com/report/traPtitech/anke-to)
 
 部内アンケートシステム
 

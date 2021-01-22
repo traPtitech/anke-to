@@ -7,6 +7,9 @@ on:
       - 'develop'
   pull_request:
 
+env:
+  TZ: Asia/Tokyo
+
 jobs:
   mod:
     name: Mod
@@ -62,6 +65,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: anke-to
+          TZ: Asia/Tokyo
     steps:
       - uses: actions/setup-go@v1
         with:
@@ -73,7 +77,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - run: go test ./... -v -coverprofile=coverage.txt -race -vet=off
+      - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password

@@ -1,16 +1,11 @@
 package model
 
 import (
-	"errors"
 	"fmt"
-	"net/http"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -42,14 +37,23 @@ type QuestionnaireInfo struct {
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
+//QuestionnaireDetail Questionnaireの詳細
+type QuestionnaireDetail struct {
+	Targets        []string
+	Respondents    []string
+	Administrators []string
+	Questionnaires
+}
+
 //TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
-	RespondedAt string `json:"responded_at"`
+	RespondedAt null.Time `json:"responded_at"`
+	HasResponse bool      `json:"has_response"`
 }
 
 //InsertQuestionnaire アンケートの追加
-func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+func InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
 	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
 		questionnaire = Questionnaires{
@@ -82,15 +86,14 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		return nil
 	})
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed in the transaction: %w", err))
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		return 0, fmt.Errorf("failed in the transaction: %w", err)
 	}
 
 	return questionnaire.ID, nil
 }
 
 //UpdateQuestionnaire アンケートの更新
-func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+func UpdateQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
 	if !resTimeLimit.Valid {
 		questionnaire := map[string]interface{}{
 			"title":          title,
@@ -99,13 +102,16 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 			"res_shared_to":  resSharedTo,
 		}
 
-		err := db.
+		result := db.
 			Model(&Questionnaires{}).
 			Where("id = ?", questionnaireID).
-			Update(questionnaire).Error
+			Update(questionnaire)
+		err := result.Error
 		if err != nil {
-			c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return fmt.Errorf("failed to update a questionnaire record: %w", err)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 		}
 
 		return nil
@@ -118,24 +124,30 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 		ResSharedTo:  resSharedTo,
 	}
 
-	err := db.
+	result := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
-		Update(&questionnaire).Error
+		Update(&questionnaire)
+	err := result.Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to update a questionnaire record: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to update a questionnaire record: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
 	}
 
 	return nil
 }
 
 //DeleteQuestionnaire アンケートの削除
-func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
-	err := db.Delete(&Questionnaires{ID: questionnaireID}).Error
+func DeleteQuestionnaire(questionnaireID int) error {
+	result := db.Delete(&Questionnaires{ID: questionnaireID})
+	err := result.Error
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return fmt.Errorf("failed to delete questionnaire: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to delete questionnaire: %w", ErrNoRecordDeleted)
 	}
 
 	return nil
@@ -143,31 +155,14 @@ func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 
 /*GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値*/
-func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, int, error) {
-	userID := GetUserID(c)
-	sort := c.QueryParam("sort")
-	search := c.QueryParam("search")
-	page := c.QueryParam("page")
-	if len(page) == 0 {
-		page = "1"
-	}
-	pageNum, err := strconv.Atoi(page)
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
-		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
-	}
-	if pageNum <= 0 {
-		c.Logger().Error(errors.New("page cannot be less than 0"))
-		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
-	}
-
+func GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
 	query := db.
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
-	query, err = setQuestionnairesOrder(query, sort)
+	query, err := setQuestionnairesOrder(query, sort)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
@@ -175,24 +170,32 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 	if nontargeted {
 		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
 	}
+	if len(search) != 0 {
+		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
+		_, err := regexp.Compile(search)
+		if err != nil {
+			return nil, 0, fmt.Errorf("invalid search param: %w", ErrInvalidRegex)
+		}
+
+		// BINARYをつけていないので大文字小文字区別しない
+		query = query.Where("questionnaires.title REGEXP ?", search)
+	}
 
 	count := 0
 	err = query.
 		Group("questionnaires.id").
 		Count(&count).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to retrieve the number of questionnaires: %w", err))
-		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
+
 	if count == 0 {
-		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
-		return nil, 0, echo.NewHTTPError(http.StatusNotFound)
+		return []QuestionnaireInfo{}, 0, nil
 	}
 	pageMax := (count + 19) / 20
 
 	if pageNum > pageMax {
-		c.Logger().Error("too large page number")
-		return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
+		return nil, 0, fmt.Errorf("failed to set page offset: %w", ErrTooLargePageNum)
 	}
 
 	offset := (pageNum - 1) * 20
@@ -202,38 +205,31 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]QuestionnaireInfo, i
 		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
-		return nil, 0, echo.NewHTTPError(http.StatusNotFound)
-	} else if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
-		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	if len(search) != 0 {
-		r, err := regexp.Compile(strings.ToLower(search))
-		if err != nil {
-			c.Logger().Error("invalid search param regexp")
-			return nil, 0, echo.NewHTTPError(http.StatusBadRequest)
-		}
-
-		retQuestionnaires := make([]QuestionnaireInfo, 0, len(questionnaires))
-		for _, q := range questionnaires {
-			if search != "" && !r.MatchString(strings.ToLower(q.Title)) {
-				continue
-			}
-
-			retQuestionnaires = append(retQuestionnaires, q)
-		}
-
-		questionnaires = retQuestionnaires
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
 	return questionnaires, pageMax, nil
 }
 
+// GetAdminQuestionnaires 自分が管理者のアンケートの取得
+func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
+	questionnaires := []Questionnaires{}
+	err := db.
+		Table("questionnaires").
+		Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
+		Where("administrators.user_traqid = ?", userID).
+		Order("questionnaires.modified_at DESC").
+		Find(&questionnaires).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+	}
+
+	return questionnaires, nil
+}
+
 //GetQuestionnaireInfo アンケートの詳細な情報取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
 	questionnaire := Questionnaires{}
 	targets := []string{}
 	administrators := []string{}
@@ -244,11 +240,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get a questionnaire: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
 
 	err = db.
@@ -256,11 +248,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get targets: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
 	err = db.
@@ -268,11 +256,7 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get administrators: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
 	}
 
 	err = db.
@@ -280,28 +264,22 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (*Questionnaires,
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get respondents: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil, nil, nil, echo.NewHTTPError(http.StatusNotFound)
-		}
-		return nil, nil, nil, nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
 	return &questionnaire, targets, administrators, respondents, nil
 }
 
 //GetTargettedQuestionnaires targetになっているアンケートの取得
-func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) ([]TargettedQuestionnaire, error) {
-	sort := c.QueryParam("sort")
+func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
 	query := db.
 		Table("questionnaires").
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
 		Joins("INNER JOIN targets ON questionnaires.id = targets.questionnaire_id").
 		Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID).
-		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ?", userID).
-		Where("respondents.user_traqid IS NULL").
+		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.deleted_at IS NULL", userID).
 		Group("questionnaires.id,respondents.user_traqid").
-		Select("questionnaires.*, MAX(respondents.submitted_at) AS responsed_at")
+		Select("questionnaires.*, MAX(respondents.submitted_at) AS responded_at, COUNT(respondents.response_id) != 0 AS has_response")
 
 	query, err := setQuestionnairesOrder(query, sort)
 	if err != nil {
@@ -319,24 +297,20 @@ func GetTargettedQuestionnaires(c echo.Context, userID string, answered string) 
 		query = query.Where("respondents.questionnaire_id IS NULL")
 	case "":
 	default:
-		return nil, fmt.Errorf("invalid answered parameter value(%s)", answered)
+		return nil, fmt.Errorf("invalid answered parameter value(%s): %w", answered, ErrInvalidAnsweredParam)
 	}
 
 	questionnaires := []TargettedQuestionnaire{}
 	err = query.Find(&questionnaires).Error
-	if gorm.IsRecordNotFoundError(err) {
-		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	} else if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get the targeted questionnaires: %w", err))
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
 	return questionnaires, nil
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
-func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
+func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
 	err := db.
@@ -345,18 +319,14 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		Select("res_time_limit").
 		Scan(&res).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", nil
-		}
-		c.Logger().Error(err)
-		return "", echo.NewHTTPError(http.StatusInternalServerError)
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
-	return NullTimeToString(res.ResTimeLimit), nil
+	return res.ResTimeLimit, nil
 }
 
 //GetResShared アンケートの回答の公開範囲の取得
-func GetResShared(c echo.Context, questionnaireID int) (string, error) {
+func GetResShared(questionnaireID int) (string, error) {
 	res := Questionnaires{}
 
 	err := db.
@@ -365,11 +335,7 @@ func GetResShared(c echo.Context, questionnaireID int) (string, error) {
 		Select("res_shared_to").
 		Scan(&res).Error
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get resShared: %w", err))
-		if gorm.IsRecordNotFoundError(err) {
-			return "", echo.NewHTTPError(http.StatusNotFound)
-		}
-		return "", echo.NewHTTPError(http.StatusInternalServerError)
+		return "", fmt.Errorf("failed to get resShared: %w", err)
 	}
 
 	return res.ResSharedTo, nil
@@ -391,8 +357,9 @@ func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 		query = query.Order("questionnaires.modified_at desc")
 	case "":
 	default:
-		return nil, errors.New("invalid sort type")
+		return nil, ErrInvalidSortParam
 	}
+	query = query.Order("questionnaires.id desc")
 
 	return query, nil
 }

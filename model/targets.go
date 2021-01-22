@@ -2,9 +2,8 @@ package model
 
 import (
 	"fmt"
-	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 )
 
@@ -15,7 +14,7 @@ type Targets struct {
 }
 
 // InsertTargets アンケートの対象を追加
-func InsertTargets(c echo.Context, questionnaireID int, targets []string) error {
+func InsertTargets(questionnaireID int, targets []string) error {
 	rowTargets := make([]interface{}, 0, len(targets))
 	for _, target := range targets {
 		rowTargets = append(rowTargets, Targets{
@@ -26,20 +25,33 @@ func InsertTargets(c echo.Context, questionnaireID int, targets []string) error 
 
 	err := gormbulk.BulkInsert(db, rowTargets, len(rowTargets))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert target: %w", err))
+		return fmt.Errorf("failed to insert target: %w", err)
 	}
 
 	return nil
 }
 
 // DeleteTargets アンケートの対象を削除
-func DeleteTargets(c echo.Context, questionnaireID int) error {
+func DeleteTargets(questionnaireID int) error {
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(&Targets{}).Error
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete targets: %w", err))
+		return fmt.Errorf("failed to delete targets: %w", err)
 	}
 
 	return nil
+}
+
+// GetTargets アンケートの対象一覧を取得
+func GetTargets(questionnaireIDs []int) ([]Targets, error) {
+	targets := []Targets{}
+	err := db.
+		Where("questionnaire_id IN (?)", questionnaireIDs).
+		Find(&targets).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, fmt.Errorf("failed to get targets: %w", err)
+	}
+
+	return targets, nil
 }
