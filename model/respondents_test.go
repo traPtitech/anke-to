@@ -454,11 +454,11 @@ func TestGetRespondentDetail(t *testing.T) {
 
 	questionIDs := make([]int, 0, 2)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
-	questionID, err = InsertQuestion(questionnaireID, 1, 3, "MultipleChoice", "radio", true)
+	questionID, err = questionImpl.InsertQuestion(questionnaireID, 1, 3, "MultipleChoice", "radio", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
@@ -579,7 +579,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	questionIDs := make([]int, 0, questionLength)
 
 	for _, question := range questions {
-		questionID, err := InsertQuestion(question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
 		require.NoError(t, err)
 		questionIDs = append(questionIDs, questionID)
 

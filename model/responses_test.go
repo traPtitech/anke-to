@@ -23,7 +23,7 @@ func TestInsertResponses(t *testing.T) {
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 
 	type args struct {
@@ -142,7 +142,7 @@ func TestDeleteResponse(t *testing.T) {
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 
 	type args struct {
