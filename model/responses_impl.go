@@ -8,8 +8,8 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-//Response responseテーブルの構造体
-type Response struct {
+//Responses responseテーブルの構造体
+type Responses struct {
 	ResponseID int         `json:"-" gorm:"type:int(11) NOT NULL;"`
 	QuestionID int         `json:"-" gorm:"type:int(11) NOT NULL;"`
 	Body       null.String `json:"response" gorm:"type:text;default:NULL;"`
@@ -18,7 +18,7 @@ type Response struct {
 }
 
 //TableName テーブル名が単数形なのでその対応
-func (*Response) TableName() string {
+func (*Responses) TableName() string {
 	return "response"
 }
 
@@ -40,7 +40,7 @@ type ResponseMeta struct {
 func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 	responses := make([]interface{}, 0, len(responseMetas))
 	for _, responseMeta := range responseMetas {
-		responses = append(responses, Response{
+		responses = append(responses, Responses{
 			ResponseID: responseID,
 			QuestionID: responseMeta.QuestionID,
 			Body:       null.NewString(responseMeta.Data, true),
@@ -58,7 +58,7 @@ func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 func DeleteResponse(responseID int) error {
 	result := db.
 		Where("response_id = ?", responseID).
-		Delete(&Response{})
+		Delete(&Responses{})
 	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete response: %w", err)

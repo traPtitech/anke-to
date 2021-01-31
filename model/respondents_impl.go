@@ -121,7 +121,7 @@ func DeleteRespondent(userID string, responseID int) error {
 
 		err = tx.
 			Where("response_id = ?", responseID).
-			Delete(&Response{}).Error
+			Delete(&Responses{}).Error
 		if err != nil {
 			return fmt.Errorf("failed to delete response: %w", err)
 		}

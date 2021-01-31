@@ -13,7 +13,7 @@ var (
 		Questionnaires{},
 		Questions{},
 		Respondents{},
-		Response{},
+		Responses{},
 		Administrators{},
 		Options{},
 		ScaleLabels{},
@@ -95,14 +95,14 @@ func Migrate() error {
 	}
 
 	err = db.
-		Model(&Response{}).
+		Model(&Responses{}).
 		AddForeignKey("response_id", "respondents(response_id)", "RESTRICT", "RESTRICT").Error
 	if err != nil {
 		return fmt.Errorf("failed to add foreingkey(response.response_id): %w", err)
 	}
 
 	err = db.
-		Model(&Response{}).
+		Model(&Responses{}).
 		AddForeignKey("question_id", "question(id)", "RESTRICT", "RESTRICT").Error
 	if err != nil {
 		return fmt.Errorf("failed to add foreingkey(response.question_id): %w", err)

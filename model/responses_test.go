@@ -117,7 +117,7 @@ func TestInsertResponses(t *testing.T) {
 			continue
 		}
 
-		response := Response{}
+		response := Responses{}
 		err = db.Where("response_id = ?", responseID).First(&response).Error
 		if err != nil {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
@@ -208,7 +208,7 @@ func TestDeleteResponse(t *testing.T) {
 			continue
 		}
 
-		response := Response{}
+		response := Responses{}
 		err = db.
 			Unscoped().
 			Where("response_id = ?", responseID).
