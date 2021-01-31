@@ -7,6 +7,9 @@ import (
 	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 )
 
+// Target TargetRepositoryの実装
+type Target struct{}
+
 //Targets targetsテーブルの構造体
 type Targets struct {
 	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
@@ -14,7 +17,7 @@ type Targets struct {
 }
 
 // InsertTargets アンケートの対象を追加
-func InsertTargets(questionnaireID int, targets []string) error {
+func (*Target) InsertTargets(questionnaireID int, targets []string) error {
 	rowTargets := make([]interface{}, 0, len(targets))
 	for _, target := range targets {
 		rowTargets = append(rowTargets, Targets{
@@ -32,7 +35,7 @@ func InsertTargets(questionnaireID int, targets []string) error {
 }
 
 // DeleteTargets アンケートの対象を削除
-func DeleteTargets(questionnaireID int) error {
+func (*Target) DeleteTargets(questionnaireID int) error {
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(&Targets{}).Error
@@ -44,7 +47,7 @@ func DeleteTargets(questionnaireID int) error {
 }
 
 // GetTargets アンケートの対象一覧を取得
-func GetTargets(questionnaireIDs []int) ([]Targets, error) {
+func (*Target) GetTargets(questionnaireIDs []int) ([]Targets, error) {
 	targets := []Targets{}
 	err := db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
