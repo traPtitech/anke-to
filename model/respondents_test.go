@@ -548,7 +548,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		args
 		expect
 	}
-	questions := []Question{
+	questions := []Questions{
 		{
 			QuestionnaireID: questionnaireID,
 			PageNum:         1,

@@ -11,7 +11,7 @@ var (
 	db        *gorm.DB
 	allTables = []interface{}{
 		Questionnaires{},
-		Question{},
+		Questions{},
 		Respondents{},
 		Response{},
 		Administrators{},
@@ -81,7 +81,7 @@ func Migrate() error {
 	}
 
 	err = db.
-		Model(&Question{}).
+		Model(&Questions{}).
 		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
 	if err != nil {
 		return fmt.Errorf("failed to add foreingkey(question.questionnaire_id): %w", err)

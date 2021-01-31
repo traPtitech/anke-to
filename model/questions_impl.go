@@ -9,8 +9,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-//Question questionテーブルの構造体
-type Question struct {
+//Questions questionテーブルの構造体
+type Questions struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
 	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);default:NULL;"`
 	PageNum         int            `json:"page_num"            gorm:"type:int(11) NOT NULL;"`
@@ -23,7 +23,7 @@ type Question struct {
 }
 
 //TableName テーブル名が単数形なのでその対応
-func (*Question) TableName() string {
+func (*Questions) TableName() string {
 	return "question"
 }
 
@@ -36,7 +36,7 @@ type QuestionIDType struct {
 //InsertQuestion 質問の追加
 func InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool) (int, error) {
-	question := Question{
+	question := Questions{
 		QuestionnaireID: questionnaireID,
 		PageNum:         pageNum,
 		QuestionNum:     questionNum,
@@ -70,7 +70,7 @@ func InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionT
 //UpdateQuestion 質問の修正
 func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool, questionID int) error {
-	question := Question{
+	question := Questions{
 		QuestionnaireID: questionnaireID,
 		PageNum:         pageNum,
 		QuestionNum:     questionNum,
@@ -80,7 +80,7 @@ func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionT
 	}
 
 	err := db.
-		Model(&Question{}).
+		Model(&Questions{}).
 		Where("id = ?", questionID).
 		Update(&question).Error
 	if err != nil {
@@ -94,7 +94,7 @@ func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionT
 func DeleteQuestion(questionID int) error {
 	err := db.
 		Where("id = ?", questionID).
-		Delete(&Question{}).Error
+		Delete(&Questions{}).Error
 	if err != nil {
 		return fmt.Errorf("failed to delete a question record: %w", err)
 	}
@@ -103,8 +103,8 @@ func DeleteQuestion(questionID int) error {
 }
 
 //GetQuestions 質問一覧の取得
-func GetQuestions(questionnaireID int) ([]Question, error) {
-	questions := []Question{}
+func GetQuestions(questionnaireID int) ([]Questions, error) {
+	questions := []Questions{}
 
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
@@ -127,7 +127,7 @@ func CheckQuestionAdmin(userID string, questionID int) (bool, error) {
 		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
 		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
 		Select("question.id").
-		Find(&Question{}).Error
+		Find(&Questions{}).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return false, nil
 	}
