@@ -11,8 +11,15 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Result Resultの構造体
+type Result struct {
+	model.RespondentRepository
+	model.QuestionnaireRepository
+	model.AdministratorRepository
+}
+
 // GetResults GET /results/:questionnaireID
-func GetResults(c echo.Context) error {
+func (r *Result) GetResults(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
@@ -21,11 +28,11 @@ func GetResults(c echo.Context) error {
 	}
 
 	// アンケートの回答を確認する権限が無ければエラーを返す
-	if err := checkResponseConfirmable(c, questionnaireID); err != nil {
+	if err := r.checkResponseConfirmable(c, questionnaireID); err != nil {
 		return err
 	}
 
-	respondentDetails, err := model.GetRespondentDetails(questionnaireID, sort)
+	respondentDetails, err := r.GetRespondentDetails(questionnaireID, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -34,8 +41,8 @@ func GetResults(c echo.Context) error {
 }
 
 // アンケートの回答を確認できるか
-func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
-	resSharedTo, err := model.GetResShared(questionnaireID)
+func (r *Result) checkResponseConfirmable(c echo.Context, questionnaireID int) error {
+	resSharedTo, err := r.GetResShared(questionnaireID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -50,7 +57,7 @@ func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
-		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
+		isAdmin, err := r.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
@@ -63,12 +70,12 @@ func checkResponseConfirmable(c echo.Context, questionnaireID int) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
-		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
+		isAdmin, err := r.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
-			isRespondent, err := model.CheckRespondent(userID, questionnaireID)
+			isRespondent, err := r.CheckRespondent(userID, questionnaireID)
 			if err != nil {
 				return err
 			}
