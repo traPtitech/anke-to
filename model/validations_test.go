@@ -17,10 +17,10 @@ func TestInsertValidation(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -164,7 +164,7 @@ func TestInsertValidation(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			questionID = -1
@@ -177,7 +177,7 @@ func TestInsertValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -205,10 +205,10 @@ func TestUpdateValidation(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -285,7 +285,7 @@ func TestUpdateValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{}
@@ -306,7 +306,7 @@ func TestUpdateValidation(t *testing.T) {
 			}
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
@@ -320,7 +320,7 @@ func TestUpdateValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = UpdateValidation(questionID, validation)
+		err = validationImpl.UpdateValidation(questionID, validation)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -349,10 +349,10 @@ func TestDeleteValidation(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -409,7 +409,7 @@ func TestDeleteValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{
@@ -419,14 +419,14 @@ func TestDeleteValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
 			questionID = -1
 		}
 
-		err = DeleteValidation(questionID)
+		err = validationImpl.DeleteValidation(questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -446,10 +446,10 @@ func TestGetValidations(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -487,9 +487,9 @@ func TestGetValidations(t *testing.T) {
 	questionIDs := make([]int, 0, 3)
 	validationMap := make(map[int]Validations)
 	for _, validation := range validations {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
 		require.NoError(t, err)
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 		validation.QuestionID = questionID
 		questionIDs = append(questionIDs, questionID)
@@ -528,7 +528,7 @@ func TestGetValidations(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		validations, err := GetValidations(testCase.args.questionIDs)
+		validations, err := validationImpl.GetValidations(testCase.args.questionIDs)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -656,7 +656,7 @@ func TestCheckNumberValidation(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckNumberValidation(testCase.args.validation, testCase.args.response)
+		err := validationImpl.CheckNumberValidation(testCase.args.validation, testCase.args.response)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -739,7 +739,7 @@ func TestCheckTextValidation(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckTextValidation(testCase.args.validation, testCase.args.response)
+		err := validationImpl.CheckTextValidation(testCase.args.validation, testCase.args.response)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -825,7 +825,7 @@ func TestCheckNumberValid(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckNumberValid(testCase.args.validation.MinBound, testCase.args.validation.MaxBound)
+		err := validationImpl.CheckNumberValid(testCase.args.validation.MinBound, testCase.args.validation.MaxBound)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

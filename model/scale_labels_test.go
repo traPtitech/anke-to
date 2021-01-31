@@ -17,10 +17,10 @@ func TestInsertScaleLabel(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -113,7 +113,7 @@ func TestInsertScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			questionID = -1
@@ -127,7 +127,7 @@ func TestInsertScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -156,10 +156,10 @@ func TestUpdateScaleLabel(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -216,7 +216,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 
 		label := ScaleLabels{
@@ -227,7 +227,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 			ScaleMax:        5,
 		}
 
-		err = InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
@@ -242,7 +242,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = UpdateScaleLabel(questionID, label)
+		err = scaleLabelImpl.UpdateScaleLabel(questionID, label)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -272,10 +272,10 @@ func TestDeleteScaleLabel(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -322,7 +322,7 @@ func TestDeleteScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 
 		label := ScaleLabels{
@@ -333,14 +333,14 @@ func TestDeleteScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
 			questionID = -1
 		}
 
-		err = DeleteScaleLabel(questionID)
+		err = scaleLabelImpl.DeleteScaleLabel(questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -359,10 +359,10 @@ func TestGetScaleLabels(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -401,9 +401,9 @@ func TestGetScaleLabels(t *testing.T) {
 	questionIDs := make([]int, 0, 3)
 	labelMap := make(map[int]ScaleLabels)
 	for _, label := range labels {
-		questionID, err := InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
-		err = InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 		require.NoError(t, err)
 		label.QuestionID = questionID
 		questionIDs = append(questionIDs, questionID)
@@ -442,7 +442,7 @@ func TestGetScaleLabels(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		labels, err := GetScaleLabels(testCase.args.questionIDs)
+		labels, err := scaleLabelImpl.GetScaleLabels(testCase.args.questionIDs)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -476,13 +476,13 @@ func TestCheckScaleLabel(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
 	require.NoError(t, err)
 
 	label := ScaleLabels{
@@ -493,7 +493,7 @@ func TestCheckScaleLabel(t *testing.T) {
 		ScaleMax:        5,
 	}
 
-	err = InsertScaleLabel(questionID, label)
+	err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 	require.NoError(t, err)
 
 	type args struct {
@@ -559,7 +559,7 @@ func TestCheckScaleLabel(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err = CheckScaleLabel(testCase.args.label, testCase.args.response)
+		err = scaleLabelImpl.CheckScaleLabel(testCase.args.label, testCase.args.response)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

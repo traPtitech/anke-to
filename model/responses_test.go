@@ -17,13 +17,13 @@ func TestInsertResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 
 	type args struct {
@@ -99,12 +99,12 @@ func TestInsertResponses(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			responseID = -1
 		}
-		err = InsertResponses(responseID, testCase.args.responseMetas)
+		err = responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -117,7 +117,7 @@ func TestInsertResponses(t *testing.T) {
 			continue
 		}
 
-		response := Response{}
+		response := Responses{}
 		err = db.Where("response_id = ?", responseID).First(&response).Error
 		if err != nil {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
@@ -136,13 +136,13 @@ func TestDeleteResponse(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 
 	type args struct {
@@ -186,15 +186,15 @@ func TestDeleteResponse(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
-		err = InsertResponses(responseID, testCase.args.responseMetas)
+		err = responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			responseID = -1
 		}
 
-		err = DeleteResponse(responseID)
+		err = responseImpl.DeleteResponse(responseID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -208,7 +208,7 @@ func TestDeleteResponse(t *testing.T) {
 			continue
 		}
 
-		response := Response{}
+		response := Responses{}
 		err = db.
 			Unscoped().
 			Where("response_id = ?", responseID).
