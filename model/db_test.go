@@ -14,6 +14,7 @@ const (
 var administratorImpl = new(Administrator)
 var questionnaireImpl = new(Questionnaire)
 var questionImpl = new(Question)
+var respondentImpl = new(Respondent)
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {

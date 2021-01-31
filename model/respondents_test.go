@@ -92,7 +92,7 @@ func TestInsertRespondent(t *testing.T) {
 			questionnaireID = -1
 		}
 
-		responseID, err := InsertRespondent(testCase.args.userID, questionnaireID, testCase.args.submittedAt)
+		responseID, err := respondentImpl.InsertRespondent(testCase.args.userID, questionnaireID, testCase.args.submittedAt)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -156,13 +156,13 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
 
-		err = UpdateSubmittedAt(responseID)
+		err = respondentImpl.UpdateSubmittedAt(responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -258,13 +258,13 @@ func TestDeleteRespondent(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := InsertRespondent(testCase.args.insertUserID, questionnaireID, null.NewTime(time.Now(), true))
+		responseID, err := respondentImpl.InsertRespondent(testCase.args.insertUserID, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
 
-		err = DeleteRespondent(testCase.args.deleteUserID, responseID)
+		err = respondentImpl.DeleteRespondent(testCase.args.deleteUserID, responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -333,7 +333,7 @@ func TestGetRespondentInfos(t *testing.T) {
 
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
-		responseID, err := InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
 		respondentMap[responseID] = respondent
@@ -385,7 +385,7 @@ func TestGetRespondentInfos(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		respondentInfos, err := GetRespondentInfos(testCase.args.userID, testCase.args.questionnaireIDs...)
+		respondentInfos, err := respondentImpl.GetRespondentInfos(testCase.args.userID, testCase.args.questionnaireIDs...)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -476,7 +476,7 @@ func TestGetRespondentDetail(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
@@ -485,7 +485,7 @@ func TestGetRespondentDetail(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		respondentDetail, err := GetRespondentDetail(responseID)
+		respondentDetail, err := respondentImpl.GetRespondentDetail(responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -624,7 +624,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	responseLength := len(respondents)
 	responseIDs := make([]int, 0, responseLength)
 	for i, respondent := range respondents {
-		responseID, err := InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		responseIDs = append(responseIDs, responseID)
 
@@ -757,7 +757,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		respondentDetails, err := GetRespondentDetails(testCase.args.questionnaireID, testCase.args.sort)
+		respondentDetails, err := respondentImpl.GetRespondentDetails(testCase.args.questionnaireID, testCase.args.sort)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -817,7 +817,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
-		responseID, err := InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
 		respondentMap[responseID] = respondent
@@ -856,7 +856,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		respondents, err := GetRespondentsUserIDs(testCase.args.questionnaireIDs)
+		respondents, err := respondentImpl.GetRespondentsUserIDs(testCase.args.questionnaireIDs)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -890,7 +890,7 @@ func TestTestCheckRespondent(t *testing.T) {
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	_, err = InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+	_, err = respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
 	type args struct {
@@ -943,7 +943,7 @@ func TestTestCheckRespondent(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		isRespondent, err := CheckRespondent(testCase.args.userID, testCase.args.questionnaireID)
+		isRespondent, err := respondentImpl.CheckRespondent(testCase.args.userID, testCase.args.questionnaireID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -970,7 +970,7 @@ func TestCheckRespondentByResponseID(t *testing.T) {
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+	responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
 	type args struct {
@@ -1023,7 +1023,7 @@ func TestCheckRespondentByResponseID(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		isRespondent, err := CheckRespondentByResponseID(testCase.args.userID, testCase.args.responseID)
+		isRespondent, err := respondentImpl.CheckRespondentByResponseID(testCase.args.userID, testCase.args.responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
