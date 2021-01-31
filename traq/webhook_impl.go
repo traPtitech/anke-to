@@ -1,4 +1,4 @@
-package model
+package traq
 
 import (
 	"crypto/hmac"
@@ -14,8 +14,11 @@ import (
 	"github.com/labstack/echo"
 )
 
+// Webhook Webhookの構造体
+type Webhook struct{}
+
 // PostMessage Webhookでのメッセージの投稿
-func PostMessage(message string) error {
+func (*Webhook) PostMessage(message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
 	req, err := http.NewRequest("POST",
 		url,
