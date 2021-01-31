@@ -6,14 +6,14 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// Administrator AdministratorRepositoryの実装
+type Administrator struct{}
+
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
 	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
 	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
 }
-
-// Administrator AdministratorRepositoryの実装
-type Administrator struct{}
 
 // InsertAdministrators アンケートの管理者を追加
 func (*Administrator) InsertAdministrators(questionnaireID int, administrators []string) error {

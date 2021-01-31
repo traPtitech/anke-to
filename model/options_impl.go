@@ -7,6 +7,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// Option OptionRepositoryの実装
+type Option struct{}
+
 // Options optionsテーブルの構造体
 type Options struct {
 	ID         int    `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
@@ -14,9 +17,6 @@ type Options struct {
 	OptionNum  int    `gorm:"type:int(11) NOT NULL;"`
 	Body       string `gorm:"type:text;default:NULL;"`
 }
-
-// Option OptionRepositoryの実装
-type Option struct{}
 
 // InsertOption 選択肢の追加
 func (*Option) InsertOption(lastID int, num int, body string) error {
