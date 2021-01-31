@@ -9,14 +9,22 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Responses 質問に対する回答一覧の構造体
+type Responses struct {
+	ID          int                  `json:"questionnaireID"`
+	SubmittedAt null.Time            `json:"submitted_at"`
+	Body        []model.ResponseBody `json:"body"`
+}
+
 // PostResponse POST /responses
 func PostResponse(c echo.Context) error {
 
-	req := model.Responses{}
+	req := Responses{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
@@ -165,7 +173,7 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	req := model.Responses{}
+	req := Responses{}
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)

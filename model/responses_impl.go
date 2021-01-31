@@ -30,13 +30,6 @@ type ResponseBody struct {
 	OptionResponse []string    `json:"option_response"`
 }
 
-// Responses 質問に対する回答一覧の構造体
-type Responses struct {
-	ID          int            `json:"questionnaireID"`
-	SubmittedAt null.Time      `json:"submitted_at"`
-	Body        []ResponseBody `json:"body"`
-}
-
 // ResponseMeta 質問に対する回答の構造体
 type ResponseMeta struct {
 	QuestionID int
