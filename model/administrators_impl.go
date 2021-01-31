@@ -12,8 +12,10 @@ type Administrators struct {
 	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
 }
 
+type Administrator struct{}
+
 // InsertAdministrators アンケートの管理者を追加
-func InsertAdministrators(questionnaireID int, administrators []string) error {
+func (*Administrator) InsertAdministrators(questionnaireID int, administrators []string) error {
 	var administrator Administrators
 	var err error
 	for _, v := range administrators {
@@ -30,7 +32,7 @@ func InsertAdministrators(questionnaireID int, administrators []string) error {
 }
 
 // DeleteAdministrators アンケートの管理者の削除
-func DeleteAdministrators(questionnaireID int) error {
+func (*Administrator) DeleteAdministrators(questionnaireID int) error {
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(Administrators{}).Error
@@ -42,7 +44,7 @@ func DeleteAdministrators(questionnaireID int) error {
 }
 
 // GetAdministrators アンケートの管理者を取得
-func GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
+func (*Administrator) GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
 	administrators := []Administrators{}
 	err := db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
@@ -55,7 +57,7 @@ func GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
 }
 
 // CheckQuestionnaireAdmin 自分がアンケートの管理者か判定
-func CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error) {
+func (*Administrator) CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		Find(&Administrators{}).Error
