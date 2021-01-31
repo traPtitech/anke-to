@@ -11,6 +11,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// Respondent RespondentRepositoryの実装
+type Respondent struct{}
+
 //Respondents respondentsテーブルの構造体
 type Respondents struct {
 	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
@@ -59,7 +62,7 @@ type RespondentDetail struct {
 }
 
 //InsertRespondent 回答の追加
-func InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error) {
+func (*Respondent) InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error) {
 	var respondent Respondents
 	if submitedAt.Valid {
 		respondent = Respondents{
@@ -95,7 +98,7 @@ func InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) 
 }
 
 // UpdateSubmittedAt 投稿日時更新
-func UpdateSubmittedAt(responseID int) error {
+func (*Respondent) UpdateSubmittedAt(responseID int) error {
 	err := db.
 		Model(&Respondents{}).
 		Where("response_id = ?", responseID).
@@ -108,7 +111,7 @@ func UpdateSubmittedAt(responseID int) error {
 }
 
 // DeleteRespondent 回答の削除
-func DeleteRespondent(userID string, responseID int) error {
+func (*Respondent) DeleteRespondent(userID string, responseID int) error {
 	return db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
 		err := result.Error
@@ -130,7 +133,7 @@ func DeleteRespondent(userID string, responseID int) error {
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
-func GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
+func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
 	respondentInfos := []RespondentInfo{}
 
 	query := db.
@@ -172,7 +175,7 @@ func GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInf
 }
 
 // GetRespondentDetail 回答のIDから回答の詳細情報を取得
-func GetRespondentDetail(responseID int) (RespondentDetail, error) {
+func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error) {
 	rows, err := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
@@ -237,7 +240,7 @@ func GetRespondentDetail(responseID int) (RespondentDetail, error) {
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
+func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
 	query := db.
 		Table("respondents").
 		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
@@ -331,7 +334,7 @@ func GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail,
 }
 
 // GetRespondentsUserIDs 回答者のユーザーID取得
-func GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
+func (*Respondent) GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
 	respondents := []Respondents{}
 	err := db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
@@ -345,7 +348,7 @@ func GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
 }
 
 // CheckRespondent 回答者かどうかの確認
-func CheckRespondent(userID string, questionnaireID int) (bool, error) {
+func (*Respondent) CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Respondents{}).Error
@@ -360,7 +363,7 @@ func CheckRespondent(userID string, questionnaireID int) (bool, error) {
 }
 
 // CheckRespondentByResponseID 回答者かどうかの確認
-func CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
+func (*Respondent) CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
 	err := db.
 		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		First(&Respondents{}).Error
