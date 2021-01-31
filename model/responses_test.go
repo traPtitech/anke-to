@@ -17,10 +17,10 @@ func TestInsertResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
@@ -136,10 +136,10 @@ func TestDeleteResponse(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	questionID, err := InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)

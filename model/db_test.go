@@ -11,7 +11,8 @@ const (
 	userThree = "YumizSui"
 )
 
-var administrator = new(Administrator)
+var administratorImpl = new(Administrator)
+var questionnaireImpl = new(Questionnaire)
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {
