@@ -15,8 +15,11 @@ type Options struct {
 	Body       string `gorm:"type:text;default:NULL;"`
 }
 
+// Option OptionRepositoryの実装
+type Option struct{}
+
 // InsertOption 選択肢の追加
-func InsertOption(lastID int, num int, body string) error {
+func (*Option) InsertOption(lastID int, num int, body string) error {
 	option := Options{
 		QuestionID: lastID,
 		OptionNum:  num,
@@ -30,7 +33,7 @@ func InsertOption(lastID int, num int, body string) error {
 }
 
 // UpdateOptions 選択肢の修正
-func UpdateOptions(options []string, questionID int) error {
+func (*Option) UpdateOptions(options []string, questionID int) error {
 	var err error
 	for i, optionLabel := range options {
 		option := Options{
@@ -67,7 +70,7 @@ func UpdateOptions(options []string, questionID int) error {
 }
 
 // DeleteOptions 選択肢の削除
-func DeleteOptions(questionID int) error {
+func (*Option) DeleteOptions(questionID int) error {
 	err := db.
 		Where("question_id = ?", questionID).
 		Delete(Options{}).Error
@@ -78,7 +81,7 @@ func DeleteOptions(questionID int) error {
 }
 
 // GetOptions 質問の選択肢の取得
-func GetOptions(questionIDs []int) ([]Options, error) {
+func (*Option) GetOptions(questionIDs []int) ([]Options, error) {
 	type option struct {
 		QuestionID int         `gorm:"type:int(11) NOT NULL;"`
 		Body       null.String `gorm:"type:text;default:NULL;"`
