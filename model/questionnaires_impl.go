@@ -9,6 +9,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// Questionnaire QuestionnaireRepositoryの実装
+type Questionnaire struct{}
+
 //Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
@@ -53,7 +56,7 @@ type TargettedQuestionnaire struct {
 }
 
 //InsertQuestionnaire アンケートの追加
-func InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+func (*Questionnaire) InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
 	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
 		questionnaire = Questionnaires{
@@ -93,7 +96,7 @@ func InsertQuestionnaire(title string, description string, resTimeLimit null.Tim
 }
 
 //UpdateQuestionnaire アンケートの更新
-func UpdateQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+func (*Questionnaire) UpdateQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
 	if !resTimeLimit.Valid {
 		questionnaire := map[string]interface{}{
 			"title":          title,
@@ -140,7 +143,7 @@ func UpdateQuestionnaire(title string, description string, resTimeLimit null.Tim
 }
 
 //DeleteQuestionnaire アンケートの削除
-func DeleteQuestionnaire(questionnaireID int) error {
+func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 	result := db.Delete(&Questionnaires{ID: questionnaireID})
 	err := result.Error
 	if err != nil {
@@ -155,7 +158,7 @@ func DeleteQuestionnaire(questionnaireID int) error {
 
 /*GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値*/
-func GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
+func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
 	query := db.
@@ -213,7 +216,7 @@ func GetQuestionnaires(userID string, sort string, search string, pageNum int, n
 }
 
 // GetAdminQuestionnaires 自分が管理者のアンケートの取得
-func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
+func (*Questionnaire) GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
 	questionnaires := []Questionnaires{}
 	err := db.
 		Table("questionnaires").
@@ -229,7 +232,7 @@ func GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
 }
 
 //GetQuestionnaireInfo アンケートの詳細な情報取得
-func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
 	questionnaire := Questionnaires{}
 	targets := []string{}
 	administrators := []string{}
@@ -271,7 +274,7 @@ func GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []str
 }
 
 //GetTargettedQuestionnaires targetになっているアンケートの取得
-func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
+func (*Questionnaire) GetTargettedQuestionnaires(userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
 	query := db.
 		Table("questionnaires").
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
@@ -310,7 +313,7 @@ func GetTargettedQuestionnaires(userID string, answered string, sort string) ([]
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
-func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
+func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 	res := Questionnaires{}
 
 	err := db.
@@ -326,7 +329,7 @@ func GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
 }
 
 //GetResShared アンケートの回答の公開範囲の取得
-func GetResShared(questionnaireID int) (string, error) {
+func (*Questionnaire) GetResShared(questionnaireID int) (string, error) {
 	res := Questionnaires{}
 
 	err := db.
