@@ -5,6 +5,9 @@ import (
 	"strconv"
 )
 
+// ScaleLabel ScaleLabelRepositoryの実装
+type ScaleLabel struct{}
+
 //ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
 	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
@@ -15,7 +18,7 @@ type ScaleLabels struct {
 }
 
 // InsertScaleLabel IDを指定してlabelを挿入する
-func InsertScaleLabel(lastID int, label ScaleLabels) error {
+func (*ScaleLabel) InsertScaleLabel(lastID int, label ScaleLabels) error {
 	label.QuestionID = lastID
 	if err := db.Create(&label).Error; err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
@@ -24,7 +27,7 @@ func InsertScaleLabel(lastID int, label ScaleLabels) error {
 }
 
 // UpdateScaleLabel questionIDを指定してlabelを更新する
-func UpdateScaleLabel(questionID int, label ScaleLabels) error {
+func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
 	result := db.
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
@@ -45,7 +48,7 @@ func UpdateScaleLabel(questionID int, label ScaleLabels) error {
 }
 
 // DeleteScaleLabel questionIDを指定してlabelを削除する
-func DeleteScaleLabel(questionID int) error {
+func (*ScaleLabel) DeleteScaleLabel(questionID int) error {
 	result := db.
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{})
@@ -60,7 +63,7 @@ func DeleteScaleLabel(questionID int) error {
 }
 
 // GetScaleLabels 指定されたquestionIDの配列のlabelを取得する
-func GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
+func (*ScaleLabel) GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
 	labels := []ScaleLabels{}
 	err := db.
 		Where("question_id IN (?)", questionIDs).
@@ -73,7 +76,7 @@ func GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
 }
 
 // CheckScaleLabel responseがScaleMin,ScaleMaxを満たしているか
-func CheckScaleLabel(label ScaleLabels, response string) error {
+func (*ScaleLabel) CheckScaleLabel(label ScaleLabels, response string) error {
 	if response == "" {
 		return nil
 	}
