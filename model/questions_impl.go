@@ -9,6 +9,9 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+// Question QuestionRepositoryの実装
+type Question struct{}
+
 //Questions questionテーブルの構造体
 type Questions struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
@@ -34,7 +37,7 @@ type QuestionIDType struct {
 }
 
 //InsertQuestion 質問の追加
-func InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
+func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool) (int, error) {
 	question := Questions{
 		QuestionnaireID: questionnaireID,
@@ -68,7 +71,7 @@ func InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionT
 }
 
 //UpdateQuestion 質問の修正
-func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
+func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool, questionID int) error {
 	question := Questions{
 		QuestionnaireID: questionnaireID,
@@ -91,7 +94,7 @@ func UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionT
 }
 
 //DeleteQuestion 質問の削除
-func DeleteQuestion(questionID int) error {
+func (*Question) DeleteQuestion(questionID int) error {
 	err := db.
 		Where("id = ?", questionID).
 		Delete(&Questions{}).Error
@@ -103,7 +106,7 @@ func DeleteQuestion(questionID int) error {
 }
 
 //GetQuestions 質問一覧の取得
-func GetQuestions(questionnaireID int) ([]Questions, error) {
+func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 	questions := []Questions{}
 
 	err := db.
@@ -121,7 +124,7 @@ func GetQuestions(questionnaireID int) ([]Questions, error) {
 }
 
 // CheckQuestionAdmin Questionの管理者か
-func CheckQuestionAdmin(userID string, questionID int) (bool, error) {
+func (*Question) CheckQuestionAdmin(userID string, questionID int) (bool, error) {
 	err := db.
 		Table("question").
 		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
