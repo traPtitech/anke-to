@@ -8,6 +8,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// Response ResponseRepositoryの実装
+type Response struct{}
+
 //Responses responseテーブルの構造体
 type Responses struct {
 	ResponseID int         `json:"-" gorm:"type:int(11) NOT NULL;"`
@@ -37,7 +40,7 @@ type ResponseMeta struct {
 }
 
 // InsertResponses 質問に対する回答の追加
-func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
+func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 	responses := make([]interface{}, 0, len(responseMetas))
 	for _, responseMeta := range responseMetas {
 		responses = append(responses, Responses{
@@ -55,7 +58,7 @@ func InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
 }
 
 // DeleteResponse 質問に対する回答の削除
-func DeleteResponse(responseID int) error {
+func (*Response) DeleteResponse(responseID int) error {
 	result := db.
 		Where("response_id = ?", responseID).
 		Delete(&Responses{})
