@@ -10,6 +10,13 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Middleware Middlewareの構造体
+type Middleware struct {
+	model.AdministratorRepository
+	model.RespondentRepository
+	model.QuestionRepository
+}
+
 const (
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
@@ -22,7 +29,7 @@ const (
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
 
 // UserAuthenticate traPのメンバーかの認証
-func UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := model.GetUserID(c)
 		// トークンを持たないユーザはアクセスできない
@@ -37,7 +44,7 @@ func UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
-func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -57,7 +64,7 @@ func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerF
 				return next(c)
 			}
 		}
-		isAdmin, err := model.CheckQuestionnaireAdmin(userID, questionnaireID)
+		isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
@@ -72,7 +79,7 @@ func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerF
 }
 
 // RespondentAuthenticate 回答者かどうかの認証
-func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -85,7 +92,7 @@ func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := model.CheckRespondentByResponseID(userID, responseID)
+		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
@@ -100,7 +107,7 @@ func RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 // QuestionAdministratorAuthenticate アンケートの管理者かどうかの認証
-func QuestionAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -120,7 +127,7 @@ func QuestionAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 				return next(c)
 			}
 		}
-		isAdmin, err := model.CheckQuestionAdmin(userID, questionID)
+		isAdmin, err := m.CheckQuestionAdmin(userID, questionID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
