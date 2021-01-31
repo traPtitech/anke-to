@@ -40,9 +40,9 @@ var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui"
 // UserAuthenticate traPのメンバーかの認証
 func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		userID := c.Request().Header.Get("X-Showcase-User")
+		if userID == "" {
+			userID = "mds_boy"
 		}
 
 		// トークンを持たないユーザはアクセスできない
