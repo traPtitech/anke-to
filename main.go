@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/middleware"
 
 	"github.com/traPtitech/anke-to/model"
-	"github.com/traPtitech/anke-to/router"
 	"github.com/traPtitech/anke-to/tuning"
 )
 
@@ -55,7 +54,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 
-	router.SetRouting(e)
+	SetRouting(e)
 
 	if env == "pprof" {
 		runtime.SetBlockProfileRate(1)
