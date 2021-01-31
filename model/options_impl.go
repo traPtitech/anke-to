@@ -10,6 +10,11 @@ import (
 // Option OptionRepositoryの実装
 type Option struct{}
 
+// NewOption Optionのコンストラクター
+func NewOption() *Option {
+	return new(Option)
+}
+
 // Options optionsテーブルの構造体
 type Options struct {
 	ID         int    `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`

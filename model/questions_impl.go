@@ -12,6 +12,11 @@ import (
 // Question QuestionRepositoryの実装
 type Question struct{}
 
+// NewQuestion Questionのコンストラクター
+func NewQuestion() *Question {
+	return new(Question)
+}
+
 //Questions questionテーブルの構造体
 type Questions struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`

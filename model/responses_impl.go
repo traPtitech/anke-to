@@ -11,6 +11,11 @@ import (
 // Response ResponseRepositoryの実装
 type Response struct{}
 
+// NewResponse Responseのコンストラクター
+func NewResponse() *Response {
+	return new(Response)
+}
+
 //Responses responseテーブルの構造体
 type Responses struct {
 	ResponseID int         `json:"-" gorm:"type:int(11) NOT NULL;"`

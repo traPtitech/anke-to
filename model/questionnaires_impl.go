@@ -12,6 +12,11 @@ import (
 // Questionnaire QuestionnaireRepositoryの実装
 type Questionnaire struct{}
 
+// NewQuestionnaire Questionnaireのコンストラクター
+func NewQuestionnaire() *Questionnaire {
+	return new(Questionnaire)
+}
+
 //Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
 	ID           int       `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`

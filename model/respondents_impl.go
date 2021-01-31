@@ -14,6 +14,11 @@ import (
 // Respondent RespondentRepositoryの実装
 type Respondent struct{}
 
+// NewRespondent Respondentのコンストラクター
+func NewRespondent() *Respondent {
+	return new(Respondent)
+}
+
 //Respondents respondentsテーブルの構造体
 type Respondents struct {
 	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`

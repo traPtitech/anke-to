@@ -9,6 +9,11 @@ import (
 // Administrator AdministratorRepositoryの実装
 type Administrator struct{}
 
+// NewAdministrator Administratorのコンストラクター
+func NewAdministrator() *Administrator {
+	return new(Administrator)
+}
+
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
 	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`

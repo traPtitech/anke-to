@@ -8,6 +8,11 @@ import (
 // ScaleLabel ScaleLabelRepositoryの実装
 type ScaleLabel struct{}
 
+// NewScaleLabel ScaleLabelのコンストラクター
+func NewScaleLabel() *ScaleLabel {
+	return new(ScaleLabel)
+}
+
 //ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
 	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`

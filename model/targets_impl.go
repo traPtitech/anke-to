@@ -10,6 +10,11 @@ import (
 // Target TargetRepositoryの実装
 type Target struct{}
 
+// NewTarget Targetのコンストラクター
+func NewTarget() *Target {
+	return new(Target)
+}
+
 //Targets targetsテーブルの構造体
 type Targets struct {
 	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`

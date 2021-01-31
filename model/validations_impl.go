@@ -9,6 +9,11 @@ import (
 // Validation ValidationRepositoryの実装
 type Validation struct{}
 
+// NewValidation Validationのコンストラクター
+func NewValidation() *Validation {
+	return new(Validation)
+}
+
 //Validations validationsテーブルの構造体
 type Validations struct {
 	QuestionID   int    `json:"questionID"    gorm:"type:int(11) PRIMARY KEY;"`
