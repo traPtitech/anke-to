@@ -6,6 +6,9 @@ import (
 	"strconv"
 )
 
+// Validation ValidationRepositoryの実装
+type Validation struct{}
+
 //Validations validationsテーブルの構造体
 type Validations struct {
 	QuestionID   int    `json:"questionID"    gorm:"type:int(11) PRIMARY KEY;"`
@@ -15,7 +18,7 @@ type Validations struct {
 }
 
 // InsertValidation IDを指定してvalidationsを挿入する
-func InsertValidation(lastID int, validation Validations) error {
+func (*Validation) InsertValidation(lastID int, validation Validations) error {
 	validation.QuestionID = lastID
 	if err := db.Create(&validation).Error; err != nil {
 		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
@@ -24,7 +27,7 @@ func InsertValidation(lastID int, validation Validations) error {
 }
 
 // UpdateValidation questionIDを指定してvalidationを更新する
-func UpdateValidation(questionID int, validation Validations) error {
+func (*Validation) UpdateValidation(questionID int, validation Validations) error {
 	result := db.
 		Model(&Validations{}).
 		Where("question_id = ?", questionID).
@@ -44,7 +47,7 @@ func UpdateValidation(questionID int, validation Validations) error {
 }
 
 // DeleteValidation questionIDを指定してvalidationを削除する
-func DeleteValidation(questionID int) error {
+func (*Validation) DeleteValidation(questionID int) error {
 	result := db.
 		Where("question_id = ?", questionID).
 		Delete(&Validations{})
@@ -59,7 +62,7 @@ func DeleteValidation(questionID int) error {
 }
 
 // GetValidations qustionIDのリストから対応するvalidationsのリストを取得する
-func GetValidations(qustionIDs []int) ([]Validations, error) {
+func (*Validation) GetValidations(qustionIDs []int) ([]Validations, error) {
 	validations := []Validations{}
 	err := db.
 		Where("question_id IN (?)", qustionIDs).
@@ -73,8 +76,8 @@ func GetValidations(qustionIDs []int) ([]Validations, error) {
 }
 
 // CheckNumberValidation BodyがMinBound,MaxBoundを満たしているか
-func CheckNumberValidation(validation Validations, Body string) error {
-	if err := CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
+func (v *Validation) CheckNumberValidation(validation Validations, Body string) error {
+	if err := v.CheckNumberValid(validation.MinBound, validation.MaxBound); err != nil {
 		return err
 	}
 
@@ -103,7 +106,7 @@ func CheckNumberValidation(validation Validations, Body string) error {
 }
 
 // CheckTextValidation ResponseがRegexPatternにマッチしているか
-func CheckTextValidation(validation Validations, Response string) error {
+func (*Validation) CheckTextValidation(validation Validations, Response string) error {
 	r, err := regexp.Compile(validation.RegexPattern)
 	if err != nil {
 		return fmt.Errorf("failed to compile the pattern (RegexPattern: %s): %w", r, ErrInvalidRegex)
@@ -116,7 +119,7 @@ func CheckTextValidation(validation Validations, Response string) error {
 }
 
 // CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
-func CheckNumberValid(MinBound, MaxBound string) error {
+func (*Validation) CheckNumberValid(MinBound, MaxBound string) error {
 	var minBoundNum, maxBoundNum int
 	if MinBound != "" {
 		min, err := strconv.Atoi(MinBound)
