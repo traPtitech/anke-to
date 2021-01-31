@@ -18,6 +18,16 @@ type Question struct {
 	model.ScaleLabelRepository
 }
 
+// NewQuestion Questionのコンストラクタ
+func NewQuestion(validation model.ValidationRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository) *Question {
+	return &Question{
+		ValidationRepository: validation,
+		QuestionRepository:   question,
+		OptionRepository:     option,
+		ScaleLabelRepository: scaleLabel,
+	}
+}
+
 // PostQuestion POST /questions
 func (q *Question) PostQuestion(c echo.Context) error {
 	req := struct {
