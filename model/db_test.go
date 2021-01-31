@@ -11,12 +11,14 @@ const (
 	userThree = "YumizSui"
 )
 
-var administratorImpl = new(Administrator)
-var questionnaireImpl = new(Questionnaire)
-var questionImpl = new(Question)
-var respondentImpl = new(Respondent)
-var responseImpl = new(Response)
-var scaleLabelImpl = new(ScaleLabel)
+var (
+	administratorImpl = new(Administrator)
+	questionnaireImpl = new(Questionnaire)
+	questionImpl      = new(Question)
+	respondentImpl    = new(Respondent)
+	responseImpl      = new(Response)
+	scaleLabelImpl    = new(ScaleLabel)
+)
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {
