@@ -11,6 +11,10 @@ import (
 	"github.com/traPtitech/anke-to/router"
 )
 
+import (
+	_ "net/http/pprof"
+)
+
 // Injectors from wire.go:
 
 func InjectAPIServer() *router.API {

@@ -23,6 +23,7 @@ tmp
 # app
 anke-to
 main
+mock_*
 
 .env
 *.png

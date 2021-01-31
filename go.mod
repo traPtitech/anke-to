@@ -5,14 +5,21 @@ go 1.15
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/wire v0.5.0
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
+	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/jinzhu/gorm v1.9.16
+	github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
+	github.com/lyft/protoc-gen-star v0.5.2 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/nbutton23/zxcvbn-go v0.0.0-20201221231540-e56b841a3c88 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/t-tiger/gorm-bulk-insert/v2 v2.0.1
 	github.com/valyala/fasttemplate v1.2.1 // indirect
