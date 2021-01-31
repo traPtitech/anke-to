@@ -16,8 +16,19 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Questionnaire Questionnaireの構造体
+type Questionnaire struct {
+	model.QuestionnaireRepository
+	model.TargetRepository
+	model.AdministratorRepository
+	model.QuestionRepository
+	model.OptionRepository
+	model.ScaleLabelRepository
+	model.ValidationRepository
+}
+
 // GetQuestionnaires GET /questionnaires
-func GetQuestionnaires(c echo.Context) error {
+func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	userID := model.GetUserID(c)
 	sort := c.QueryParam("sort")
 	search := c.QueryParam("search")
@@ -32,7 +43,7 @@ func GetQuestionnaires(c echo.Context) error {
 	if pageNum <= 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
-	questionnaires, pageMax, err := model.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
+	questionnaires, pageMax, err := q.QuestionnaireRepository.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -49,7 +60,7 @@ func GetQuestionnaires(c echo.Context) error {
 }
 
 // PostQuestionnaire POST /questionnaires
-func PostQuestionnaire(c echo.Context) error {
+func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 	req := struct {
 		Title          string    `json:"title"`
 		Description    string    `json:"description"`
@@ -65,16 +76,16 @@ func PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	lastID, err := model.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
 	}
 
-	if err := model.InsertTargets(lastID, req.Targets); err != nil {
+	if err := q.InsertTargets(lastID, req.Targets); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertAdministrators(lastID, req.Administrators); err != nil {
+	if err := q.InsertAdministrators(lastID, req.Administrators); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -115,14 +126,14 @@ func PostQuestionnaire(c echo.Context) error {
 }
 
 // GetQuestionnaire GET /questionnaires/:questionnaireID
-func GetQuestionnaire(c echo.Context) error {
+func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	questionnaire, targets, administrators, respondents, err := model.GetQuestionnaireInfo(questionnaireID)
+	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(questionnaireID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -145,7 +156,7 @@ func GetQuestionnaire(c echo.Context) error {
 }
 
 // EditQuestionnaire PATCH /questonnaires/:questionnaireID
-func EditQuestionnaire(c echo.Context) error {
+func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
@@ -169,24 +180,24 @@ func EditQuestionnaire(c echo.Context) error {
 		req.ResSharedTo = "administrators"
 	}
 
-	if err := model.UpdateQuestionnaire(
+	if err := q.UpdateQuestionnaire(
 		req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteTargets(questionnaireID); err != nil {
+	if err := q.DeleteTargets(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertTargets(questionnaireID, req.Targets); err != nil {
+	if err := q.InsertTargets(questionnaireID, req.Targets); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteAdministrators(questionnaireID); err != nil {
+	if err := q.DeleteAdministrators(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.InsertAdministrators(questionnaireID, req.Administrators); err != nil {
+	if err := q.InsertAdministrators(questionnaireID, req.Administrators); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -194,21 +205,21 @@ func EditQuestionnaire(c echo.Context) error {
 }
 
 // DeleteQuestionnaire DELETE /questonnaires/:questionnaireID
-func DeleteQuestionnaire(c echo.Context) error {
+func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
-	if err := model.DeleteQuestionnaire(questionnaireID); err != nil {
+	if err := q.QuestionnaireRepository.DeleteQuestionnaire(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteTargets(questionnaireID); err != nil {
+	if err := q.DeleteTargets(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteAdministrators(questionnaireID); err != nil {
+	if err := q.DeleteAdministrators(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -216,14 +227,14 @@ func DeleteQuestionnaire(c echo.Context) error {
 }
 
 // GetQuestions GET /questionnaires/:questionnaireID/questions
-func GetQuestions(c echo.Context) error {
+func (q *Questionnaire) GetQuestions(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	allquestions, err := model.GetQuestions(questionnaireID)
+	allquestions, err := q.QuestionRepository.GetQuestions(questionnaireID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -268,7 +279,7 @@ func GetQuestions(c echo.Context) error {
 		}
 	}
 
-	options, err := model.GetOptions(optionIDs)
+	options, err := q.GetOptions(optionIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -277,7 +288,7 @@ func GetQuestions(c echo.Context) error {
 		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body)
 	}
 
-	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := q.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -286,7 +297,7 @@ func GetQuestions(c echo.Context) error {
 		scaleLabelMap[label.QuestionID] = &label
 	}
 
-	validations, err := model.GetValidations(validationIDs)
+	validations, err := q.GetValidations(validationIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
