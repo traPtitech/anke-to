@@ -18,6 +18,15 @@ type Result struct {
 	model.AdministratorRepository
 }
 
+// NewResult Resultのコンストラクタ
+func NewResult(respondent model.RespondentRepository, questionnaire model.QuestionnaireRepository, administrator model.AdministratorRepository) *Result {
+	return &Result{
+		RespondentRepository:    respondent,
+		QuestionnaireRepository: questionnaire,
+		AdministratorRepository: administrator,
+	}
+}
+
 // GetResults GET /results/:questionnaireID
 func (r *Result) GetResults(c echo.Context) error {
 	sort := c.QueryParam("sort")
