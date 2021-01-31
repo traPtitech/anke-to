@@ -13,18 +13,26 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// User Userの構造体
+type User struct {
+	model.RespondentRepository
+	model.QuestionnaireRepository
+	model.TargetRepository
+	model.AdministratorRepository
+}
+
 // GetUsersMe GET /users/me
-func GetUsersMe(c echo.Context) error {
+func (*User) GetUsersMe(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"traqID": model.GetUserID(c),
 	})
 }
 
 // GetMyResponses GET /users/me/responses
-func GetMyResponses(c echo.Context) error {
+func (u *User) GetMyResponses(c echo.Context) error {
 	userID := model.GetUserID(c)
 
-	myResponses, err := model.GetRespondentInfos(userID)
+	myResponses, err := u.GetRespondentInfos(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -33,7 +41,7 @@ func GetMyResponses(c echo.Context) error {
 }
 
 // GetMyResponsesByID GET /users/me/responses/:questionnaireID
-func GetMyResponsesByID(c echo.Context) error {
+func (u *User) GetMyResponsesByID(c echo.Context) error {
 	userID := model.GetUserID(c)
 
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
@@ -42,7 +50,7 @@ func GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := model.GetRespondentInfos(userID, questionnaireID)
+	myresponses, err := u.GetRespondentInfos(userID, questionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -51,10 +59,10 @@ func GetMyResponsesByID(c echo.Context) error {
 }
 
 // GetTargetedQuestionnaire GET /users/me/targeted
-func GetTargetedQuestionnaire(c echo.Context) error {
+func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
 	userID := model.GetUserID(c)
 	sort := c.QueryParam("sort")
-	ret, err := model.GetTargettedQuestionnaires(userID, "", sort)
+	ret, err := u.GetTargettedQuestionnaires(userID, "", sort)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -66,14 +74,14 @@ func GetTargetedQuestionnaire(c echo.Context) error {
 }
 
 // GetMyQuestionnaire GET /users/me/administrates
-func GetMyQuestionnaire(c echo.Context) error {
+func (u *User) GetMyQuestionnaire(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	// 自分が管理者になっているアンケート一覧
-	questionnaires, err := model.GetAdminQuestionnaires(userID)
+	questionnaires, err := u.GetAdminQuestionnaires(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaires: %w", err))
 	}
@@ -83,7 +91,7 @@ func GetMyQuestionnaire(c echo.Context) error {
 		questionnaireIDs = append(questionnaireIDs, questionnaire.ID)
 	}
 
-	targets, err := model.GetTargets(questionnaireIDs)
+	targets, err := u.GetTargets(questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get targets: %w", err))
 	}
@@ -97,7 +105,7 @@ func GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	respondents, err := model.GetRespondentsUserIDs(questionnaireIDs)
+	respondents, err := u.GetRespondentsUserIDs(questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondents: %w", err))
 	}
@@ -111,7 +119,7 @@ func GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	administrators, err := model.GetAdministrators(questionnaireIDs)
+	administrators, err := u.GetAdministrators(questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get administrators: %w", err))
 	}
@@ -190,10 +198,10 @@ func GetMyQuestionnaire(c echo.Context) error {
 }
 
 // GetTargettedQuestionnairesBytraQID GET /users/:traQID/targeted
-func GetTargettedQuestionnairesBytraQID(c echo.Context) error {
+func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	sort := c.QueryParam("sort")
-	ret, err := model.GetTargettedQuestionnaires(traQID, "unanswered", sort)
+	ret, err := u.GetTargettedQuestionnaires(traQID, "unanswered", sort)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
