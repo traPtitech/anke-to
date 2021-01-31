@@ -23,6 +23,17 @@ type Response struct {
 	model.ResponseRepository
 }
 
+// NewResponse Responseのコンストラクタ
+func NewResponse(questionnaire model.QuestionnaireRepository, validation model.ValidationRepository, scaleLabel model.ScaleLabelRepository, respondent model.RespondentRepository, response model.ResponseRepository) *Response {
+	return &Response{
+		QuestionnaireRepository: questionnaire,
+		ValidationRepository:    validation,
+		ScaleLabelRepository:    scaleLabel,
+		RespondentRepository:    respondent,
+		ResponseRepository:      response,
+	}
+}
+
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int                  `json:"questionnaireID"`
