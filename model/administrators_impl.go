@@ -12,6 +12,7 @@ type Administrators struct {
 	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
 }
 
+// Administrator AdministratorRepositoryの実装
 type Administrator struct{}
 
 // InsertAdministrators アンケートの管理者を追加

@@ -11,6 +11,8 @@ const (
 	userThree = "YumizSui"
 )
 
+var administrator = new(Administrator)
+
 //TestMain テストのmain
 func TestMain(m *testing.M) {
 	db, err := EstablishConnection()

@@ -19,7 +19,7 @@ func TestInsertRespondent(t *testing.T) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -125,7 +125,7 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -195,7 +195,7 @@ func TestDeleteRespondent(t *testing.T) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -435,7 +435,7 @@ func TestGetRespondentDetail(t *testing.T) {
 		Find(&questionnaire).Error
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -530,7 +530,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		Find(&questionnaire).Error
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -887,7 +887,7 @@ func TestTestCheckRespondent(t *testing.T) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	_, err = InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
@@ -967,7 +967,7 @@ func TestCheckRespondentByResponseID(t *testing.T) {
 	questionnaireID, err := InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = InsertAdministrators(questionnaireID, []string{userOne})
+	err = administrator.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	responseID, err := InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
