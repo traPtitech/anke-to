@@ -17,6 +17,11 @@ import (
 // Webhook Webhookの構造体
 type Webhook struct{}
 
+// NewWebhook Webhookのコンストラクター
+func NewWebhook() *Webhook {
+	return new(Webhook)
+}
+
 // PostMessage Webhookでのメッセージの投稿
 func (*Webhook) PostMessage(message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")

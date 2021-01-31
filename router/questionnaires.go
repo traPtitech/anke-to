@@ -14,6 +14,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/traq"
 )
 
 // Questionnaire Questionnaireの構造体
@@ -25,10 +26,11 @@ type Questionnaire struct {
 	model.OptionRepository
 	model.ScaleLabelRepository
 	model.ValidationRepository
+	traq.IWebhook
 }
 
 // NewQuestionnaire Questionnaireのコンストラクタ
-func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository, validation model.ValidationRepository) *Questionnaire {
+func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository, validation model.ValidationRepository, webhook traq.IWebhook) *Questionnaire {
 	return &Questionnaire{
 		QuestionnaireRepository: questionnaire,
 		TargetRepository:        target,
@@ -37,6 +39,7 @@ func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.
 		OptionRepository:        option,
 		ScaleLabelRepository:    scaleLabel,
 		ValidationRepository:    validation,
+		IWebhook:                webhook,
 	}
 }
 
@@ -116,7 +119,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		targetsMentionText = "@" + strings.Join(req.Targets, " @")
 	}
 
-	if err := model.PostMessage(
+	if err := q.PostMessage(
 		"### アンケート『" + "[" + req.Title + "](https://anke-to.trap.jp/questionnaires/" +
 			strconv.Itoa(lastID) + ")" + "』が作成されました\n" +
 			"#### 管理者\n" + strings.Join(req.Administrators, ",") + "\n" +

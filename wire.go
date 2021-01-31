@@ -6,6 +6,7 @@ import (
 	"github.com/google/wire"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
+	"github.com/traPtitech/anke-to/traq"
 )
 
 var (
@@ -18,6 +19,8 @@ var (
 	scaleLabelRepository    = wire.Bind(new(model.ScaleLabelRepository), new(*model.ScaleLabel))
 	targetRepository        = wire.Bind(new(model.TargetRepository), new(*model.Target))
 	validationRepository    = wire.Bind(new(model.ValidationRepository), new(*model.Validation))
+
+	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )
 
 func InjectAPIServer() *router.API {
@@ -38,6 +41,7 @@ func InjectAPIServer() *router.API {
 		model.NewScaleLabel,
 		model.NewTarget,
 		model.NewValidation,
+		traq.NewWebhook,
 		administratorRepository,
 		optionRepository,
 		questionnaireRepository,
@@ -47,6 +51,7 @@ func InjectAPIServer() *router.API {
 		scaleLabelRepository,
 		targetRepository,
 		validationRepository,
+		webhookBind,
 	)
 
 	return nil
