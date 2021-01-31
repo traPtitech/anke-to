@@ -18,6 +18,7 @@ var (
 	respondentImpl    = new(Respondent)
 	responseImpl      = new(Response)
 	scaleLabelImpl    = new(ScaleLabel)
+	validationImpl    = new(Validation)
 )
 
 //TestMain テストのmain

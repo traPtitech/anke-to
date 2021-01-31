@@ -177,7 +177,7 @@ func TestInsertValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -306,7 +306,7 @@ func TestUpdateValidation(t *testing.T) {
 			}
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
@@ -320,7 +320,7 @@ func TestUpdateValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = UpdateValidation(questionID, validation)
+		err = validationImpl.UpdateValidation(questionID, validation)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -419,14 +419,14 @@ func TestDeleteValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
 			questionID = -1
 		}
 
-		err = DeleteValidation(questionID)
+		err = validationImpl.DeleteValidation(questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -489,7 +489,7 @@ func TestGetValidations(t *testing.T) {
 	for _, validation := range validations {
 		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
 		require.NoError(t, err)
-		err = InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)
 		validation.QuestionID = questionID
 		questionIDs = append(questionIDs, questionID)
@@ -528,7 +528,7 @@ func TestGetValidations(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		validations, err := GetValidations(testCase.args.questionIDs)
+		validations, err := validationImpl.GetValidations(testCase.args.questionIDs)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -656,7 +656,7 @@ func TestCheckNumberValidation(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckNumberValidation(testCase.args.validation, testCase.args.response)
+		err := validationImpl.CheckNumberValidation(testCase.args.validation, testCase.args.response)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -739,7 +739,7 @@ func TestCheckTextValidation(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckTextValidation(testCase.args.validation, testCase.args.response)
+		err := validationImpl.CheckTextValidation(testCase.args.validation, testCase.args.response)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -825,7 +825,7 @@ func TestCheckNumberValid(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 
-		err := CheckNumberValid(testCase.args.validation.MinBound, testCase.args.validation.MaxBound)
+		err := validationImpl.CheckNumberValid(testCase.args.validation.MinBound, testCase.args.validation.MaxBound)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
