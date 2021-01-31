@@ -42,7 +42,11 @@ func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.
 
 // GetQuestionnaires GET /questionnaires
 func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
-	userID := model.GetUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	sort := c.QueryParam("sort")
 	search := c.QueryParam("search")
 	page := c.QueryParam("page")
@@ -158,7 +162,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 		"questionnaireID": questionnaire.ID,
 		"title":           questionnaire.Title,
 		"description":     questionnaire.Description,
-		"res_time_limit":  model.NullTimeToString(questionnaire.ResTimeLimit),
+		"res_time_limit":  questionnaire.ResTimeLimit,
 		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
 		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
 		"res_shared_to":   questionnaire.ResSharedTo,

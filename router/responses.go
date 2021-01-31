@@ -43,6 +43,10 @@ type Responses struct {
 
 // PostResponse POST /responses
 func (r *Response) PostResponse(c echo.Context) error {
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
 
 	req := Responses{}
 
@@ -130,7 +134,6 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	userID := model.GetUserID(c)
 	responseID, err := r.InsertRespondent(userID, req.ID, req.SubmittedAt)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -318,12 +321,16 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 // DeleteResponse DELETE /responses/:responseID
 func (r *Response) DeleteResponse(c echo.Context) error {
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	responseID, err := getResponseID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	userID := model.GetUserID(c)
 	if err := r.DeleteRespondent(userID, responseID); err != nil {
 		if errors.Is(err, model.ErrNoRecordDeleted) {
 			return echo.NewHTTPError(http.StatusNotFound, err)

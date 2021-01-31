@@ -9,6 +9,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -33,14 +34,22 @@ func NewUser(respondent model.RespondentRepository, questionnaire model.Question
 
 // GetUsersMe GET /users/me
 func (*User) GetUsersMe(c echo.Context) error {
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"traqID": model.GetUserID(c),
+		"traqID": userID,
 	})
 }
 
 // GetMyResponses GET /users/me/responses
 func (u *User) GetMyResponses(c echo.Context) error {
-	userID := model.GetUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
 
 	myResponses, err := u.GetRespondentInfos(userID)
 	if err != nil {
@@ -52,7 +61,10 @@ func (u *User) GetMyResponses(c echo.Context) error {
 
 // GetMyResponsesByID GET /users/me/responses/:questionnaireID
 func (u *User) GetMyResponsesByID(c echo.Context) error {
-	userID := model.GetUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
 
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
@@ -70,7 +82,11 @@ func (u *User) GetMyResponsesByID(c echo.Context) error {
 
 // GetTargetedQuestionnaire GET /users/me/targeted
 func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
-	userID := model.GetUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	sort := c.QueryParam("sort")
 	ret, err := u.GetTargettedQuestionnaires(userID, "", sort)
 	if err != nil {
@@ -144,17 +160,17 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 	}
 
 	type QuestionnaireInfo struct {
-		ID             int      `json:"questionnaireID"`
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		CreatedAt      string   `json:"created_at"`
-		ModifiedAt     string   `json:"modified_at"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		AllResponded   bool     `json:"all_responded"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
-		Respondents    []string `json:"respondents"`
+		ID             int       `json:"questionnaireID"`
+		Title          string    `json:"title"`
+		Description    string    `json:"description"`
+		ResTimeLimit   null.Time `json:"res_time_limit"`
+		CreatedAt      string    `json:"created_at"`
+		ModifiedAt     string    `json:"modified_at"`
+		ResSharedTo    string    `json:"res_shared_to"`
+		AllResponded   bool      `json:"all_responded"`
+		Targets        []string  `json:"targets"`
+		Administrators []string  `json:"administrators"`
+		Respondents    []string  `json:"respondents"`
 	}
 	ret := []QuestionnaireInfo{}
 
@@ -193,7 +209,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 			ID:             questionnaire.ID,
 			Title:          questionnaire.Title,
 			Description:    questionnaire.Description,
-			ResTimeLimit:   model.NullTimeToString(questionnaire.ResTimeLimit),
+			ResTimeLimit:   questionnaire.ResTimeLimit,
 			CreatedAt:      questionnaire.CreatedAt.Format(time.RFC3339),
 			ModifiedAt:     questionnaire.ModifiedAt.Format(time.RFC3339),
 			ResSharedTo:    questionnaire.ResSharedTo,
