@@ -17,6 +17,15 @@ type Middleware struct {
 	model.QuestionRepository
 }
 
+// NewMiddleware Middlewareのコンストラクタ
+func NewMiddleware(administrator model.AdministratorRepository, respondent model.RespondentRepository, question model.QuestionRepository) *Middleware {
+	return &Middleware{
+		AdministratorRepository: administrator,
+		RespondentRepository:    respondent,
+		QuestionRepository:      question,
+	}
+}
+
 const (
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
