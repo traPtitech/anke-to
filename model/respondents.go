@@ -4,8 +4,8 @@ package model
 
 import "gopkg.in/guregu/null.v3"
 
-// RespondentRepository RespondentのRepository
-type RespondentRepository interface {
+// IRespondent RespondentのRepository
+type IRespondent interface {
 	InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error)
 	UpdateSubmittedAt(responseID int) error
 	DeleteRespondent(userID string, responseID int) error

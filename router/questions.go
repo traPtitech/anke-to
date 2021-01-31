@@ -12,19 +12,19 @@ import (
 
 // Question Questionの構造体
 type Question struct {
-	model.ValidationRepository
-	model.QuestionRepository
-	model.OptionRepository
-	model.ScaleLabelRepository
+	model.IValidation
+	model.IQuestion
+	model.IOption
+	model.IScaleLabel
 }
 
 // NewQuestion Questionのコンストラクタ
-func NewQuestion(validation model.ValidationRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository) *Question {
+func NewQuestion(validation model.IValidation, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel) *Question {
 	return &Question{
-		ValidationRepository: validation,
-		QuestionRepository:   question,
-		OptionRepository:     option,
-		ScaleLabelRepository: scaleLabel,
+		IValidation: validation,
+		IQuestion:   question,
+		IOption:     option,
+		IScaleLabel: scaleLabel,
 	}
 }
 
@@ -202,7 +202,7 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	if err := q.QuestionRepository.DeleteQuestion(questionID); err != nil {
+	if err := q.IQuestion.DeleteQuestion(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

@@ -2,8 +2,8 @@
 
 package model
 
-// AdministratorRepository AdministratorのRepository
-type AdministratorRepository interface {
+// IAdministrator AdministratorのRepository
+type IAdministrator interface {
 	InsertAdministrators(questionnaireID int, administrators []string) error
 	DeleteAdministrators(questionnaireID int) error
 	GetAdministrators(questionnaireIDs []int) ([]Administrators, error)

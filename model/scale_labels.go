@@ -2,8 +2,8 @@
 
 package model
 
-// ScaleLabelRepository ScaleLabelのRepository
-type ScaleLabelRepository interface {
+// IScaleLabel ScaleLabelのRepository
+type IScaleLabel interface {
 	InsertScaleLabel(lastID int, label ScaleLabels) error
 	UpdateScaleLabel(questionID int, label ScaleLabels) error
 	DeleteScaleLabel(questionID int) error

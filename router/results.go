@@ -13,17 +13,17 @@ import (
 
 // Result Resultの構造体
 type Result struct {
-	model.RespondentRepository
-	model.QuestionnaireRepository
-	model.AdministratorRepository
+	model.IRespondent
+	model.IQuestionnaire
+	model.IAdministrator
 }
 
 // NewResult Resultのコンストラクタ
-func NewResult(respondent model.RespondentRepository, questionnaire model.QuestionnaireRepository, administrator model.AdministratorRepository) *Result {
+func NewResult(respondent model.IRespondent, questionnaire model.IQuestionnaire, administrator model.IAdministrator) *Result {
 	return &Result{
-		RespondentRepository:    respondent,
-		QuestionnaireRepository: questionnaire,
-		AdministratorRepository: administrator,
+		IRespondent:    respondent,
+		IQuestionnaire: questionnaire,
+		IAdministrator: administrator,
 	}
 }
 

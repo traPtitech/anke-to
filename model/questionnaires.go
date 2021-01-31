@@ -4,8 +4,8 @@ package model
 
 import "gopkg.in/guregu/null.v3"
 
-// QuestionnaireRepository QuestionnaireのRepository
-type QuestionnaireRepository interface {
+// IQuestionnaire QuestionnaireのRepository
+type IQuestionnaire interface {
 	InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error)
 	UpdateQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error
 	DeleteQuestionnaire(questionnaireID int) error

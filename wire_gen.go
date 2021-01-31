@@ -42,15 +42,15 @@ func InjectAPIServer() *router.API {
 // wire.go:
 
 var (
-	administratorBind = wire.Bind(new(model.AdministratorRepository), new(*model.Administrator))
-	optionBind        = wire.Bind(new(model.OptionRepository), new(*model.Option))
-	questionnaireBind = wire.Bind(new(model.QuestionnaireRepository), new(*model.Questionnaire))
-	questionBind      = wire.Bind(new(model.QuestionRepository), new(*model.Question))
-	respondentBind    = wire.Bind(new(model.RespondentRepository), new(*model.Respondent))
-	responseBind      = wire.Bind(new(model.ResponseRepository), new(*model.Response))
-	scaleLabelBind    = wire.Bind(new(model.ScaleLabelRepository), new(*model.ScaleLabel))
-	targetBind        = wire.Bind(new(model.TargetRepository), new(*model.Target))
-	validationBind    = wire.Bind(new(model.ValidationRepository), new(*model.Validation))
+	administratorBind = wire.Bind(new(model.IAdministrator), new(*model.Administrator))
+	optionBind        = wire.Bind(new(model.IOption), new(*model.Option))
+	questionnaireBind = wire.Bind(new(model.IQuestionnaire), new(*model.Questionnaire))
+	questionBind      = wire.Bind(new(model.IQuestion), new(*model.Question))
+	respondentBind    = wire.Bind(new(model.IRespondent), new(*model.Respondent))
+	responseBind      = wire.Bind(new(model.IResponse), new(*model.Response))
+	scaleLabelBind    = wire.Bind(new(model.IScaleLabel), new(*model.ScaleLabel))
+	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
+	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )

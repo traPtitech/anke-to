@@ -12,17 +12,17 @@ import (
 
 // Middleware Middlewareの構造体
 type Middleware struct {
-	model.AdministratorRepository
-	model.RespondentRepository
-	model.QuestionRepository
+	model.IAdministrator
+	model.IRespondent
+	model.IQuestion
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.AdministratorRepository, respondent model.RespondentRepository, question model.QuestionRepository) *Middleware {
+func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion) *Middleware {
 	return &Middleware{
-		AdministratorRepository: administrator,
-		RespondentRepository:    respondent,
-		QuestionRepository:      question,
+		IAdministrator: administrator,
+		IRespondent:    respondent,
+		IQuestion:      question,
 	}
 }
 

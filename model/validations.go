@@ -2,8 +2,8 @@
 
 package model
 
-// ValidationRepository ValidationのRepository
-type ValidationRepository interface {
+// IValidation ValidationのRepository
+type IValidation interface {
 	InsertValidation(lastID int, validation Validations) error
 	UpdateValidation(questionID int, validation Validations) error
 	DeleteValidation(questionID int) error

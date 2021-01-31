@@ -19,27 +19,27 @@ import (
 
 // Questionnaire Questionnaireの構造体
 type Questionnaire struct {
-	model.QuestionnaireRepository
-	model.TargetRepository
-	model.AdministratorRepository
-	model.QuestionRepository
-	model.OptionRepository
-	model.ScaleLabelRepository
-	model.ValidationRepository
+	model.IQuestionnaire
+	model.ITarget
+	model.IAdministrator
+	model.IQuestion
+	model.IOption
+	model.IScaleLabel
+	model.IValidation
 	traq.IWebhook
 }
 
 // NewQuestionnaire Questionnaireのコンストラクタ
-func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository, validation model.ValidationRepository, webhook traq.IWebhook) *Questionnaire {
+func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel, validation model.IValidation, webhook traq.IWebhook) *Questionnaire {
 	return &Questionnaire{
-		QuestionnaireRepository: questionnaire,
-		TargetRepository:        target,
-		AdministratorRepository: administrator,
-		QuestionRepository:      question,
-		OptionRepository:        option,
-		ScaleLabelRepository:    scaleLabel,
-		ValidationRepository:    validation,
-		IWebhook:                webhook,
+		IQuestionnaire: questionnaire,
+		ITarget:        target,
+		IAdministrator: administrator,
+		IQuestion:      question,
+		IOption:        option,
+		IScaleLabel:    scaleLabel,
+		IValidation:    validation,
+		IWebhook:       webhook,
 	}
 }
 
@@ -63,7 +63,7 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	if pageNum <= 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
-	questionnaires, pageMax, err := q.QuestionnaireRepository.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
+	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -231,7 +231,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
-	if err := q.QuestionnaireRepository.DeleteQuestionnaire(questionnaireID); err != nil {
+	if err := q.IQuestionnaire.DeleteQuestionnaire(questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -254,7 +254,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	allquestions, err := q.QuestionRepository.GetQuestions(questionnaireID)
+	allquestions, err := q.IQuestion.GetQuestions(questionnaireID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)

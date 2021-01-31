@@ -16,21 +16,21 @@ import (
 
 // Response Responseの構造体
 type Response struct {
-	model.QuestionnaireRepository
-	model.ValidationRepository
-	model.ScaleLabelRepository
-	model.RespondentRepository
-	model.ResponseRepository
+	model.IQuestionnaire
+	model.IValidation
+	model.IScaleLabel
+	model.IRespondent
+	model.IResponse
 }
 
 // NewResponse Responseのコンストラクタ
-func NewResponse(questionnaire model.QuestionnaireRepository, validation model.ValidationRepository, scaleLabel model.ScaleLabelRepository, respondent model.RespondentRepository, response model.ResponseRepository) *Response {
+func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidation, scaleLabel model.IScaleLabel, respondent model.IRespondent, response model.IResponse) *Response {
 	return &Response{
-		QuestionnaireRepository: questionnaire,
-		ValidationRepository:    validation,
-		ScaleLabelRepository:    scaleLabel,
-		RespondentRepository:    respondent,
-		ResponseRepository:      response,
+		IQuestionnaire: questionnaire,
+		IValidation:    validation,
+		IScaleLabel:    scaleLabel,
+		IRespondent:    respondent,
+		IResponse:      response,
 	}
 }
 
@@ -289,7 +289,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := r.ResponseRepository.DeleteResponse(responseID); err != nil {
+	if err := r.IResponse.DeleteResponse(responseID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

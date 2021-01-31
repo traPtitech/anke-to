@@ -2,8 +2,8 @@
 
 package model
 
-// OptionRepository OptionのRepository
-type OptionRepository interface {
+// IOption OptionのRepository
+type IOption interface {
 	InsertOption(lastID int, num int, body string) error
 	UpdateOptions(options []string, questionID int) error
 	DeleteOptions(questionID int) error

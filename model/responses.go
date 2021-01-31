@@ -2,8 +2,8 @@
 
 package model
 
-// ResponseRepository ResponseのRepository
-type ResponseRepository interface {
+// IResponse ResponseのRepository
+type IResponse interface {
 	InsertResponses(responseID int, responseMetas []*ResponseMeta) error
 	DeleteResponse(responseID int) error
 }

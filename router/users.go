@@ -16,19 +16,19 @@ import (
 
 // User Userの構造体
 type User struct {
-	model.RespondentRepository
-	model.QuestionnaireRepository
-	model.TargetRepository
-	model.AdministratorRepository
+	model.IRespondent
+	model.IQuestionnaire
+	model.ITarget
+	model.IAdministrator
 }
 
 // NewUser Userのコンストラクタ
-func NewUser(respondent model.RespondentRepository, questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository) *User {
+func NewUser(respondent model.IRespondent, questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator) *User {
 	return &User{
-		RespondentRepository:    respondent,
-		QuestionnaireRepository: questionnaire,
-		TargetRepository:        target,
-		AdministratorRepository: administrator,
+		IRespondent:    respondent,
+		IQuestionnaire: questionnaire,
+		ITarget:        target,
+		IAdministrator: administrator,
 	}
 }
 
