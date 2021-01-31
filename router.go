@@ -6,6 +6,8 @@ import (
 
 // SetRouting ルーティングの設定
 func SetRouting(e *echo.Echo) {
+	api := InjectAPIServer()
+
 	// Static Files
 	e.Static("/", "client/dist")
 	e.Static("/js", "client/dist/js")
@@ -17,34 +19,34 @@ func SetRouting(e *echo.Echo) {
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
 
-	api := e.Group("/api", UserAuthenticate)
+	echoAPI := e.Group("/api", api.UserAuthenticate)
 	{
-		apiQuestionnnaires := api.Group("/questionnaires")
+		apiQuestionnnaires := echoAPI.Group("/questionnaires")
 		{
-			apiQuestionnnaires.GET("", GetQuestionnaires)
-			apiQuestionnnaires.POST("", PostQuestionnaire)
-			apiQuestionnnaires.GET("/:questionnaireID", GetQuestionnaire)
-			apiQuestionnnaires.PATCH("/:questionnaireID", EditQuestionnaire, QuestionnaireAdministratorAuthenticate)
-			apiQuestionnnaires.DELETE("/:questionnaireID", DeleteQuestionnaire, QuestionnaireAdministratorAuthenticate)
-			apiQuestionnnaires.GET("/:questionnaireID/questions", GetQuestions)
+			apiQuestionnnaires.GET("", api.GetQuestionnaires)
+			apiQuestionnnaires.POST("", api.PostQuestionnaire)
+			apiQuestionnnaires.GET("/:questionnaireID", api.GetQuestionnaire)
+			apiQuestionnnaires.PATCH("/:questionnaireID", api.EditQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.DELETE("/:questionnaireID", api.DeleteQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
+			apiQuestionnnaires.GET("/:questionnaireID/questions", api.GetQuestions)
 		}
 
-		apiQuestions := api.Group("/questions")
+		apiQuestions := echoAPI.Group("/questions")
 		{
-			apiQuestions.POST("", PostQuestion)
-			apiQuestions.PATCH("/:questionID", EditQuestion, QuestionAdministratorAuthenticate)
-			apiQuestions.DELETE("/:questionID", DeleteQuestion, QuestionAdministratorAuthenticate)
+			apiQuestions.POST("", api.PostQuestion)
+			apiQuestions.PATCH("/:questionID", api.EditQuestion, api.QuestionAdministratorAuthenticate)
+			apiQuestions.DELETE("/:questionID", api.DeleteQuestion, api.QuestionAdministratorAuthenticate)
 		}
 
-		apiResponses := api.Group("/responses")
+		apiResponses := echoAPI.Group("/responses")
 		{
-			apiResponses.POST("", PostResponse)
-			apiResponses.GET("/:responseID", GetResponse)
-			apiResponses.PATCH("/:responseID", EditResponse, RespondentAuthenticate)
-			apiResponses.DELETE("/:responseID", DeleteResponse, RespondentAuthenticate)
+			apiResponses.POST("", api.PostResponse)
+			apiResponses.GET("/:responseID", api.GetResponse)
+			apiResponses.PATCH("/:responseID", api.EditResponse, api.RespondentAuthenticate)
+			apiResponses.DELETE("/:responseID", api.DeleteResponse, api.RespondentAuthenticate)
 		}
 
-		apiUsers := api.Group("/users")
+		apiUsers := echoAPI.Group("/users")
 		{
 			/*
 				TODO
@@ -52,18 +54,18 @@ func SetRouting(e *echo.Echo) {
 			*/
 			apiUsersMe := apiUsers.Group("/me")
 			{
-				apiUsersMe.GET("", GetUsersMe)
-				apiUsersMe.GET("/responses", GetMyResponses)
-				apiUsersMe.GET("/responses/:questionnaireID", GetMyResponsesByID)
-				apiUsersMe.GET("/targeted", GetTargetedQuestionnaire)
-				apiUsersMe.GET("/administrates", GetMyQuestionnaire)
+				apiUsersMe.GET("", api.GetUsersMe)
+				apiUsersMe.GET("/responses", api.GetMyResponses)
+				apiUsersMe.GET("/responses/:questionnaireID", api.GetMyResponsesByID)
+				apiUsersMe.GET("/targeted", api.GetTargetedQuestionnaire)
+				apiUsersMe.GET("/administrates", api.GetMyQuestionnaire)
 			}
-			apiUsers.GET("/:traQID/targeted", GetTargettedQuestionnairesBytraQID)
+			apiUsers.GET("/:traQID/targeted", api.GetTargettedQuestionnairesBytraQID)
 		}
 
-		apiResults := api.Group("/results")
+		apiResults := echoAPI.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", GetResults)
+			apiResults.GET("/:questionnaireID", api.GetResults)
 		}
 	}
 }
