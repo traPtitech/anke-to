@@ -21,6 +21,16 @@ type User struct {
 	model.AdministratorRepository
 }
 
+// NewUser Userのコンストラクタ
+func NewUser(respondent model.RespondentRepository, questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository) *User {
+	return &User{
+		RespondentRepository:    respondent,
+		QuestionnaireRepository: questionnaire,
+		TargetRepository:        target,
+		AdministratorRepository: administrator,
+	}
+}
+
 // GetUsersMe GET /users/me
 func (*User) GetUsersMe(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
