@@ -2,10 +2,21 @@ package main
 
 import (
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 // SetRouting ルーティングの設定
-func SetRouting(e *echo.Echo) {
+func SetRouting(port string) {
+	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowCredentials: true,
+	}))
+
+	// Middleware
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+
 	api := InjectAPIServer()
 
 	// Static Files
@@ -68,4 +79,6 @@ func SetRouting(e *echo.Echo) {
 			apiResults.GET("/:questionnaireID", api.GetResults)
 		}
 	}
+
+	e.Logger.Fatal(e.Start(port))
 }

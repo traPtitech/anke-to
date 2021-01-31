@@ -7,9 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/tuning"
 )
@@ -44,18 +41,6 @@ func main() {
 		db.LogMode(true)
 	}
 
-	e := echo.New()
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
-		AllowCredentials: true,
-	}))
-
-	// Middleware
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-
-	SetRouting(e)
-
 	if env == "pprof" {
 		runtime.SetBlockProfileRate(1)
 		go func() {
@@ -64,6 +49,6 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
-	// Start server
-	e.Logger.Fatal(e.Start(port))
+
+	SetRouting(port)
 }
