@@ -27,6 +27,19 @@ type Questionnaire struct {
 	model.ValidationRepository
 }
 
+// NewQuestionnaire Questionnaireのコンストラクタ
+func NewQuestionnaire(questionnaire model.QuestionnaireRepository, target model.TargetRepository, administrator model.AdministratorRepository, question model.QuestionRepository, option model.OptionRepository, scaleLabel model.ScaleLabelRepository, validation model.ValidationRepository) *Questionnaire {
+	return &Questionnaire{
+		QuestionnaireRepository: questionnaire,
+		TargetRepository:        target,
+		AdministratorRepository: administrator,
+		QuestionRepository:      question,
+		OptionRepository:        option,
+		ScaleLabelRepository:    scaleLabel,
+		ValidationRepository:    validation,
+	}
+}
+
 // GetQuestionnaires GET /questionnaires
 func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	userID := model.GetUserID(c)
