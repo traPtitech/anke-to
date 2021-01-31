@@ -14,6 +14,15 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Response Responseの構造体
+type Response struct {
+	model.QuestionnaireRepository
+	model.ValidationRepository
+	model.ScaleLabelRepository
+	model.RespondentRepository
+	model.ResponseRepository
+}
+
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int                  `json:"questionnaireID"`
@@ -22,7 +31,7 @@ type Responses struct {
 }
 
 // PostResponse POST /responses
-func PostResponse(c echo.Context) error {
+func (r *Response) PostResponse(c echo.Context) error {
 
 	req := Responses{}
 
@@ -31,7 +40,7 @@ func PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -50,7 +59,7 @@ func PostResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs)
+	validations, err := r.GetValidations(questionIDs)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -60,7 +69,7 @@ func PostResponse(c echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
-			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
@@ -70,7 +79,7 @@ func PostResponse(c echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
-			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
@@ -87,7 +96,7 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := r.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -104,14 +113,14 @@ func PostResponse(c echo.Context) error {
 			if !ok {
 				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
 	}
 
 	userID := model.GetUserID(c)
-	responseID, err := model.InsertRespondent(userID, req.ID, req.SubmittedAt)
+	responseID, err := r.InsertRespondent(userID, req.ID, req.SubmittedAt)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -134,7 +143,7 @@ func PostResponse(c echo.Context) error {
 		}
 	}
 
-	err = model.InsertResponses(responseID, responseMetas)
+	err = r.InsertResponses(responseID, responseMetas)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
@@ -148,14 +157,14 @@ func PostResponse(c echo.Context) error {
 }
 
 // GetResponse GET /responses/:responseID
-func GetResponse(c echo.Context) error {
+func (r *Response) GetResponse(c echo.Context) error {
 	strResponseID := c.Param("responseID")
 	responseID, err := strconv.Atoi(strResponseID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to parse responseID(%s) to integer: %w", strResponseID, err))
 	}
 
-	respondentDetail, err := model.GetRespondentDetail(responseID)
+	respondentDetail, err := r.GetRespondentDetail(responseID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -167,7 +176,7 @@ func GetResponse(c echo.Context) error {
 }
 
 // EditResponse PATCH /responses/:responseID
-func EditResponse(c echo.Context) error {
+func (r *Response) EditResponse(c echo.Context) error {
 	responseID, err := getResponseID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
@@ -179,7 +188,7 @@ func EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := model.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -198,7 +207,7 @@ func EditResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := model.GetValidations(questionIDs)
+	validations, err := r.GetValidations(questionIDs)
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -208,7 +217,7 @@ func EditResponse(c echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
-			if err := model.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
@@ -218,7 +227,7 @@ func EditResponse(c echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
-			if err := model.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
@@ -235,7 +244,7 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabels, err := model.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := r.GetScaleLabels(scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -252,21 +261,21 @@ func EditResponse(c echo.Context) error {
 			if !ok {
 				label = &model.ScaleLabels{}
 			}
-			if err := model.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
 	}
 
 	if req.SubmittedAt.Valid {
-		err := model.UpdateSubmittedAt(responseID)
+		err := r.UpdateSubmittedAt(responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))
 		}
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := model.DeleteResponse(responseID); err != nil {
+	if err := r.ResponseRepository.DeleteResponse(responseID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -288,7 +297,7 @@ func EditResponse(c echo.Context) error {
 		}
 	}
 
-	err = model.InsertResponses(responseID, responseMetas)
+	err = r.InsertResponses(responseID, responseMetas)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
@@ -297,14 +306,14 @@ func EditResponse(c echo.Context) error {
 }
 
 // DeleteResponse DELETE /responses/:responseID
-func DeleteResponse(c echo.Context) error {
+func (r *Response) DeleteResponse(c echo.Context) error {
 	responseID, err := getResponseID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
 	userID := model.GetUserID(c)
-	if err := model.DeleteRespondent(userID, responseID); err != nil {
+	if err := r.DeleteRespondent(userID, responseID); err != nil {
 		if errors.Is(err, model.ErrNoRecordDeleted) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
