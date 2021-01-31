@@ -104,7 +104,7 @@ func TestInsertResponses(t *testing.T) {
 		if !testCase.args.validID {
 			responseID = -1
 		}
-		err = InsertResponses(responseID, testCase.args.responseMetas)
+		err = responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -188,13 +188,13 @@ func TestDeleteResponse(t *testing.T) {
 	for _, testCase := range testCases {
 		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
-		err = InsertResponses(responseID, testCase.args.responseMetas)
+		err = responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			responseID = -1
 		}
 
-		err = DeleteResponse(responseID)
+		err = responseImpl.DeleteResponse(responseID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

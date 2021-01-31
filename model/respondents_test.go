@@ -481,7 +481,7 @@ func TestGetRespondentDetail(t *testing.T) {
 		if !testCase.args.validresponseID {
 			responseID = -1
 		} else {
-			err := InsertResponses(responseID, testCase.args.responseMetas)
+			err := responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
 			require.NoError(t, err)
 		}
 
@@ -628,7 +628,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		require.NoError(t, err)
 		responseIDs = append(responseIDs, responseID)
 
-		err = InsertResponses(responseIDs[i], responseMetasList[i])
+		err = responseImpl.InsertResponses(responseIDs[i], responseMetasList[i])
 		require.NoError(t, err)
 
 	}

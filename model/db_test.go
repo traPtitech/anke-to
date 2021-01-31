@@ -15,6 +15,7 @@ var administratorImpl = new(Administrator)
 var questionnaireImpl = new(Questionnaire)
 var questionImpl = new(Question)
 var respondentImpl = new(Respondent)
+var responseImpl = new(Response)
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {
