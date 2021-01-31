@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	administratorRepository = wire.Bind(new(model.AdministratorRepository), new(*model.Administrator))
-	optionRepository        = wire.Bind(new(model.OptionRepository), new(*model.Option))
-	questionnaireRepository = wire.Bind(new(model.QuestionnaireRepository), new(*model.Questionnaire))
-	questionRepository      = wire.Bind(new(model.QuestionRepository), new(*model.Question))
-	respondentRepository    = wire.Bind(new(model.RespondentRepository), new(*model.Respondent))
-	responseRepository      = wire.Bind(new(model.ResponseRepository), new(*model.Response))
-	scaleLabelRepository    = wire.Bind(new(model.ScaleLabelRepository), new(*model.ScaleLabel))
-	targetRepository        = wire.Bind(new(model.TargetRepository), new(*model.Target))
-	validationRepository    = wire.Bind(new(model.ValidationRepository), new(*model.Validation))
+	administratorBind = wire.Bind(new(model.AdministratorRepository), new(*model.Administrator))
+	optionBind        = wire.Bind(new(model.OptionRepository), new(*model.Option))
+	questionnaireBind = wire.Bind(new(model.QuestionnaireRepository), new(*model.Questionnaire))
+	questionBind      = wire.Bind(new(model.QuestionRepository), new(*model.Question))
+	respondentBind    = wire.Bind(new(model.RespondentRepository), new(*model.Respondent))
+	responseBind      = wire.Bind(new(model.ResponseRepository), new(*model.Response))
+	scaleLabelBind    = wire.Bind(new(model.ScaleLabelRepository), new(*model.ScaleLabel))
+	targetBind        = wire.Bind(new(model.TargetRepository), new(*model.Target))
+	validationBind    = wire.Bind(new(model.ValidationRepository), new(*model.Validation))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )
@@ -42,15 +42,15 @@ func InjectAPIServer() *router.API {
 		model.NewTarget,
 		model.NewValidation,
 		traq.NewWebhook,
-		administratorRepository,
-		optionRepository,
-		questionnaireRepository,
-		questionRepository,
-		respondentRepository,
-		responseRepository,
-		scaleLabelRepository,
-		targetRepository,
-		validationRepository,
+		administratorBind,
+		optionBind,
+		questionnaireBind,
+		questionBind,
+		respondentBind,
+		responseBind,
+		scaleLabelBind,
+		targetBind,
+		validationBind,
 		webhookBind,
 	)
 
