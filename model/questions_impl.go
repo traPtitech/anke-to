@@ -124,9 +124,6 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 		Find(&questions).Error
 	// アンケートidの一致する質問を取る
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, fmt.Errorf("failed to get questions: %w", gorm.ErrRecordNotFound)
-		}
 		return nil, fmt.Errorf("failed to get questions: %w", err)
 	}
 
