@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@traptitech/traq": "^3.4.5-1",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "base64url": "^3.0.1",
     "bulma": "^0.9.1",
     "js-sha256": "^0.9.0",
