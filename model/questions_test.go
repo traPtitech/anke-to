@@ -32,6 +32,7 @@ func TestQuestions(t *testing.T) {
 
 	t.Run("InsertQuestion", insertQuestionTest)
 	t.Run("UpdateQuestion", updateQuestionTest)
+	t.Run("DeleteQuestion", deleteQuestionTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
@@ -559,5 +560,97 @@ func updateQuestionTest(t *testing.T) {
 
 		assertion.WithinDuration(question.CreatedAt, question.CreatedAt, time.Second, testCase.description, "created_at")
 		assertion.Equal(false, question.DeletedAt.Valid, testCase.description, "deleted_at")
+	}
+}
+
+func deleteQuestionTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		questionID int
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	invalidQuestionID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionID).First(&Questions{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionID *= 10
+	}
+
+	testQuestions := []*Questions{
+		{
+			QuestionnaireID: questionnaireDatas[0].ID,
+			PageNum:         1,
+			QuestionNum:     1,
+			Type:            "TextArea",
+			Body:            "自由記述欄",
+			IsRequired:      false,
+		},
+	}
+
+	for _, question := range testQuestions {
+		err := db.Create(question).Error
+		if err != nil {
+			t.Errorf("failed to insert question: %w", err)
+		}
+	}
+
+	testCases := []test{
+		{
+			description: "questionID: valid",
+			args: args{
+				questionID: testQuestions[0].ID,
+			},
+		},
+		{
+			description: "questionID: invalid",
+			args: args{
+				questionID: invalidQuestionID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrNoRecordDeleted,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		err := questionImpl.DeleteQuestion(testCase.args.questionID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		actualQuestion := Questions{}
+		err = db.Unscoped().Where("id = ?", testCase.args.questionID).First(&actualQuestion).Error
+		if err != nil {
+			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+		}
+
+		assertion.True(actualQuestion.DeletedAt.Valid, testCase.description, "deleted_at")
 	}
 }

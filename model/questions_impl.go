@@ -100,11 +100,15 @@ func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum in
 
 //DeleteQuestion 質問の削除
 func (*Question) DeleteQuestion(questionID int) error {
-	err := db.
+	result := db.
 		Where("id = ?", questionID).
-		Delete(&Questions{}).Error
+		Delete(&Questions{})
+	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete a question record: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return ErrNoRecordDeleted
 	}
 
 	return nil
