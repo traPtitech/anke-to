@@ -2,6 +2,10 @@ package model
 
 import (
 	"testing"
+	"time"
+
+	"github.com/jinzhu/gorm"
+	"github.com/stretchr/testify/assert"
 )
 
 const questionsTestUserID = "questionsUser"
@@ -13,12 +17,12 @@ type QuestionsTestQuestionnaireData struct {
 }
 
 type QuestionsTestData struct {
-	Question
+	Questions
 }
 
 var (
 	questionnaireDatas = []QuestionsTestQuestionnaireData{}
-	datas              = []QuestionsTestData{}
+	questionDatas      = []QuestionsTestData{}
 )
 
 func TestQuestions(t *testing.T) {
@@ -60,9 +64,9 @@ func setupQuestionsTest(t *testing.T) {
 		}
 	}
 
-	datas = []QuestionsTestData{
+	questionDatas = []QuestionsTestData{
 		{
-			Question: Question{
+			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     1,
@@ -71,42 +75,42 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "TextArea",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "Number",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "MultipleChoice",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "Checkbox",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "Dropdown",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "LinearScale",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "Date",
 			},
 		},
 		{
-			Question: Question{
+			Questions: Questions{
 				Type: "Time",
 			},
 		},
@@ -117,15 +121,10 @@ func insertQuestionTest(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
-	//assertion := assert.New(t)
+	assertion := assert.New(t)
 
 	type args struct {
-		questionnaireID int
-		pageNum         int
-		questionNum     int
-		questionType    string
-		body            string
-		isRequired      bool
+		Questions
 	}
 	type expect struct {
 		isErr bool
@@ -135,5 +134,185 @@ func insertQuestionTest(t *testing.T) {
 		description string
 		args
 		expect
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	testCases := []test{
+		{
+			description: "type:TextArea, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:Number, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Number",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:MultipleChoice, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "MultipleChoice",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:Checkbox, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Checkbox",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:Dropdown, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Dropdown",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:LinearScale, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "LinearScale",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:Date, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Date",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:Time, required: false",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Time",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:TextArea, required: true",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      true,
+				},
+			},
+		},
+		{
+			description: "invalid questionnaireID",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: invalidQuestionnaireID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		createdAt := time.Now()
+		questionID, err := questionImpl.InsertQuestion(testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		question := Questions{}
+		err = db.Where("id = ?", questionID).First(&question).Error
+		if err != nil {
+			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+		}
+
+		assertion.Equal(testCase.args.QuestionnaireID, question.QuestionnaireID, testCase.description, "questionnaire_id")
+		assertion.Equal(testCase.args.PageNum, question.PageNum, testCase.description, "page_num")
+		assertion.Equal(testCase.args.QuestionNum, question.QuestionNum, testCase.description, "question_num")
+		assertion.Equal(testCase.args.Type, question.Type, testCase.description, "type")
+		assertion.Equal(testCase.args.Body, question.Body, testCase.description, "body")
+		assertion.Equal(testCase.args.IsRequired, question.IsRequired, testCase.description, "is_required")
+
+		assertion.WithinDuration(createdAt, question.CreatedAt, 2*time.Second, testCase.description, "created_at")
+		assertion.Equal(false, question.DeletedAt.Valid, testCase.description, "deleted_at")
 	}
 }
