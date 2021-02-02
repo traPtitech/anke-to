@@ -31,6 +31,7 @@ func TestQuestions(t *testing.T) {
 	setupQuestionsTest(t)
 
 	t.Run("InsertQuestion", insertQuestionTest)
+	t.Run("UpdateQuestion", updateQuestionTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
@@ -317,6 +318,246 @@ func insertQuestionTest(t *testing.T) {
 		assertion.Equal(testCase.args.IsRequired, question.IsRequired, testCase.description, "is_required")
 
 		assertion.WithinDuration(createdAt, question.CreatedAt, 2*time.Second, testCase.description, "created_at")
+		assertion.Equal(false, question.DeletedAt.Valid, testCase.description, "deleted_at")
+	}
+}
+
+func updateQuestionTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type before struct {
+		Questions
+	}
+	type after struct {
+		Questions
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		before
+		after
+		expect
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	testCases := []test{
+		{
+			description: "type:TextArea->Number",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "Number",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "questionnaireID: valid->valid",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[1].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "questionnaireID: valid->invalid",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: invalidQuestionnaireID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "pageNum: 1->2",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         2,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "questionNum: 1->2",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     2,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "body: 自由記述欄->自由記述欄1",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     2,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "isRequired: false->true",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     2,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      true,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		question := &testCase.before.Questions
+		err := db.Create(question).Error
+		if err != nil {
+			t.Errorf("failed to insert question(%s): %w", testCase.description, err)
+		}
+
+		err = questionImpl.UpdateQuestion(testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		actualQuestion := Questions{}
+		err = db.Where("id = ?", question.ID).First(&actualQuestion).Error
+		if err != nil {
+			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+		}
+
+		assertion.Equal(testCase.after.QuestionnaireID, actualQuestion.QuestionnaireID, testCase.description, "questionnaire_id")
+		assertion.Equal(testCase.after.PageNum, actualQuestion.PageNum, testCase.description, "page_num")
+		assertion.Equal(testCase.after.QuestionNum, actualQuestion.QuestionNum, testCase.description, "question_num")
+		assertion.Equal(testCase.after.Type, actualQuestion.Type, testCase.description, "type")
+		assertion.Equal(testCase.after.Body, actualQuestion.Body, testCase.description, "body")
+		assertion.Equal(testCase.after.IsRequired, actualQuestion.IsRequired, testCase.description, "is_required")
+
+		assertion.WithinDuration(question.CreatedAt, question.CreatedAt, time.Second, testCase.description, "created_at")
 		assertion.Equal(false, question.DeletedAt.Valid, testCase.description, "deleted_at")
 	}
 }
