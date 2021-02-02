@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,8 +22,9 @@ type QuestionsTestData struct {
 }
 
 var (
-	questionnaireDatas = []QuestionsTestQuestionnaireData{}
-	questionDatas      = []QuestionsTestData{}
+	questionnaireDatas       = []QuestionsTestQuestionnaireData{}
+	questionDatas            = []QuestionsTestData{}
+	questionQuestionnaireMap = map[int][]*Questions{}
 )
 
 func TestQuestions(t *testing.T) {
@@ -33,6 +35,7 @@ func TestQuestions(t *testing.T) {
 	t.Run("InsertQuestion", insertQuestionTest)
 	t.Run("UpdateQuestion", updateQuestionTest)
 	t.Run("DeleteQuestion", deleteQuestionTest)
+	t.Run("GetQuestions", getQuestionsTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
@@ -82,44 +85,113 @@ func setupQuestionsTest(t *testing.T) {
 		},
 		{
 			Questions: Questions{
-				Type: "TextArea",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "TextArea",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "Number",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Number",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "MultipleChoice",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "MultipleChoice",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "Checkbox",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Checkbox",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "Dropdown",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Dropdown",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "LinearScale",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "LinearScale",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "Date",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Date",
+				Body:            "",
 			},
 		},
 		{
 			Questions: Questions{
-				Type: "Time",
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Time",
+				Body:            "",
 			},
 		},
+		{
+			Questions: Questions{
+				QuestionnaireID: questionnaireDatas[1].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Text",
+				Body:            "",
+				DeletedAt: mysql.NullTime{
+					Time:  time.Now(),
+					Valid: true,
+				},
+			},
+		},
+		{
+			Questions: Questions{
+				QuestionnaireID: questionnaireDatas[0].ID,
+				PageNum:         1,
+				QuestionNum:     1,
+				Type:            "Text",
+				Body:            "",
+			},
+		},
+	}
+
+	for i, questionData := range questionDatas {
+		err := db.Create(&questionDatas[i].Questions).Error
+		if err != nil {
+			t.Errorf("failed to create questionnaire(%+v): %w", questionData, err)
+		}
+
+		if !questionData.Questions.DeletedAt.Valid {
+			questions, ok := questionQuestionnaireMap[questionData.Questions.QuestionnaireID]
+			if !ok {
+				questionQuestionnaireMap[questionData.Questions.QuestionnaireID] = []*Questions{}
+			}
+			questionQuestionnaireMap[questionData.Questions.QuestionnaireID] = append(questions, &questionDatas[i].Questions)
+		}
 	}
 }
 
@@ -652,5 +724,96 @@ func deleteQuestionTest(t *testing.T) {
 		}
 
 		assertion.True(actualQuestion.DeletedAt.Valid, testCase.description, "deleted_at")
+	}
+}
+
+func getQuestionsTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		questionnaireID int
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	testCases := []test{
+		{
+			description: "questionID: valid",
+			args: args{
+				questionnaireID: questionnaireDatas[1].ID,
+			},
+		},
+		{
+			description: "questionID: invalid",
+			args: args{
+				questionnaireID: invalidQuestionnaireID,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		questions, err := questionImpl.GetQuestions(testCase.args.questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		actualQuestionIDs := make([]int, 0, len(questions))
+		for _, question := range questions {
+			actualQuestionIDs = append(actualQuestionIDs, question.ID)
+		}
+
+		expectQuestions := questionQuestionnaireMap[testCase.questionnaireID]
+		if expectQuestions == nil {
+			expectQuestions = []*Questions{}
+		}
+		expectQuestionIDs := make([]int, 0, len(expectQuestions))
+		for _, question := range expectQuestions {
+			expectQuestionIDs = append(expectQuestionIDs, question.ID)
+		}
+
+		assertion.ElementsMatch(expectQuestionIDs, actualQuestionIDs, testCase.description, "elements")
+
+		for i, actualQuestion := range questions {
+			expectQuestion := expectQuestions[i]
+			assertion.Equal(expectQuestion.QuestionnaireID, actualQuestion.QuestionnaireID, testCase.description, "questionnaire_id")
+			assertion.Equal(expectQuestion.PageNum, actualQuestion.PageNum, testCase.description, "page_num")
+			assertion.Equal(expectQuestion.QuestionNum, actualQuestion.QuestionNum, testCase.description, "question_num")
+			assertion.Equal(expectQuestion.Type, actualQuestion.Type, testCase.description, "type")
+			assertion.Equal(expectQuestion.Body, actualQuestion.Body, testCase.description, "body")
+			assertion.Equal(expectQuestion.IsRequired, actualQuestion.IsRequired, testCase.description, "is_required")
+
+			assertion.WithinDuration(expectQuestion.CreatedAt, actualQuestion.CreatedAt, time.Second, testCase.description, "created_at")
+			assertion.Equal(false, actualQuestion.DeletedAt.Valid, testCase.description, "deleted_at")
+		}
 	}
 }
