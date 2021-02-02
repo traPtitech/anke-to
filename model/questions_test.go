@@ -27,6 +27,10 @@ var (
 
 func TestQuestions(t *testing.T) {
 	t.Parallel()
+
+	setupQuestionsTest(t)
+
+	t.Run("InsertQuestion", insertQuestionTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
