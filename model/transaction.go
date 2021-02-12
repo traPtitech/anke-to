@@ -1,8 +1,11 @@
 package model
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 // ITransaction Transaction処理のinterface
 type ITransaction interface {
-	Do(context.Context, func(context.Context) error) error
+	Do(context.Context, *sql.TxOptions, func(context.Context) error) error
 }
