@@ -21,7 +21,7 @@ RUN npm run build
 
 
 # run
-FROM alpine:3.12.1
+FROM alpine:3.13.2
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
