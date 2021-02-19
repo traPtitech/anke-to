@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -168,7 +169,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := q.UpdateOptions(req.Options, questionID); err != nil {
+		if err := q.UpdateOptions(req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
@@ -178,7 +179,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
-			}); err != nil {
+			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
@@ -187,7 +188,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
-			}); err != nil {
+			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
