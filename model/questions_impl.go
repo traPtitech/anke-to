@@ -116,6 +116,7 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
 		Find(&questions).Error
 	// アンケートidの一致する質問を取る
 	if err != nil {
