@@ -78,19 +78,19 @@ func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum in
 //UpdateQuestion 質問の修正
 func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
 	body string, isRequired bool, questionID int) error {
-	question := Questions{
-		QuestionnaireID: questionnaireID,
-		PageNum:         pageNum,
-		QuestionNum:     questionNum,
-		Type:            questionType,
-		Body:            body,
-		IsRequired:      isRequired,
+	question := map[string]interface{}{
+		"questionnaire_id": questionnaireID,
+		"page_num":         pageNum,
+		"question_num":     questionNum,
+		"type":             questionType,
+		"body":             body,
+		"is_required":      isRequired,
 	}
 
 	err := db.
 		Model(&Questions{}).
 		Where("id = ?", questionID).
-		Update(&question).Error
+		Update(question).Error
 	if err != nil {
 		return fmt.Errorf("failed to update a question record: %w", err)
 	}
@@ -116,6 +116,7 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 
 	err := db.
 		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
 		Find(&questions).Error
 	// アンケートidの一致する質問を取る
 	if err != nil {
