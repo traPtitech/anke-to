@@ -39,9 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/QuestionnaireForList'
+                $ref: '#/components/schemas/QuestionnairesWithPageMax'
     post:
       operationId: postQuestionnaire
       tags:
@@ -494,6 +492,19 @@ components:
                 自分がターゲットになっているかどうか
           required:
             - is_targeted
+    QuestionnairesWithPageMax:
+      type: object
+      properties:
+        page_max:
+          type: integer
+          description: 最大ページ数
+        questionnaires:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionnaireForList'
+      required:
+        - page_max
+        - questionnaires
     QuestionnaireByID:
       allOf:
         - $ref: '#/components/schemas/QuestionnaireUser'

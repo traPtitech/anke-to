@@ -1,5 +1,6 @@
 // vue.config.js
 module.exports = {
+  productionSourceMap: process.env.NODE_ENV === 'production' ? false : true,
   css: {
     loaderOptions: {
       // pass options to sass-loader

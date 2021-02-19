@@ -11,6 +11,16 @@ const (
 	userThree = "YumizSui"
 )
 
+var (
+	administratorImpl = new(Administrator)
+	questionnaireImpl = new(Questionnaire)
+	questionImpl      = new(Question)
+	respondentImpl    = new(Respondent)
+	responseImpl      = new(Response)
+	scaleLabelImpl    = new(ScaleLabel)
+	validationImpl    = new(Validation)
+)
+
 //TestMain テストのmain
 func TestMain(m *testing.M) {
 	db, err := EstablishConnection()

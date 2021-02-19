@@ -104,8 +104,9 @@ export default {
     timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
       return (
+        this.questionnaireInformation.res_time_limit != null &&
         new Date(this.questionnaireInformation.res_time_limit).getTime() <
-        new Date().getTime()
+          new Date().getTime()
       )
     },
     newResponseLink() {

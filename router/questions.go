@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -10,8 +11,26 @@ import (
 	"github.com/traPtitech/anke-to/model"
 )
 
+// Question Questionの構造体
+type Question struct {
+	model.IValidation
+	model.IQuestion
+	model.IOption
+	model.IScaleLabel
+}
+
+// NewQuestion Questionのコンストラクタ
+func NewQuestion(validation model.IValidation, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel) *Question {
+	return &Question{
+		IValidation: validation,
+		IQuestion:   question,
+		IOption:     option,
+		IScaleLabel: scaleLabel,
+	}
+}
+
 // PostQuestion POST /questions
-func PostQuestion(c echo.Context) error {
+func (q *Question) PostQuestion(c echo.Context) error {
 	req := struct {
 		QuestionnaireID int      `json:"questionnaireID"`
 		QuestionType    string   `json:"question_type"`
@@ -43,12 +62,12 @@ func PostQuestion(c echo.Context) error {
 		}
 	case "Number":
 		//数字か，min<=maxになってるか
-		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
-	lastID, err := model.InsertQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	lastID, err := q.InsertQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -56,12 +75,12 @@ func PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if err := model.InsertOption(lastID, i+1, v); err != nil {
+			if err := q.InsertOption(lastID, i+1, v); err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	case "LinearScale":
-		if err := model.InsertScaleLabel(lastID,
+		if err := q.InsertScaleLabel(lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -71,7 +90,7 @@ func PostQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.InsertValidation(lastID,
+		if err := q.InsertValidation(lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
@@ -101,7 +120,7 @@ func PostQuestion(c echo.Context) error {
 }
 
 // EditQuestion PATCH /questions/:id
-func EditQuestion(c echo.Context) error {
+func (q *Question) EditQuestion(c echo.Context) error {
 	questionID, err := getQuestionID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
@@ -138,38 +157,38 @@ func EditQuestion(c echo.Context) error {
 		}
 	case "Number":
 		//数字か，min<=maxになってるか
-		if err := model.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
-	if err := model.UpdateQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
+	if err := q.UpdateQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
 		req.IsRequired, questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := model.UpdateOptions(req.Options, questionID); err != nil {
+		if err := q.UpdateOptions(req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
-		if err := model.UpdateScaleLabel(questionID,
+		if err := q.UpdateScaleLabel(questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
-			}); err != nil {
+			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := model.UpdateValidation(questionID,
+		if err := q.UpdateValidation(questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
-			}); err != nil {
+			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
@@ -178,25 +197,25 @@ func EditQuestion(c echo.Context) error {
 }
 
 // DeleteQuestion DELETE /questions/:id
-func DeleteQuestion(c echo.Context) error {
+func (q *Question) DeleteQuestion(c echo.Context) error {
 	questionID, err := getQuestionID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	if err := model.DeleteQuestion(questionID); err != nil {
+	if err := q.IQuestion.DeleteQuestion(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteOptions(questionID); err != nil {
+	if err := q.DeleteOptions(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteScaleLabel(questionID); err != nil {
+	if err := q.DeleteScaleLabel(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := model.DeleteValidation(questionID); err != nil {
+	if err := q.DeleteValidation(questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
