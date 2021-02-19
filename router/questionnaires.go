@@ -111,7 +111,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 	timeLimit := "なし"
 	if req.ResTimeLimit.Valid {
-		timeLimit = req.ResTimeLimit.Time.Format("2006/01/02 15:04")
+		timeLimit = req.ResTimeLimit.Time.Local().Format("2006/01/02 15:04")
 	}
 
 	targetsMentionText := "なし"
