@@ -2,19 +2,14 @@
   <div class="is-fullheight">
     <top-bar-message :message="message"></top-bar-message>
 
-    <div
-      v-if="isEditing || (information.res_time_limit && !timeLimitExceeded)"
-      class="is-fullheight details"
-    >
+    <div v-if="showDetails" class="is-fullheight details">
       <div class="tabs is-centered">
         <router-link id="return-button" :to="titleLink">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul></ul>
         <a
-          v-if="
-            !isNewResponse && information.res_time_limit && !timeLimitExceeded
-          "
+          v-if="!isNewResponse && !timeLimitExceeded"
           id="edit-button"
           :class="{ 'is-editing': isEditing }"
           @click.prevent="isEditing = !isEditing"
@@ -90,7 +85,8 @@ export default {
         showMessage: false
       },
       isSubmitting: false,
-      isSaving: false
+      isSaving: false,
+      showDetails: true
     }
   },
   computed: {
@@ -137,7 +133,7 @@ export default {
     timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
       return (
-        this.information.res_time_limit &&
+        this.information.res_time_limit !== null &&
         new Date(this.information.res_time_limit).getTime() <
           new Date().getTime()
       )
@@ -219,20 +215,31 @@ export default {
             color: 'red',
             showMessage: true
           }
+          this.showDetails = false
         }
       })
     },
     getResponseData() {
-      return axios.get('/responses/' + this.responseId).then(res => {
-        this.responseData = res.data
+      return axios
+        .get('/responses/' + this.responseId)
+        .then(res => {
+          this.responseData = res.data
 
-        // questionIdをキーにしてresponseData.body の各要素をとれるようにする
-        let newBody = {}
-        this.responseData.body.forEach(data => {
-          newBody[data.questionID] = data
+          // questionIdをキーにしてresponseData.body の各要素をとれるようにする
+          let newBody = {}
+          this.responseData.body.forEach(data => {
+            newBody[data.questionID] = data
+          })
+          this.responseData.body = newBody
         })
-        this.responseData.body = newBody
-      })
+        .catch(() => {
+          this.message = {
+            body: '存在しないアンケートです',
+            color: 'red',
+            showMessage: true
+          }
+          this.showDetails = false
+        })
     },
     getQuestions() {
       this.questions = []
