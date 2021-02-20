@@ -3,7 +3,7 @@
     <top-bar-message :message="message"></top-bar-message>
 
     <div
-      v-if="!isEditing || (information.res_time_limit && !timeLimitExceeded)"
+      v-if="isEditing || (information.res_time_limit && !timeLimitExceeded)"
       class="is-fullheight details"
     >
       <div class="tabs is-centered">
