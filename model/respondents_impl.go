@@ -258,6 +258,7 @@ func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]Res
 	rows, err := query.
 		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL AND question.deleted_at IS NULL AND response.deleted_at IS NULL", questionnaireID).
 		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
+		Order("respondents.response_id, question.question_num").
 		Rows()
 	if err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
