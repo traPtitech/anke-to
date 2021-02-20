@@ -2,19 +2,14 @@
   <div class="is-fullheight">
     <top-bar-message :message="message"></top-bar-message>
 
-    <div
-      v-if="isEditing || (information.res_time_limit && !timeLimitExceeded)"
-      class="is-fullheight details"
-    >
+    <div class="is-fullheight details">
       <div class="tabs is-centered">
         <router-link id="return-button" :to="titleLink">
           <span class="ti-arrow-left"></span>
         </router-link>
         <ul></ul>
         <a
-          v-if="
-            !isNewResponse && information.res_time_limit && !timeLimitExceeded
-          "
+          v-if="!isNewResponse && !timeLimitExceeded"
           id="edit-button"
           :class="{ 'is-editing': isEditing }"
           @click.prevent="isEditing = !isEditing"
@@ -137,7 +132,7 @@ export default {
     timeLimitExceeded() {
       // 回答期限を過ぎていた場合はtrueを返す
       return (
-        this.information.res_time_limit &&
+        this.information.res_time_limit !== null &&
         new Date(this.information.res_time_limit).getTime() <
           new Date().getTime()
       )
