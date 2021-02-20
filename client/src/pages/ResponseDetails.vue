@@ -2,7 +2,7 @@
   <div class="is-fullheight">
     <top-bar-message :message="message"></top-bar-message>
 
-    <div class="is-fullheight details">
+    <div v-if="showDetails" class="is-fullheight details">
       <div class="tabs is-centered">
         <router-link id="return-button" :to="titleLink">
           <span class="ti-arrow-left"></span>
@@ -85,7 +85,8 @@ export default {
         showMessage: false
       },
       isSubmitting: false,
-      isSaving: false
+      isSaving: false,
+      showDetails: true
     }
   },
   computed: {
@@ -214,20 +215,31 @@ export default {
             color: 'red',
             showMessage: true
           }
+          this.showDetails = false
         }
       })
     },
     getResponseData() {
-      return axios.get('/responses/' + this.responseId).then(res => {
-        this.responseData = res.data
+      return axios
+        .get('/responses/' + this.responseId)
+        .then(res => {
+          this.responseData = res.data
 
-        // questionIdをキーにしてresponseData.body の各要素をとれるようにする
-        let newBody = {}
-        this.responseData.body.forEach(data => {
-          newBody[data.questionID] = data
+          // questionIdをキーにしてresponseData.body の各要素をとれるようにする
+          let newBody = {}
+          this.responseData.body.forEach(data => {
+            newBody[data.questionID] = data
+          })
+          this.responseData.body = newBody
         })
-        this.responseData.body = newBody
-      })
+        .catch(() => {
+          this.message = {
+            body: '存在しないアンケートです',
+            color: 'red',
+            showMessage: true
+          }
+          this.showDetails = false
+        })
     },
     getQuestions() {
       this.questions = []
