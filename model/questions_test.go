@@ -37,6 +37,7 @@ func TestQuestions(t *testing.T) {
 	t.Run("UpdateQuestion", updateQuestionTest)
 	t.Run("DeleteQuestion", deleteQuestionTest)
 	t.Run("GetQuestions", getQuestionsTest)
+	t.Run("CheckQuestionAdmin", checkQuestionAdminTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
@@ -851,7 +852,7 @@ func getQuestionsTest(t *testing.T) {
 			expectQuestionIDs = append(expectQuestionIDs, question.ID)
 		}
 
-		assertion.ElementsMatch(expectQuestionIDs, actualQuestionIDs, testCase.description, "elements")
+		assertion.Subset(expectQuestionIDs, actualQuestionIDs, testCase.description, "elements")
 
 		assertion.True(sort.SliceIsSorted(questions, func(i, j int) bool { return questions[i].QuestionNum <= questions[j].QuestionNum }), testCase.description, "sort")
 
@@ -867,5 +868,84 @@ func getQuestionsTest(t *testing.T) {
 			assertion.WithinDuration(expectQuestion.CreatedAt, actualQuestion.CreatedAt, time.Second, testCase.description, "created_at")
 			assertion.Equal(false, actualQuestion.DeletedAt.Valid, testCase.description, "deleted_at")
 		}
+	}
+}
+
+func checkQuestionAdminTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		userID     string
+		questionID int
+	}
+	type expect struct {
+		isAdmin bool
+		isErr   bool
+		err     error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "userID: valid, admin: true",
+			args: args{
+				userID:     questionsTestUserID,
+				questionID: questionDatas[10].ID,
+			},
+			expect: expect{
+				isAdmin: true,
+			},
+		},
+		{
+			description: "userID: valid, admin: false",
+			args: args{
+				userID:     questionsTestUserID,
+				questionID: questionDatas[0].ID,
+			},
+			expect: expect{
+				isAdmin: false,
+			},
+		},
+		{
+			description: "userID: invalid, admin: true",
+			args: args{
+				userID:     invalidQuestionsTestUserID,
+				questionID: questionDatas[10].ID,
+			},
+			expect: expect{
+				isAdmin: false,
+			},
+		},
+		{
+			description: "userID: invalid, admin: false",
+			args: args{
+				userID:     invalidQuestionsTestUserID,
+				questionID: questionDatas[10].ID,
+			},
+			expect: expect{
+				isAdmin: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualIsAdmin, err := questionImpl.CheckQuestionAdmin(testCase.args.userID, testCase.args.questionID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.isAdmin, actualIsAdmin, testCase.description, "isAdmin")
 	}
 }
