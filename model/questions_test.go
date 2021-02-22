@@ -1,6 +1,7 @@
 package model
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -78,7 +79,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     0,
 				Type:            "Text",
 				Body:            "",
 			},
@@ -96,7 +97,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     2,
 				Type:            "Number",
 				Body:            "",
 			},
@@ -105,7 +106,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     3,
 				Type:            "MultipleChoice",
 				Body:            "",
 			},
@@ -114,7 +115,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     4,
 				Type:            "Checkbox",
 				Body:            "",
 			},
@@ -123,7 +124,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     5,
 				Type:            "Dropdown",
 				Body:            "",
 			},
@@ -132,7 +133,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     6,
 				Type:            "LinearScale",
 				Body:            "",
 			},
@@ -141,7 +142,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     7,
 				Type:            "Date",
 				Body:            "",
 			},
@@ -150,7 +151,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     8,
 				Type:            "Time",
 				Body:            "",
 			},
@@ -159,7 +160,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     8,
 				Type:            "Text",
 				Body:            "",
 				DeletedAt: mysql.NullTime{
@@ -172,7 +173,7 @@ func setupQuestionsTest(t *testing.T) {
 			Questions: Questions{
 				QuestionnaireID: questionnaireDatas[0].ID,
 				PageNum:         1,
-				QuestionNum:     1,
+				QuestionNum:     0,
 				Type:            "Text",
 				Body:            "",
 			},
@@ -343,6 +344,32 @@ func insertQuestionTest(t *testing.T) {
 					Type:            "TextArea",
 					Body:            "自由記述欄",
 					IsRequired:      true,
+				},
+			},
+		},
+		{
+			description: "type:TextArea, required: false, question_num: 0",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     0,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "type:TextArea, required: false, page_num: 0",
+			args: args{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         0,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
 				},
 			},
 		},
@@ -545,6 +572,29 @@ func updateQuestionTest(t *testing.T) {
 					QuestionnaireID: questionnaireDatas[0].ID,
 					PageNum:         1,
 					QuestionNum:     2,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+		},
+		{
+			description: "questionNum: 1->0",
+			before: before{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     1,
+					Type:            "TextArea",
+					Body:            "自由記述欄",
+					IsRequired:      false,
+				},
+			},
+			after: after{
+				Questions: Questions{
+					QuestionnaireID: questionnaireDatas[0].ID,
+					PageNum:         1,
+					QuestionNum:     0,
 					Type:            "TextArea",
 					Body:            "自由記述欄",
 					IsRequired:      false,
@@ -802,6 +852,8 @@ func getQuestionsTest(t *testing.T) {
 		}
 
 		assertion.ElementsMatch(expectQuestionIDs, actualQuestionIDs, testCase.description, "elements")
+
+		assertion.True(sort.SliceIsSorted(questions, func(i, j int) bool { return questions[i].QuestionNum <= questions[j].QuestionNum }), testCase.description, "sort")
 
 		for i, actualQuestion := range questions {
 			expectQuestion := expectQuestions[i]
