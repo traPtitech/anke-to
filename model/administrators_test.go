@@ -18,7 +18,7 @@ const (
 
 var (
 	administratorsTestUserIDs           = []string{"administratorsUser0", "administratorsUser1"}
-	administrotorTestQuestionnaireDatas []administratorsTestQuestionnairesTestData
+	administratorTestQuestionnaireDatas []administratorsTestQuestionnairesTestData
 )
 
 func TestAministrators(t *testing.T) {
@@ -28,10 +28,11 @@ func TestAministrators(t *testing.T) {
 
 	t.Run("InsertAdministrators", insertAdministratorsTest)
 	t.Run("DeleteAdministrators", deleteAdministratorsTest)
+	t.Run("GetAdministrators", getAdministratorsTest)
 }
 
 func setupAdministratorTest(t *testing.T) {
-	administrotorTestQuestionnaireDatas = []administratorsTestQuestionnairesTestData{
+	administratorTestQuestionnaireDatas = []administratorsTestQuestionnairesTestData{
 		{
 			questionnaire: Questionnaires{
 				Title:       "第1回集会らん☆ぷろ募集アンケート",
@@ -48,15 +49,15 @@ func setupAdministratorTest(t *testing.T) {
 		},
 	}
 
-	for i, questionnaireData := range administrotorTestQuestionnaireDatas {
-		err := db.Create(&administrotorTestQuestionnaireDatas[i].questionnaire).Error
+	for i, questionnaireData := range administratorTestQuestionnaireDatas {
+		err := db.Create(&administratorTestQuestionnaireDatas[i].questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", questionnaireData, err)
 		}
 
 		for _, administrator := range questionnaireData.administrators {
 			err = db.Create(&Administrators{
-				QuestionnaireID: administrotorTestQuestionnaireDatas[i].questionnaire.ID,
+				QuestionnaireID: administratorTestQuestionnaireDatas[i].questionnaire.ID,
 				UserTraqid:      administrator,
 			}).Error
 			if err != nil {
@@ -290,5 +291,90 @@ func deleteAdministratorsTest(t *testing.T) {
 		}
 
 		assertion.Len(administrators, 0, testCase.description, "administrator length")
+	}
+}
+
+func getAdministratorsTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		questionnaireIDs []int
+	}
+	type expect struct {
+		administrators []Administrators
+		isErr          bool
+		err            error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "questionnaire_id_num: 2",
+			args: args{
+				questionnaireIDs: []int{administratorTestQuestionnaireDatas[0].questionnaire.ID, administratorTestQuestionnaireDatas[1].questionnaire.ID},
+			},
+			expect: expect{
+				administrators: []Administrators{
+					{
+						QuestionnaireID: administratorTestQuestionnaireDatas[0].questionnaire.ID,
+						UserTraqid:      administratorsTestUserIDs[0],
+					},
+				},
+			},
+		},
+		{
+			description: "questionnaire_id_num: 1",
+			args: args{
+				questionnaireIDs: []int{administratorTestQuestionnaireDatas[0].questionnaire.ID},
+			},
+			expect: expect{
+				administrators: []Administrators{
+					{
+						QuestionnaireID: administratorTestQuestionnaireDatas[0].questionnaire.ID,
+						UserTraqid:      administratorsTestUserIDs[0],
+					},
+				},
+			},
+		},
+		{
+			description: "questionnaire_id_num: 1, no administrator",
+			args: args{
+				questionnaireIDs: []int{administratorTestQuestionnaireDatas[1].questionnaire.ID},
+			},
+			expect: expect{
+				administrators: []Administrators{},
+			},
+		},
+		{
+			description: "questionnaire_id_num: 0",
+			args: args{
+				questionnaireIDs: []int{},
+			},
+			expect: expect{
+				administrators: []Administrators{},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualAdministrators, err := administratorImpl.GetAdministrators(testCase.args.questionnaireIDs)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.ElementsMatch(actualAdministrators, testCase.expect.administrators, testCase.description, "element")
 	}
 }
