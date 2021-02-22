@@ -852,7 +852,7 @@ func getQuestionsTest(t *testing.T) {
 			expectQuestionIDs = append(expectQuestionIDs, question.ID)
 		}
 
-		assertion.Subset(expectQuestionIDs, actualQuestionIDs, testCase.description, "elements")
+		assertion.Subset(actualQuestionIDs, expectQuestionIDs, testCase.description, "elements")
 
 		assertion.True(sort.SliceIsSorted(questions, func(i, j int) bool { return questions[i].QuestionNum <= questions[j].QuestionNum }), testCase.description, "sort")
 
