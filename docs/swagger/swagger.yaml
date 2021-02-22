@@ -711,7 +711,7 @@ components:
           format: date-time
         modified_at:
           type: string
-          format: date-tie
+          format: date-time
       required:
         - responseID
         - questionnaireID
