@@ -29,6 +29,7 @@ func TestAministrators(t *testing.T) {
 	t.Run("InsertAdministrators", insertAdministratorsTest)
 	t.Run("DeleteAdministrators", deleteAdministratorsTest)
 	t.Run("GetAdministrators", getAdministratorsTest)
+	t.Run("CheckQuestionnaireAdmin", checkQuestionnaireAdminTest)
 }
 
 func setupAdministratorTest(t *testing.T) {
@@ -376,5 +377,89 @@ func getAdministratorsTest(t *testing.T) {
 		}
 
 		assertion.ElementsMatch(actualAdministrators, testCase.expect.administrators, testCase.description, "element")
+	}
+}
+
+func checkQuestionnaireAdminTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		userID          string
+		questionnaireID int
+	}
+	type expect struct {
+		isAdmin bool
+		isErr   bool
+		err     error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	testCases := []test{
+		{
+			description: "questionnaireID: valid, is_admin: true",
+			args: args{
+				userID:          administratorsTestUserIDs[0],
+				questionnaireID: administratorTestQuestionnaireDatas[0].questionnaire.ID,
+			},
+			expect: expect{
+				isAdmin: true,
+			},
+		},
+		{
+			description: "questionnaireID: valid, is_admin: false",
+			args: args{
+				userID:          invalidAdministratorTestUserID,
+				questionnaireID: administratorTestQuestionnaireDatas[0].questionnaire.ID,
+			},
+			expect: expect{
+				isAdmin: false,
+			},
+		},
+		{
+			description: "questionnaireID: invalid",
+			args: args{
+				userID:          administratorsTestUserIDs[0],
+				questionnaireID: invalidQuestionnaireID,
+			},
+			expect: expect{
+				isAdmin: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualIsAdmin, err := administratorImpl.CheckQuestionnaireAdmin(testCase.args.userID, testCase.args.questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.isAdmin, actualIsAdmin, testCase.description, "isAdmin")
 	}
 }
