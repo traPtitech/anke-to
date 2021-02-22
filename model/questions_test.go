@@ -441,7 +441,7 @@ func updateQuestionTest(t *testing.T) {
 	type test struct {
 		description string
 		before
-		after
+		after `json:"-"`
 		expect
 	}
 
