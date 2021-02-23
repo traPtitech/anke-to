@@ -664,7 +664,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ResponseBody'
+        submitted_at:
+          type: string
+          format: date-time
       required:
+        - submitted_at
         - questionnaireID
         - body
     Response:
@@ -672,18 +676,14 @@ components:
         - $ref: '#/components/schemas/NewResponse'
         - type: object
           properties:
-            submitted_at:
-              type: string
-              format: date-time
             modified_at:
               type: string
               format: date-time
           required:
-            - submitted_at
             - modified_at
     ResponseDetails:
       allOf:
-        - $ref: '#/components/schemas/Response'
+        - $ref: '#/components/schemas/NewResponse'
         - type: object
           properties:
             responseID:
