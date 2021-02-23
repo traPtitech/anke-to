@@ -2,11 +2,8 @@ package router
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -28,56 +25,7 @@ type responseBody struct {
 	OptionResponse []string    `json:"option_response"`
 }
 
-type responseResponseBody struct {
-	QuestionnaireID int            `json:"questionnaireID"`
-	SubmittedAt     null.Time      `json:"submitted_at"`
-	ModifiedAt      null.Time      `json:"modified_at"`
-	Body            []responseBody `json:"body"`
-}
-
-var (
-	errMock = errors.New("Mock Error")
-)
-
-type users string
-type httpMethods string
-type contentTypes string
-
-const (
-	rootPath               = "/api"
-	userHeader             = "X-Showcase-User"
-	userUnAuthorized       = "-"
-	userOne          users = "mazrean"
-	userTwo          users = "ryoha"
-	//userThree        users        = "YumizSui"
-	methodGet    httpMethods  = http.MethodGet
-	methodPost   httpMethods  = http.MethodPost
-	methodPatch  httpMethods  = http.MethodPatch
-	methodDelete httpMethods  = http.MethodDelete
-	typeNone     contentTypes = ""
-	typeJSON     contentTypes = echo.MIMEApplicationJSON
-)
-
-func makePath(path string) string {
-	return rootPath + path
-}
-
-func createRecorder(e *echo.Echo, user users, method httpMethods, path string, contentType contentTypes, body string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(string(method), path, strings.NewReader(body))
-	if contentType != typeNone {
-		req.Header.Set(echo.HeaderContentType, string(contentType))
-	}
-	req.Header.Set(userHeader, string(user))
-
-	rec := httptest.NewRecorder()
-
-	e.ServeHTTP(rec, req)
-
-	return rec
-}
-
 func TestPostResponse(t *testing.T) {
-
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID"`
 		SubmittedAt     null.Time      `json:"submitted_at"`
@@ -1274,24 +1222,6 @@ func TestEditResponse(t *testing.T) {
 }
 
 func TestDeleteResponse(t *testing.T) {
-	// testList := []struct {
-	// 	description string
-	// 	responseID  int
-	// 	request     responseRequestBody
-	// 	expectCode  int
-	// }{
-	// 	{
-	// 		description: "valid",
-	// 		responseID:  -1,
-	// 		expectCode:  http.StatusOK,
-	// 	},
-	// 	{
-	// 		description: "response not exist",
-	// 		responseID:  -1,
-	// 		expectCode:  http.StatusNotFound,
-	// 	},
-	// }
-	// fmt.Println(testList)
 	type responseResponseBody struct {
 		QuestionnaireID int            `json:"questionnaireID"`
 		SubmittedAt     null.Time      `json:"submitted_at"`
