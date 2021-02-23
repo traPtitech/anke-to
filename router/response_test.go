@@ -252,8 +252,9 @@ func TestPostResponse(t *testing.T) {
 	// assertion.NoError(err)
 
 	type request struct {
-		user        users
-		requestBody responseRequestBody
+		user             users
+		isBadRequestBody bool
+		requestBody      responseRequestBody
 	}
 	type expect struct {
 		isErr      bool
@@ -310,6 +311,16 @@ func TestPostResponse(t *testing.T) {
 				isErr:      false,
 				code:       http.StatusCreated,
 				responseID: responseIDSuccess,
+			},
+		},
+		{
+			description: "bad request body",
+			request: request{
+				isBadRequestBody: true,
+			},
+			expect: expect{
+				isErr: true,
+				code:  http.StatusBadRequest,
 			},
 		},
 		{
@@ -517,6 +528,9 @@ func TestPostResponse(t *testing.T) {
 		require.NoError(t, jsonErr)
 		requestStr := string(requestByte) + "\n"
 
+		if testCase.request.isBadRequestBody {
+			requestStr = "badRequestBody"
+		}
 		rec := createRecorder(e, testCase.request.user, methodPost, makePath("/responses"), typeJSON, requestStr)
 
 		assertion.Equal(testCase.expect.code, rec.Code, testCase.description, "status code")
