@@ -57,6 +57,9 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -75,6 +78,9 @@ func (r *Response) PostResponse(c echo.Context) error {
 	}
 
 	validations, err := r.GetValidations(questionIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -204,6 +210,9 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -222,6 +231,9 @@ func (r *Response) EditResponse(c echo.Context) error {
 	}
 
 	validations, err := r.GetValidations(questionIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	// パターンマッチしてエラーなら返す
 	for _, validation := range validations {
@@ -332,9 +344,6 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 	}
 
 	if err := r.DeleteRespondent(userID, responseID); err != nil {
-		if errors.Is(err, model.ErrNoRecordDeleted) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
