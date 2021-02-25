@@ -74,7 +74,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestionnaireByID'
     patch:
-      operationId: patchQuestionnaire
+      operationId: editQuestionnaire
       tags:
         - questionnaire
       description: アンケートの情報を変更します．
@@ -139,7 +139,7 @@ paths:
           description: 正常に作成できませんでした。リクエストが不正です。
   '/questions/{questionID}':
     patch:
-      operationId: patchQuestion
+      operationId: editQuestion
       tags:
         - question
       description: 質問を変更します．
@@ -203,7 +203,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
     patch:
-      operationId: patchResponse
+      operationId: editResponse
       tags:
         - response
       description: 回答を変更します．
@@ -246,7 +246,7 @@ paths:
                   $ref: '#/components/schemas/User'
   /users/me:
     get:
-      operationId: getMe
+      operationId: getUsersMe
       tags:
         - user
       description: 自分のユーザー情報を取得します
@@ -274,7 +274,7 @@ paths:
                   $ref: '#/components/schemas/ResponseSummary'
   '/users/me/responses/{questionnaireID}':
     get:
-      operationId: getResponsesToQuestionnaire
+      operationId: getMyResponsesByID
       tags:
         - user
       parameters:
@@ -291,10 +291,29 @@ paths:
                   $ref: '#/components/schemas/ResponseSummary'
   /users/me/targeted:
     get:
-      operationId: getMyTargeted
+      operationId: getTargetedQuestionnaire
       tags:
         - user
       description: 自分が対象になっている アンケートのリストを取得します。
+      parameters:
+        - $ref: '#/components/parameters/sortInQuery'
+      responses:
+        '200':
+          description: 正常に取得できました。アンケートの配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuestionnaireMyTargeted'
+  /users/{traQID}/targeted:
+    get:
+      operationId: getTargettedQuestionnairesBytraQID
+      tags:
+        - user
+      description: ユーザが対象になっているアンケートのリストを取得します。
+      parameters:
+        - $ref: '#/components/parameters/sortInQuery'
       responses:
         '200':
           description: 正常に取得できました。アンケートの配列を返します。
@@ -306,7 +325,7 @@ paths:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
   /users/me/administrates:
     get:
-      operationId: getMyAdministrates
+      operationId: getMyQuestionnaire
       tags:
         - user
       description: 自分が管理者になっているアンケートのリストを取得します。
@@ -342,6 +361,7 @@ paths:
         - result
       parameters:
         - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: '#/components/parameters/sortInQuery'
       description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
       responses:
         '200':

@@ -77,10 +77,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - run: |
-          go install github.com/golang/mock/mockgen
-          go generate ./model ./traq
-          go test ./model ./router -v -cover
+      - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
