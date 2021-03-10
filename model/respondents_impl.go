@@ -415,11 +415,11 @@ func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]
 		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
 		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
 		if bodyI.QuestionType == "Number" {
-			numi, err := strconv.Atoi(bodyI.Body.String)
+			numi, err := strconv.ParseFloat(bodyI.Body.String, 64)
 			if err != nil {
 				return true
 			}
-			numj, err := strconv.Atoi(bodyJ.Body.String)
+			numj, err := strconv.ParseFloat(bodyJ.Body.String, 64)
 			if err != nil {
 				return true
 			}
