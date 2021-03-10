@@ -89,21 +89,21 @@ func (v *Validation) CheckNumberValidation(validation Validations, Body string) 
 	if Body == "" {
 		return nil
 	}
-	number, err := strconv.Atoi(Body)
+	number, err := strconv.ParseFloat(Body, 64)
 	if err != nil {
 		return ErrInvalidNumber
 	}
 
 	if validation.MinBound != "" {
-		minBoundNum, _ := strconv.Atoi(validation.MinBound)
+		minBoundNum, _ := strconv.ParseFloat(validation.MinBound, 64)
 		if minBoundNum > number {
-			return fmt.Errorf("failed to meet the boundary value. the number must be greater than MinBound (number: %d, MinBound: %d): %w", number, minBoundNum, ErrNumberBoundary)
+			return fmt.Errorf("failed to meet the boundary value. the number must be greater than MinBound (number: %g, MinBound: %g): %w", number, minBoundNum, ErrNumberBoundary)
 		}
 	}
 	if validation.MaxBound != "" {
-		maxBoundNum, _ := strconv.Atoi(validation.MaxBound)
+		maxBoundNum, _ := strconv.ParseFloat(validation.MaxBound, 64)
 		if maxBoundNum < number {
-			return fmt.Errorf("failed to meet the boundary value. the number must be less than MaxBound (number: %d, MaxBound: %d): %w", number, maxBoundNum, ErrNumberBoundary)
+			return fmt.Errorf("failed to meet the boundary value. the number must be less than MaxBound (number: %g, MaxBound: %g): %w", number, maxBoundNum, ErrNumberBoundary)
 		}
 	}
 
@@ -125,16 +125,16 @@ func (*Validation) CheckTextValidation(validation Validations, Response string) 
 
 // CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
 func (*Validation) CheckNumberValid(MinBound, MaxBound string) error {
-	var minBoundNum, maxBoundNum int
+	var minBoundNum, maxBoundNum float64
 	if MinBound != "" {
-		min, err := strconv.Atoi(MinBound)
+		min, err := strconv.ParseFloat(MinBound, 64)
 		minBoundNum = min
 		if err != nil {
 			return fmt.Errorf("failed to check the boundary value. MinBound is not a numerical value: %w", ErrInvalidNumber)
 		}
 	}
 	if MaxBound != "" {
-		max, err := strconv.Atoi(MaxBound)
+		max, err := strconv.ParseFloat(MaxBound, 64)
 		maxBoundNum = max
 		if err != nil {
 			return fmt.Errorf("failed to check the boundary value. MaxBound is not a numerical value: %w", ErrInvalidNumber)
@@ -143,7 +143,7 @@ func (*Validation) CheckNumberValid(MinBound, MaxBound string) error {
 
 	if MinBound != "" && MaxBound != "" {
 		if minBoundNum > maxBoundNum {
-			return fmt.Errorf("failed to check the boundary value. MinBound must be less than MaxBound (MinBound: %d, MaxBound: %d): %w", minBoundNum, maxBoundNum, ErrInvalidNumber)
+			return fmt.Errorf("failed to check the boundary value. MinBound must be less than MaxBound (MinBound: %g, MaxBound: %g): %w", minBoundNum, maxBoundNum, ErrInvalidNumber)
 
 		}
 	}
