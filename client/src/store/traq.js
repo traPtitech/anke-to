@@ -17,6 +17,7 @@ export default {
   namespaced: true,
   state: {
     accessToken: null,
+    accessTokenEnsured: false,
     users: null,
     groups: null
   },
@@ -115,6 +116,9 @@ export default {
     setAccessToken(state, token) {
       state.accessToken = token
     },
+    setAccessTokenEnsured(state, ensured) {
+      state.accessTokenEnsured = ensured
+    },
     setUsers(state, users) {
       state.users = users
     },
@@ -123,6 +127,22 @@ export default {
     }
   },
   actions: {
+    async ensureToken({ state, commit }) {
+      if (!state.accessToken) {
+        return
+      }
+      if (state.accessTokenEnsured) {
+        return
+      }
+      setAuthToken(state.accessToken)
+
+      try {
+        await apis.getMe()
+        commit('setAccessTokenEnsured', true)
+      } catch {
+        commit('setAccessToken', null)
+      }
+    },
     async updateUsers({ state, commit }) {
       if (!state.accessToken) {
         console.error('no access token')
