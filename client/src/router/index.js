@@ -141,7 +141,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.requiresTraqAuth) {
-    await store.dispatch('ensureToken')
+    await store.dispatch('traq/ensureToken')
     if (!store.state.traq.accessToken) {
       const message =
         'アンケートの編集・作成にはtraQアカウントへのアクセスが必要です。OKを押すとtraQに飛びます。'
