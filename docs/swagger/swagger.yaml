@@ -31,6 +31,7 @@ paths:
       description: 与えられた条件を満たす20件以下のアンケートのリストを取得します．
       parameters:
         - $ref: '#/components/parameters/sortInQuery'
+        - $ref: '#/components/parameters/searchInQuery'
         - $ref: '#/components/parameters/pageInQuery'
         - $ref: '#/components/parameters/nontargetedInQuery'
       responses:
@@ -364,6 +365,12 @@ components:
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
+      schema:
+        type: string
+    searchInQuery:
+      name: search
+      in: query
+      description: タイトルの検索
       schema:
         type: string
     pageInQuery:
