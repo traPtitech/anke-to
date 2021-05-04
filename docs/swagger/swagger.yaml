@@ -723,8 +723,6 @@ components:
         - responseID
         - questionnaireID
         - questionnaire_title
-        - res_time_limit
-        - submitted_at
         - modified_at
     ResponseBody:
       type: object
