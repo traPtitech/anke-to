@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/router/session"
 	"golang.org/x/oauth2"
 )
