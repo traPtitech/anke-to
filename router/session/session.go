@@ -6,11 +6,13 @@ import (
 )
 
 type ISessionStore interface {
-	SetMiddleware() echo.MiddlewareFunc
+	GetMiddleware() echo.MiddlewareFunc
 	GetSession(c echo.Context) (ISession, error)
 }
 
 type ISession interface {
+	SetUserID(string) error
+	GetUserID() (string, error)
 	SetState(string) error
 	GetState() (string, error)
 	SetCodeVerifier(string) error

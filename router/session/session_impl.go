@@ -48,6 +48,21 @@ type Session struct {
 	sess *sessions.Session
 }
 
+func (s *Session) SetUserID(userID string) error {
+	s.sess.Values["userID"] = userID
+
+	return nil
+}
+
+func (s *Session) GetUserID() (string, error) {
+	iUserID, ok := s.sess.Values["userID"]
+	if !ok || iUserID == nil {
+		return "", ErrNoValue
+	}
+
+	return iUserID.(string), nil
+}
+
 func (s *Session) SetState(state string) error {
 	s.sess.Values["state"] = state
 
