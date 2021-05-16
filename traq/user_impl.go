@@ -10,6 +10,10 @@ import (
 
 type User struct {}
 
+func NewUser() *User {
+	return &User{}
+}
+
 type UserRes struct {
 	ID string `json:"id"`
 	Name string `json:"name"`

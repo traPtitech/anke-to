@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -17,7 +19,10 @@ func SetRouting(port string) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 
-	api := InjectAPIServer()
+	api, err := InjectAPIServer()
+	if err != nil {
+		panic(fmt.Errorf("failed to inject: %w", err))
+	}
 
 	// Static Files
 	e.Static("/", "client/dist")
