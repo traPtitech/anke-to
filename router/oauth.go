@@ -29,7 +29,7 @@ type OAuth2 struct {
 	sessStore session.ISessionStore
 }
 
-func newOAuth2(sessStore session.ISessionStore) *OAuth2 {
+func NewOAuth2(sessStore session.ISessionStore) *OAuth2 {
 	return &OAuth2{
 		conf: &oauth2.Config{
 			ClientID:     clientID,
