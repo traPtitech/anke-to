@@ -1,5 +1,9 @@
 package model
 
-type Session interface {
-	Get()
+import (
+	"github.com/srinathgs/mysqlstore"
+)
+
+type ISession interface {
+	Get() (*mysqlstore.MySQLStore, error)
 }

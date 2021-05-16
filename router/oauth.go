@@ -1,23 +1,19 @@
 package router
 
 import (
-	"crypt/rand"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/json"
+	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/anke-to/router/session"
 	"golang.org/x/oauth2"
 )
 
@@ -30,9 +26,10 @@ var (
 // OAuth2 oauthの構造体
 type OAuth2 struct {
 	conf *oauth2.Config
+	sessStore session.ISessionStore
 }
 
-func newOAuth2() *OAuth2 {
+func newOAuth2(sessStore session.ISessionStore) *OAuth2 {
 	return &OAuth2{
 		conf: &oauth2.Config{
 			ClientID:     clientID,
@@ -43,51 +40,71 @@ func newOAuth2() *OAuth2 {
 				TokenURL: fmt.Sprintf("%s%s", baseURL, "/oauth2/token"),
 			},
     },
+		sessStore: sessStore,
 	}
 }
 
 // Callback GET /oauth2/callbackの処理部分
-func (o *OAuth2) Callback(code string, c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+func (o *OAuth2) Callback(c echo.Context) error {
+	sess, err := o.sessStore.GetSession(c)
+	if errors.Is(err, session.ErrNoSession) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting Session: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session: %w", err))
 	}
 
-	interfaceCodeVerifier, ok := sess.Values["codeVerifier"]
-	if !ok || interfaceCodeVerifier == nil {
-		return errors.New("CodeVerifier IS NULL")
-	}
-	codeVerifier := interfaceCodeVerifier.(string)
+	reqState := c.QueryParam("state")
 
-	res, err := o.getAccessToken(code, codeVerifier)
+	sessState, err := sess.GetState()
+	if errors.Is(err, session.ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no state")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting AccessToken:%w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get state: %w", err))
 	}
 
-	sess.Values["accessToken"] = res.AccessToken
-	sess.Values["refreshToken"] = res.RefreshToken
+	if reqState != sessState {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid state")
+	}
 
-	user, err := o.oauth.GetMe(res.AccessToken)
+	code := c.QueryParam("code")
+
+	codeVerifier, err := sess.GetCodeVerifier()
+	if errors.Is(err, session.ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no codeVerifier")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting Me: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get codeVerifier: %w", err))
 	}
 
-	sess.Values["userID"] = user.Id
-	sess.Values["userName"] = user.Name
-
-	err = sess.Save(c.Request(), c.Response())
+	codeChallengeOption := oauth2.SetAuthURLParam("code_verifier", codeVerifier)
+	token, err := o.conf.Exchange(c.Request().Context(), code, codeChallengeOption)
 	if err != nil {
-		return fmt.Errorf("Failed In Save Session: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to exchange token: %w", err))
 	}
 
-	return nil
+	err = sess.SetToken(token)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to set token: %w", err))
+	}
+
+	err = sess.Save()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 // GetGeneratedCode POST /oauth2/generate/codeの処理部分
 func (o *OAuth2) GetGeneratedCode(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+	sess, err := o.sessStore.GetSession(c)
+	if errors.Is(err, session.ErrNoSession) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+	}
 	if err != nil {
-		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session: %w", err))
 	}
 
 	state, err := randomString(60)
@@ -100,125 +117,93 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to create a random string: %w", err))
 	}
 
-	bytesCodeChallenge := sha256.Sum256([]byte(codeVerifier))
-	codeChallenge := base64url.Encode(bytesCodeChallenge[:])
-
-	codeChallengeMethodOption := oauth2.SetAuthURLParam("code_challenge_method", "S256")
-	codeChallengeOption := oauth2.SetAuthURLParam("code_challenge", codeChallenge)
-	authURL := o.conf.AuthCodeURL(state)
-
-	sess.Values["codeVerifier"] = codeVerifier
-
-	err = sess.Save(c.Request(), c.Response())
+	h := sha256.New()
+	_, err = io.Copy(h, strings.NewReader(codeVerifier))
 	if err != nil {
-		return nil, fmt.Errorf("Failed In Save Session: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to copy codeVerifier: %w", err))
 	}
 
-	return pkceParams, nil
+	codeChallengeBuilder := strings.Builder{}
+
+	bytesCodeChallenge := sha256.Sum256(h.Sum(nil))
+	enc := base64.NewEncoder(base64.RawURLEncoding, &codeChallengeBuilder)
+	defer enc.Close()
+
+	_, err = enc.Write(bytesCodeChallenge[:])
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to write codeChallenge: %w", err))
+	}
+
+	err = enc.Close()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to encode codeChallenge: %w", err))
+	}
+
+	codeChallengeMethodOption := oauth2.SetAuthURLParam("code_challenge_method", "S256")
+	codeChallengeOption := oauth2.SetAuthURLParam("code_challenge", codeChallengeBuilder.String())
+	authURL := o.conf.AuthCodeURL(state, codeChallengeMethodOption, codeChallengeOption)
+
+	err = sess.SetState(state)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to set state: %w", err))
+	}
+
+	err = sess.SetCodeVerifier(codeVerifier)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to set codeVerifier: %w", err))
+	}
+
+	err = sess.Save()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+	}
+
+	return c.String(http.StatusOK, authURL)
 }
 
 // PostLogout POST /oauth2/logoutの処理部分
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+	sess, err := o.sessStore.GetSession(c)
+	if errors.Is(err, session.ErrNoSession) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting Session: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session: %w", err))
 	}
 
-	interfaceAccessToken, ok := sess.Values["accessToken"]
-	if !ok || interfaceAccessToken == nil {
-		log.Printf("error: Unexpected No Access Token")
-		return errors.New("No Access Token")
+	token, err := sess.GetToken()
+	if errors.Is(err, session.ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no token")
 	}
-	accessToken, ok := interfaceAccessToken.(string)
-	if !ok {
-		return errors.New("Invalid Access Token")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get token: %w", err))
 	}
 
-	path := o.oauth.BaseURL()
-	path.Path += "/oauth2/revoke"
+	path := fmt.Sprintf("%s%s", baseURL, "/oauth2/revoke")
 	form := url.Values{}
-	form.Set("token", accessToken)
+	form.Set("token", token.AccessToken)
 	reqBody := strings.NewReader(form.Encode())
-	req, err := http.NewRequest("POST", path.String(), reqBody)
+	req, err := http.NewRequest("POST", path, reqBody)
 	if err != nil {
-		return fmt.Errorf("Failed In Making HTTP Request:%w", err)
+		return fmt.Errorf("failed to make HTTP request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("Failed In HTTP Request:%w", err)
+		return fmt.Errorf("failed in HTTP request:%w", err)
 	}
 	if res.StatusCode != 200 {
-		return fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+		return fmt.Errorf("failed to revoke access token:(status:%d %s)", res.StatusCode, res.Status)
 	}
 
-	err = o.session.RevokeSession(c)
+	err = sess.Revoke()
 	if err != nil {
-		return fmt.Errorf("Failed In Revoke Session: %w", err)
+		return fmt.Errorf("failed to revoke session: %w", err)
 	}
 
 	return nil
-}
-
-var randSrc = rand.NewSource(time.Now().UnixNano())
-
-const (
-	letters       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	letterIdxBits = 6
-	letterIdxMask = 1<<letterIdxBits - 1
-	letterIdxMax  = 63 / letterIdxBits
-)
-
-func randBytes(n int) []byte {
-	b := make([]byte, n)
-	cache, remain := randSrc.Int63(), letterIdxMax
-	for i := n - 1; i >= 0; {
-		if remain == 0 {
-			cache, remain = randSrc.Int63(), letterIdxMax
-		}
-		idx := int(cache & letterIdxMask)
-		if idx < len(letters) {
-			b[i] = letters[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
-	}
-	return b
-}
-
-func (o *OAuth2) getAccessToken(code string, codeVerifier string) (*authResponse, error) {
-	form := url.Values{}
-	form.Set("grant_type", "authorization_code")
-	form.Set("client_id", o.clientID)
-	form.Set("code", code)
-	form.Set("code_verifier", codeVerifier)
-	reqBody := strings.NewReader(form.Encode())
-	path := o.oauth.BaseURL()
-	path.Path += "/oauth2/token"
-	req, err := http.NewRequest("POST", path.String(), reqBody)
-	if err != nil {
-		return &authResponse{}, err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	httpClient := http.DefaultClient
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return &authResponse{}, err
-	}
-	if res.StatusCode != 200 {
-		return &authResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
-	}
-
-	authRes := &authResponse{}
-	err = json.NewDecoder(res.Body).Decode(authRes)
-	if err != nil {
-		return &authResponse{}, fmt.Errorf("Failed In Parsing Json: %w", err)
-	}
-	return authRes, nil
 }
 
 func randomString(n int) (string, error) {
