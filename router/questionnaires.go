@@ -153,7 +153,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
 	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(questionnaireID)
