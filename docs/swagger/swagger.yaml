@@ -16,6 +16,7 @@ security:
       - read
       - write
 tags:
+  - name: oauth2.0
   - name: questionnaire
   - name: question
   - name: response
@@ -23,6 +24,50 @@ tags:
   - name: group
   - name: result
 paths:
+  /oauth2/callback:
+    parameters:
+      - $ref: '#/components/parameters/codeInQuery'
+    get:
+      tags:
+        - oauth2
+      summary: OAuthのコールバック
+      description: OAuthのコールバック
+      operationId: callback
+      responses:
+        "200":
+          description: 成功
+        "302":
+          description: 失敗時。認証ページへリダイレクト
+  /oauth2/generate/code:
+    get:
+      tags:
+        - oauth2.0
+      summary: OAuthのcode_challengeとかの取得
+      description: OAuthのcode_challengeとかの取得
+      operationId: getGeneratedCode
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthCode'
+        "500":
+          description: 失敗
+  /oauth2/logout:
+    post:
+      tags:
+        - oauth2.0
+      summary: ログアウト
+      description: ログアウト
+      operationId: postLogout
+      responses:
+        "200":
+          description: 成功
+        "401":
+          description: 未ログイン
+        "500":
+          description: 失敗
   /questionnaires:
     get:
       operationId: getQuestionnaires
@@ -357,6 +402,13 @@ paths:
           description: 結果を閲覧する権限がありません。
 components:
   parameters:
+    codeInQuery:
+      name: code
+      in: query
+      required: true
+      description: OAuth2.0のcode
+      schema:
+        type: string
     sortInQuery:
       name: sort
       in: query
@@ -413,6 +465,17 @@ components:
       schema:
         type: integer
   schemas:
+    OAuthCode:
+      type: object
+      properties:
+        code_challenge:
+          type: string
+        code_challenge_method:
+          type: string
+        client_id:
+          type: string
+        response_type:
+          type: string
     NewQuestionnaire:
       type: object
       properties:
