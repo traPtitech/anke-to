@@ -29,7 +29,7 @@ type Questionnaire struct {
 	traq.IWebhook
 }
 
-const MAX_ITLE_LENGTH = 50
+const MAX_TITLE_LENGTH = 50
 // NewQuestionnaire Questionnaireのコンストラクタ
 func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel, validation model.IValidation, webhook traq.IWebhook) *Questionnaire {
 	return &Questionnaire{
@@ -96,8 +96,8 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if len(req.Title) > MAX_ITLE_LENGTH {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	if len(req.Title) > MAX_TITLE_LENGTH {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
@@ -153,7 +153,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(questionnaireID)
@@ -198,8 +198,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if len(req.Title) > MAX_ITLE_LENGTH {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	if len(req.Title) > MAX_TITLE_LENGTH {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("Length of the Title must be under 50.",err))
 	}
 
 	if req.ResSharedTo == "" {
