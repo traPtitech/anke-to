@@ -199,7 +199,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if len(req.Title) > MAX_TITLE_LENGTH {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("Length of the Title must be under 50.",err))
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if req.ResSharedTo == "" {
