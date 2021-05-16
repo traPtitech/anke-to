@@ -97,7 +97,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if len(req.Title) > MAX_TITLE_LENGTH {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
 	}
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
@@ -199,7 +199,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if len(req.Title) > MAX_TITLE_LENGTH {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
 	}
 
 	if req.ResSharedTo == "" {
