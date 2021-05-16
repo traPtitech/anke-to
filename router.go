@@ -37,6 +37,13 @@ func SetRouting(port string) {
 
 	e.Use(api.SessionMiddleware())
 
+	oauthAPI := e.Group("/api/oauth2")
+	{
+		oauthAPI.GET("/callback", api.Callback)
+		oauthAPI.GET("/generate/code", api.GetGeneratedCode)
+		oauthAPI.POST("/logout", api.PostLogout)
+	}
+
 	echoAPI := e.Group("/api", api.UserAuthenticate)
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")

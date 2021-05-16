@@ -42,7 +42,8 @@ func InjectAPIServer() (*router.API, error) {
 	routerResponse := router.NewResponse(questionnaire, validation, scaleLabel, respondent, response)
 	result := router.NewResult(respondent, questionnaire, administrator)
 	routerUser := router.NewUser(respondent, questionnaire, target, administrator)
-	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, routerUser)
+	oAuth2 := router.NewOAuth2(sessionStore)
+	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, routerUser, oAuth2)
 	return api, nil
 }
 

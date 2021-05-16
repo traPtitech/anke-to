@@ -29,7 +29,7 @@ paths:
       - $ref: '#/components/parameters/codeInQuery'
     get:
       tags:
-        - oauth2
+        - oauth2.0
       summary: OAuthのコールバック
       description: OAuthのコールバック
       operationId: callback
@@ -51,7 +51,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OAuthCode'
+                type: string
+                format: url
         "500":
           description: 失敗
   /oauth2/logout:

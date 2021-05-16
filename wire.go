@@ -37,6 +37,7 @@ func InjectAPIServer() (*router.API, error) {
 		router.NewResponse,
 		router.NewResult,
 		router.NewUser,
+		router.NewOAuth2,
 		model.NewAdministrator,
 		model.NewOption,
 		model.NewQuestionnaire,
