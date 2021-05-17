@@ -27,7 +27,7 @@ func NewMiddleware(administrator model.IAdministrator, respondent model.IRespond
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
-		IStore:  session,
+		IStore:         session,
 		IUser:          user,
 	}
 }
