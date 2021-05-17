@@ -22,7 +22,7 @@ var (
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 	sessionBind       = wire.Bind(new(model.ISession), new(*model.Session))
 
-	sessionStoreBind = wire.Bind(new(session.ISessionStore), new(*session.SessionStore))
+	storeBind = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
@@ -48,7 +48,7 @@ func InjectAPIServer() (*router.API, error) {
 		model.NewTarget,
 		model.NewValidation,
 		model.NewSession,
-		session.NewSessionStore,
+		session.NewStore,
 		traq.NewUser,
 		traq.NewWebhook,
 		administratorBind,
@@ -61,7 +61,7 @@ func InjectAPIServer() (*router.API, error) {
 		targetBind,
 		validationBind,
 		sessionBind,
-		sessionStoreBind,
+		storeBind,
 		userBind,
 		webhookBind,
 	)

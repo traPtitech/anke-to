@@ -24,12 +24,12 @@ func InjectAPIServer() (*router.API, error) {
 	respondent := model.NewRespondent()
 	question := model.NewQuestion()
 	modelSession := model.NewSession()
-	sessionStore, err := session.NewStore(modelSession)
+	store, err := session.NewStore(modelSession)
 	if err != nil {
 		return nil, err
 	}
 	user := traq.NewUser()
-	middleware := router.NewMiddleware(administrator, respondent, question, sessionStore, user)
+	middleware := router.NewMiddleware(administrator, respondent, question, store, user)
 	questionnaire := model.NewQuestionnaire()
 	target := model.NewTarget()
 	option := model.NewOption()
@@ -42,7 +42,7 @@ func InjectAPIServer() (*router.API, error) {
 	routerResponse := router.NewResponse(questionnaire, validation, scaleLabel, respondent, response)
 	result := router.NewResult(respondent, questionnaire, administrator)
 	routerUser := router.NewUser(respondent, questionnaire, target, administrator)
-	oAuth2 := router.NewOAuth2(sessionStore)
+	oAuth2 := router.NewOAuth2(store)
 	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, routerUser, oAuth2)
 	return api, nil
 }
@@ -61,7 +61,7 @@ var (
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 	sessionBind       = wire.Bind(new(model.ISession), new(*model.Session))
 
-	sessionStoreBind = wire.Bind(new(session.IStore), new(*session.Store))
+	storeBind = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
