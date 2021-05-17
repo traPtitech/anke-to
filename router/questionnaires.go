@@ -29,6 +29,8 @@ type Questionnaire struct {
 	traq.IWebhook
 }
 
+const MaxTitleLength = 50
+
 // NewQuestionnaire Questionnaireのコンストラクタ
 func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel, validation model.IValidation, webhook traq.IWebhook) *Questionnaire {
 	return &Questionnaire{
@@ -95,7 +97,9 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-
+	if len(req.Title) > MaxTitleLength {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
+	}
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
@@ -194,6 +198,9 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if len(req.Title) > MaxTitleLength {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
 	}
 
 	if req.ResSharedTo == "" {
