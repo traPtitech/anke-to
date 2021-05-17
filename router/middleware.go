@@ -17,23 +17,22 @@ type Middleware struct {
 	model.IAdministrator
 	model.IRespondent
 	model.IQuestion
-	session.ISessionStore
+	session.IStore
 	traq.IUser
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, session session.ISessionStore, user traq.IUser) *Middleware {
+func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, session session.IStore, user traq.IUser) *Middleware {
 	return &Middleware{
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
-		ISessionStore:  session,
+		IStore:  session,
 		IUser:          user,
 	}
 }
 
 const (
-	tokenKey           = "token"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"
@@ -45,13 +44,13 @@ const (
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
 
 func (m *Middleware) SessionMiddleware() echo.MiddlewareFunc {
-	return m.ISessionStore.GetMiddleware()
+	return m.IStore.GetMiddleware()
 }
 
 // UserAuthenticate traPのメンバーかの認証
 func (m *Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		sess, err := m.ISessionStore.GetSession(c)
+		sess, err := m.IStore.GetSession(c)
 		if errors.Is(err, session.ErrNoSession) {
 			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
 		}

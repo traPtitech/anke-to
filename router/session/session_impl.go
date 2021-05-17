@@ -12,26 +12,26 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type SessionStore struct {
+type Store struct {
 	store *mysqlstore.MySQLStore
 }
 
-func NewSessionStore(sess model.ISession) (*SessionStore, error) {
+func NewStore(sess model.ISession) (*Store, error) {
 	store, err := sess.Get()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	return &SessionStore{
+	return &Store{
 		store: store,
 	}, nil
 }
 
-func (ss *SessionStore) GetMiddleware() echo.MiddlewareFunc {
+func (ss *Store) GetMiddleware() echo.MiddlewareFunc {
 	return session.Middleware(ss.store)
 }
 
-func (ss *SessionStore) GetSession(c echo.Context) (ISession, error) {
+func (ss *Store) GetSession(c echo.Context) (ISession, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)

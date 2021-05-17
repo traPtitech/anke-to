@@ -24,7 +24,7 @@ func InjectAPIServer() (*router.API, error) {
 	respondent := model.NewRespondent()
 	question := model.NewQuestion()
 	modelSession := model.NewSession()
-	sessionStore, err := session.NewSessionStore(modelSession)
+	sessionStore, err := session.NewStore(modelSession)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ var (
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 	sessionBind       = wire.Bind(new(model.ISession), new(*model.Session))
 
-	sessionStoreBind = wire.Bind(new(session.ISessionStore), new(*session.SessionStore))
+	sessionStoreBind = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))

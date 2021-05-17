@@ -26,10 +26,10 @@ var (
 // OAuth2 oauthの構造体
 type OAuth2 struct {
 	conf      *oauth2.Config
-	sessStore session.ISessionStore
+	sessStore session.IStore
 }
 
-func NewOAuth2(sessStore session.ISessionStore) *OAuth2 {
+func NewOAuth2(sessStore session.IStore) *OAuth2 {
 	return &OAuth2{
 		conf: &oauth2.Config{
 			ClientID:     clientID,

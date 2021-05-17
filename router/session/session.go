@@ -5,7 +5,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type ISessionStore interface {
+type IStore interface {
 	GetMiddleware() echo.MiddlewareFunc
 	GetSession(c echo.Context) (ISession, error)
 }
