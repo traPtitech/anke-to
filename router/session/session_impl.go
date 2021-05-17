@@ -38,15 +38,15 @@ func (ss *SessionStore) GetSession(c echo.Context) (ISession, error) {
 	}
 
 	return &Session{
-		c: c,
+		c:    c,
 		sess: sess,
 	}, nil
 }
 
 type Session struct {
-	c echo.Context
+	c     echo.Context
 	store mysqlstore.MySQLStore
-	sess *sessions.Session
+	sess  *sessions.Session
 }
 
 func (s *Session) SetUserID(userID string) error {
@@ -125,10 +125,10 @@ func (s *Session) GetToken() (*oauth2.Token, error) {
 	}
 
 	return &oauth2.Token{
-		AccessToken: iAccessToken.(string),
-		TokenType: iTokenType.(string),
+		AccessToken:  iAccessToken.(string),
+		TokenType:    iTokenType.(string),
 		RefreshToken: iRefreshToken.(string),
-		Expiry: iExpiry.(time.Time),
+		Expiry:       iExpiry.(time.Time),
 	}, nil
 }
 

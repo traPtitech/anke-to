@@ -27,13 +27,13 @@ func NewMiddleware(administrator model.IAdministrator, respondent model.IRespond
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
-		ISessionStore: session,
-		IUser: user,
+		ISessionStore:  session,
+		IUser:          user,
 	}
 }
 
 const (
-	tokenKey = "token"
+	tokenKey           = "token"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"

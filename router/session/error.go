@@ -4,5 +4,5 @@ import "errors"
 
 var (
 	ErrNoSession = errors.New("no session")
-	ErrNoValue = errors.New("no value")
+	ErrNoValue   = errors.New("no value")
 )

@@ -20,6 +20,6 @@ func NewAPI(middleware *Middleware, questionnaire *Questionnaire, question *Ques
 		Response:      response,
 		Result:        result,
 		User:          user,
-		OAuth2: oauth2,
+		OAuth2:        oauth2,
 	}
 }

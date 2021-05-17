@@ -7,7 +7,7 @@ import (
 	"github.com/srinathgs/mysqlstore"
 )
 
-type Session struct {}
+type Session struct{}
 
 func NewSession() *Session {
 	return &Session{}

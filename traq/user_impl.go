@@ -8,14 +8,14 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type User struct {}
+type User struct{}
 
 func NewUser() *User {
 	return &User{}
 }
 
 type UserRes struct {
-	ID string `json:"id"`
+	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 

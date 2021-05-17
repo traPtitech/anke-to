@@ -20,12 +20,12 @@ var (
 	scaleLabelBind    = wire.Bind(new(model.IScaleLabel), new(*model.ScaleLabel))
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
-	sessionBind = wire.Bind(new(model.ISession), new(*model.Session))
+	sessionBind       = wire.Bind(new(model.ISession), new(*model.Session))
 
 	sessionStoreBind = wire.Bind(new(session.ISessionStore), new(*session.SessionStore))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
-	userBind = wire.Bind(new(traq.IUser), new(*traq.User))
+	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
 )
 
 func InjectAPIServer() (*router.API, error) {

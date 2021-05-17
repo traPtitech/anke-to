@@ -18,14 +18,14 @@ import (
 )
 
 var (
-	clientID = os.Getenv("CLIENT_ID")
+	clientID     = os.Getenv("CLIENT_ID")
 	clientSecret = os.Getenv("CLIENT_SECRET")
-	baseURL = "https://q.trap.jp/api/v3"
+	baseURL      = "https://q.trap.jp/api/v3"
 )
 
 // OAuth2 oauthの構造体
 type OAuth2 struct {
-	conf *oauth2.Config
+	conf      *oauth2.Config
 	sessStore session.ISessionStore
 }
 
@@ -39,7 +39,7 @@ func NewOAuth2(sessStore session.ISessionStore) *OAuth2 {
 				AuthURL:  fmt.Sprintf("%s%s", baseURL, "/oauth2/authorize"),
 				TokenURL: fmt.Sprintf("%s%s", baseURL, "/oauth2/token"),
 			},
-    },
+		},
 		sessStore: sessStore,
 	}
 }
@@ -195,19 +195,19 @@ const (
 )
 
 func randomString(n int) (string, error) {
-	bytesState := make([]byte,  n)
+	bytesState := make([]byte, n)
 	_, err := rand.Read(bytesState)
 	if err != nil {
-    return "", fmt.Errorf("failed to read random bytes: %w", err)
-  }
+		return "", fmt.Errorf("failed to read random bytes: %w", err)
+	}
 
 	sb := strings.Builder{}
-  for _, v := range bytesState {
-    _, err := sb.Write([]byte{letters[v%64]})
+	for _, v := range bytesState {
+		_, err := sb.Write([]byte{letters[v%64]})
 		if err != nil {
 			return "", fmt.Errorf("failed to write byte: %w", err)
 		}
-  }
+	}
 
-  return sb.String(), nil
+	return sb.String(), nil
 }
