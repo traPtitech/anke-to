@@ -30,6 +30,7 @@ type Questionnaire struct {
 }
 
 const MAX_TITLE_LENGTH = 50
+
 // NewQuestionnaire Questionnaireのコンストラクタ
 func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel, validation model.IValidation, webhook traq.IWebhook) *Questionnaire {
 	return &Questionnaire{
