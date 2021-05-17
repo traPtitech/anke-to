@@ -3,7 +3,6 @@ package router
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/router/session"
 	"golang.org/x/oauth2"
@@ -36,7 +36,7 @@ func NewOAuth2(sessStore session.ISessionStore) *OAuth2 {
 			ClientSecret: clientSecret,
 			Scopes:       []string{"read"},
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  fmt.Sprintf("%s%s", baseURL, "/oauth2/auth"),
+				AuthURL:  fmt.Sprintf("%s%s", baseURL, "/oauth2/authorize"),
 				TokenURL: fmt.Sprintf("%s%s", baseURL, "/oauth2/token"),
 			},
     },
@@ -100,14 +100,11 @@ func (o *OAuth2) Callback(c echo.Context) error {
 // GetGeneratedCode POST /oauth2/generate/codeの処理部分
 func (o *OAuth2) GetGeneratedCode(c echo.Context) error {
 	sess, err := o.sessStore.GetSession(c)
-	if errors.Is(err, session.ErrNoSession) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
-	}
-	if err != nil {
+	if err != nil && !errors.Is(err, session.ErrNoSession) {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session: %w", err))
 	}
 
-	state, err := randomString(60)
+	state, err := randomString(20)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to create a random string: %w", err))
 	}
@@ -123,24 +120,11 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to copy codeVerifier: %w", err))
 	}
 
-	codeChallengeBuilder := strings.Builder{}
-
-	bytesCodeChallenge := sha256.Sum256(h.Sum(nil))
-	enc := base64.NewEncoder(base64.RawURLEncoding, &codeChallengeBuilder)
-	defer enc.Close()
-
-	_, err = enc.Write(bytesCodeChallenge[:])
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to write codeChallenge: %w", err))
-	}
-
-	err = enc.Close()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to encode codeChallenge: %w", err))
-	}
+	bytesCodeChallenge := h.Sum(nil)
+	codeChallenge := base64url.Encode(bytesCodeChallenge[:])
 
 	codeChallengeMethodOption := oauth2.SetAuthURLParam("code_challenge_method", "S256")
-	codeChallengeOption := oauth2.SetAuthURLParam("code_challenge", codeChallengeBuilder.String())
+	codeChallengeOption := oauth2.SetAuthURLParam("code_challenge", codeChallenge)
 	authURL := o.conf.AuthCodeURL(state, codeChallengeMethodOption, codeChallengeOption)
 
 	err = sess.SetState(state)
@@ -206,6 +190,10 @@ func (o *OAuth2) PostLogout(c echo.Context) error {
 	return nil
 }
 
+const (
+	letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+)
+
 func randomString(n int) (string, error) {
 	bytesState := make([]byte,  n)
 	_, err := rand.Read(bytesState)
@@ -215,8 +203,7 @@ func randomString(n int) (string, error) {
 
 	sb := strings.Builder{}
   for _, v := range bytesState {
-    // 制御文字が当たらないように調整
-    _, err := sb.Write([]byte{v%byte(94) + 33})
+    _, err := sb.Write([]byte{letters[v%64]})
 		if err != nil {
 			return "", fmt.Errorf("failed to write byte: %w", err)
 		}

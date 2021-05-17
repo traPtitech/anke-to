@@ -12,6 +12,9 @@ services:
       MARIADB_PASSWORD: password
       MARIADB_HOSTNAME: mysql
       MARIADB_DATABASE: anke-to
+      CLIENT_ID:
+      CLIENT_SECRET:
+      SESSION_SECRET: secret
       TZ: Asia/Tokyo
       GO111MODULE: "on"
     ports:

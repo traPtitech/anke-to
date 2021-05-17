@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -94,18 +95,41 @@ func (s *Session) GetCodeVerifier() (string, error) {
 }
 
 func (s *Session) SetToken(token *oauth2.Token) error {
-	s.sess.Values["token"] = token
+	s.sess.Values["access_token"] = token.AccessToken
+	s.sess.Values["token_type"] = token.TokenType
+	s.sess.Values["refresh_token"] = token.RefreshToken
+	s.sess.Values["expiry"] = token.Expiry
 
 	return nil
 }
 
 func (s *Session) GetToken() (*oauth2.Token, error) {
-	iToken, ok := s.sess.Values["token"]
-	if !ok || iToken == nil {
+	iAccessToken, ok := s.sess.Values["access_token"]
+	if !ok || iAccessToken == nil {
 		return nil, ErrNoValue
 	}
 
-	return iToken.(*oauth2.Token), nil
+	iTokenType, ok := s.sess.Values["token_type"]
+	if !ok || iTokenType == nil {
+		return nil, ErrNoValue
+	}
+
+	iRefreshToken, ok := s.sess.Values["refresh_token"]
+	if !ok || iRefreshToken == nil {
+		return nil, ErrNoValue
+	}
+
+	iExpiry, ok := s.sess.Values["expiry"]
+	if !ok || iExpiry == nil {
+		return nil, ErrNoValue
+	}
+
+	return &oauth2.Token{
+		AccessToken: iAccessToken.(string),
+		TokenType: iTokenType.(string),
+		RefreshToken: iRefreshToken.(string),
+		Expiry: iExpiry.(time.Time),
+	}, nil
 }
 
 func (s *Session) Save() error {

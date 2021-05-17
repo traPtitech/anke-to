@@ -1,6 +1,8 @@
 package session
 
+import "errors"
+
 var (
-	ErrNoSession error
-	ErrNoValue error
+	ErrNoSession = errors.New("no session")
+	ErrNoValue = errors.New("no value")
 )
