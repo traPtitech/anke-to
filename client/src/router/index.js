@@ -10,7 +10,7 @@ import Results from '@/pages/Results'
 import ResponseDetails from '@/pages/ResponseDetails'
 import NotFound from '@/pages/NotFound'
 import Blank from '@/pages/Blank'
-import { getRequest2Callback, redirect2AuthEndpoint } from '@/util/api.js'
+import { sendTokenRequest, sendCodeRequest } from '../bin/traqAuth'
 
 Vue.use(Router)
 
@@ -57,7 +57,10 @@ const router = new Router({
     {
       path: '/questionnaires/:id/edit',
       name: 'QuestionnaireDetailsEdit',
-      component: QuestionnaireDetails
+      component: QuestionnaireDetails,
+      meta: {
+        requiresTraqAuth: true
+      }
     },
     {
       path: '/results/:id',
@@ -86,12 +89,32 @@ const router = new Router({
       name: 'Callback',
       component: Blank,
       beforeEnter: async (to, _, next) => {
-        await getRequest2Callback(to)
-        const destination = sessionStorage.getItem('destination')
-        if (destination) {
-          next(destination)
+        const clearSessionStorage = () => {
+          sessionStorage.removeItem('nextRoute')
+          sessionStorage.removeItem('previousRoute')
+          sessionStorage.removeItem(`traq-auth-code-verifier-${state}`)
         }
-        next()
+
+        const code = to.query.code
+        const state = to.query.state
+        const codeVerifier = sessionStorage.getItem(
+          `traq-auth-code-verifier-${state}`
+        )
+        if (!code || !codeVerifier) {
+          let previousRoute = sessionStorage.getItem('previousRoute')
+          if (!previousRoute) previousRoute = '/targeted'
+          clearSessionStorage()
+          next(previousRoute)
+          return
+        }
+
+        const res = await sendTokenRequest(code, codeVerifier)
+        store.commit('traq/setAccessToken', res.data.access_token)
+
+        let nextRoute = sessionStorage.getItem('nextRoute')
+        if (!nextRoute) nextRoute = '/targeted'
+        clearSessionStorage()
+        next(nextRoute)
       }
     }
   ],
@@ -106,12 +129,6 @@ const router = new Router({
 })
 
 router.beforeEach(async (to, from, next) => {
-  console.log(to.name)
-  if (to.name === 'Callback') {
-    next()
-    return
-  }
-
   // traQにログイン済みかどうか調べる
   if (!store.state.me) {
     await store.dispatch('whoAmI')
@@ -119,8 +136,34 @@ router.beforeEach(async (to, from, next) => {
 
   if (!store.state.me) {
     // 未ログインの場合、traQのログインページに飛ばす
-    sessionStorage.setItem(`destination`, to.fullPath)
-    await redirect2AuthEndpoint()
+    const traQLoginURL = 'https://q.trap.jp/login?redirect=' + location.href
+    location.href = traQLoginURL
+  }
+
+  if (to.meta.requiresTraqAuth) {
+    await store.dispatch('traq/ensureToken')
+    if (!store.state.traq.accessToken) {
+      const message =
+        'アンケートの編集・作成にはtraQアカウントへのアクセスが必要です。OKを押すとtraQに飛びます。'
+      if (window.confirm(message)) {
+        sessionStorage.setItem('nextRoute', to.path) // traQでのトークン取得後に飛ばすルート
+        sessionStorage.setItem('previousRoute', from.path) // traQでのトークン取得失敗時に飛ばすルート
+        await sendCodeRequest()
+
+        // traQのconsentページに飛ぶ前にnextが表示されることを防ぐ
+        next(false)
+        return
+      } else {
+        // キャンセルを押された場合は元のルートに戻る
+        if (from.path !== to.path) {
+          next(from.path)
+        } else {
+          // url直打ちなどでアクセスされた場合
+          next('/targeted')
+        }
+        return
+      }
+    }
   }
 
   next()

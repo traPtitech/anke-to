@@ -8,11 +8,10 @@ type API struct {
 	*Response
 	*Result
 	*User
-	*OAuth2
 }
 
 // NewAPI APIのコンストラクタ
-func NewAPI(middleware *Middleware, questionnaire *Questionnaire, question *Question, response *Response, result *Result, user *User, oauth2 *OAuth2) *API {
+func NewAPI(middleware *Middleware, questionnaire *Questionnaire, question *Question, response *Response, result *Result, user *User) *API {
 	return &API{
 		Middleware:    middleware,
 		Questionnaire: questionnaire,
@@ -20,6 +19,5 @@ func NewAPI(middleware *Middleware, questionnaire *Questionnaire, question *Ques
 		Response:      response,
 		Result:        result,
 		User:          user,
-		OAuth2:        oauth2,
 	}
 }

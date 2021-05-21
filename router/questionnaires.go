@@ -10,7 +10,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
