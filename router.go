@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 // SetRouting ルーティングの設定
@@ -19,10 +17,7 @@ func SetRouting(port string) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 
-	api, err := InjectAPIServer()
-	if err != nil {
-		panic(fmt.Errorf("failed to inject: %w", err))
-	}
+	api := InjectAPIServer()
 
 	// Static Files
 	e.Static("/", "client/dist")
@@ -34,18 +29,6 @@ func SetRouting(port string) {
 	e.File("/app.js", "client/dist/app.js")
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
-
-	e.Use(api.SessionMiddleware())
-
-	oauthAPI := e.Group("/api")
-	{
-		apiOAuth := oauthAPI.Group("/oauth2")
-		{
-			apiOAuth.GET("/callback", api.Callback)
-			apiOAuth.GET("/generate/code", api.GetGeneratedCode)
-			apiOAuth.POST("/logout", api.PostLogout)
-		}
-	}
 
 	echoAPI := e.Group("/api", api.UserAuthenticate)
 	{

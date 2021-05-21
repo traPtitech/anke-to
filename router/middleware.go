@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo"
 	"github.com/traPtitech/anke-to/model"
-	"github.com/traPtitech/anke-to/router/session"
-	"github.com/traPtitech/anke-to/traq"
 )
 
 // Middleware Middlewareの構造体
@@ -17,18 +15,14 @@ type Middleware struct {
 	model.IAdministrator
 	model.IRespondent
 	model.IQuestion
-	session.IStore
-	traq.IUser
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, session session.IStore, user traq.IUser) *Middleware {
+func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion) *Middleware {
 	return &Middleware{
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
-		IStore:         session,
-		IUser:          user,
 	}
 }
 
@@ -43,38 +37,17 @@ const (
 暫定的にハードコーディングで対応*/
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
 
-func (m *Middleware) SessionMiddleware() echo.MiddlewareFunc {
-	return m.IStore.GetMiddleware()
-}
-
 // UserAuthenticate traPのメンバーかの認証
-func (m *Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		sess, err := m.IStore.GetSession(c)
-		if errors.Is(err, session.ErrNoSession) {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
-		}
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session: %w", err))
+		userID := c.Request().Header.Get("X-Showcase-User")
+		if userID == "" {
+			userID = "mds_boy"
 		}
 
-		userID, err := sess.GetUserID()
-		if err != nil && !errors.Is(err, session.ErrNoValue) {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-		}
-		if errors.Is(err, session.ErrNoValue) {
-			token, err := sess.GetToken()
-			if errors.Is(err, session.ErrNoValue) {
-				return echo.NewHTTPError(http.StatusUnauthorized, "no token")
-			}
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get token: %w", err))
-			}
-
-			userID, err = m.IUser.GetMyID(token)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-			}
+		// トークンを持たないユーザはアクセスできない
+		if userID == "-" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 		}
 
 		c.Set(userIDKey, userID)

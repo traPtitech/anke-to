@@ -6,7 +6,6 @@ import (
 	"github.com/google/wire"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
-	"github.com/traPtitech/anke-to/router/session"
 	"github.com/traPtitech/anke-to/traq"
 )
 
@@ -20,15 +19,11 @@ var (
 	scaleLabelBind    = wire.Bind(new(model.IScaleLabel), new(*model.ScaleLabel))
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
-	sessionBind       = wire.Bind(new(model.ISession), new(*model.Session))
-
-	storeBind = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
-	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
 )
 
-func InjectAPIServer() (*router.API, error) {
+func InjectAPIServer() *router.API {
 	wire.Build(
 		router.NewAPI,
 		router.NewMiddleware,
@@ -37,7 +32,6 @@ func InjectAPIServer() (*router.API, error) {
 		router.NewResponse,
 		router.NewResult,
 		router.NewUser,
-		router.NewOAuth2,
 		model.NewAdministrator,
 		model.NewOption,
 		model.NewQuestionnaire,
@@ -47,9 +41,6 @@ func InjectAPIServer() (*router.API, error) {
 		model.NewScaleLabel,
 		model.NewTarget,
 		model.NewValidation,
-		model.NewSession,
-		session.NewStore,
-		traq.NewUser,
 		traq.NewWebhook,
 		administratorBind,
 		optionBind,
@@ -60,11 +51,8 @@ func InjectAPIServer() (*router.API, error) {
 		scaleLabelBind,
 		targetBind,
 		validationBind,
-		sessionBind,
-		storeBind,
-		userBind,
 		webhookBind,
 	)
 
-	return nil, nil
+	return nil
 }
