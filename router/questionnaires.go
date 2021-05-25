@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -305,6 +306,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 			validationIDs = append(validationIDs, question.ID)
 		}
 	}
+	log.Printf("%+v\n", scaleLabelIDs)
 
 	options, err := q.GetOptions(optionIDs)
 	if err != nil {
@@ -319,24 +321,27 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
 	for _, label := range scaleLabels {
-		scaleLabelMap[label.QuestionID] = &label
+		scaleLabelMap[label.QuestionID] = label
+	}
+	for k, label := range scaleLabelMap {
+		log.Printf("%d:%+v\n", k, label)
 	}
 
 	validations, err := q.GetValidations(validationIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	validationMap := make(map[int]*model.Validations, len(validations))
+	validationMap := make(map[int]model.Validations, len(validations))
 	for _, validation := range validations {
-		validationMap[validation.QuestionID] = &validation
+		validationMap[validation.QuestionID] = validation
 	}
 
 	for _, v := range allquestions {
 		options := []string{}
-		scalelabel := &model.ScaleLabels{}
-		validation := &model.Validations{}
+		scalelabel := model.ScaleLabels{}
+		validation := model.Validations{}
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
 			var ok bool
@@ -348,13 +353,13 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 			var ok bool
 			scalelabel, ok = scaleLabelMap[v.ID]
 			if !ok {
-				scalelabel = &model.ScaleLabels{}
+				scalelabel = model.ScaleLabels{}
 			}
 		case "Text", "Number":
 			var ok bool
 			validation, ok = validationMap[v.ID]
 			if !ok {
-				validation = &model.Validations{}
+				validation = model.Validations{}
 			}
 		}
 
@@ -375,7 +380,8 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 				RegexPattern:    validation.RegexPattern,
 				MinBound:        validation.MinBound,
 				MaxBound:        validation.MaxBound,
-			})
+			},
+		)
 	}
 
 	return c.JSON(http.StatusOK, ret)
