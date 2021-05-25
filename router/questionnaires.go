@@ -3,7 +3,6 @@ package router
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -306,7 +305,6 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 			validationIDs = append(validationIDs, question.ID)
 		}
 	}
-	log.Printf("%+v\n", scaleLabelIDs)
 
 	options, err := q.GetOptions(optionIDs)
 	if err != nil {
@@ -324,9 +322,6 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
 	for _, label := range scaleLabels {
 		scaleLabelMap[label.QuestionID] = label
-	}
-	for k, label := range scaleLabelMap {
-		log.Printf("%d:%+v\n", k, label)
 	}
 
 	validations, err := q.GetValidations(validationIDs)
