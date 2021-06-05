@@ -1,13 +1,11 @@
 package router
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"gopkg.in/guregu/null.v3"
 
@@ -90,9 +88,6 @@ func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	ret, err := u.GetTargettedQuestionnaires(userID, "", sort)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -229,9 +224,6 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	ret, err := u.GetTargettedQuestionnaires(traQID, "unanswered", sort)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
