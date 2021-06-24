@@ -76,7 +76,7 @@ func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) 
 			ModifiedAt: time.Now(), //gormbulkを使うため自動で設定してくれない
 		})
 	}
-	err := gormbulk.BulkInsert(db, responses, len(responses), "ModifiedAt", "DeletedAt")
+	err := gormbulk.BulkInsert(db, responses, len(responses), "DeletedAt")
 	if err != nil {
 		return fmt.Errorf("failed to insert response: %w", err)
 	}
