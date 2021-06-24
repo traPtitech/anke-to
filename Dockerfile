@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.15.3-alpine as server-build
+FROM golang:1.16.5-alpine as server-build
 RUN apk add --update --no-cache git
 
 WORKDIR /github.com/traPtitech/anke-to
