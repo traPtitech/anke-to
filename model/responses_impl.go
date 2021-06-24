@@ -73,6 +73,7 @@ func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) 
 			ResponseID: responseID,
 			QuestionID: responseMeta.QuestionID,
 			Body:       null.NewString(responseMeta.Data, true),
+			ModifiedAt: time.Now(), //gormbulkを使うため自動で設定してくれない
 		})
 	}
 	err := gormbulk.BulkInsert(db, responses, len(responses), "ModifiedAt", "DeletedAt")
