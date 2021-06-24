@@ -12,11 +12,12 @@ COPY . .
 RUN go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:16-alpine as client-build
+FROM node:14-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 RUN apk add --update --no-cache python3 make g++
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
+RUN npx browserslist@latest --update-db
 COPY client .
 RUN npm run build
 
