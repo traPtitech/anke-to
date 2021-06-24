@@ -13,7 +13,7 @@ COPY . .
 RUN go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:12-alpine as client-build
+FROM node:16-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci --prefer-offline
