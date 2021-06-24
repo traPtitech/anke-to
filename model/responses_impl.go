@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 	"gopkg.in/guregu/null.v3"
 )
@@ -23,6 +24,26 @@ type Responses struct {
 	Body       null.String `json:"response" gorm:"type:text;default:NULL;"`
 	ModifiedAt time.Time   `json:"-" gorm:"type:timestamp NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 	DeletedAt  null.Time   `json:"-" gorm:"type:timestamp NULL;default:NULL;"`
+}
+
+//BeforeCreate insert時に自動でmodifiedAt更新
+func (*Responses) BeforeCreate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
+
+	return nil
+}
+
+//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+func (*Responses) BeforeUpdate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
+
+	return nil
 }
 
 //TableName テーブル名が単数形なのでその対応
