@@ -65,7 +65,6 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: anke-to
-          TZ: Asia/Tokyo
     steps:
       - uses: actions/setup-go@v2
         with:
