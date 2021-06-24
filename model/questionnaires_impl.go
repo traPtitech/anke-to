@@ -30,6 +30,20 @@ type Questionnaires struct {
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
+func (questionnaire *Questionnaires) BeforeCreate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ModifiedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set ModifiedAt: %w", err)
+	}
+	err = scope.SetColumn("CreatedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set CreatedAt: %w", err)
+	}
+
+	return nil
+}
+
+//BeforeUpdate Update時に自動でmodified_atを現在時刻に
 func (questionnaire *Questionnaires) BeforeUpdate(scope *gorm.Scope) error {
 	err := scope.SetColumn("ModifiedAt", time.Now())
 	if err != nil {

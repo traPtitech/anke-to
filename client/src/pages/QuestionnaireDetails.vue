@@ -301,6 +301,9 @@ export default {
         axios
           .post('/questionnaires', informationData)
           .then(resp => {
+            if (resp.status == 400) {
+              throw new Error('Bad Request')
+            }
             // 返ってきたquestionnaireIDを保存
             this.newQuestionnaireId = resp.data.questionnaireID
           })
@@ -327,7 +330,10 @@ export default {
 
         axios
           .patch('/questionnaires/' + this.questionnaireId, informationData)
-          .then(() => {
+          .then(resp => {
+            if (resp.status == 400) {
+              throw new Error('Bad Request')
+            }
             // 質問を送信
             return this.sendQuestions(0)
           })

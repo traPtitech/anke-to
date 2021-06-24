@@ -15,9 +15,9 @@ jobs:
     name: Mod
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
         with:
@@ -31,9 +31,9 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - uses: actions/checkout@v1
       - uses: actions/cache@v1
         with:
@@ -65,11 +65,10 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: anke-to
-          TZ: Asia/Tokyo
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
         with:
@@ -77,6 +76,8 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
+      - run: go install github.com/golang/mock/mockgen@v1.5.0
+      - run: go generate ./...
       - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
@@ -98,7 +99,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v1
         with:
-          go-version: 1.15
+          go-version: 1.16
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v1

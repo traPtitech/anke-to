@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/jinzhu/gorm"
 
@@ -97,7 +98,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if len(req.Title) > MaxTitleLength {
+	if utf8.RuneCountInString(req.Title) > MaxTitleLength {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
 	}
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
@@ -199,7 +200,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if len(req.Title) > MaxTitleLength {
+	if utf8.RuneCountInString(req.Title) > MaxTitleLength {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
 	}
 

@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.15.3-alpine as server-build
+FROM golang:1.16.5-alpine as server-build
 RUN apk add --update --no-cache git
 
 WORKDIR /github.com/traPtitech/anke-to
@@ -12,16 +12,18 @@ COPY . .
 RUN go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:12-alpine as client-build
+FROM node:14-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
+RUN apk add --update --no-cache python3 make g++
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
+RUN npx browserslist@latest --update-db
 COPY client .
 RUN npm run build
 
 
 # run
-FROM alpine:3.12.1
+FROM alpine:3.14.0
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \

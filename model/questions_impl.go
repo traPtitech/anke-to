@@ -30,6 +30,16 @@ type Questions struct {
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
 }
 
+//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+func (questionnaire *Questions) BeforeCreate(scope *gorm.Scope) error {
+	err := scope.SetColumn("CreatedAt", time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set CreatedAt: %w", err)
+	}
+
+	return nil
+}
+
 //TableName テーブル名が単数形なのでその対応
 func (*Questions) TableName() string {
 	return "question"

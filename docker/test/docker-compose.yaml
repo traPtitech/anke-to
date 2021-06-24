@@ -16,7 +16,11 @@ services:
     volumes:
       - ../../:/go/src/github.com/traPtitech/anke-to
     working_dir: /go/src/github.com/traPtitech/anke-to
-    command: go test ./model ./router -v -cover
+    command: >
+      sh -c '
+      go install github.com/golang/mock/mockgen &&
+      go generate ./model ./traq &&
+      go test ./model ./router -v -cover'
     restart: on-failure
     depends_on:
       - mysql
