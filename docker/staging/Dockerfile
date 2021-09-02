@@ -24,7 +24,7 @@ RUN npm run staging-build
 
 
 # run
-FROM alpine:3.12.0
+FROM alpine:3.14.2
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
