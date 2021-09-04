@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/traPtitech/anke-to/model"
