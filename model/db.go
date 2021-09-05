@@ -24,23 +24,23 @@ var (
 
 // EstablishConnection DBと接続
 func EstablishConnection() (*gorm.DB, error) {
-	user := os.Getenv("MARIADB_USERNAME")
-	if user == "" {
+	user, ok := os.LookupEnv("MARIADB_USERNAME")
+	if !ok {
 		user = "root"
 	}
 
-	pass := os.Getenv("MARIADB_PASSWORD")
-	if pass == "" {
+	pass, ok := os.LookupEnv("MARIADB_PASSWORD")
+	if !ok {
 		pass = "password"
 	}
 
-	host := os.Getenv("MARIADB_HOSTNAME")
-	if host == "" {
+	host, ok := os.LookupEnv("MARIADB_HOSTNAME")
+	if !ok {
 		host = "localhost"
 	}
 
-	dbname := os.Getenv("MARIADB_DATABASE")
-	if dbname == "" {
+	dbname, ok := os.LookupEnv("MARIADB_DATABASE")
+	if !ok {
 		dbname = "anke-to"
 	}
 
