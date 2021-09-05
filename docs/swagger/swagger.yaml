@@ -53,7 +53,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewQuestionnaire'
       responses:
-        '200':
+        '201':
           description: 正常にアンケートを作成できました．作成されたアンケートを返します．
           content:
             application/json:
