@@ -168,8 +168,8 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 	}
 }
 
-// ResultAdministratorAuthenticate アンケートの回答を確認できるかの認証
-func (m *Middleware) ResultAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+// ResultAuthenticate アンケートの回答を確認できるかの認証
+func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
