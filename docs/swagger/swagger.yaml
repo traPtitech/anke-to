@@ -362,7 +362,7 @@ paths:
         - result
       parameters:
         - $ref: '#/components/parameters/questionnaireIDInPath'
-        - $ref: '#/components/parameters/sortInQuery'
+        - $ref: '#/components/parameters/responseSortInQuery'
       description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
       responses:
         '200':
@@ -380,13 +380,21 @@ components:
     sortInQuery:
       name: sort
       in: query
-      required: true
-      description: |
+      description:
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
-        type: string
+        $ref: '#/components/schemas/SortType'
+    responseSortInQuery:
+      name: sort
+      in: query
+      description:
+        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title",
+        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+        "-modified_at" )
+      schema:
+        $ref: '#/components/schemas/ResponseSortType'
     searchInQuery:
       name: search
       in: query
@@ -396,16 +404,14 @@ components:
     pageInQuery:
       name: page
       in: query
-      required: true
       description: 何ページ目か (未定義の場合は1ページ目)
       schema:
         type: integer
     nontargetedInQuery:
       name: nontargeted
       in: query
-      required: true
       description: |
-        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
+        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     questionnaireIDInPath:
@@ -433,6 +439,26 @@ components:
       schema:
         type: integer
   schemas:
+    SortType:
+      type: string
+      description: question、questionnaire用のソートの種類
+      enum:
+        - created_at
+        - -created_at
+        - title
+        - -title
+        - modified_at
+        - -modified_at
+    ResponseSortType:
+      type: string
+      description: response用のsortの種類
+      enum:
+        - submitted_at
+        - -submitted_at
+        - title
+        - -title
+        - modified_at
+        - -modified_at
     ResShareType:
       type: string
       example: public
