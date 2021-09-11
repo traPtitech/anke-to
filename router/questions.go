@@ -30,20 +30,20 @@ func NewQuestion(validation model.IValidation, question model.IQuestion, option 
 }
 
 type PostQuestionRequest struct {
-	QuestionnaireID int      `json:"questionnaireID"`
-	QuestionType    string   `json:"question_type"`
-	QuestionNum     int      `json:"question_num"`
-	PageNum         int      `json:"page_num"`
-	Body            string   `json:"body"`
+	QuestionnaireID int      `json:"questionnaireID" validate:"min=0"`
+	QuestionType    string   `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
+	QuestionNum     int      `json:"question_num" validate:"min=0"`
+	PageNum         int      `json:"page_num" validate:"min=0"`
+	Body            string   `json:"body" validate:"required"`
 	IsRequired      bool     `json:"is_required"`
-	Options         []string `json:"options"`
-	ScaleLabelRight string   `json:"scale_label_right"`
-	ScaleLabelLeft  string   `json:"scale_label_left"`
+	Options         []string `json:"options" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+	ScaleLabelRight string   `json:"scale_label_right" validate:"required_if=QuestionType LinearScale,max=50"`
+	ScaleLabelLeft  string   `json:"scale_label_left" validate:"required_if=QuestionType LinearScale,max=50"`
 	ScaleMin        int      `json:"scale_min"`
-	ScaleMax        int      `json:"scale_max"`
+	ScaleMax        int      `json:"scale_max" validate:"gtecsfield=ScaleMin"`
 	RegexPattern    string   `json:"regex_pattern"`
-	MinBound        string   `json:"min_bound"`
-	MaxBound        string   `json:"max_bound"`
+	MinBound        string   `json:"min_bound" validate:"omitempty,number"`
+	MaxBound        string   `json:"max_bound" validate:"omitempty,number"`
 }
 
 // PostQuestion POST /questions
