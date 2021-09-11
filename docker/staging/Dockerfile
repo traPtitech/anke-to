@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.17.0-alpine as server-build
+FROM golang:1.17.1-alpine as server-build
 
 RUN apk add --update --no-cache git
 
