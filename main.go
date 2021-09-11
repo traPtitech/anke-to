@@ -14,7 +14,7 @@ import (
 func main() {
 	env, ok := os.LookupEnv("ANKE-TO_ENV")
 	if !ok {
-		panic("no ANKE-TO_ENV")
+		env = "production"
 	}
 	logOn := env == "pprof" || env == "dev"
 

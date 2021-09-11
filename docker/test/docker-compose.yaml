@@ -2,7 +2,7 @@ version: "3"
 
 services:
   anke-to:
-    image: golang:1.15.3-alpine
+    image: golang:1.17.1-alpine
     environment:
       ANKE-TO_ENV: dev
       CGO_ENABLED: 0

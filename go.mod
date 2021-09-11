@@ -29,6 +29,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-playground/validator/v10 v10.9.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/labstack/gommon v0.3.0 // indirect
@@ -38,4 +39,10 @@ require (
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+)
+
+require (
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
 )

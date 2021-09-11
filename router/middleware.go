@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
@@ -30,11 +31,21 @@ func NewMiddleware(administrator model.IAdministrator, respondent model.IRespond
 }
 
 const (
+	validatorKay       = "validator"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"
 	questionIDKey      = "questionID"
 )
+
+func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		validate := validator.New()
+		c.Set(validatorKay, validate)
+
+		return next(c)
+	}
+}
 
 /* 消せないアンケートの発生を防ぐための管理者
 暫定的にハードコーディングで対応*/
@@ -215,6 +226,16 @@ func (m *Middleware) ResultAdministratorAuthenticate(next echo.HandlerFunc) echo
 
 		return next(c)
 	}
+}
+
+func getValidator(c echo.Context) (*validator.Validate, error) {
+	rowValidate := c.Get(validatorKay)
+	validate, ok := rowValidate.(*validator.Validate)
+	if !ok {
+		return nil, fmt.Errorf("failed to get validator")
+	}
+
+	return validate, nil
 }
 
 func getUserID(c echo.Context) (string, error) {
