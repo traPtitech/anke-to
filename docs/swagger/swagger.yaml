@@ -604,14 +604,12 @@ components:
           enum:
             - Text
             - TextArea
+            - Number
             - MultipleChoice
             - Checkbox
-            - Dropdown
             - LinearScale
-            - Date
-            - Time
           description: |
-            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
         body:
           type: string
           example: 質問文
