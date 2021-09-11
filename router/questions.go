@@ -29,24 +29,26 @@ func NewQuestion(validation model.IValidation, question model.IQuestion, option 
 	}
 }
 
+type PostQuestionRequest struct {
+	QuestionnaireID int      `json:"questionnaireID"`
+	QuestionType    string   `json:"question_type"`
+	QuestionNum     int      `json:"question_num"`
+	PageNum         int      `json:"page_num"`
+	Body            string   `json:"body"`
+	IsRequired      bool     `json:"is_required"`
+	Options         []string `json:"options"`
+	ScaleLabelRight string   `json:"scale_label_right"`
+	ScaleLabelLeft  string   `json:"scale_label_left"`
+	ScaleMin        int      `json:"scale_min"`
+	ScaleMax        int      `json:"scale_max"`
+	RegexPattern    string   `json:"regex_pattern"`
+	MinBound        string   `json:"min_bound"`
+	MaxBound        string   `json:"max_bound"`
+}
+
 // PostQuestion POST /questions
 func (q *Question) PostQuestion(c echo.Context) error {
-	req := struct {
-		QuestionnaireID int      `json:"questionnaireID"`
-		QuestionType    string   `json:"question_type"`
-		QuestionNum     int      `json:"question_num"`
-		PageNum         int      `json:"page_num"`
-		Body            string   `json:"body"`
-		IsRequired      bool     `json:"is_required"`
-		Options         []string `json:"options"`
-		ScaleLabelRight string   `json:"scale_label_right"`
-		ScaleLabelLeft  string   `json:"scale_label_left"`
-		ScaleMin        int      `json:"scale_min"`
-		ScaleMax        int      `json:"scale_max"`
-		RegexPattern    string   `json:"regex_pattern"`
-		MinBound        string   `json:"min_bound"`
-		MaxBound        string   `json:"max_bound"`
-	}{}
+	req := PostQuestionRequest{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
