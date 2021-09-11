@@ -55,6 +55,18 @@ func (q *Question) PostQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	switch req.QuestionType {
 	case "Text":
 		//正規表現のチェック
