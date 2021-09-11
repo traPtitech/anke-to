@@ -30,7 +30,7 @@ func SetRouting(port string) {
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
 
-	echoAPI := e.Group("/api", api.UserAuthenticate)
+	echoAPI := e.Group("/api", api.UserAuthenticate, api.SetValidatorMiddleware)
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")
 		{
