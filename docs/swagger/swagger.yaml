@@ -756,12 +756,10 @@ components:
           enum:
             - Text
             - TextArea
+            - Number
             - MultipleChoice
             - Checkbox
-            - Dropdown
             - LinearScale
-            - Date
-            - Time
         response:
           type: string
           example: リマインダーBOTを作った話
@@ -773,8 +771,6 @@ components:
       required:
         - questionID
         - question_type
-        - response
-        - option_response
     ResponseResult:
       allOf:
       - $ref: '#/components/schemas/Response'
