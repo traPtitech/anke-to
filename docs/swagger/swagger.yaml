@@ -433,6 +433,15 @@ components:
       schema:
         type: integer
   schemas:
+    ResShareType:
+      type: string
+      example: public
+      enum:
+        - administrators
+        - respondents
+        - public
+      description: |
+        アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
     NewQuestionnaire:
       type: object
       properties:
@@ -446,14 +455,7 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          type: string
-          example: public
-          enum:
-            - administrators
-            - respondents
-            - public
-          description: |
-            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          $ref: '#/components/schemas/ResShareType'
         targets:
           $ref: '#/components/schemas/Users'
         administrators:
@@ -490,14 +492,7 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          type: string
-          example: public
-          enum:
-            - administrators
-            - respondents
-            - public
-          description: |
-            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          $ref: '#/components/schemas/ResShareType'
       required:
         - questionnaireID
         - title
@@ -582,6 +577,18 @@ components:
         required:
           - targets
           - administrators
+    QuestionType:
+      type: string
+      example: Text
+      enum:
+        - Text
+        - TextArea
+        - Number
+        - MultipleChoice
+        - Checkbox
+        - LinearScale
+      description: |
+        どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
     NewQuestion:
       type: object
       properties:
@@ -599,17 +606,7 @@ components:
           description: |
             アンケートの質問のうち、何問目か
         question_type:
-          type: string
-          example: Text
-          enum:
-            - Text
-            - TextArea
-            - Number
-            - MultipleChoice
-            - Checkbox
-            - LinearScale
-          description: |
-            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
+          $ref: '#/components/schemas/QuestionType'
         body:
           type: string
           example: 質問文
@@ -749,15 +746,7 @@ components:
           type: integer
           example: 1
         question_type:
-          type: string
-          example: Text
-          enum:
-            - Text
-            - TextArea
-            - Number
-            - MultipleChoice
-            - Checkbox
-            - LinearScale
+          $ref: '#/components/schemas/QuestionType'
         response:
           type: string
           example: リマインダーBOTを作った話
