@@ -95,6 +95,7 @@ func TestPostResponse(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 	// Questionnaire
 	// GetQuestionnaireLimit
@@ -590,6 +591,7 @@ func TestGetResponse(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Respondent
@@ -757,6 +759,7 @@ func TestEditResponse(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 	// Questionnaire
 	// GetQuestionnaireLimit
@@ -1258,6 +1261,7 @@ func TestDeleteResponse(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Respondent

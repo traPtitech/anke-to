@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
 )
@@ -15,14 +16,16 @@ type Middleware struct {
 	model.IAdministrator
 	model.IRespondent
 	model.IQuestion
+	model.IQuestionnaire
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion) *Middleware {
+func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, questionnaire model.IQuestionnaire) *Middleware {
 	return &Middleware{
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
+		IQuestionnaire: questionnaire,
 	}
 }
 
@@ -149,6 +152,66 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 		}
 
 		c.Set(questionIDKey, questionID)
+
+		return next(c)
+	}
+}
+
+// ResultAdministratorAuthenticate アンケートの回答を確認できるかの認証
+func (m *Middleware) ResultAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		resSharedTo, err := m.GetResShared(questionnaireID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return echo.NewHTTPError(http.StatusNotFound, err)
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+
+		switch resSharedTo {
+		case "administrators":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+			}
+
+			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+			}
+			if !isAdmin {
+				return echo.NewHTTPError(http.StatusUnauthorized)
+			}
+		case "respondents":
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+			}
+
+			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+			}
+			if !isAdmin {
+				isRespondent, err := m.CheckRespondent(userID, questionnaireID)
+				if err != nil {
+					return err
+				}
+				if !isRespondent {
+					return echo.NewHTTPError(http.StatusUnauthorized, errors.New("only admins and respondents can see this responses"))
+				}
+			}
+		}
 
 		return next(c)
 	}

@@ -76,7 +76,7 @@ func SetRouting(port string) {
 
 		apiResults := echoAPI.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", api.GetResults)
+			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAdministratorAuthenticate)
 		}
 	}
 

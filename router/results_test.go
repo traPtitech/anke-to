@@ -136,6 +136,7 @@ func TestGetResults(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Respondent
