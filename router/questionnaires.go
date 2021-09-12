@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/jinzhu/gorm"
 
@@ -82,16 +81,18 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	})
 }
 
+type PostAndEditQuestionnaireRequest struct {
+	Title          string    `json:"title"`
+	Description    string    `json:"description"`
+	ResTimeLimit   null.Time `json:"res_time_limit"`
+	ResSharedTo    string    `json:"res_shared_to"`
+	Targets        []string  `json:"targets"`
+	Administrators []string  `json:"administrators"`
+}
+
 // PostQuestionnaire POST /questionnaires
 func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
-	req := struct {
-		Title          string    `json:"title"`
-		Description    string    `json:"description"`
-		ResTimeLimit   null.Time `json:"res_time_limit"`
-		ResSharedTo    string    `json:"res_shared_to"`
-		Targets        []string  `json:"targets"`
-		Administrators []string  `json:"administrators"`
-	}{}
+	req := PostAndEditQuestionnaireRequest{}
 
 	// JSONを構造体につける
 	if err := c.Bind(&req); err != nil {
@@ -187,25 +188,31 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
-	req := struct {
-		Title          string    `json:"title"`
-		Description    string    `json:"description"`
-		ResTimeLimit   null.Time `json:"res_time_limit"`
-		ResSharedTo    string    `json:"res_shared_to"`
-		Targets        []string  `json:"targets"`
-		Administrators []string  `json:"administrators"`
-	}{}
+	req := PostAndEditQuestionnaireRequest{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if utf8.RuneCountInString(req.Title) > MaxTitleLength {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if req.ResSharedTo == "" {
-		req.ResSharedTo = "administrators"
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if req.ResTimeLimit.Valid {
+		isBefore := req.ResTimeLimit.ValueOrZero().Before(time.Now())
+		if isBefore {
+			c.Logger().Info(fmt.Sprintf(": %+v", req.ResTimeLimit))
+			return echo.NewHTTPError(http.StatusBadRequest, "res time limit is before now")
+		}
 	}
 
 	if err := q.UpdateQuestionnaire(
