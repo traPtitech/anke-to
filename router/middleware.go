@@ -195,10 +195,11 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 
 		resSharedTo, err := m.GetResShared(questionnaireID)
 		if err != nil {
-			// FIXME:
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.Logger().Info(err)
 				return echo.NewHTTPError(http.StatusNotFound, err)
 			}
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
