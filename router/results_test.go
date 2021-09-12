@@ -226,7 +226,7 @@ func TestGetResults(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusUnauthorized,
+				code:  http.StatusForbidden,
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestGetResults(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusUnauthorized,
+				code:  http.StatusForbidden,
 			},
 		},
 		{
@@ -297,7 +297,7 @@ func TestGetResults(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate)
+	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate, m.ResultAuthenticate)
 
 	for _, testCase := range testCases {
 		if testCase.request.questionnaireID == questionnaireIDSuccess {
