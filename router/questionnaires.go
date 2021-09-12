@@ -112,6 +112,14 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	if req.ResTimeLimit.Valid {
+		isBefore := req.ResTimeLimit.ValueOrZero().Before(time.Now())
+		if isBefore {
+			c.Logger().Info(fmt.Sprintf(": %+v", req.ResTimeLimit))
+			return echo.NewHTTPError(http.StatusBadRequest, "res time limit is before now")
+		}
+	}
+
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
