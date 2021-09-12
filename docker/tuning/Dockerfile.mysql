@@ -1,4 +1,4 @@
-FROM mariadb:10.3.9
+FROM mariadb:10.6.4
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends wget percona-toolkit && \

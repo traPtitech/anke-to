@@ -1,6 +1,9 @@
+# syntax = docker/dockerfile:1.3.0
+
 # build backend
-FROM golang:1.16.5-alpine as server-build
-RUN apk add --update --no-cache git
+FROM golang:1.17.1-alpine as server-build
+RUN --mount=type=cache,target=/var/cache/apk \
+  apk add --update git
 
 WORKDIR /github.com/traPtitech/anke-to
 
@@ -9,21 +12,26 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /anke-to -ldflags "-s -w"
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
 FROM node:14-alpine as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
-RUN apk add --update --no-cache python3 make g++
+RUN --mount=type=cache,target=/var/cache/apk \
+  apk add --update --no-cache python3 make g++
 COPY client/package.json client/package-lock.json ./
-RUN npm ci
-RUN npx browserslist@latest --update-db
+RUN --mount=type=cache,target=/root/.npm \
+  npm ci
+RUN  --mount=type=cache,target=/root/.npm \
+  npx browserslist@latest --update-db
 COPY client .
-RUN npm run build
+RUN --mount=type=cache,target=/github.com/traPtitech/anke-to/client/node_modules/.cache \
+  npm run build
 
 
 # run
-FROM alpine:3.14.0
+FROM alpine:3.14.2
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \

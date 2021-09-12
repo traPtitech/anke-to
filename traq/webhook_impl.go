@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // Webhook Webhookの構造体

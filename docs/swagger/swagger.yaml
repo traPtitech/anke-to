@@ -53,7 +53,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewQuestionnaire'
       responses:
-        '200':
+        '201':
           description: 正常にアンケートを作成できました．作成されたアンケートを返します．
           content:
             application/json:
@@ -362,7 +362,7 @@ paths:
         - result
       parameters:
         - $ref: '#/components/parameters/questionnaireIDInPath'
-        - $ref: '#/components/parameters/sortInQuery'
+        - $ref: '#/components/parameters/responseSortInQuery'
       description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
       responses:
         '200':
@@ -380,13 +380,21 @@ components:
     sortInQuery:
       name: sort
       in: query
-      required: true
-      description: |
+      description:
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
-        type: string
+        $ref: '#/components/schemas/SortType'
+    responseSortInQuery:
+      name: sort
+      in: query
+      description:
+        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title",
+        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+        "-modified_at" )
+      schema:
+        $ref: '#/components/schemas/ResponseSortType'
     searchInQuery:
       name: search
       in: query
@@ -396,16 +404,14 @@ components:
     pageInQuery:
       name: page
       in: query
-      required: true
       description: 何ページ目か (未定義の場合は1ページ目)
       schema:
         type: integer
     nontargetedInQuery:
       name: nontargeted
       in: query
-      required: true
       description: |
-        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
+        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     questionnaireIDInPath:
@@ -433,6 +439,35 @@ components:
       schema:
         type: integer
   schemas:
+    SortType:
+      type: string
+      description: question、questionnaire用のソートの種類
+      enum:
+        - created_at
+        - -created_at
+        - title
+        - -title
+        - modified_at
+        - -modified_at
+    ResponseSortType:
+      type: string
+      description: response用のsortの種類
+      enum:
+        - submitted_at
+        - -submitted_at
+        - title
+        - -title
+        - modified_at
+        - -modified_at
+    ResShareType:
+      type: string
+      example: public
+      enum:
+        - administrators
+        - respondents
+        - public
+      description: |
+        アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
     NewQuestionnaire:
       type: object
       properties:
@@ -446,14 +481,7 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          type: string
-          example: public
-          enum:
-            - administrators
-            - respondents
-            - public
-          description: |
-            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          $ref: '#/components/schemas/ResShareType'
         targets:
           $ref: '#/components/schemas/Users'
         administrators:
@@ -490,14 +518,7 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          type: string
-          example: public
-          enum:
-            - administrators
-            - respondents
-            - public
-          description: |
-            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+          $ref: '#/components/schemas/ResShareType'
       required:
         - questionnaireID
         - title
@@ -582,6 +603,18 @@ components:
         required:
           - targets
           - administrators
+    QuestionType:
+      type: string
+      example: Text
+      enum:
+        - Text
+        - TextArea
+        - Number
+        - MultipleChoice
+        - Checkbox
+        - LinearScale
+      description: |
+        どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
     NewQuestion:
       type: object
       properties:
@@ -599,19 +632,7 @@ components:
           description: |
             アンケートの質問のうち、何問目か
         question_type:
-          type: string
-          example: Text
-          enum:
-            - Text
-            - TextArea
-            - MultipleChoice
-            - Checkbox
-            - Dropdown
-            - LinearScale
-            - Date
-            - Time
-          description: |
-            どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+          $ref: '#/components/schemas/QuestionType'
         body:
           type: string
           example: 質問文
@@ -751,17 +772,7 @@ components:
           type: integer
           example: 1
         question_type:
-          type: string
-          example: Text
-          enum:
-            - Text
-            - TextArea
-            - MultipleChoice
-            - Checkbox
-            - Dropdown
-            - LinearScale
-            - Date
-            - Time
+          $ref: '#/components/schemas/QuestionType'
         response:
           type: string
           example: リマインダーBOTを作った話
@@ -773,8 +784,6 @@ components:
       required:
         - questionID
         - question_type
-        - response
-        - option_response
     ResponseResult:
       allOf:
       - $ref: '#/components/schemas/Response'

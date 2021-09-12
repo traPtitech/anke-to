@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -29,28 +29,42 @@ func NewQuestion(validation model.IValidation, question model.IQuestion, option 
 	}
 }
 
+type PostQuestionRequest struct {
+	QuestionnaireID int      `json:"questionnaireID" validate:"min=0"`
+	QuestionType    string   `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
+	QuestionNum     int      `json:"question_num" validate:"min=0"`
+	PageNum         int      `json:"page_num" validate:"min=0"`
+	Body            string   `json:"body" validate:"required"`
+	IsRequired      bool     `json:"is_required"`
+	Options         []string `json:"options" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+	ScaleLabelRight string   `json:"scale_label_right" validate:"required_if=QuestionType LinearScale,max=50"`
+	ScaleLabelLeft  string   `json:"scale_label_left" validate:"required_if=QuestionType LinearScale,max=50"`
+	ScaleMin        int      `json:"scale_min"`
+	ScaleMax        int      `json:"scale_max" validate:"gtecsfield=ScaleMin"`
+	RegexPattern    string   `json:"regex_pattern"`
+	MinBound        string   `json:"min_bound" validate:"omitempty,number"`
+	MaxBound        string   `json:"max_bound" validate:"omitempty,number"`
+}
+
 // PostQuestion POST /questions
 func (q *Question) PostQuestion(c echo.Context) error {
-	req := struct {
-		QuestionnaireID int      `json:"questionnaireID"`
-		QuestionType    string   `json:"question_type"`
-		QuestionNum     int      `json:"question_num"`
-		PageNum         int      `json:"page_num"`
-		Body            string   `json:"body"`
-		IsRequired      bool     `json:"is_required"`
-		Options         []string `json:"options"`
-		ScaleLabelRight string   `json:"scale_label_right"`
-		ScaleLabelLeft  string   `json:"scale_label_left"`
-		ScaleMin        int      `json:"scale_min"`
-		ScaleMax        int      `json:"scale_max"`
-		RegexPattern    string   `json:"regex_pattern"`
-		MinBound        string   `json:"min_bound"`
-		MaxBound        string   `json:"max_bound"`
-	}{}
+	req := PostQuestionRequest{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	switch req.QuestionType {

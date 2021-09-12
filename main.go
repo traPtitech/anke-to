@@ -12,7 +12,10 @@ import (
 )
 
 func main() {
-	env := os.Getenv("ANKE-TO_ENV")
+	env, ok := os.LookupEnv("ANKE-TO_ENV")
+	if !ok {
+		env = "production"
+	}
 	logOn := env == "pprof" || env == "dev"
 
 	if len(os.Args) > 1 {
@@ -48,7 +51,10 @@ func main() {
 		}()
 	}
 
-	port := os.Getenv("PORT")
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		panic("no PORT")
+	}
 
 	SetRouting(port)
 }

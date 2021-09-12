@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // SetRouting ルーティングの設定
@@ -30,7 +30,7 @@ func SetRouting(port string) {
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
 
-	echoAPI := e.Group("/api", api.UserAuthenticate)
+	echoAPI := e.Group("/api", api.UserAuthenticate, api.SetValidatorMiddleware)
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")
 		{
