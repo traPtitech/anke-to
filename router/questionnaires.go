@@ -99,9 +99,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if utf8.RuneCountInString(req.Title) > MaxTitleLength {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("length of the title must be under 50"))
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
