@@ -14,9 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Login GitHub Registry
-        run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
-      - name: Build Image
-        run: docker build -t docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:latest .
-      - name: Push image to GitHub Registry (latest)
-        run: docker push docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:latest
+      - name: Log in to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: traPtitech
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
