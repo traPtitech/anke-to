@@ -82,12 +82,12 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 }
 
 type PostAndEditQuestionnaireRequest struct {
-	Title          string    `json:"title"`
+	Title          string    `json:"title" validate:"required,max=50"`
 	Description    string    `json:"description"`
 	ResTimeLimit   null.Time `json:"res_time_limit"`
-	ResSharedTo    string    `json:"res_shared_to"`
-	Targets        []string  `json:"targets"`
-	Administrators []string  `json:"administrators"`
+	ResSharedTo    string    `json:"res_shared_to" validate:"required,oneof=administrators respondents public"`
+	Targets        []string  `json:"targets" validate:"dive,max=32"`
+	Administrators []string  `json:"administrators" validate:"required,min=1,dive,max=32"`
 }
 
 // PostQuestionnaire POST /questionnaires
