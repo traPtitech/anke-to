@@ -75,12 +75,14 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionnaireID := c.Param("questionnaireID")
 		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
@@ -93,6 +95,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 		}
 		isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -110,17 +113,20 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strResponseID := c.Param("responseID")
 		responseID, err := strconv.Atoi(strResponseID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
 		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
 		if !isRespondent {
@@ -138,12 +144,14 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionID := c.Param("questionID")
 		questionID, err := strconv.Atoi(strQuestionID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionID:%s(error: %w)", strQuestionID, err))
 		}
 
@@ -156,6 +164,7 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 		}
 		isAdmin, err := m.CheckQuestionAdmin(userID, questionID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -173,18 +182,20 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionnaireID := c.Param("questionnaireID")
 		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
 		resSharedTo, err := m.GetResShared(questionnaireID)
 		if err != nil {
+			// FIXME:
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return echo.NewHTTPError(http.StatusNotFound, err)
 			}
@@ -193,33 +204,28 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 
 		switch resSharedTo {
 		case "administrators":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-			}
-
 			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
 			if err != nil {
+				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 			}
 			if !isAdmin {
-				return echo.NewHTTPError(http.StatusUnauthorized)
+				return c.String(http.StatusForbidden, "Only admins can see this result.")
 			}
 		case "respondents":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-			}
-
 			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
 			if err != nil {
+				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 			}
 			if !isAdmin {
 				isRespondent, err := m.CheckRespondent(userID, questionnaireID)
 				if err != nil {
-					return err
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are respondent: %w", err))
 				}
 				if !isRespondent {
-					return echo.NewHTTPError(http.StatusUnauthorized, errors.New("only admins and respondents can see this responses"))
+					return c.String(http.StatusForbidden, "Only admins and respondents can see this result.")
 				}
 			}
 		}
