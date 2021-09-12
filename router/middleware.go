@@ -197,10 +197,10 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				c.Logger().Info(err)
-				return echo.NewHTTPError(http.StatusNotFound, err)
+				return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("resShared of questionnaireID:%d not found (error: %w)", questionnaireID, err))
 			}
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
 		}
 
 		switch resSharedTo {
