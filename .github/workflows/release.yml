@@ -27,6 +27,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: docker.pkg.github.com/traptitech/anke-to/${IMAGE_NAME}:latest
+          tags: docker.pkg.github.com/traptitech/anke-to/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
