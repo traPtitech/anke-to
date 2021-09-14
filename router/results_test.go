@@ -216,20 +216,6 @@ func TestGetResults(t *testing.T) {
 			},
 		},
 		{
-			description: "administrators not Admin",
-			request: request{
-				questionnaireID: questionnaireIDSuccess,
-			},
-			call: call{
-				resSharedTo: "administrators",
-				isAdmin:     false,
-			},
-			expect: expect{
-				isErr: true,
-				code:  http.StatusForbidden,
-			},
-		},
-		{
 			description: "respondents admin",
 			request: request{
 				questionnaireID: questionnaireIDSuccess,
@@ -260,21 +246,6 @@ func TestGetResults(t *testing.T) {
 			},
 		},
 		{
-			description: "respondents not admin or respondent",
-			request: request{
-				questionnaireID: questionnaireIDSuccess,
-			},
-			call: call{
-				resSharedTo:  "respondents",
-				isAdmin:      false,
-				isRespondent: false,
-			},
-			expect: expect{
-				isErr: true,
-				code:  http.StatusForbidden,
-			},
-		},
-		{
 			description: "failure",
 			request: request{
 				questionnaireID: questionnaireIDFailure,
@@ -284,20 +255,10 @@ func TestGetResults(t *testing.T) {
 				code:  http.StatusInternalServerError,
 			},
 		},
-		{
-			description: "NotFound",
-			request: request{
-				questionnaireID: questionnaireIDNotFound,
-			},
-			expect: expect{
-				isErr: true,
-				code:  http.StatusNotFound,
-			},
-		},
 	}
 
 	e := echo.New()
-	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate, m.ResultAuthenticate)
+	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate)
 
 	for _, testCase := range testCases {
 		if testCase.request.questionnaireID == questionnaireIDSuccess {
