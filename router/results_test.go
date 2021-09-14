@@ -261,29 +261,6 @@ func TestGetResults(t *testing.T) {
 	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate)
 
 	for _, testCase := range testCases {
-		if testCase.request.questionnaireID == questionnaireIDSuccess {
-			// GetResShared
-			mockQuestionnaire.EXPECT().
-				GetResShared(questionnaireIDSuccess).
-				Return(testCase.call.resSharedTo, nil)
-		}
-		if testCase.call.resSharedTo != "" {
-
-			if testCase.call.resSharedTo == "administrators" || testCase.call.resSharedTo == "respondents" {
-				// CheckQuestionnaireAdmin
-				mockAdministrator.EXPECT().
-					CheckQuestionnaireAdmin(gomock.Any(), testCase.request.questionnaireID).
-					Return(testCase.call.isAdmin, nil)
-			}
-
-			if testCase.call.resSharedTo == "respondents" && !testCase.call.isAdmin {
-				// CheckRespondent
-				mockRespondent.EXPECT().
-					CheckRespondent(gomock.Any(), testCase.request.questionnaireID).
-					Return(testCase.call.isRespondent, nil)
-			}
-		}
-
 		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/results/", testCase.request.questionnaireID), typeNone, "")
 
 		assertion.Equal(testCase.expect.code, rec.Code, testCase.description, "status code")
