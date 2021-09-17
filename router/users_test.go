@@ -68,6 +68,7 @@ func TestGetUsersMe(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	type request struct {
@@ -210,6 +211,7 @@ func TestGetMyResponses(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Respondent
@@ -366,6 +368,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Respondent
@@ -531,6 +534,7 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Questionnaire
@@ -675,6 +679,7 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 		mockAdministrator,
 		mockRespondent,
 		mockQuestion,
+		mockQuestionnaire,
 	)
 
 	// Questionnaire
