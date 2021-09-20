@@ -65,7 +65,14 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	if pageNum <= 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
-	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(userID, sort, search, pageNum, c.QueryParam("nontargeted") == "true")
+
+	nontargeted := c.QueryParam("nontargeted")
+	nontargetedBool, err := strconv.ParseBool(nontargeted)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
+	}
+
+	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(userID, sort, search, pageNum, nontargetedBool)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
