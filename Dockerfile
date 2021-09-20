@@ -16,15 +16,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o /anke-to -ldflags "-s -w"
 
 #build frontend
-FROM node:14-alpine as client-build
+FROM node:16.9.1-alpine3.14 as client-build
 WORKDIR /github.com/traPtitech/anke-to/client
 RUN --mount=type=cache,target=/var/cache/apk \
   apk add --update --no-cache python3 make g++
 COPY client/package.json client/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
   npm ci
-RUN  --mount=type=cache,target=/root/.npm \
-  npx browserslist@latest --update-db
 COPY client .
 RUN --mount=type=cache,target=/github.com/traPtitech/anke-to/client/node_modules/.cache \
   npm run build

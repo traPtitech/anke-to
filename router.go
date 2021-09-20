@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -16,6 +17,8 @@ func SetRouting(port string) {
 	// Middleware
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
 
 	api := InjectAPIServer()
 
@@ -76,7 +79,7 @@ func SetRouting(port string) {
 
 		apiResults := echoAPI.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", api.GetResults)
+			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
 		}
 	}
 

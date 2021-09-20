@@ -449,6 +449,13 @@ components:
         - -title
         - modified_at
         - -modified_at
+      x-enum-varnames:
+        - CreatedAtASC
+        - CreatedAtDESC
+        - TitleASC
+        - TitleDESC
+        - ModifiedAtASC
+        - ModifiedAtDESC
     ResponseSortType:
       type: string
       description: response用のsortの種類
@@ -459,6 +466,13 @@ components:
         - -title
         - modified_at
         - -modified_at
+      x-enum-varnames:
+        - SubmittedAtASC
+        - SubmittedAtDESC
+        - TitleASC
+        - TitleDESC
+        - ModifiedAtASC
+        - ModifiedAtDESC
     ResShareType:
       type: string
       example: public

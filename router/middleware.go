@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
 )
@@ -16,19 +17,21 @@ type Middleware struct {
 	model.IAdministrator
 	model.IRespondent
 	model.IQuestion
+	model.IQuestionnaire
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion) *Middleware {
+func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, questionnaire model.IQuestionnaire) *Middleware {
 	return &Middleware{
 		IAdministrator: administrator,
 		IRespondent:    respondent,
 		IQuestion:      question,
+		IQuestionnaire: questionnaire,
 	}
 }
 
 const (
-	validatorKay = "validator"
+	validatorKay       = "validator"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"
@@ -72,12 +75,14 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionnaireID := c.Param("questionnaireID")
 		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
@@ -90,6 +95,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 		}
 		isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -107,17 +113,20 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strResponseID := c.Param("responseID")
 		responseID, err := strconv.Atoi(strResponseID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
 		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
 		if !isRespondent {
@@ -135,12 +144,14 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionID := c.Param("questionID")
 		questionID, err := strconv.Atoi(strQuestionID)
 		if err != nil {
+			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionID:%s(error: %w)", strQuestionID, err))
 		}
 
@@ -153,6 +164,7 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 		}
 		isAdmin, err := m.CheckQuestionAdmin(userID, questionID)
 		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -160,6 +172,64 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 		}
 
 		c.Set(questionIDKey, questionID)
+
+		return next(c)
+	}
+}
+
+// ResultAuthenticate アンケートの回答を確認できるかの認証
+func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		resSharedTo, err := m.GetResShared(questionnaireID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.Logger().Info(err)
+				return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
+			}
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
+		}
+
+		switch resSharedTo {
+		case "administrators":
+			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+			}
+			if !isAdmin {
+				return c.String(http.StatusForbidden, "Only admins can see this result.")
+			}
+		case "respondents":
+			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+			}
+			if !isAdmin {
+				isRespondent, err := m.CheckRespondent(userID, questionnaireID)
+				if err != nil {
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are respondent: %w", err))
+				}
+				if !isRespondent {
+					return c.String(http.StatusForbidden, "Only admins and respondents can see this result.")
+				}
+			}
+		}
 
 		return next(c)
 	}
