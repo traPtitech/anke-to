@@ -55,7 +55,7 @@ func SetRouting(port string) {
 		apiResponses := echoAPI.Group("/responses")
 		{
 			apiResponses.POST("", api.PostResponse)
-			apiResponses.GET("/:responseID", api.GetResponse)
+			apiResponses.GET("/:responseID", api.GetResponse, api.ResponseReadAuthenticate)
 			apiResponses.PATCH("/:responseID", api.EditResponse, api.RespondentAuthenticate)
 			apiResponses.DELETE("/:responseID", api.DeleteResponse, api.RespondentAuthenticate)
 		}
