@@ -74,6 +74,12 @@ type TargettedQuestionnaire struct {
 	HasResponse bool      `json:"has_response"`
 }
 
+type ResponseReadPrivilegeInfo struct {
+	ResSharedTo     string
+	IsAdministrator bool
+	IsRespondent    bool
+}
+
 //InsertQuestionnaire アンケートの追加
 func (*Questionnaire) InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
 	var questionnaire Questionnaires
@@ -361,6 +367,26 @@ func (*Questionnaire) GetResShared(questionnaireID int) (string, error) {
 	}
 
 	return res.ResSharedTo, nil
+}
+
+func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
+	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
+	err := db.
+		Table("respondents").
+		Where("respondents.response_id = ? AND respondents.submitted_at IS NOT NULL", responseID).
+		Joins("INNER JOIN questionnaires ON questionnaires.id = respondents.questionnaire_id").
+		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
+		Joins("LEFT OUTER JOIN respondents AS respondents2 ON questionnaires.id = respondents2.questionnaire_id AND respondents2.user_traqid = ? AND respondents2.submitted_at IS NOT NULL", userID).
+		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NULL AS is_administrator, respondents2.response_id IS NULL AS is_respondent").
+		Scan(&responseReadPrivilegeInfo).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, ErrInvalidResponseID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response read privilege info: %w", err)
+	}
+
+	return &responseReadPrivilegeInfo, nil
 }
 
 func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
