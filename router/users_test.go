@@ -681,15 +681,15 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	// GetTargettedQuestionnaires
 	// success
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires(string(userOne), "unanswered", gomock.Any()).
+		GetTargettedQuestionnaires(string(userOne), gomock.Any(), gomock.Any()).
 		Return(targettedQuestionnaires, nil).AnyTimes()
 	// empty
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("empty", "unanswered", gomock.Any()).
+		GetTargettedQuestionnaires("empty", gomock.Any(), gomock.Any()).
 		Return([]model.TargettedQuestionnaire{}, nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("StatusInternalServerError", "unanswered", gomock.Any()).
+		GetTargettedQuestionnaires("StatusInternalServerError", gomock.Any(), gomock.Any()).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
