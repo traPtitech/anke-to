@@ -222,7 +222,8 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	sort := c.QueryParam("sort")
-	ret, err := u.GetTargettedQuestionnaires(traQID, "unanswered", sort)
+	answered := c.QueryParam("answered")
+	ret, err := u.GetTargettedQuestionnaires(traQID, answered, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
