@@ -23,4 +23,6 @@ var (
 	ErrTextMatching = errors.New("failed to match the pattern")
 	// ErrInvalidAnsweredParam invalid sort param
 	ErrInvalidAnsweredParam = errors.New("invalid answered param")
+	// ErrInvalidResponseID invalid response id
+	ErrInvalidResponseID = errors.New("invalid response id")
 )

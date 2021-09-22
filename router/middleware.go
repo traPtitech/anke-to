@@ -108,6 +108,53 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 	}
 }
 
+// ResponseReadAuthenticate 回答閲覧権限があるかの認証
+func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strResponseID := c.Param("responseID")
+		responseID, err := strconv.Atoi(strResponseID)
+		if err != nil {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
+		}
+
+		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
+		}
+		if isRespondent {
+			return next(c)
+		}
+
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(userID, responseID)
+		if errors.Is(err, model.ErrInvalidResponseID) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
+		} else if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
+		}
+
+		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
+		}
+		if !haveReadPrivilege {
+			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
+		}
+
+		return next(c)
+	}
+}
+
 // RespondentAuthenticate 回答者かどうかの認証
 func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -233,6 +280,19 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 
 		return next(c)
 	}
+}
+
+func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPrivilegeInfo) (bool, error) {
+	switch responseReadPrivilegeInfo.ResSharedTo {
+	case "administrators":
+		return responseReadPrivilegeInfo.IsAdministrator, nil
+	case "respondents":
+		return responseReadPrivilegeInfo.IsAdministrator || responseReadPrivilegeInfo.IsRespondent, nil
+	case "public":
+		return true, nil
+	}
+
+	return false, errors.New("invalid resSharedTo")
 }
 
 func getValidator(c echo.Context) (*validator.Validate, error) {
