@@ -2,8 +2,11 @@ package router
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -1225,30 +1228,17 @@ func TestEditResponse(t *testing.T) {
 }
 
 func TestDeleteResponse(t *testing.T) {
-	type responseResponseBody struct {
-		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
-		ModifiedAt      null.Time      `json:"modified_at"`
-		Body            []responseBody `json:"body"`
-	}
-
 	t.Parallel()
 	assertion := assert.New(t)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	responseIDSuccess := 1
-	responseIDFailure := 0
-
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockValidation := mock_model.NewMockIValidation(ctrl)
 	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
 	mockRespondent := mock_model.NewMockIRespondent(ctrl)
 	mockResponse := mock_model.NewMockIResponse(ctrl)
-
-	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
 
 	r := NewResponse(
 		mockQuestionnaire,
@@ -1257,76 +1247,61 @@ func TestDeleteResponse(t *testing.T) {
 		mockRespondent,
 		mockResponse,
 	)
-	m := NewMiddleware(
-		mockAdministrator,
-		mockRespondent,
-		mockQuestion,
-		mockQuestionnaire,
-	)
-
-	// Respondent
-	// InsertRespondent
-	// success
-	mockRespondent.EXPECT().
-		DeleteRespondent(gomock.Any(), responseIDSuccess).
-		Return(nil).AnyTimes()
-	// success
-	mockRespondent.EXPECT().
-		DeleteRespondent(gomock.Any(), responseIDSuccess).
-		Return(model.ErrNoRecordDeleted).AnyTimes()
-	// CheckRespondentByResponseID
-	// success
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDSuccess).
-		Return(true, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDFailure).
-		Return(false, nil).AnyTimes()
 
 	type request struct {
-		user       users
-		responseID int
+		DeleteRespondentError error
 	}
 	type expect struct {
-		isErr bool
-		code  int
+		statusCode int
 	}
-
 	type test struct {
 		description string
 		request
 		expect
 	}
+
 	testCases := []test{
 		{
-			description: "success",
+			description: "DeleteRespondentがエラーなしなので200",
 			request: request{
-				responseID: responseIDSuccess,
+				DeleteRespondentError: nil,
 			},
 			expect: expect{
-				isErr: false,
-				code:  http.StatusOK,
+				statusCode: http.StatusOK,
 			},
 		},
 		{
-			description: "response does not exist",
+			description: "DeleteRespondentがエラーを吐くので500",
 			request: request{
-				responseID: responseIDFailure,
+				DeleteRespondentError: errors.New("error"),
 			},
 			expect: expect{
-				isErr: true,
-				code:  http.StatusForbidden,
+				statusCode: http.StatusInternalServerError,
 			},
 		},
 	}
 
-	e := echo.New()
-	e.DELETE("/api/responses/:responseID", r.DeleteResponse, m.UserAuthenticate, m.RespondentAuthenticate)
-
 	for _, testCase := range testCases {
-		rec := createRecorder(e, testCase.request.user, methodDelete, fmt.Sprint(rootPath, "/responses/", testCase.request.responseID), typeNone, "")
+		userID := "userID1"
+		responseID := 1
 
-		assertion.Equal(testCase.expect.code, rec.Code, testCase.description, "status code")
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/responses/%d", responseID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/responses/:responseID")
+		c.SetParamNames("responseID")
+		c.SetParamValues(strconv.Itoa(responseID))
+		c.Set(userIDKey, userID)
+		c.Set(responseIDKey, responseID)
+
+		mockRespondent.
+			EXPECT().
+			DeleteRespondent(userID, responseID).
+			Return(testCase.request.DeleteRespondentError)
+
+		e.HTTPErrorHandler(r.DeleteResponse(c), c)
+
+		assertion.Equal(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
 	}
 }
