@@ -377,7 +377,7 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, re
 		Joins("INNER JOIN questionnaires ON questionnaires.id = respondents.questionnaire_id").
 		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
 		Joins("LEFT OUTER JOIN respondents AS respondents2 ON questionnaires.id = respondents2.questionnaire_id AND respondents2.user_traqid = ? AND respondents2.submitted_at IS NOT NULL", userID).
-		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NULL AS is_administrator, respondents2.response_id IS NULL AS is_respondent").
+		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents2.response_id IS NOT NULL AS is_respondent").
 		Scan(&responseReadPrivilegeInfo).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return nil, ErrInvalidResponseID
