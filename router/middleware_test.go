@@ -40,15 +40,15 @@ func TestResponseReadAuthenticate(t *testing.T) {
 	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
 
 	type args struct {
-		isRespondent bool
-		CheckRespondentByResponseIDError error
-		haveReadPrivilege bool
+		isRespondent                                  bool
+		CheckRespondentByResponseIDError              error
+		haveReadPrivilege                             bool
 		GetResponseReadPrivilegeInfoByResponseIDError error
-		checkResponseReadPrivilegeError error
+		checkResponseReadPrivilegeError               error
 	}
 	type expect struct {
 		statusCode int
-		isCalled bool
+		isCalled   bool
 	}
 	type test struct {
 		description string
@@ -64,7 +64,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
-				isCalled: true,
+				isCalled:   true,
 			},
 		},
 		{
@@ -74,65 +74,65 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
-				isCalled: false,
+				isCalled:   false,
 			},
 		},
 		{
 			description: "この回答の回答者でなくてもhaveReadPrivilegeがtrueの場合通す",
 			args: args{
-				isRespondent: false,
+				isRespondent:      false,
 				haveReadPrivilege: true,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
-				isCalled: true,
+				isCalled:   true,
 			},
 		},
 		{
 			description: "この回答の回答者でなく、haveReadPrivilegeがfalseの場合403",
 			args: args{
-				isRespondent: false,
+				isRespondent:      false,
 				haveReadPrivilege: false,
 			},
 			expect: expect{
 				statusCode: http.StatusForbidden,
-				isCalled: false,
+				isCalled:   false,
 			},
 		},
 		{
 			description: "GetResponseReadPrivilegeInfoByResponseIDがErrInvalidResponseIDの場合400",
 			args: args{
-				isRespondent: false,
+				isRespondent:      false,
 				haveReadPrivilege: false,
 				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrInvalidResponseID,
 			},
 			expect: expect{
 				statusCode: http.StatusBadRequest,
-				isCalled: false,
+				isCalled:   false,
 			},
 		},
 		{
 			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrInvalidResponseID以外)の場合500",
 			args: args{
-				isRespondent: false,
+				isRespondent:      false,
 				haveReadPrivilege: false,
 				GetResponseReadPrivilegeInfoByResponseIDError: errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
-				isCalled: false,
+				isCalled:   false,
 			},
 		},
 		{
 			description: "checkResponseReadPrivilegeがエラーの場合500",
 			args: args{
-				isRespondent: false,
-				haveReadPrivilege: false,
+				isRespondent:                    false,
+				haveReadPrivilege:               false,
 				checkResponseReadPrivilegeError: errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
-				isCalled: false,
+				isCalled:   false,
 			},
 		},
 	}
@@ -181,5 +181,119 @@ func TestResponseReadAuthenticate(t *testing.T) {
 
 		assertion.Equalf(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
 		assertion.Equalf(testCase.expect.isCalled, callChecker.IsCalled, testCase.description, "isCalled")
+	}
+}
+
+func TestCheckResponseReadPrivilege(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		responseReadPrivilegeInfo model.ResponseReadPrivilegeInfo
+	}
+	type expect struct {
+		haveReadPrivilege bool
+		isErr             bool
+		err               error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "res_shared_toがpublic、administrators、respondentsのいずれでもない場合エラー",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "invalid value",
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "res_shared_toがpublicの場合true",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "public",
+				},
+			},
+			expect: expect{
+				haveReadPrivilege: true,
+			},
+		},
+		{
+			description: "res_shared_toがadministratorsかつadministratorの場合true",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo:     "administrators",
+					IsAdministrator: true,
+				},
+			},
+			expect: expect{
+				haveReadPrivilege: true,
+			},
+		},
+		{
+			description: "res_shared_toがadministratorsかつadministratorでない場合false",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo:     "administrators",
+					IsAdministrator: false,
+				},
+			},
+		},
+		{
+			description: "res_shared_toがrespondentsかつadministratorの場合true",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo:     "respondents",
+					IsAdministrator: true,
+				},
+			},
+			expect: expect{
+				haveReadPrivilege: true,
+			},
+		},
+		{
+			description: "res_shared_toがrespondentsかつrespondentの場合true",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo:  "respondents",
+					IsRespondent: true,
+				},
+			},
+			expect: expect{
+				haveReadPrivilege: true,
+			},
+		},
+		{
+			description: "res_shared_toがrespondentsかつ、administratorでもrespondentでない場合false",
+			args: args{
+				responseReadPrivilegeInfo: model.ResponseReadPrivilegeInfo{
+					ResSharedTo:     "respondents",
+					IsAdministrator: false,
+					IsRespondent:    false,
+				},
+			},
+			expect: expect{
+				haveReadPrivilege: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		haveReadPrivilege, err := checkResponseReadPrivilege(&testCase.args.responseReadPrivilegeInfo)
+
+		if testCase.expect.isErr {
+			assertion.Errorf(err, testCase.description, "error")
+		} else {
+			assertion.NoErrorf(err, testCase.description, "no error")
+			assertion.Equalf(testCase.expect.haveReadPrivilege, haveReadPrivilege, testCase.description, "haveReadPrivilege")
+		}
 	}
 }
