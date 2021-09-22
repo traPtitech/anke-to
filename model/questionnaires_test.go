@@ -14,6 +14,7 @@ import (
 )
 
 const questionnairesTestUserID = "questionnairesUser"
+const questionnairesTestUserID2 = "questionnairesUser2"
 const invalidQuestionnairesTestUserID = "invalidQuestionnairesUser"
 
 var questionnairesNow = time.Now()
@@ -26,7 +27,7 @@ type QuestionnairesTestData struct {
 }
 
 type QuestionnairesTestRespondent struct {
-	userID      string
+	respondent  Respondents
 	isSubmitted bool
 }
 
@@ -52,6 +53,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
 	t.Run("GetResShared", getResSharedTest)
+	t.Run("GetResponseReadPrivilegeInfoByResponseID", getResponseReadPrivilegeInfoByResponseIDTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -108,7 +110,9 @@ func setupQuestionnairesTest(t *testing.T) {
 			administrators: []string{},
 			respondents: []QuestionnairesTestRespondent{
 				{
-					userID:      questionnairesTestUserID,
+					respondent: Respondents{
+						UserTraqid: questionnairesTestUserID,
+					},
 					isSubmitted: true,
 				},
 			},
@@ -126,7 +130,9 @@ func setupQuestionnairesTest(t *testing.T) {
 			administrators: []string{},
 			respondents: []QuestionnairesTestRespondent{
 				{
-					userID: questionnairesTestUserID,
+					respondent: Respondents{
+						UserTraqid: questionnairesTestUserID,
+					},
 				},
 			},
 		},
@@ -185,6 +191,49 @@ func setupQuestionnairesTest(t *testing.T) {
 		targets:        []string{questionnairesTestUserID},
 		administrators: []string{questionnairesTestUserID},
 		respondents:    []QuestionnairesTestRespondent{},
+	}, QuestionnairesTestData{
+		questionnaire: Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(time.Time{}, false),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{questionnairesTestUserID},
+		respondents: []QuestionnairesTestRespondent{
+			{
+				respondent: Respondents{
+					UserTraqid: questionnairesTestUserID,
+				},
+				isSubmitted: true,
+			},
+		},
+	}, QuestionnairesTestData{
+		questionnaire: Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(time.Time{}, false),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{},
+		respondents: []QuestionnairesTestRespondent{
+			{
+				respondent: Respondents{
+					UserTraqid: questionnairesTestUserID,
+				},
+				isSubmitted: true,
+			},
+			{
+				respondent: Respondents{
+					UserTraqid: questionnairesTestUserID2,
+				},
+			},
+		},
 	})
 
 	for i, data := range datas {
@@ -231,16 +280,16 @@ func setupQuestionnairesTest(t *testing.T) {
 
 		for _, respondentData := range data.respondents {
 			if respondentData.isSubmitted {
-				questionnaires, ok := userRespondentMap[respondentData.userID]
+				questionnaires, ok := userRespondentMap[respondentData.respondent.UserTraqid]
 				if !ok {
 					questionnaires = []int{}
 				}
-				userRespondentMap[respondentData.userID] = append(questionnaires, datas[i].questionnaire.ID)
+				userRespondentMap[respondentData.respondent.UserTraqid] = append(questionnaires, datas[i].questionnaire.ID)
 			}
 
 			respondent := Respondents{
 				QuestionnaireID: datas[i].questionnaire.ID,
-				UserTraqid:      respondentData.userID,
+				UserTraqid:      respondentData.respondent.UserTraqid,
 			}
 			if respondentData.isSubmitted {
 				respondent.SubmittedAt = null.NewTime(time.Now(), true)
@@ -249,6 +298,8 @@ func setupQuestionnairesTest(t *testing.T) {
 			if err != nil {
 				t.Error("failed to create respondent: %w", err)
 			}
+
+			respondentData.respondent = respondent
 		}
 	}
 }
@@ -1591,5 +1642,168 @@ func getResSharedTest(t *testing.T) {
 		}
 
 		assertion.Equal(testCase.expect.resSharedTo, actualResSharedTo, testCase.description, "res_shared_to")
+	}
+}
+
+func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	invalidResponseID := 1000
+	for {
+		err := db.Where("response_id = ?", invalidResponseID).First(&Respondents{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get response(make invalid responseID): %w", err)
+			break
+		}
+
+		invalidResponseID *= 10
+	}
+
+	type args struct {
+		userID     string
+		responseID int
+	}
+	type expect struct {
+		responseReadPrivilegeInfo *ResponseReadPrivilegeInfo
+		isErr                     bool
+		err                       error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "回答が存在しないのでエラー",
+			args: args{
+				responseID: invalidResponseID,
+				userID:     questionnairesTestUserID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidResponseID,
+			},
+		},
+		{
+			description: "下書きの回答なのでエラー",
+			args: args{
+				responseID: datas[4].respondents[0].respondent.ResponseID,
+				userID:     questionnairesTestUserID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidResponseID,
+			},
+		},
+		{
+			description: "回答はあるが、管理者でも回答者でもない",
+			args: args{
+				responseID: datas[3].respondents[0].respondent.ResponseID,
+				userID:     invalidQuestionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[3].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    false,
+				},
+			},
+		},
+		{
+			description: "回答はあり、管理者ではないが回答者ではある",
+			args: args{
+				responseID: datas[3].respondents[0].respondent.ResponseID,
+				userID:     questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[3].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    true,
+				},
+			},
+		},
+		{
+			description: "回答はあり、管理者ではあるが回答者ではない",
+			args: args{
+				responseID: datas[28].respondents[0].respondent.ResponseID,
+				userID:     questionnairesTestUserID2,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[28].questionnaire.ResSharedTo,
+					IsAdministrator: true,
+					IsRespondent:    false,
+				},
+			},
+		},
+		{
+			description: "回答はあり、管理者かつ回答者ではある",
+			args: args{
+				responseID: datas[28].respondents[0].respondent.ResponseID,
+				userID:     questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[28].questionnaire.ResSharedTo,
+					IsAdministrator: true,
+					IsRespondent:    true,
+				},
+			},
+		},
+		{
+			description: "回答はあり、管理者でなく下書きの回答しかないため回答者ではない",
+			args: args{
+				responseID: datas[29].respondents[0].respondent.ResponseID,
+				userID:     questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[29].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    false,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(testCase.args.userID, testCase.args.responseID)
+
+		if testCase.expect.isErr {
+			if testCase.expect.err == nil {
+				assertion.Errorf(err, testCase.description, "no error")
+			} else {
+				if !errors.Is(err, testCase.expect.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+				}
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.responseReadPrivilegeInfo, responseReadPrivilegeInfo, testCase.description, "responseReadPrivilegeInfo")
 	}
 }
