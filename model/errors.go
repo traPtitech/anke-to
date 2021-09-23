@@ -25,4 +25,6 @@ var (
 	ErrTextMatching = errors.New("failed to match the pattern")
 	// ErrInvalidAnsweredParam invalid sort param
 	ErrInvalidAnsweredParam = errors.New("invalid answered param")
+	// ErrInvalidTx transactionに誤った値が入っている
+	ErrInvalidTx = errors.New("invalid tx")
 )
