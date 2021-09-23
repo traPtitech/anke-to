@@ -64,6 +64,24 @@ func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// TraPMemberAuthenticate traP部員かの認証
+func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		// トークンを持たないユーザはアクセスできない
+		if userID == "-" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
+		}
+
+		return next(c)
+	}
+}
+
 // UserAuthenticate traPのメンバーかの認証
 func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
