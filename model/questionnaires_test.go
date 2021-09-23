@@ -53,6 +53,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
 	t.Run("GetResponseReadPrivilegeInfoByResponseID", getResponseReadPrivilegeInfoByResponseIDTest)
+	t.Run("GetResponseReadPrivilegeInfoByQuestionnaireID", getResponseReadPrivilegeInfoByQuestionnaireIDTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
@@ -1697,6 +1698,144 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(testCase.args.userID, testCase.args.responseID)
+
+		if testCase.expect.isErr {
+			if testCase.expect.err == nil {
+				assertion.Errorf(err, testCase.description, "no error")
+			} else {
+				if !errors.Is(err, testCase.expect.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+				}
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.responseReadPrivilegeInfo, responseReadPrivilegeInfo, testCase.description, "responseReadPrivilegeInfo")
+	}
+}
+
+func getResponseReadPrivilegeInfoByQuestionnaireIDTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			break
+		}
+
+		invalidQuestionnaireID *= 10
+	}
+
+	type args struct {
+		userID          string
+		questionnaireID int
+	}
+	type expect struct {
+		responseReadPrivilegeInfo *ResponseReadPrivilegeInfo
+		isErr                     bool
+		err                       error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "存在しないquestionnaireID",
+			args: args{
+				questionnaireID: invalidQuestionnaireID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrRecordNotFound,
+			},
+		},
+		{
+			description: "管理者でも回答者でもない",
+			args: args{
+				questionnaireID: datas[0].questionnaire.ID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[0].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    false,
+				},
+			},
+		},
+		{
+			description: "管理者ではあるが回答者ではない",
+			args: args{
+				questionnaireID: datas[2].questionnaire.ID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[2].questionnaire.ResSharedTo,
+					IsAdministrator: true,
+					IsRespondent:    false,
+				},
+			},
+		},
+		{
+			description: "管理者ではないが回答者ではある",
+			args: args{
+				questionnaireID: datas[3].questionnaire.ID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[3].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    true,
+				},
+			},
+		},
+		{
+			description: "管理者でなく下書きの回答しかないため回答者ではない",
+			args: args{
+				questionnaireID: datas[4].questionnaire.ID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[4].questionnaire.ResSharedTo,
+					IsAdministrator: false,
+					IsRespondent:    false,
+				},
+			},
+		},
+		{
+			description: "管理者かつ回答者ではある",
+			args: args{
+				questionnaireID: datas[28].questionnaire.ID,
+				userID:          questionnairesTestUserID,
+			},
+			expect: expect{
+				responseReadPrivilegeInfo: &ResponseReadPrivilegeInfo{
+					ResSharedTo:     datas[28].questionnaire.ResSharedTo,
+					IsAdministrator: true,
+					IsRespondent:    true,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByQuestionnaireID(testCase.args.userID, testCase.args.questionnaireID)
 
 		if testCase.expect.isErr {
 			if testCase.expect.err == nil {
