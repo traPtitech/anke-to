@@ -389,6 +389,25 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, re
 	return &responseReadPrivilegeInfo, nil
 }
 
+func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error) {
+	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
+	err := db.
+		Table("questionnaires").
+		Where("questionnaires.id = ?", questionnaireID).
+		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
+		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL", userID).
+		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents.response_id IS NOT NULL AS is_respondent").
+		Scan(&responseReadPrivilegeInfo).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response read privilege info: %w", err)
+	}
+
+	return &responseReadPrivilegeInfo, nil
+}
+
 func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 	switch sort {
 	case "created_at":

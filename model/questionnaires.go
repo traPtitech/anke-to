@@ -16,4 +16,5 @@ type IQuestionnaire interface {
 	GetQuestionnaireLimit(questionnaireID int) (null.Time, error)
 	GetResShared(questionnaireID int) (string, error)
 	GetResponseReadPrivilegeInfoByResponseID(userID string, responseID int) (*ResponseReadPrivilegeInfo, error)
+	GetResponseReadPrivilegeInfoByQuestionnaireID(userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error)
 }
