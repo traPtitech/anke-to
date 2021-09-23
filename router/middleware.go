@@ -51,20 +51,33 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 暫定的にハードコーディングで対応*/
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
 
-// UserAuthenticate traPのメンバーかの認証
-func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+// SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
+func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Request().Header.Get("X-Showcase-User")
 		if userID == "" {
 			userID = "mds_boy"
 		}
 
+		c.Set(userIDKey, userID)
+
+		return next(c)
+	}
+}
+
+// TraPMemberAuthenticate traP部員かの認証
+func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
 		// トークンを持たないユーザはアクセスできない
 		if userID == "-" {
 			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 		}
-
-		c.Set(userIDKey, userID)
 
 		return next(c)
 	}

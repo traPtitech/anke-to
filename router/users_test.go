@@ -102,7 +102,7 @@ func TestGetUsersMe(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/me", u.GetUsersMe, m.UserAuthenticate)
+	e.GET("api/users/me", u.GetUsersMe, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, makePath("/users/me"), typeNone, "")
@@ -279,7 +279,7 @@ func TestGetMyResponses(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/me/responses", u.GetMyResponses, m.UserAuthenticate)
+	e.GET("api/users/me/responses", u.GetMyResponses, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, makePath("/users/me/responses"), typeNone, "")
@@ -453,7 +453,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/me/responses/:questionnaireID", u.GetMyResponsesByID, m.UserAuthenticate)
+	e.GET("api/users/me/responses/:questionnaireID", u.GetMyResponsesByID, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		reqPath := fmt.Sprint(rootPath, "/users/me/responses/", testCase.request.questionnaireID)
@@ -602,7 +602,7 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/me/targeted", u.GetTargetedQuestionnaire, m.UserAuthenticate)
+	e.GET("api/users/me/targeted", u.GetTargetedQuestionnaire, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, makePath("/users/me/targeted"), typeNone, "")
@@ -751,7 +751,7 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.UserAuthenticate)
+	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/users/", testCase.request.targetUser, "/targeted"), typeNone, "")
