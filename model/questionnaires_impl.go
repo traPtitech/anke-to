@@ -1,6 +1,8 @@
 package model
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"regexp"
 	"time"
@@ -185,6 +187,16 @@ func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 2つ目の戻り値はページ数の最大値*/
 func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
+
+	db := db
+	if len(search) != 0 {
+		ctx := context.Background()
+		ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+		defer cancel()
+
+		db = db.BeginTx(ctx, &sql.TxOptions{})
+		defer db.Commit()
+	}
 
 	query := db.
 		Table("questionnaires").

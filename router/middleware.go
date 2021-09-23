@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/traPtitech/anke-to/model"
 )
 
@@ -67,6 +68,24 @@ func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
+}
+
+// TrapReteLimitMiddleware traP IDベースのリクエスト制限
+func (*Middleware) TrapReteLimitMiddlewareFunc() echo.MiddlewareFunc {
+	config := middleware.RateLimiterConfig{
+		Store: middleware.NewRateLimiterMemoryStore(5),
+		IdentifierExtractor: func(c echo.Context) (string, error) {
+			userID, err := getUserID(c)
+			if err != nil {
+				c.Logger().Error(err)
+				return "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+			}
+
+			return userID, nil
+		},
+	}
+
+	return middleware.RateLimiterWithConfig(config)
 }
 
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
