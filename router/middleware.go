@@ -82,25 +82,6 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 	}
 }
 
-// UserAuthenticate traPのメンバーかの認証
-func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userID := c.Request().Header.Get("X-Showcase-User")
-		if userID == "" {
-			userID = "mds_boy"
-		}
-
-		// トークンを持たないユーザはアクセスできない
-		if userID == "-" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
-		}
-
-		c.Set(userIDKey, userID)
-
-		return next(c)
-	}
-}
-
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
 func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
