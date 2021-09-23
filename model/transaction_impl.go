@@ -17,6 +17,10 @@ const (
 // Transaction ITransactionの実装
 type Transaction struct{}
 
+func NewTransaction() *Transaction {
+	return &Transaction{}
+}
+
 // Do トランザクション用の関数
 func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx context.Context) error) error {
 	tx := db.BeginTx(ctx, txOption)
