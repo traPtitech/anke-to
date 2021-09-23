@@ -4,273 +4,173 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
 	"gopkg.in/guregu/null.v3"
 )
 
 func TestGetResults(t *testing.T) {
-
-	type resultResponseBody struct {
-		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
-		ModifiedAt      time.Time      `json:"modified_at"`
-		Body            []responseBody `json:"body"`
-	}
-
 	t.Parallel()
 	assertion := assert.New(t)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	nowTime := time.Now()
-	questionnaireIDSuccess := 1
-	// responseIDSuccess := 1
-	questionIDSuccess := 1
-
-	questionnaireIDFailure := 0
-	questionnaireIDNotFound := -1
-	response1 := model.ResponseBody{
-		QuestionID:     questionIDSuccess,
-		QuestionType:   "Text",
-		Body:           null.StringFrom("回答1"),
-		OptionResponse: []string{},
-	}
-	response2 := model.ResponseBody{
-		QuestionID:     questionIDSuccess,
-		QuestionType:   "Text",
-		Body:           null.StringFrom("回答2"),
-		OptionResponse: []string{},
-	}
-	response3 := model.ResponseBody{
-		QuestionID:     questionIDSuccess,
-		QuestionType:   "Text",
-		Body:           null.StringFrom("回答3"),
-		OptionResponse: []string{},
-	}
-	respondentDetails := []model.RespondentDetail{
-		model.RespondentDetail{
-			QuestionnaireID: questionnaireIDSuccess,
-			SubmittedAt:     null.TimeFrom(nowTime),
-			ModifiedAt:      nowTime,
-			Responses:       []model.ResponseBody{response1},
-		},
-		model.RespondentDetail{
-			QuestionnaireID: questionnaireIDSuccess,
-			SubmittedAt:     null.TimeFrom(nowTime),
-			ModifiedAt:      nowTime,
-			Responses:       []model.ResponseBody{response2},
-		},
-		model.RespondentDetail{
-			QuestionnaireID: questionnaireIDSuccess,
-			SubmittedAt:     null.TimeFrom(nowTime),
-			ModifiedAt:      nowTime,
-			Responses:       []model.ResponseBody{response3},
-		},
-	}
-
-	resultResponseBodies := []resultResponseBody{
-		{
-			QuestionnaireID: questionnaireIDSuccess,
-			Body: []responseBody{
-				responseBody{
-					QuestionID:     response1.QuestionID,
-					QuestionType:   response1.QuestionType,
-					Body:           response1.Body,
-					OptionResponse: response1.OptionResponse,
-				},
-			},
-			SubmittedAt: null.TimeFrom(nowTime),
-			ModifiedAt:  nowTime,
-		},
-		{
-			QuestionnaireID: questionnaireIDSuccess,
-			Body: []responseBody{
-				responseBody{
-					QuestionID:     response2.QuestionID,
-					QuestionType:   response2.QuestionType,
-					Body:           response2.Body,
-					OptionResponse: response2.OptionResponse,
-				},
-			},
-			SubmittedAt: null.TimeFrom(nowTime),
-			ModifiedAt:  nowTime,
-		},
-		{
-			QuestionnaireID: questionnaireIDSuccess,
-			Body: []responseBody{
-				responseBody{
-					QuestionID:     response3.QuestionID,
-					QuestionType:   response3.QuestionType,
-					Body:           response3.Body,
-					OptionResponse: response3.OptionResponse,
-				},
-			},
-			SubmittedAt: null.TimeFrom(nowTime),
-			ModifiedAt:  nowTime,
-		},
-	}
-
 	mockRespondent := mock_model.NewMockIRespondent(ctrl)
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
-	r := NewResult(
-		mockRespondent,
-		mockQuestionnaire,
-		mockAdministrator,
-	)
-
-	m := NewMiddleware(
-		mockAdministrator,
-		mockRespondent,
-		mockQuestion,
-		mockQuestionnaire,
-	)
-
-	// Respondent
-	// InsertRespondent
-	mockRespondent.EXPECT().
-		GetRespondentDetails(questionnaireIDSuccess, gomock.Any()).
-		Return(respondentDetails, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		GetRespondentDetails(questionnaireIDFailure, gomock.Any()).
-		Return(nil, errMock).AnyTimes()
-	// NotFound
-	mockRespondent.EXPECT().
-		GetRespondentDetails(questionnaireIDNotFound, gomock.Any()).
-		Return([]model.RespondentDetail{}, nil).AnyTimes()
-
-	// Questionnaire
-	// GetResShared
-	// failure
-	mockQuestionnaire.EXPECT().
-		GetResShared(questionnaireIDFailure).
-		Return("", errMock).AnyTimes()
-	// NotFound
-	mockQuestionnaire.EXPECT().
-		GetResShared(questionnaireIDNotFound).
-		Return("", gorm.ErrRecordNotFound).AnyTimes()
+	result := NewResult(mockRespondent, mockQuestionnaire, mockAdministrator)
 
 	type request struct {
-		user            users
-		questionnaireID int
+		sortParam                 string
+		questionnaireIDParam      string
+		questionnaireIDValid      bool
+		questionnaireID           int
+		respondentDetails         []model.RespondentDetail
+		getRespondentDetailsError error
 	}
-	type call struct {
-		resSharedTo  string
-		isAdmin      bool
-		isRespondent bool
+	type response struct {
+		statusCode int
+		body       string
 	}
-	type expect struct {
-		isErr    bool
-		code     int
-		response []resultResponseBody
-	}
-
 	type test struct {
 		description string
 		request
-		call
-		expect
+		response
 	}
+
+	textResponse := []model.RespondentDetail{
+		{
+			ResponseID:      1,
+			TraqID:          "mazrean",
+			QuestionnaireID: 1,
+			SubmittedAt:     null.NewTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), true),
+			ModifiedAt:      time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
+			Responses: []model.ResponseBody{
+				{
+					QuestionID:     1,
+					QuestionType:   "Text",
+					Body:           null.NewString("テスト", true),
+					OptionResponse: nil,
+				},
+			},
+		},
+	}
+	sb := strings.Builder{}
+	err := json.NewEncoder(&sb).Encode(textResponse)
+	if err != nil {
+		t.Errorf("failed to encode text response: %v", err)
+		return
+	}
+
 	testCases := []test{
 		{
-			description: "public",
+			description: "questionnaireIDが数字でないので400",
 			request: request{
-				questionnaireID: questionnaireIDSuccess,
+				sortParam:            "traqid",
+				questionnaireIDParam: "abc",
 			},
-			call: call{
-				resSharedTo: "public",
-			},
-			expect: expect{
-				isErr:    false,
-				code:     http.StatusOK,
-				response: resultResponseBodies,
+			response: response{
+				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			description: "administrators admin",
+			description: "questionnaireIDが空文字なので400",
 			request: request{
-				questionnaireID: questionnaireIDSuccess,
+				sortParam:            "traqid",
+				questionnaireIDParam: "",
 			},
-			call: call{
-				resSharedTo: "administrators",
-				isAdmin:     true,
-			},
-			expect: expect{
-				isErr:    false,
-				code:     http.StatusOK,
-				response: resultResponseBodies,
+			response: response{
+				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			description: "respondents admin",
+			description: "GetRespondentDetailsがエラーなので500",
 			request: request{
-				questionnaireID: questionnaireIDSuccess,
+				sortParam:                 "traqid",
+				questionnaireIDValid:      true,
+				questionnaireIDParam:      "1",
+				questionnaireID:           1,
+				getRespondentDetailsError: fmt.Errorf("error"),
 			},
-			call: call{
-				resSharedTo: "respondents",
-				isAdmin:     true,
-			},
-			expect: expect{
-				isErr:    false,
-				code:     http.StatusOK,
-				response: resultResponseBodies,
+			response: response{
+				statusCode: http.StatusInternalServerError,
 			},
 		},
 		{
-			description: "respondents respondent",
+			description: "respondentDetailsがnilでも200",
 			request: request{
-				questionnaireID: questionnaireIDSuccess,
+				sortParam:            "traqid",
+				questionnaireIDValid: true,
+				questionnaireIDParam: "1",
+				questionnaireID:      1,
 			},
-			call: call{
-				resSharedTo:  "respondents",
-				isRespondent: true,
-			},
-			expect: expect{
-				isErr:    false,
-				code:     http.StatusOK,
-				response: resultResponseBodies,
+			response: response{
+				statusCode: http.StatusOK,
+				body:       "null\n",
 			},
 		},
 		{
-			description: "failure",
+			description: "respondentDetailsがそのまま帰り200",
 			request: request{
-				questionnaireID: questionnaireIDFailure,
+				sortParam:            "traqid",
+				questionnaireIDValid: true,
+				questionnaireIDParam: "1",
+				questionnaireID:      1,
+				respondentDetails: []model.RespondentDetail{
+					{
+						ResponseID:      1,
+						TraqID:          "mazrean",
+						QuestionnaireID: 1,
+						SubmittedAt:     null.NewTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), true),
+						ModifiedAt:      time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
+						Responses: []model.ResponseBody{
+							{
+								QuestionID:     1,
+								QuestionType:   "Text",
+								Body:           null.NewString("テスト", true),
+								OptionResponse: nil,
+							},
+						},
+					},
+				},
 			},
-			expect: expect{
-				isErr: true,
-				code:  http.StatusInternalServerError,
+			response: response{
+				statusCode: http.StatusOK,
+				body:       sb.String(),
 			},
 		},
 	}
 
-	e := echo.New()
-	e.GET("/api/results/:questionnaireID", r.GetResults, m.UserAuthenticate)
-
 	for _, testCase := range testCases {
-		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/results/", testCase.request.questionnaireID), typeNone, "")
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/results/%s?sort=%s", testCase.request.questionnaireIDParam, testCase.request.sortParam), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/results/:questionnaireID")
+		c.SetParamNames("questionnaireID", "sort")
+		c.SetParamValues(testCase.request.questionnaireIDParam, testCase.request.sortParam)
 
-		assertion.Equal(testCase.expect.code, rec.Code, testCase.description, "status code")
-		if rec.Code < 200 || rec.Code >= 300 {
-			continue
+		if testCase.request.questionnaireIDValid {
+			mockRespondent.
+				EXPECT().
+				GetRespondentDetails(testCase.request.questionnaireID, testCase.request.sortParam).
+				Return(testCase.request.respondentDetails, testCase.request.getRespondentDetailsError)
 		}
 
-		responseByte, jsonErr := json.Marshal(testCase.expect.response)
-		require.NoError(t, jsonErr)
-		responseStr := string(responseByte) + "\n"
-		assertion.Equal(responseStr, rec.Body.String(), testCase.description, "responseBody")
+		e.HTTPErrorHandler(result.GetResults(c), c)
+		assertion.Equalf(testCase.response.statusCode, rec.Code, testCase.description, "statusCode")
+		if testCase.response.statusCode == http.StatusOK {
+			assertion.Equalf(testCase.response.body, rec.Body.String(), testCase.description, "body")
+		}
 	}
 }
