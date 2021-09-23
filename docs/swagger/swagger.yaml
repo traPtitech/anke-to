@@ -382,10 +382,9 @@ components:
     answeredInQuery:
       name: answered
       in: query
-      required: true
       description: 回答したもの(answered)か未回答のもの(unanswered)かを選別
       schema:
-        type: string
+        $ref: '#/components/schemas/AnsweredType'
     sortInQuery:
       name: sort
       in: query
@@ -456,6 +455,15 @@ components:
       schema:
         type: integer
   schemas:
+    AnsweredType:
+      type: string
+      description: アンケート検索時に回答済みかの状態での絞り込み
+      enum:
+        - answered
+        - unanswered
+      x-enum-varnames:
+        - Answered
+        - Unanswered
     SortType:
       type: string
       description: question、questionnaire用のソートの種類
