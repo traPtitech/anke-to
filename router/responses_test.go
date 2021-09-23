@@ -506,7 +506,7 @@ func TestPostResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.POST("/api/responses", r.PostResponse, m.UserAuthenticate)
+	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -674,7 +674,7 @@ func TestGetResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("/api/responses/:responseID", r.GetResponse, m.UserAuthenticate)
+	e.GET("/api/responses/:responseID", r.GetResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 
@@ -1211,7 +1211,7 @@ func TestEditResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.UserAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
