@@ -315,7 +315,7 @@ paths:
       description: ユーザが対象になっているアンケートのリストを取得します。
       parameters:
         - $ref: '#/components/parameters/sortInQuery'
-        - $ref: '#/components/parameters/answered'
+        - $ref: '#/components/parameters/answeredInQuery'
       responses:
         '200':
           description: 正常に取得できました。アンケートの配列を返します。
@@ -378,7 +378,7 @@ paths:
           description: 結果を閲覧する権限がありません。
 components:
   parameters:
-    answered:
+    answeredInQuery:
       name: answered
       in: query
       required: true
