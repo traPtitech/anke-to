@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
 )
@@ -240,42 +239,22 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
-		resSharedTo, err := m.GetResShared(questionnaireID)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.Logger().Info(err)
-				return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
-			}
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
+		} else if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
 		}
 
-		switch resSharedTo {
-		case "administrators":
-			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
-			}
-			if !isAdmin {
-				return c.String(http.StatusForbidden, "Only admins can see this result.")
-			}
-		case "respondents":
-			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
-			}
-			if !isAdmin {
-				isRespondent, err := m.CheckRespondent(userID, questionnaireID)
-				if err != nil {
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are respondent: %w", err))
-				}
-				if !isRespondent {
-					return c.String(http.StatusForbidden, "Only admins and respondents can see this result.")
-				}
-			}
+		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
+		}
+		if !haveReadPrivilege {
+			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
 		}
 
 		return next(c)
