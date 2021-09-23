@@ -9,6 +9,8 @@ var (
 	ErrTooLargePageNum = errors.New("too large page number")
 	// ErrInvalidRegex invalid regexp
 	ErrInvalidRegex = errors.New("invalid regexp")
+	// ErrRecordNotFound record not found
+	ErrRecordNotFound = errors.New("record not found")
 	// ErrNoRecordUpdated no record updated
 	ErrNoRecordUpdated = errors.New("no record updated")
 	// ErrNoRecordDeleted no record deleted
@@ -23,6 +25,4 @@ var (
 	ErrTextMatching = errors.New("failed to match the pattern")
 	// ErrInvalidAnsweredParam invalid sort param
 	ErrInvalidAnsweredParam = errors.New("invalid answered param")
-	// ErrInvalidResponseID invalid response id
-	ErrInvalidResponseID = errors.New("invalid response id")
 )
