@@ -99,6 +99,74 @@ func TestSetUserIDMiddleware(t *testing.T) {
 	}
 }
 
+func TestTraPMemberAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		statusCode int
+		isCalled   bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "正常なユーザーIDなので通す",
+			args: args{
+				userID: "mazrean",
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+		{
+			description: "ユーザーIDが-なので401",
+			args: args{
+				userID: "-",
+			},
+			expect: expect{
+				statusCode: http.StatusUnauthorized,
+				isCalled:   false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		c.Set(userIDKey, testCase.args.userID)
+
+		callChecker := CallChecker{}
+
+		e.HTTPErrorHandler(middleware.TraPMemberAuthenticate(callChecker.Handler)(c), c)
+
+		assertion.Equal(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
+		assertion.Equal(testCase.expect.isCalled, testCase.expect.statusCode == http.StatusOK, testCase.description, "isCalled")
+	}
+}
+
 func TestResponseReadAuthenticate(t *testing.T) {
 	t.Parallel()
 
