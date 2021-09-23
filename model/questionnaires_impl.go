@@ -353,22 +353,6 @@ func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, err
 	return res.ResTimeLimit, nil
 }
 
-//GetResShared アンケートの回答の公開範囲の取得
-func (*Questionnaire) GetResShared(questionnaireID int) (string, error) {
-	res := Questionnaires{}
-
-	err := db.
-		Model(Questionnaires{}).
-		Where("id = ?", questionnaireID).
-		Select("res_shared_to").
-		Scan(&res).Error
-	if err != nil {
-		return "", fmt.Errorf("failed to get resShared: %w", err)
-	}
-
-	return res.ResSharedTo, nil
-}
-
 func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
 	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
 	err := db.
