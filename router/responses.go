@@ -345,24 +345,14 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	respondentDetail, err := r.GetRespondentDetail(responseID)
+	limit, err := r.GetQuestionnaireLimitByResponseID(responseID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.Logger().Info(err)
-			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find respondentDetail of responseID:%d(error: %w)", responseID, err))
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of responseID:%d(error: %w)", responseID, err))
 		}
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondentDetail of responseID:%d(error: %w)", responseID, err))
-	}
-
-	limit, err := r.GetQuestionnaireLimit(respondentDetail.QuestionnaireID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.Logger().Info(err)
-			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of questionnaireID:%d(error: %w)", respondentDetail.QuestionnaireID, err))
-		}
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get limit of questionnaireID:%d(error: %w)", respondentDetail.QuestionnaireID, err))
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get limit of responseID:%d(error: %w)", responseID, err))
 	}
 
 	// 回答期限を過ぎた回答の削除は許可しない

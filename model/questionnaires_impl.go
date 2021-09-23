@@ -353,6 +353,24 @@ func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, err
 	return res.ResTimeLimit, nil
 }
 
+// GetQuestionnaireLimitByResponseID 回答のIDからアンケートの回答期限を取得
+func (*Questionnaire) GetQuestionnaireLimitByResponseID(responseID int) (null.Time, error) {
+	res := Questionnaires{}
+
+	err := db.
+		Table("respondents").
+		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
+		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND questionnaires.id = response.question_id AND response.deleted_at IS NULL").
+		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
+		Select("questionnaires.res_time_limit").
+		Scan(&res).Error
+	if err != nil {
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
+	}
+
+	return res.ResTimeLimit, nil
+}
+
 //GetResShared アンケートの回答の公開範囲の取得
 func (*Questionnaire) GetResShared(questionnaireID int) (string, error) {
 	res := Questionnaires{}
