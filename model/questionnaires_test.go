@@ -1609,7 +1609,7 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				err:   ErrInvalidResponseID,
+				err:   ErrRecordNotFound,
 			},
 		},
 		{
@@ -1620,7 +1620,7 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				err:   ErrInvalidResponseID,
+				err:   ErrRecordNotFound,
 			},
 		},
 		{

@@ -133,7 +133,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(userID, responseID)
-		if errors.Is(err, model.ErrInvalidResponseID) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
 		} else if err != nil {

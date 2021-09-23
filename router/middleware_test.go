@@ -100,11 +100,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "GetResponseReadPrivilegeInfoByResponseIDがErrInvalidResponseIDの場合400",
+			description: "GetResponseReadPrivilegeInfoByResponseIDがErrRecordNotFoundの場合400",
 			args: args{
 				isRespondent:      false,
 				haveReadPrivilege: false,
-				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrInvalidResponseID,
+				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrRecordNotFound,
 			},
 			expect: expect{
 				statusCode: http.StatusBadRequest,
@@ -112,7 +112,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrInvalidResponseID以外)の場合500",
+			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrRecordNotFound以外)の場合500",
 			args: args{
 				isRespondent:      false,
 				haveReadPrivilege: false,

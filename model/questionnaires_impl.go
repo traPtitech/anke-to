@@ -364,7 +364,7 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, re
 		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents2.response_id IS NOT NULL AS is_respondent").
 		Scan(&responseReadPrivilegeInfo).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return nil, ErrInvalidResponseID
+		return nil, ErrRecordNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get response read privilege info: %w", err)
