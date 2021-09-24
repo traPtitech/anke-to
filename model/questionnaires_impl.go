@@ -359,8 +359,7 @@ func (*Questionnaire) GetQuestionnaireLimitByResponseID(responseID int) (null.Ti
 
 	err := db.
 		Table("respondents").
-		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
-		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND questionnaires.id = response.question_id AND response.deleted_at IS NULL").
+		Joins("INNER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
 		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
 		Select("questionnaires.res_time_limit").
 		Scan(&res).Error
