@@ -23,11 +23,10 @@ var (
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {
-	db, err := EstablishConnection()
+	err := EstablishConnection(true)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	err = Migrate()
 	if err != nil {
