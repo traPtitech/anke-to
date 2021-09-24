@@ -1301,6 +1301,18 @@ func TestDeleteResponse(t *testing.T) {
 			},
 		},
 		{
+			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				ExecutesDeletion:           false,
+				DeleteRespondentError:      nil,
+			},
+			expect: expect{
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
 			description: "GetQuestionnaireLimitByResponseIDがエラーを吐くので500",
 			request: request{
 				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
