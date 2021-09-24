@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertRespondent(t *testing.T) {
@@ -105,7 +106,10 @@ func TestInsertRespondent(t *testing.T) {
 		}
 
 		respondent := Respondents{}
-		err = db.Where("response_id = ?", responseID).First(&respondent).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
 		assertion.NoError(err, testCase.description, "get respondent")
 
 		assertion.Equal(responseID, respondent.ResponseID, testCase.description, "responseID")
@@ -113,7 +117,7 @@ func TestInsertRespondent(t *testing.T) {
 		assertion.Equal(testCase.args.userID, respondent.UserTraqid, testCase.description, "userID")
 		assertion.WithinDuration(testCase.args.submittedAt.ValueOrZero(), respondent.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 		assertion.WithinDuration(time.Now(), respondent.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 	}
 }
 
@@ -175,7 +179,10 @@ func TestUpdateSubmittedAt(t *testing.T) {
 		}
 
 		respondent := Respondents{}
-		err = db.Where("response_id = ?", responseID).First(&respondent).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
 		assertion.NoError(err, testCase.description, "get respondent")
 
 		assertion.Equal(responseID, respondent.ResponseID, testCase.description, "responseID")
@@ -183,7 +190,7 @@ func TestUpdateSubmittedAt(t *testing.T) {
 		assertion.Equal(testCase.args.userID, respondent.UserTraqid, testCase.description, "userID")
 		assertion.WithinDuration(testCase.args.submittedAt.ValueOrZero(), respondent.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 		assertion.WithinDuration(time.Now(), respondent.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 	}
 }
 
@@ -303,6 +310,7 @@ func TestGetRespondentInfos(t *testing.T) {
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
@@ -415,7 +423,7 @@ func TestGetRespondentInfos(t *testing.T) {
 			assertion.WithinDuration(questionnaire.ResTimeLimit.ValueOrZero(), respondentInfo.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "ResTimeLimit")
 			assertion.WithinDuration(expectRespondent.SubmittedAt.ValueOrZero(), respondentInfo.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 			assertion.WithinDuration(time.Now(), respondentInfo.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-			assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondentInfo.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+			assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondentInfo.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 		}
 	}
 }
@@ -430,6 +438,7 @@ func TestGetRespondentDetail(t *testing.T) {
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
@@ -525,6 +534,7 @@ func TestGetRespondentDetails(t *testing.T) {
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
