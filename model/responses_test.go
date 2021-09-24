@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertResponses(t *testing.T) {
@@ -117,7 +118,10 @@ func TestInsertResponses(t *testing.T) {
 		}
 
 		response := Responses{}
-		err = db.Where("response_id = ?", responseID).First(&response).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&response).Error
 		if err != nil {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
 		}
@@ -126,7 +130,7 @@ func TestInsertResponses(t *testing.T) {
 		assertion.Equal(questionID, response.QuestionID, testCase.description, "questionID")
 		assertion.Equal(testCase.args.responseMetas[0].Data, response.Body.ValueOrZero(), testCase.description, "Body")
 		assertion.WithinDuration(time.Now(), response.ModifiedAt, 2*time.Second, testCase.description, "ModifiedAt")
-		assertion.Equal(time.Time{}, response.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "DeletedAt")
+		assertion.Equal(time.Time{}, response.DeletedAt.Time, 2*time.Second, testCase.description, "DeletedAt")
 	}
 }
 
@@ -208,6 +212,7 @@ func TestDeleteResponse(t *testing.T) {
 
 		response := Responses{}
 		err = db.
+			Session(&gorm.Session{NewDB: true}).
 			Unscoped().
 			Where("response_id = ?", responseID).
 			First(&response).Error
@@ -215,6 +220,6 @@ func TestDeleteResponse(t *testing.T) {
 			t.Errorf("failed to get responses(%s): %w", testCase.description, err)
 		}
 
-		assertion.WithinDuration(time.Now(), response.DeletedAt.ValueOrZero(), 2*time.Second)
+		assertion.WithinDuration(time.Now(), response.DeletedAt.Time, 2*time.Second)
 	}
 }
