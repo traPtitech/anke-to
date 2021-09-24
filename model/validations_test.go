@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertValidation(t *testing.T) {
@@ -190,7 +191,10 @@ func TestInsertValidation(t *testing.T) {
 		}
 
 		validation = Validations{}
-		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&validation).Error
 		assertion.NoError(err, testCase.description, "get validations")
 
 		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
@@ -334,7 +338,10 @@ func TestUpdateValidation(t *testing.T) {
 		}
 
 		validation = Validations{}
-		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&validation).Error
 		assertion.NoError(err, testCase.description, "get validations")
 
 		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
