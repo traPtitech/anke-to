@@ -52,6 +52,7 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
+	t.Run("GetQuestionnaireLimitByResponseID", getQuestionnaireLimitByResponseIDTest)
 	t.Run("GetResponseReadPrivilegeInfoByResponseID", getResponseReadPrivilegeInfoByResponseIDTest)
 	t.Run("GetResponseReadPrivilegeInfoByQuestionnaireID", getResponseReadPrivilegeInfoByQuestionnaireIDTest)
 }
@@ -232,6 +233,44 @@ func setupQuestionnairesTest(t *testing.T) {
 				respondent: Respondents{
 					UserTraqid: questionnairesTestUserID2,
 				},
+			},
+		},
+	}, QuestionnairesTestData{
+		questionnaire: Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(questionnairesNow, true),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{questionnairesTestUserID},
+		respondents: []QuestionnairesTestRespondent{
+			{
+				respondent: Respondents{
+					UserTraqid: questionnairesTestUserID,
+				},
+				isSubmitted: true,
+			},
+		},
+	}, QuestionnairesTestData{
+		questionnaire: Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(time.Time{}, false),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{questionnairesTestUserID},
+		respondents: []QuestionnairesTestRespondent{
+			{
+				respondent: Respondents{
+					UserTraqid: questionnairesTestUserID,
+				},
+				isSubmitted: true,
 			},
 		},
 	})
@@ -1537,6 +1576,88 @@ func getQuestionnaireLimitTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		actualLimit, err := questionnaireImpl.GetQuestionnaireLimit(testCase.args.questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+	}
+}
+
+func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	invalidResponseID := 1000
+	for {
+		err := db.Where("response_id = ?", invalidResponseID).First(&Respondents{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get response(make invalid responseID): %w", err)
+			break
+		}
+
+		invalidResponseID *= 10
+	}
+
+	type args struct {
+		responseID int
+	}
+	type expect struct {
+		limit null.Time
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "回答が存在しないのでエラー",
+			args: args{
+				responseID: invalidResponseID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   gorm.ErrRecordNotFound,
+			},
+		},
+		{
+			description: "limit: not null",
+			args: args{
+				responseID: datas[30].respondents[0].respondent.ResponseID,
+			},
+			expect: expect{
+				limit: datas[30].questionnaire.ResTimeLimit,
+			},
+		},
+		{
+			description: "limit: null",
+			args: args{
+				responseID: datas[31].respondents[0].respondent.ResponseID,
+			},
+			expect: expect{
+				limit: datas[31].questionnaire.ResTimeLimit,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(testCase.args.responseID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
