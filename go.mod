@@ -3,16 +3,13 @@ module github.com/traPtitech/anke-to
 go 1.17
 
 require (
-	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/google/wire v0.5.0
-	github.com/jinzhu/gorm v1.9.16
 	github.com/labstack/echo/v4 v4.6.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/t-tiger/gorm-bulk-insert/v2 v2.0.1
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
@@ -63,3 +60,5 @@ require (
 	github.com/jinzhu/now v1.1.2 // indirect
 	gorm.io/driver/mysql v1.1.2
 )
+
+require github.com/go-sql-driver/mysql v1.6.0 // indirect
