@@ -1679,7 +1679,11 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 			continue
 		}
 
-		assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+		if testCase.expect.limit.Valid {
+			assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+		} else {
+			assertion.False(actualLimit.Valid, testCase.description, "limit null")
+		}
 	}
 }
 
