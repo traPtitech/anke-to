@@ -21,7 +21,7 @@ func NewRespondent() *Respondent {
 
 //Respondents respondentsテーブルの構造体
 type Respondents struct {
-	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
+	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;primary_key"`
 	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11) NOT NULL;"`
 	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30) NOT NULL;"`
 	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`

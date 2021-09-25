@@ -20,19 +20,19 @@ const invalidQuestionnairesTestUserID = "invalidQuestionnairesUser"
 var questionnairesNow = time.Now()
 
 type QuestionnairesTestData struct {
-	questionnaire  Questionnaires
+	questionnaire  *Questionnaires
 	targets        []string
 	administrators []string
-	respondents    []QuestionnairesTestRespondent
+	respondents    []*QuestionnairesTestRespondent
 }
 
 type QuestionnairesTestRespondent struct {
-	respondent  Respondents
+	respondent  *Respondents
 	isSubmitted bool
 }
 
 var (
-	datas                   = []QuestionnairesTestData{}
+	datas                   = []*QuestionnairesTestData{}
 	deletedQuestionnaireIDs = []int{}
 	userTargetMap           = map[string][]int{}
 	userAdministratorMap    = map[string][]int{}
@@ -52,14 +52,15 @@ func TestQuestionnaires(t *testing.T) {
 	t.Run("GetQuestionnaireInfo", getQuestionnaireInfoTest)
 	t.Run("GetTargettedQuestionnaires", getTargettedQuestionnairesTest)
 	t.Run("GetQuestionnaireLimit", getQuestionnaireLimitTest)
+	t.Run("GetQuestionnaireLimitByResponseID", getQuestionnaireLimitByResponseIDTest)
 	t.Run("GetResponseReadPrivilegeInfoByResponseID", getResponseReadPrivilegeInfoByResponseIDTest)
 	t.Run("GetResponseReadPrivilegeInfoByQuestionnaireID", getResponseReadPrivilegeInfoByQuestionnaireIDTest)
 }
 
 func setupQuestionnairesTest(t *testing.T) {
-	datas = []QuestionnairesTestData{
+	datas = []*QuestionnairesTestData{
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(questionnairesNow, true),
@@ -69,10 +70,10 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -82,10 +83,10 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{questionnairesTestUserID},
 			administrators: []string{},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -95,10 +96,10 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{questionnairesTestUserID},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -108,9 +109,9 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
-			respondents: []QuestionnairesTestRespondent{
+			respondents: []*QuestionnairesTestRespondent{
 				{
-					respondent: Respondents{
+					respondent: &Respondents{
 						UserTraqid: questionnairesTestUserID,
 					},
 					isSubmitted: true,
@@ -118,7 +119,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -128,16 +129,16 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
-			respondents: []QuestionnairesTestRespondent{
+			respondents: []*QuestionnairesTestRespondent{
 				{
-					respondent: Respondents{
+					respondent: &Respondents{
 						UserTraqid: questionnairesTestUserID,
 					},
 				},
 			},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -147,10 +148,10 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{questionnairesTestUserID},
 			administrators: []string{questionnairesTestUserID},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		},
 		{
-			questionnaire: Questionnaires{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -161,12 +162,12 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		},
 	}
 	for i := 0; i < 20; i++ {
-		datas = append(datas, QuestionnairesTestData{
-			questionnaire: Questionnaires{
+		datas = append(datas, &QuestionnairesTestData{
+			questionnaire: &Questionnaires{
 				Title:        "第1回集会らん☆ぷろ募集アンケート",
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -176,11 +177,11 @@ func setupQuestionnairesTest(t *testing.T) {
 			},
 			targets:        []string{},
 			administrators: []string{},
-			respondents:    []QuestionnairesTestRespondent{},
+			respondents:    []*QuestionnairesTestRespondent{},
 		})
 	}
-	datas = append(datas, QuestionnairesTestData{
-		questionnaire: Questionnaires{
+	datas = append(datas, &QuestionnairesTestData{
+		questionnaire: &Questionnaires{
 			Title:        "第1回集会らん☆ぷろ募集アンケートGetQuestionnaireTest",
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -190,9 +191,9 @@ func setupQuestionnairesTest(t *testing.T) {
 		},
 		targets:        []string{questionnairesTestUserID},
 		administrators: []string{questionnairesTestUserID},
-		respondents:    []QuestionnairesTestRespondent{},
-	}, QuestionnairesTestData{
-		questionnaire: Questionnaires{
+		respondents:    []*QuestionnairesTestRespondent{},
+	}, &QuestionnairesTestData{
+		questionnaire: &Questionnaires{
 			Title:        "第1回集会らん☆ぷろ募集アンケート",
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -201,17 +202,17 @@ func setupQuestionnairesTest(t *testing.T) {
 			ModifiedAt:   questionnairesNow,
 		},
 		targets:        []string{},
-		administrators: []string{questionnairesTestUserID},
-		respondents: []QuestionnairesTestRespondent{
+		administrators: []string{questionnairesTestUserID, questionnairesTestUserID2},
+		respondents: []*QuestionnairesTestRespondent{
 			{
-				respondent: Respondents{
+				respondent: &Respondents{
 					UserTraqid: questionnairesTestUserID,
 				},
 				isSubmitted: true,
 			},
 		},
-	}, QuestionnairesTestData{
-		questionnaire: Questionnaires{
+	}, &QuestionnairesTestData{
+		questionnaire: &Questionnaires{
 			Title:        "第1回集会らん☆ぷろ募集アンケート",
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
@@ -221,17 +222,49 @@ func setupQuestionnairesTest(t *testing.T) {
 		},
 		targets:        []string{},
 		administrators: []string{},
-		respondents: []QuestionnairesTestRespondent{
+		respondents: []*QuestionnairesTestRespondent{
 			{
-				respondent: Respondents{
+				respondent: &Respondents{
+					UserTraqid: questionnairesTestUserID,
+				},
+			},
+		},
+	}, &QuestionnairesTestData{
+		questionnaire: &Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(questionnairesNow, true),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{questionnairesTestUserID},
+		respondents: []*QuestionnairesTestRespondent{
+			{
+				respondent: &Respondents{
 					UserTraqid: questionnairesTestUserID,
 				},
 				isSubmitted: true,
 			},
+		},
+	}, &QuestionnairesTestData{
+		questionnaire: &Questionnaires{
+			Title:        "第1回集会らん☆ぷろ募集アンケート",
+			Description:  "第1回集会らん☆ぷろ参加者募集",
+			ResTimeLimit: null.NewTime(time.Time{}, false),
+			ResSharedTo:  "public",
+			CreatedAt:    questionnairesNow,
+			ModifiedAt:   questionnairesNow,
+		},
+		targets:        []string{},
+		administrators: []string{questionnairesTestUserID},
+		respondents: []*QuestionnairesTestRespondent{
 			{
-				respondent: Respondents{
-					UserTraqid: questionnairesTestUserID2,
+				respondent: &Respondents{
+					UserTraqid: questionnairesTestUserID,
 				},
+				isSubmitted: true,
 			},
 		},
 	})
@@ -241,7 +274,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			deletedQuestionnaireIDs = append(deletedQuestionnaireIDs, data.questionnaire.ID)
 		}
 
-		err := db.Create(&datas[i].questionnaire).Error
+		err := db.Create(data.questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", data, err)
 		}
@@ -254,7 +287,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			userTargetMap[target] = append(questionnaires, datas[i].questionnaire.ID)
 
 			err := db.Create(&Targets{
-				QuestionnaireID: datas[i].questionnaire.ID,
+				QuestionnaireID: data.questionnaire.ID,
 				UserTraqid:      target,
 			}).Error
 			if err != nil {
@@ -270,7 +303,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			userAdministratorMap[administrator] = append(questionnaires, datas[i].questionnaire.ID)
 
 			err := db.Create(&Administrators{
-				QuestionnaireID: datas[i].questionnaire.ID,
+				QuestionnaireID: data.questionnaire.ID,
 				UserTraqid:      administrator,
 			}).Error
 			if err != nil {
@@ -287,19 +320,15 @@ func setupQuestionnairesTest(t *testing.T) {
 				userRespondentMap[respondentData.respondent.UserTraqid] = append(questionnaires, datas[i].questionnaire.ID)
 			}
 
-			respondent := Respondents{
-				QuestionnaireID: datas[i].questionnaire.ID,
-				UserTraqid:      respondentData.respondent.UserTraqid,
-			}
+			respondentData.respondent.QuestionnaireID = data.questionnaire.ID
 			if respondentData.isSubmitted {
-				respondent.SubmittedAt = null.NewTime(time.Now(), true)
+				respondentData.respondent.SubmittedAt = null.NewTime(time.Now(), true)
 			}
-			err := db.Create(&respondent).Error
+
+			err := db.Create(respondentData.respondent).Error
 			if err != nil {
 				t.Error("failed to create respondent: %w", err)
 			}
-
-			respondentData.respondent = respondent
 		}
 	}
 }
@@ -1171,7 +1200,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[0].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  datas[0].questionnaire,
+				questionnaire:  *datas[0].questionnaire,
 				targets:        []string{},
 				administrators: []string{},
 				respondents:    []string{},
@@ -1183,7 +1212,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[1].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  datas[1].questionnaire,
+				questionnaire:  *datas[1].questionnaire,
 				targets:        []string{questionnairesTestUserID},
 				administrators: []string{},
 				respondents:    []string{},
@@ -1195,7 +1224,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[2].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  datas[2].questionnaire,
+				questionnaire:  *datas[2].questionnaire,
 				targets:        []string{},
 				administrators: []string{questionnairesTestUserID},
 				respondents:    []string{},
@@ -1207,7 +1236,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[3].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  datas[3].questionnaire,
+				questionnaire:  *datas[3].questionnaire,
 				targets:        []string{},
 				administrators: []string{},
 				respondents:    []string{questionnairesTestUserID},
@@ -1219,7 +1248,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[4].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  datas[4].questionnaire,
+				questionnaire:  *datas[4].questionnaire,
 				targets:        []string{},
 				administrators: []string{},
 				respondents:    []string{},
@@ -1550,6 +1579,92 @@ func getQuestionnaireLimitTest(t *testing.T) {
 		}
 
 		assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+	}
+}
+
+func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	invalidResponseID := 1000
+	for {
+		err := db.Where("response_id = ?", invalidResponseID).First(&Respondents{}).Error
+		if gorm.IsRecordNotFoundError(err) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get response(make invalid responseID): %w", err)
+			break
+		}
+
+		invalidResponseID *= 10
+	}
+
+	type args struct {
+		responseID int
+	}
+	type expect struct {
+		limit null.Time
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "回答が存在しないのでエラー",
+			args: args{
+				responseID: invalidResponseID,
+			},
+			expect: expect{
+				isErr: true,
+				err:   gorm.ErrRecordNotFound,
+			},
+		},
+		{
+			description: "limit: not null",
+			args: args{
+				responseID: datas[30].respondents[0].respondent.ResponseID,
+			},
+			expect: expect{
+				limit: datas[30].questionnaire.ResTimeLimit,
+			},
+		},
+		{
+			description: "limit: null",
+			args: args{
+				responseID: datas[31].respondents[0].respondent.ResponseID,
+			},
+			expect: expect{
+				limit: datas[31].questionnaire.ResTimeLimit,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(testCase.args.responseID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			if !errors.Is(err, testCase.expect.err) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.expect.err, err)
+			}
+		}
+		if err != nil {
+			continue
+		}
+
+		if testCase.expect.limit.Valid {
+			assertion.WithinDuration(testCase.limit.ValueOrZero(), actualLimit.ValueOrZero(), 2*time.Second, testCase.description, "limit")
+		} else {
+			assertion.False(actualLimit.Valid, testCase.description, "limit null")
+		}
 	}
 }
 
