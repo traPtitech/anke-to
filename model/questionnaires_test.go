@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -203,7 +202,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			ModifiedAt:   questionnairesNow,
 		},
 		targets:        []string{},
-		administrators: []string{questionnairesTestUserID},
+		administrators: []string{questionnairesTestUserID, questionnairesTestUserID2},
 		respondents: []*QuestionnairesTestRespondent{
 			{
 				respondent: &Respondents{
@@ -227,12 +226,6 @@ func setupQuestionnairesTest(t *testing.T) {
 			{
 				respondent: &Respondents{
 					UserTraqid: questionnairesTestUserID,
-				},
-				isSubmitted: true,
-			},
-			{
-				respondent: &Respondents{
-					UserTraqid: questionnairesTestUserID2,
 				},
 			},
 		},
@@ -332,21 +325,9 @@ func setupQuestionnairesTest(t *testing.T) {
 				respondentData.respondent.SubmittedAt = null.NewTime(time.Now(), true)
 			}
 
-			err := db.Transaction(func(tx *gorm.DB) error {
-				err := db.Create(respondentData.respondent).Error
-				if err != nil {
-					return fmt.Errorf("failed to create respondent: %w", err)
-				}
-
-				err = db.Order("response_id DESC").Last(respondentData.respondent).Error
-				if err != nil {
-					return fmt.Errorf("failed to get respondent: %w", err)
-				}
-
-				return nil
-			})
+			err := db.Create(respondentData.respondent).Error
 			if err != nil {
-				t.Errorf("failed in the transaction: %w", err)
+				t.Error("failed to create respondent: %w", err)
 			}
 		}
 	}
