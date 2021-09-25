@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
-
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v3"
 
@@ -74,9 +72,7 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 
 	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(userID, sort, search, pageNum, nontargetedBool)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		} else if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
+		if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -186,7 +182,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 
 	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(questionnaireID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -288,9 +284,6 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 	allquestions, err := q.IQuestion.GetQuestions(questionnaireID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
