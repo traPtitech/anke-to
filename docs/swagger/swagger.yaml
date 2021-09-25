@@ -315,6 +315,8 @@ paths:
       description: ユーザが対象になっているアンケートのリストを取得します。
       parameters:
         - $ref: '#/components/parameters/sortInQuery'
+        - $ref: '#/components/parameters/answeredInQuery'
+        - $ref: '#/components/parameters/traQIDInPath'
       responses:
         '200':
           description: 正常に取得できました。アンケートの配列を返します。
@@ -377,6 +379,12 @@ paths:
           description: 結果を閲覧する権限がありません。
 components:
   parameters:
+    answeredInQuery:
+      name: answered
+      in: query
+      description: 回答したもの(answered)か未回答のもの(unanswered)かを選別
+      schema:
+        $ref: '#/components/schemas/AnsweredType'
     sortInQuery:
       name: sort
       in: query
@@ -438,7 +446,24 @@ components:
         回答ID
       schema:
         type: integer
+    traQIDInPath:
+      name: traQID
+      in: path
+      required: true
+      description: |
+        traQ ID(ex:mazrean)
+      schema:
+        type: integer
   schemas:
+    AnsweredType:
+      type: string
+      description: アンケート検索時に回答済みかの状態での絞り込み
+      enum:
+        - answered
+        - unanswered
+      x-enum-varnames:
+        - Answered
+        - Unanswered
     SortType:
       type: string
       description: question、questionnaire用のソートの種類

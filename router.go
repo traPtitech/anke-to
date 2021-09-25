@@ -33,11 +33,11 @@ func SetRouting(port string) {
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
 
-	echoAPI := e.Group("/api", api.UserAuthenticate, api.SetValidatorMiddleware)
+	echoAPI := e.Group("/api", api.SetValidatorMiddleware, api.SetUserIDMiddleware, api.TraPMemberAuthenticate)
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")
 		{
-			apiQuestionnnaires.GET("", api.GetQuestionnaires)
+			apiQuestionnnaires.GET("", api.GetQuestionnaires, api.TrapReteLimitMiddlewareFunc())
 			apiQuestionnnaires.POST("", api.PostQuestionnaire)
 			apiQuestionnnaires.GET("/:questionnaireID", api.GetQuestionnaire)
 			apiQuestionnnaires.PATCH("/:questionnaireID", api.EditQuestionnaire, api.QuestionnaireAdministratorAuthenticate)

@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/traPtitech/anke-to/model"
 )
 
@@ -51,12 +51,27 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 暫定的にハードコーディングで対応*/
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
 
-// UserAuthenticate traPのメンバーかの認証
-func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+// SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
+func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Request().Header.Get("X-Showcase-User")
 		if userID == "" {
 			userID = "mds_boy"
+		}
+
+		c.Set(userIDKey, userID)
+
+		return next(c)
+	}
+}
+
+// TraPMemberAuthenticate traP部員かの認証
+func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		// トークンを持たないユーザはアクセスできない
@@ -64,10 +79,26 @@ func (*Middleware) UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 		}
 
-		c.Set(userIDKey, userID)
-
 		return next(c)
 	}
+}
+
+// TrapReteLimitMiddleware traP IDベースのリクエスト制限
+func (*Middleware) TrapReteLimitMiddlewareFunc() echo.MiddlewareFunc {
+	config := middleware.RateLimiterConfig{
+		Store: middleware.NewRateLimiterMemoryStore(5),
+		IdentifierExtractor: func(c echo.Context) (string, error) {
+			userID, err := getUserID(c)
+			if err != nil {
+				c.Logger().Error(err)
+				return "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+			}
+
+			return userID, nil
+		},
+	}
+
+	return middleware.RateLimiterWithConfig(config)
 }
 
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
@@ -134,7 +165,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(userID, responseID)
-		if errors.Is(err, model.ErrInvalidResponseID) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
 		} else if err != nil {
@@ -240,42 +271,22 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
-		resSharedTo, err := m.GetResShared(questionnaireID)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.Logger().Info(err)
-				return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
-			}
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
+		} else if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get resShared of questionnaireID:%d(error: %w)", questionnaireID, err))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
 		}
 
-		switch resSharedTo {
-		case "administrators":
-			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
-			}
-			if !isAdmin {
-				return c.String(http.StatusForbidden, "Only admins can see this result.")
-			}
-		case "respondents":
-			isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
-			}
-			if !isAdmin {
-				isRespondent, err := m.CheckRespondent(userID, questionnaireID)
-				if err != nil {
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are respondent: %w", err))
-				}
-				if !isRespondent {
-					return c.String(http.StatusForbidden, "Only admins and respondents can see this result.")
-				}
-			}
+		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
+		}
+		if !haveReadPrivilege {
+			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
 		}
 
 		return next(c)

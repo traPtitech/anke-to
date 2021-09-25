@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -22,6 +23,148 @@ func (cc *CallChecker) Handler(c echo.Context) error {
 	cc.IsCalled = true
 
 	return c.NoContent(http.StatusOK)
+}
+
+func TestSetUserIDMiddleware(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		userID interface{}
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "正常なユーザーIDなのでユーザーID取得",
+			args: args{
+				userID: "mazrean",
+			},
+			expect: expect{
+				userID: "mazrean",
+			},
+		},
+		{
+			description: "ユーザーIDが空なのでmds_boy",
+			args: args{
+				userID: "",
+			},
+			expect: expect{
+				userID: "mds_boy",
+			},
+		},
+		{
+			description: "ユーザーIDが-なので-",
+			args: args{
+				userID: "-",
+			},
+			expect: expect{
+				userID: "-",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		req.Header.Set("X-Showcase-User", testCase.args.userID)
+
+		e.HTTPErrorHandler(middleware.SetUserIDMiddleware(func(c echo.Context) error {
+			assertion.Equal(testCase.expect.userID, c.Get(userIDKey), testCase.description, "userID")
+			return c.NoContent(http.StatusOK)
+		})(c), c)
+
+		assertion.Equal(http.StatusOK, rec.Code, testCase.description, "status code")
+	}
+}
+
+func TestTraPMemberAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		statusCode int
+		isCalled   bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "正常なユーザーIDなので通す",
+			args: args{
+				userID: "mazrean",
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+		{
+			description: "ユーザーIDが-なので401",
+			args: args{
+				userID: "-",
+			},
+			expect: expect{
+				statusCode: http.StatusUnauthorized,
+				isCalled:   false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		c.Set(userIDKey, testCase.args.userID)
+
+		callChecker := CallChecker{}
+
+		e.HTTPErrorHandler(middleware.TraPMemberAuthenticate(callChecker.Handler)(c), c)
+
+		assertion.Equal(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
+		assertion.Equal(testCase.expect.isCalled, testCase.expect.statusCode == http.StatusOK, testCase.description, "isCalled")
+	}
 }
 
 func TestResponseReadAuthenticate(t *testing.T) {
@@ -100,11 +243,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "GetResponseReadPrivilegeInfoByResponseIDがErrInvalidResponseIDの場合400",
+			description: "GetResponseReadPrivilegeInfoByResponseIDがErrRecordNotFoundの場合400",
 			args: args{
 				isRespondent:      false,
 				haveReadPrivilege: false,
-				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrInvalidResponseID,
+				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrRecordNotFound,
 			},
 			expect: expect{
 				statusCode: http.StatusBadRequest,
@@ -112,7 +255,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrInvalidResponseID以外)の場合500",
+			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrRecordNotFound以外)の場合500",
 			args: args{
 				isRespondent:      false,
 				haveReadPrivilege: false,
@@ -178,6 +321,133 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		callChecker := CallChecker{}
 
 		e.HTTPErrorHandler(middleware.ResponseReadAuthenticate(callChecker.Handler)(c), c)
+
+		assertion.Equalf(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
+		assertion.Equalf(testCase.expect.isCalled, callChecker.IsCalled, testCase.description, "isCalled")
+	}
+}
+
+func TestResultAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		haveReadPrivilege                             bool
+		GetResponseReadPrivilegeInfoByResponseIDError error
+		checkResponseReadPrivilegeError               error
+	}
+	type expect struct {
+		statusCode int
+		isCalled   bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "haveReadPrivilegeがtrueの場合通す",
+			args: args{
+				haveReadPrivilege: true,
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+		{
+			description: "haveReadPrivilegeがfalseの場合403",
+			args: args{
+				haveReadPrivilege: false,
+			},
+			expect: expect{
+				statusCode: http.StatusForbidden,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "GetResponseReadPrivilegeInfoByResponseIDがErrRecordNotFoundの場合400",
+			args: args{
+				haveReadPrivilege: false,
+				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrRecordNotFound,
+			},
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrRecordNotFound以外)の場合500",
+			args: args{
+				haveReadPrivilege: false,
+				GetResponseReadPrivilegeInfoByResponseIDError: errors.New("error"),
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "checkResponseReadPrivilegeがエラーの場合500",
+			args: args{
+				haveReadPrivilege:               false,
+				checkResponseReadPrivilegeError: errors.New("error"),
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+				isCalled:   false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		userID := "testUser"
+		questionnaireID := 1
+		var responseReadPrivilegeInfo model.ResponseReadPrivilegeInfo
+		if testCase.args.checkResponseReadPrivilegeError != nil {
+			responseReadPrivilegeInfo = model.ResponseReadPrivilegeInfo{
+				ResSharedTo: "invalid value",
+			}
+		} else if testCase.args.haveReadPrivilege {
+			responseReadPrivilegeInfo = model.ResponseReadPrivilegeInfo{
+				ResSharedTo: "public",
+			}
+		} else {
+			responseReadPrivilegeInfo = model.ResponseReadPrivilegeInfo{
+				ResSharedTo: "administrators",
+			}
+		}
+
+		mockQuestionnaire.
+			EXPECT().
+			GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID).
+			Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/results/%d", questionnaireID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/results/:questionnaireID")
+		c.SetParamNames("questionnaireID")
+		c.SetParamValues(strconv.Itoa(questionnaireID))
+		c.Set(userIDKey, userID)
+
+		callChecker := CallChecker{}
+
+		e.HTTPErrorHandler(middleware.ResultAuthenticate(callChecker.Handler)(c), c)
 
 		assertion.Equalf(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
 		assertion.Equalf(testCase.expect.isCalled, callChecker.IsCalled, testCase.description, "isCalled")

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"regexp"
 	"time"
@@ -186,6 +188,16 @@ func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
+	db := db
+	if len(search) != 0 {
+		ctx := context.Background()
+		ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+		defer cancel()
+
+		db = db.BeginTx(ctx, &sql.TxOptions{})
+		defer db.Commit()
+	}
+
 	query := db.
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
@@ -353,20 +365,21 @@ func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, err
 	return res.ResTimeLimit, nil
 }
 
-//GetResShared アンケートの回答の公開範囲の取得
-func (*Questionnaire) GetResShared(questionnaireID int) (string, error) {
+// GetQuestionnaireLimitByResponseID 回答のIDからアンケートの回答期限を取得
+func (*Questionnaire) GetQuestionnaireLimitByResponseID(responseID int) (null.Time, error) {
 	res := Questionnaires{}
 
 	err := db.
-		Model(Questionnaires{}).
-		Where("id = ?", questionnaireID).
-		Select("res_shared_to").
+		Table("respondents").
+		Joins("INNER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
+		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
+		Select("questionnaires.res_time_limit").
 		Scan(&res).Error
 	if err != nil {
-		return "", fmt.Errorf("failed to get resShared: %w", err)
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
-	return res.ResSharedTo, nil
+	return res.ResTimeLimit, nil
 }
 
 func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
@@ -380,7 +393,26 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, re
 		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents2.response_id IS NOT NULL AS is_respondent").
 		Scan(&responseReadPrivilegeInfo).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return nil, ErrInvalidResponseID
+		return nil, ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response read privilege info: %w", err)
+	}
+
+	return &responseReadPrivilegeInfo, nil
+}
+
+func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error) {
+	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
+	err := db.
+		Table("questionnaires").
+		Where("questionnaires.id = ?", questionnaireID).
+		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
+		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL", userID).
+		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents.response_id IS NOT NULL AS is_respondent").
+		Scan(&responseReadPrivilegeInfo).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, ErrRecordNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get response read privilege info: %w", err)

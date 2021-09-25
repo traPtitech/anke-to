@@ -335,15 +335,34 @@ func (r *Response) EditResponse(c echo.Context) error {
 func (r *Response) DeleteResponse(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	responseID, err := getResponseID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
+	limit, err := r.GetQuestionnaireLimitByResponseID(responseID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of responseID:%d(error: %w)", responseID, err))
+		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get limit of responseID:%d(error: %w)", responseID, err))
+	}
+
+	// 回答期限を過ぎた回答の削除は許可しない
+	if limit.Valid && limit.Time.Before(time.Now()) {
+		c.Logger().Info(err)
+		return echo.NewHTTPError(http.StatusMethodNotAllowed)
+	}
+
 	if err := r.DeleteRespondent(userID, responseID); err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

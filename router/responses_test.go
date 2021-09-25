@@ -506,7 +506,7 @@ func TestPostResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.POST("/api/responses", r.PostResponse, m.UserAuthenticate)
+	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -674,7 +674,7 @@ func TestGetResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("/api/responses/:responseID", r.GetResponse, m.UserAuthenticate)
+	e.GET("/api/responses/:responseID", r.GetResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 
@@ -1211,7 +1211,7 @@ func TestEditResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.UserAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -1249,7 +1249,10 @@ func TestDeleteResponse(t *testing.T) {
 	)
 
 	type request struct {
-		DeleteRespondentError error
+		QuestionnaireLimit         null.Time
+		GetQuestionnaireLimitError error
+		ExecutesDeletion           bool
+		DeleteRespondentError      error
 	}
 	type expect struct {
 		statusCode int
@@ -1262,18 +1265,72 @@ func TestDeleteResponse(t *testing.T) {
 
 	testCases := []test{
 		{
-			description: "DeleteRespondentがエラーなしなので200",
+			description: "期限が設定されていない、かつDeleteRespondentがエラーなしなので200",
 			request: request{
-				DeleteRespondentError: nil,
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
 			},
 		},
 		{
+			description: "期限前、かつDeleteRespondentがエラーなしなので200",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Now().AddDate(0, 0, 1), true),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      nil,
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			description: "期限後なので405",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Now().AddDate(0, 0, -1), true),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           false,
+				DeleteRespondentError:      nil,
+			},
+			expect: expect{
+				statusCode: http.StatusMethodNotAllowed,
+			},
+		},
+		{
+			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				ExecutesDeletion:           false,
+				DeleteRespondentError:      nil,
+			},
+			expect: expect{
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			description: "GetQuestionnaireLimitByResponseIDがエラーを吐くので500",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: errors.New("error"),
+				ExecutesDeletion:           false,
+				DeleteRespondentError:      nil,
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
 			description: "DeleteRespondentがエラーを吐くので500",
 			request: request{
-				DeleteRespondentError: errors.New("error"),
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1295,10 +1352,16 @@ func TestDeleteResponse(t *testing.T) {
 		c.Set(userIDKey, userID)
 		c.Set(responseIDKey, responseID)
 
-		mockRespondent.
+		mockQuestionnaire.
 			EXPECT().
-			DeleteRespondent(userID, responseID).
-			Return(testCase.request.DeleteRespondentError)
+			GetQuestionnaireLimitByResponseID(responseID).
+			Return(testCase.request.QuestionnaireLimit, testCase.request.GetQuestionnaireLimitError)
+		if testCase.request.ExecutesDeletion {
+			mockRespondent.
+				EXPECT().
+				DeleteRespondent(userID, responseID).
+				Return(testCase.request.DeleteRespondentError)
+		}
 
 		e.HTTPErrorHandler(r.DeleteResponse(c), c)
 
