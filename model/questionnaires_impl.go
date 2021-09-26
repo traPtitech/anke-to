@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -161,8 +162,14 @@ func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	query := db.
-		Session(&gorm.Session{NewDB: true}).
+		Session(&gorm.Session{
+			NewDB: true,
+			Context: ctx,
+		}).
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
@@ -190,6 +197,9 @@ func (*Questionnaire) GetQuestionnaires(userID string, sort string, search strin
 		Session(&gorm.Session{}).
 		Group("questionnaires.id").
 		Count(&count).Error
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, 0, ErrDeadlineExceeded
+	}
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
@@ -211,7 +221,10 @@ func (*Questionnaire) GetQuestionnaires(userID string, sort string, search strin
 		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, 0, ErrDeadlineExceeded
+	}
+	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 

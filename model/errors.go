@@ -27,4 +27,6 @@ var (
 	ErrInvalidAnsweredParam = errors.New("invalid answered param")
 	// ErrInvalidTx transactionに誤った値が入っている
 	ErrInvalidTx = errors.New("invalid tx")
+	// ErrDeadlineExceeded deadline exceeded
+	ErrDeadlineExceeded = errors.New("deadline exceeded")
 )
