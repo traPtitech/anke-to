@@ -41,7 +41,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionnairesWithPageMax'
-        '408':
+        '503':
           description: SQLの実行時間が3sを超えた場合。主に正規表現が原因。
     post:
       operationId: postQuestionnaire
