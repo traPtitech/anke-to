@@ -654,12 +654,9 @@ components:
         - LinearScale
       description: |
         どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
-    NewQuestion:
+    QuestionBase:
       type: object
       properties:
-        questionnaireID:
-          type: integer
-          example: 1
         page_num:
           type: integer
           example: 1
@@ -707,7 +704,6 @@ components:
           type: string
           example: ''
       required:
-        - questionnaireID
         - page_num
         - question_num
         - question_type
@@ -718,9 +714,16 @@ components:
         - scale_label_left
         - scale_min
         - scale_max
-        - regex_pattern
-        - min_bound
-        - max_bound
+    NewQuestion:
+      allOf:
+      - $ref: '#/components/schemas/QuestionBase'
+      - type: object
+        properties:
+          questionnaireID:
+            type: integer
+            example: 1
+        required:
+          - questionnaireID
     Question:
       allOf:
       - $ref: '#/components/schemas/NewQuestion'
@@ -733,13 +736,17 @@ components:
           - questionID
     QuestionDetails:
       allOf:
-      - $ref: '#/components/schemas/Question'
+      - $ref: '#/components/schemas/QuestionBase'
       - type: object
         properties:
+          questionID:
+            type: integer
+            example: 1
           created_at:
             type: string
             format: date-time
         required:
+          - questionID
           - created_at
     NewResponse:
       type: object
