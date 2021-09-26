@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/prometheus"
 )
 
 var (
@@ -59,6 +60,14 @@ func EstablishConnection(isProduction bool) error {
 		Logger: logger.Default.LogMode(logLevel),
 	})
 	db = db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
+
+	db.Use(prometheus.New(prometheus.Config{
+		DBName:          "anke-to",
+		RefreshInterval: 15,
+		MetricsCollector: []prometheus.MetricsCollector{
+			&MetricsCollector{},
+		},
+	}))
 
 	return err
 }
