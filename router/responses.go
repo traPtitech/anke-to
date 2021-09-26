@@ -36,9 +36,9 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
-	ID          int                  `json:"questionnaireID"`
+	ID          int                  `json:"questionnaireID" validate:"min=0"`
 	SubmittedAt null.Time            `json:"submitted_at"`
-	Body        []model.ResponseBody `json:"body"`
+	Body        []model.ResponseBody `json:"body" validate:"required"`
 }
 
 // PostResponse POST /responses
