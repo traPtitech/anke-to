@@ -53,52 +53,29 @@ func TestPostResponseValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			description: "ResponsesのIDが負なのでエラー",
 			request:     &Responses{
-				ID:          0,
+				ID:          -1,
 				SubmittedAt: null.Time{},
 				Body:       []model.ResponseBody{
 					{
-						QuestionID:     0,
+						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
 				} ,
 			},
-			isErr:       false,
+			isErr:       true,
 		},
 		{
-			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			description: "Bodyがnilなのでエラー",
 			request:     &Responses{
-				ID:          0,
+				ID:          2,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
-					{
-						QuestionID:     0,
-						QuestionType:   "Text",
-						Body:           null.String{},
-						OptionResponse: nil,
-					},
-				} ,
+				Body:       nil,
 			},
-			isErr:       false,
-		},
-		{
-			description: "旧クライアントの一般的なリクエストなのでエラーなし",
-			request:     &Responses{
-				ID:          0,
-				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
-					{
-						QuestionID:     0,
-						QuestionType:   "Text",
-						Body:           null.String{},
-						OptionResponse: nil,
-					},
-				} ,
-			},
-			isErr:       false,
+			isErr:       true,
 		},
 	}
 
