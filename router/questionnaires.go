@@ -76,7 +76,7 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 		if errors.Is(err, model.ErrDeadlineExceeded) {
-			return echo.NewHTTPError(http.StatusRequestTimeout, err)
+			return echo.NewHTTPError(http.StatusServiceUnavailable, "deadline exceeded")
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
