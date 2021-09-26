@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -109,7 +108,7 @@ func TestPostResponse(t *testing.T) {
 	// failure
 	mockQuestionnaire.EXPECT().
 		GetQuestionnaireLimit(questionnaireIDFailure).
-		Return(null.NewTime(time.Time{}, false), gorm.ErrRecordNotFound).AnyTimes()
+		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
 		GetQuestionnaireLimit(questionnaireIDLimit).
@@ -610,7 +609,7 @@ func TestGetResponse(t *testing.T) {
 	// NotFound
 	mockRespondent.EXPECT().
 		GetRespondentDetail(responseIDNotFound).
-		Return(model.RespondentDetail{}, gorm.ErrRecordNotFound).AnyTimes()
+		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
 	type request struct {
 		user       users
@@ -1304,7 +1303,7 @@ func TestDeleteResponse(t *testing.T) {
 			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
 			request: request{
 				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
-				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				GetQuestionnaireLimitError: model.ErrRecordNotFound,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
 			},

@@ -1,12 +1,11 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/jinzhu/gorm"
-
-	"github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
 )
 
 // Question QuestionRepositoryの実装
@@ -19,23 +18,24 @@ func NewQuestion() *Question {
 
 //Questions questionテーブルの構造体
 type Questions struct {
-	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
-	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);default:NULL;"`
-	PageNum         int            `json:"page_num"            gorm:"type:int(11) NOT NULL;"`
-	QuestionNum     int            `json:"question_num"        gorm:"type:int(11) NOT NULL;"`
-	Type            string         `json:"type"                gorm:"type:char(20) NOT NULL;"`
-	Body            string         `json:"body"                gorm:"type:text;default:NULL;"`
-	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4) NOT NULL;default:0;"`
-	DeletedAt       mysql.NullTime `json:"deleted_at"          gorm:"type:timestamp NULL;default:NULL;"`
-	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);not null"`
+	PageNum         int            `json:"page_num"            gorm:"type:int(11);not null"`
+	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);not null"`
+	Type            string         `json:"type"                gorm:"type:char(20);size:20;not null"`
+	Body            string         `json:"body"                gorm:"type:text;default:NULL"`
+	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);size:4;not null;default:0"`
+	DeletedAt       gorm.DeletedAt `json:"-"          gorm:"type:TIMESTAMP NULL;default:NULL"`
+	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	Options         []Options      `json:"-"  gorm:"foreignKey:QuestionID"`
+	Responses       []Responses    `json:"-"  gorm:"foreignKey:QuestionID"`
+	ScaleLabels     []ScaleLabels  `json:"-"  gorm:"foreignKey:QuestionID"`
+	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questions) BeforeCreate(scope *gorm.Scope) error {
-	err := scope.SetColumn("CreatedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set CreatedAt: %w", err)
-	}
+func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
+	questionnaire.CreatedAt = time.Now()
 
 	return nil
 }
@@ -63,23 +63,11 @@ func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum in
 		IsRequired:      isRequired,
 	}
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&question).Error
-		if err != nil {
-			return fmt.Errorf("failed to insert a question record: %w", err)
-		}
-
-		err = tx.
-			Select("id").
-			Last(&question).Error
-		if err != nil {
-			return fmt.Errorf("failed to get the last question record: %w", err)
-		}
-
-		return nil
-	})
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&question).Error
 	if err != nil {
-		return 0, fmt.Errorf("failed in transaction: %w", err)
+		return 0, fmt.Errorf("failed to insert a question record: %w", err)
 	}
 
 	return question.ID, nil
@@ -98,9 +86,10 @@ func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum in
 	}
 
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Model(&Questions{}).
 		Where("id = ?", questionID).
-		Update(question).Error
+		Updates(question).Error
 	if err != nil {
 		return fmt.Errorf("failed to update a question record: %w", err)
 	}
@@ -111,6 +100,7 @@ func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum in
 //DeleteQuestion 質問の削除
 func (*Question) DeleteQuestion(questionID int) error {
 	result := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("id = ?", questionID).
 		Delete(&Questions{})
 	err := result.Error
@@ -129,6 +119,7 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 	questions := []Questions{}
 
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
 		Find(&questions).Error
@@ -143,12 +134,12 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 // CheckQuestionAdmin Questionの管理者か
 func (*Question) CheckQuestionAdmin(userID string, questionID int) (bool, error) {
 	err := db.
-		Table("question").
+		Session(&gorm.Session{NewDB: true}).
 		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
 		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
 		Select("question.id").
-		Find(&Questions{}).Error
-	if gorm.IsRecordNotFoundError(err) {
+		First(&Questions{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
 	}
 	if err != nil {

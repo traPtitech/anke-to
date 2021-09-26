@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 // ScaleLabel ScaleLabelRepositoryの実装
@@ -15,7 +17,7 @@ func NewScaleLabel() *ScaleLabel {
 
 //ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
-	QuestionID      int    `json:"questionID"        gorm:"type:int(11) NOT NULL PRIMARY KEY;"`
+	QuestionID      int    `json:"questionID"        gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	ScaleLabelRight string `json:"scale_label_right" gorm:"type:text;default:NULL;"`
 	ScaleLabelLeft  string `json:"scale_label_left"  gorm:"type:text;default:NULL;"`
 	ScaleMin        int    `json:"scale_min"         gorm:"type:int(11);default:NULL;"`
@@ -25,7 +27,10 @@ type ScaleLabels struct {
 // InsertScaleLabel IDを指定してlabelを挿入する
 func (*ScaleLabel) InsertScaleLabel(lastID int, label ScaleLabels) error {
 	label.QuestionID = lastID
-	if err := db.Create(&label).Error; err != nil {
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&label).Error
+	if err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
 	return nil
@@ -34,14 +39,16 @@ func (*ScaleLabel) InsertScaleLabel(lastID int, label ScaleLabels) error {
 // UpdateScaleLabel questionIDを指定してlabelを更新する
 func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
 	result := db.
+		Session(&gorm.Session{NewDB: true}).
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
-		Update(map[string]interface{}{
+		Updates(map[string]interface{}{
 			"question_id":       questionID,
 			"scale_label_right": label.ScaleLabelRight,
 			"scale_label_left":  label.ScaleLabelLeft,
 			"scale_min":         label.ScaleMin,
-			"scale_max":         label.ScaleMax})
+			"scale_max":         label.ScaleMax,
+		})
 	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update the scale label (questionID: %d): %w", questionID, err)
@@ -55,6 +62,7 @@ func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
 // DeleteScaleLabel questionIDを指定してlabelを削除する
 func (*ScaleLabel) DeleteScaleLabel(questionID int) error {
 	result := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{})
 	err := result.Error
@@ -71,6 +79,7 @@ func (*ScaleLabel) DeleteScaleLabel(questionID int) error {
 func (*ScaleLabel) GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
 	labels := []ScaleLabels{}
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id IN (?)", questionIDs).
 		Find(&labels).Error
 	if err != nil {

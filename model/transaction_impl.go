@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type ctxKey string
@@ -23,20 +23,20 @@ func NewTransaction() *Transaction {
 
 // Do トランザクション用の関数
 func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx context.Context) error) error {
-	tx := db.BeginTx(ctx, txOption)
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Transaction(func(tx *gorm.DB) error {
+			ctx = context.WithValue(ctx, txKey, tx)
 
-	ctx = context.WithValue(ctx, txKey, tx)
+			err := f(ctx)
+			if err != nil {
+				return err
+			}
 
-	err := f(ctx)
+			return nil
+		}, txOption)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed in transaction: %w", err)
-	}
-
-	err = tx.Commit().Error
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit: %w", err)
 	}
 
 	return nil
@@ -45,7 +45,10 @@ func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx 
 func getTx(ctx context.Context) (*gorm.DB, error) {
 	iDB := ctx.Value(txKey)
 	if iDB == nil {
-		return db, nil
+		return db.Session(&gorm.Session{
+			NewDB:   true,
+			Context: ctx,
+		}), nil
 	}
 
 	db, ok := iDB.(*gorm.DB)

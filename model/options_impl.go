@@ -1,10 +1,11 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 // Option OptionRepositoryの実装
@@ -17,9 +18,9 @@ func NewOption() *Option {
 
 // Options optionsテーブルの構造体
 type Options struct {
-	ID         int    `gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
-	QuestionID int    `gorm:"type:int(11) NOT NULL;"`
-	OptionNum  int    `gorm:"type:int(11) NOT NULL;"`
+	ID         int    `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	QuestionID int    `gorm:"type:int(11);not null"`
+	OptionNum  int    `gorm:"type:int(11);not null"`
 	Body       string `gorm:"type:text;default:NULL;"`
 }
 
@@ -30,7 +31,9 @@ func (*Option) InsertOption(lastID int, num int, body string) error {
 		OptionNum:  num,
 		Body:       body,
 	}
-	err := db.Create(&option).Error
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&option).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert a option: %w", err)
 	}
@@ -45,14 +48,14 @@ func (*Option) UpdateOptions(options []string, questionID int) error {
 			Body: optionLabel,
 		}
 		query := db.
-			Model(Options{}).
+			Session(&gorm.Session{NewDB: true}).
 			Where("question_id = ? AND option_num = ?", questionID, i+1)
 		err := query.First(&Options{}).Error
-		if err != nil && !gorm.IsRecordNotFoundError(err) {
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("failed to get option: %w", err)
 		}
 
-		if gorm.IsRecordNotFoundError(err) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			option.QuestionID = questionID
 			option.OptionNum = i + 1
 			err = db.Create(&option).Error
@@ -60,14 +63,17 @@ func (*Option) UpdateOptions(options []string, questionID int) error {
 				return fmt.Errorf("failed to insert option: %w", err)
 			}
 		} else {
-			result := query.Update(&option)
+			result := query.Updates(&option)
 			err = result.Error
 			if err != nil {
 				return fmt.Errorf("failed to update option: %w", err)
 			}
 		}
 	}
-	err = db.Where("question_id = ? AND option_num > ?", questionID, len(options)).Delete(Options{}).Error
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("question_id = ? AND option_num > ?", questionID, len(options)).
+		Delete(Options{}).Error
 	if err != nil {
 		return fmt.Errorf("failed to update option: %w", err)
 	}
@@ -77,6 +83,7 @@ func (*Option) UpdateOptions(options []string, questionID int) error {
 // DeleteOptions 選択肢の削除
 func (*Option) DeleteOptions(questionID int) error {
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id = ?", questionID).
 		Delete(Options{}).Error
 	if err != nil {
@@ -94,7 +101,7 @@ func (*Option) GetOptions(questionIDs []int) ([]Options, error) {
 	options := []option{}
 
 	err := db.
-		Model(Options{}).
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id IN (?)", questionIDs).
 		Order("option_num").
 		Select("question_id, body").

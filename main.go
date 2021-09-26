@@ -29,19 +29,14 @@ func main() {
 		}
 	}
 
-	db, err := model.EstablishConnection()
+	err := model.EstablishConnection(logOn)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	err = model.Migrate()
 	if err != nil {
 		panic(err)
-	}
-
-	if logOn {
-		db.LogMode(true)
 	}
 
 	if env == "pprof" {

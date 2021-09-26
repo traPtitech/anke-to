@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v3"
 
@@ -57,7 +56,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -185,10 +184,11 @@ func (r *Response) GetResponse(c echo.Context) error {
 	}
 
 	respondentDetail, err := r.GetRespondentDetail(responseID)
+	if errors.Is(err, model.ErrRecordNotFound) {
+		c.Logger().Info(err)
+		return echo.NewHTTPError(http.StatusNotFound, "response not found")
+	}
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -210,7 +210,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 	limit, err := r.GetQuestionnaireLimit(req.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -347,7 +347,7 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 
 	limit, err := r.GetQuestionnaireLimitByResponseID(responseID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of responseID:%d(error: %w)", responseID, err))
 		}

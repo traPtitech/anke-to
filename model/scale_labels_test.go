@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertScaleLabel(t *testing.T) {
@@ -140,7 +141,10 @@ func TestInsertScaleLabel(t *testing.T) {
 		}
 
 		label = ScaleLabels{}
-		err = db.Where("question_id = ?", questionID).First(&label).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&label).Error
 		assertion.NoError(err, testCase.description, "get scalelabels")
 
 		assertion.Equal(questionID, label.QuestionID, testCase.description, "questionID")
@@ -256,7 +260,10 @@ func TestUpdateScaleLabel(t *testing.T) {
 		}
 
 		label = ScaleLabels{}
-		err = db.Where("question_id = ?", questionID).First(&label).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&label).Error
 		assertion.NoError(err, testCase.description, "get scalelabels")
 
 		assertion.Equal(questionID, label.QuestionID, testCase.description, "questionID")

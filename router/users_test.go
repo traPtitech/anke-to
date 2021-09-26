@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 type myResponse struct {
@@ -493,7 +494,7 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
+				DeletedAt:    gorm.DeletedAt(null.NewTime(nowTime, false)),
 				ResSharedTo:  "public",
 				CreatedAt:    nowTime,
 				ModifiedAt:   nowTime,
@@ -507,10 +508,13 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID2",
 				Description:  "questionnaireID2",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
@@ -638,10 +642,13 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
@@ -652,10 +659,13 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 				Title:        "questionnaireID2",
 				Description:  "questionnaireID2",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
