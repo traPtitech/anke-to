@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -28,6 +29,92 @@ type responseBody struct {
 	OptionResponse []string    `json:"option_response"`
 }
 
+func TestPostResponseValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{
+		description string
+		request     *Responses
+		isErr       bool
+	}{
+		{
+			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			request:     &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     0,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+		},
+		{
+			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			request:     &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     0,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+			isErr:       false,
+		},
+		{
+			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			request:     &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     0,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+			isErr:       false,
+		},
+		{
+			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			request:     &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     0,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+			isErr:       false,
+		},
+	}
+
+	for _, test := range tests {
+		validate := validator.New()
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+
+			if test.isErr {
+				assert.Error(t, err)
+			}else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 func TestPostResponse(t *testing.T) {
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID"`
