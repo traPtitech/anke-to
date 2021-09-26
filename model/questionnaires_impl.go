@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -161,8 +162,14 @@ func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	query := db.
-		Session(&gorm.Session{NewDB: true}).
+		Session(&gorm.Session{
+			NewDB: true,
+			Context: ctx,
+		}).
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
