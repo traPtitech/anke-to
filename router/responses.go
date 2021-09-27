@@ -54,7 +54,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := r.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -208,7 +208,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := r.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -345,7 +345,7 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	limit, err := r.GetQuestionnaireLimitByResponseID(responseID)
+	limit, err := r.GetQuestionnaireLimitByResponseID(c.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)

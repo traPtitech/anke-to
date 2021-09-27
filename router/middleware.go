@@ -164,7 +164,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return next(c)
 		}
 
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(userID, responseID)
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
@@ -271,7 +271,7 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID)
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
