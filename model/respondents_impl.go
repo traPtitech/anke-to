@@ -84,9 +84,6 @@ func (*Respondent) InsertRespondent(userID string, questionnaireID int, submited
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
-	if err != nil {
-		return 0, fmt.Errorf("failed in transaction: %w", err)
-	}
 
 	return respondent.ResponseID, nil
 }
@@ -106,27 +103,20 @@ func (*Respondent) UpdateSubmittedAt(responseID int) error {
 }
 
 // DeleteRespondent 回答の削除
-func (*Respondent) DeleteRespondent(userID string, responseID int) error {
-	return db.
+func (*Respondent) DeleteRespondent(responseID int) error {
+	result := db.
 		Session(&gorm.Session{NewDB: true}).
-		Transaction(func(tx *gorm.DB) error {
-			result := tx.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
-			err := result.Error
-			if err != nil {
-				return fmt.Errorf("failed to delete respondents: %w", err)
-			}
-			if result.RowsAffected == 0 {
-				return fmt.Errorf("failed to delete respondents : %w", ErrNoRecordDeleted)
-			}
+		Where("response_id = ?", responseID).
+		Delete(&Respondents{})
+	if err := result.Error; err != nil {
+		return fmt.Errorf("failed to delete respondent: %w", err)
+	}
 
-			err = tx.
-				Where("response_id = ?", responseID).
-				Delete(&Responses{}).Error
-			if err != nil {
-				return fmt.Errorf("failed to delete response: %w", err)
-			}
-			return nil
-		})
+	if result.RowsAffected == 0 {
+		return ErrNoRecordDeleted
+	}
+
+	return nil
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得

@@ -1252,6 +1252,7 @@ func TestDeleteResponse(t *testing.T) {
 		GetQuestionnaireLimitError error
 		ExecutesDeletion           bool
 		DeleteRespondentError      error
+		DeleteResponseError        error
 	}
 	type expect struct {
 		statusCode int
@@ -1270,6 +1271,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1282,6 +1284,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1294,6 +1297,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusMethodNotAllowed,
@@ -1306,6 +1310,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: model.ErrRecordNotFound,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusNotFound,
@@ -1318,6 +1323,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: errors.New("error"),
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1330,6 +1336,20 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      errors.New("error"),
+				DeleteResponseError:        nil,
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "DeleteResponseがエラーを吐くので500",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      nil,
+				DeleteResponseError:        errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1358,8 +1378,14 @@ func TestDeleteResponse(t *testing.T) {
 		if testCase.request.ExecutesDeletion {
 			mockRespondent.
 				EXPECT().
-				DeleteRespondent(userID, responseID).
+				DeleteRespondent(responseID).
 				Return(testCase.request.DeleteRespondentError)
+			if testCase.request.DeleteRespondentError == nil {
+				mockResponse.
+					EXPECT().
+					DeleteResponse(responseID).
+					Return(testCase.request.DeleteResponseError)
+			}
 		}
 
 		e.HTTPErrorHandler(r.DeleteResponse(c), c)

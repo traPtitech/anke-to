@@ -212,7 +212,6 @@ func TestDeleteRespondent(t *testing.T) {
 	type args struct {
 		validresponseID bool
 		insertUserID    string
-		deleteUserID    string
 	}
 	type expect struct {
 		isErr bool
@@ -227,31 +226,10 @@ func TestDeleteRespondent(t *testing.T) {
 
 	testCases := []test{
 		{
-			description: "delete by administrator",
-			args: args{
-				validresponseID: true,
-				insertUserID:    userTwo,
-				deleteUserID:    userOne,
-			},
-		},
-		{
 			description: "delete by respondents",
 			args: args{
 				validresponseID: true,
 				insertUserID:    userTwo,
-				deleteUserID:    userTwo,
-			},
-		},
-		{
-			description: "delete by another user",
-			args: args{
-				validresponseID: true,
-				insertUserID:    userTwo,
-				deleteUserID:    userThree,
-			},
-			expect: expect{
-				isErr: true,
-				err:   ErrNoRecordDeleted,
 			},
 		},
 		{
@@ -259,7 +237,6 @@ func TestDeleteRespondent(t *testing.T) {
 			args: args{
 				validresponseID: false,
 				insertUserID:    userTwo,
-				deleteUserID:    userThree,
 			},
 			expect: expect{
 				isErr: true,
@@ -275,7 +252,8 @@ func TestDeleteRespondent(t *testing.T) {
 			responseID = -1
 		}
 
-		err = respondentImpl.DeleteRespondent(testCase.args.deleteUserID, responseID)
+		err = respondentImpl.DeleteRespondent(responseID)
+
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -286,6 +264,18 @@ func TestDeleteRespondent(t *testing.T) {
 		if err != nil {
 			continue
 		}
+
+		respondent := Respondents{}
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Unscoped().
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
+		if err != nil {
+			t.Errorf("failed to get respondent: %v", err)
+		}
+
+		assertion.WithinDuration(time.Now(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 	}
 }
 
