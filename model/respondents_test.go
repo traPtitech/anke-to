@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -16,8 +17,9 @@ func TestInsertRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -125,8 +127,9 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -198,8 +201,9 @@ func TestDeleteRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -288,6 +292,7 @@ func TestDeleteRespondent(t *testing.T) {
 func TestGetRespondentInfos(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireIDs []int
@@ -303,9 +308,9 @@ func TestGetRespondentInfos(t *testing.T) {
 		args
 		expect
 	}
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
-	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -432,8 +437,9 @@ func TestGetRespondentDetail(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -528,8 +534,9 @@ func TestGetRespondentDetails(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -790,6 +797,7 @@ func TestGetRespondentDetails(t *testing.T) {
 func TestGetRespondentsUserIDs(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireIDs []int
@@ -807,7 +815,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 	}
 	questionnaireIDs := make([]int, 0, 3)
 	for i := 0; i < 3; i++ {
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 		require.NoError(t, err)
 		questionnaireIDs = append(questionnaireIDs, questionnaireID)
 	}
@@ -893,8 +901,9 @@ func TestTestCheckRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -973,8 +982,9 @@ func TestCheckRespondentByResponseID(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})

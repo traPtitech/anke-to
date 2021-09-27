@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"math"
 	"sort"
@@ -448,7 +449,9 @@ func insertQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
+		ctx := context.Background()
+
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -641,6 +644,8 @@ func updateQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		ctx := context.Background()
+
 		before := &testCase.before
 		questionnaire := Questionnaires{
 			Title:        before.title,
@@ -658,7 +663,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		createdAt := questionnaire.CreatedAt
 		questionnaireID := questionnaire.ID
 		after := &testCase.after
-		err = questionnaireImpl.UpdateQuestionnaire(after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
+		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -720,7 +725,9 @@ func updateQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, arg := range invalidTestCases {
-		err := questionnaireImpl.UpdateQuestionnaire(arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+		ctx := context.Background()
+
+		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
 		if !errors.Is(err, ErrNoRecordUpdated) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
@@ -764,6 +771,8 @@ func deleteQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		ctx := context.Background()
+
 		questionnaire := Questionnaires{
 			Title:        testCase.args.title,
 			Description:  testCase.args.description,
@@ -778,7 +787,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 		}
 
 		questionnaireID := questionnaire.ID
-		err = questionnaireImpl.DeleteQuestionnaire(questionnaireID)
+		err = questionnaireImpl.DeleteQuestionnaire(ctx, questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -820,7 +829,9 @@ func deleteQuestionnaireTest(t *testing.T) {
 		invalidQuestionnaireID *= 10
 	}
 
-	err := questionnaireImpl.DeleteQuestionnaire(invalidQuestionnaireID)
+	ctx := context.Background()
+
+	err := questionnaireImpl.DeleteQuestionnaire(ctx, invalidQuestionnaireID)
 	if !errors.Is(err, ErrNoRecordDeleted) {
 		if err == nil {
 			t.Errorf("Succeeded with invalid questionnaireID")
@@ -1042,7 +1053,9 @@ func getQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
+		ctx := context.Background()
+
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1143,7 +1156,9 @@ func getAdminQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, err := questionnaireImpl.GetAdminQuestionnaires(testCase.userID)
+		ctx := context.Background()
+
+		questionnaires, err := questionnaireImpl.GetAdminQuestionnaires(ctx, testCase.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1300,7 +1315,9 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(testCase.questionnaireID)
+		ctx := context.Background()
+
+		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1482,7 +1499,9 @@ func getTargettedQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, err := questionnaireImpl.GetTargettedQuestionnaires(testCase.args.userID, testCase.args.answered, testCase.args.sort)
+		ctx := context.Background()
+
+		questionnaires, err := questionnaireImpl.GetTargettedQuestionnaires(ctx, testCase.args.userID, testCase.args.answered, testCase.args.sort)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1601,7 +1620,9 @@ func getQuestionnaireLimitTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualLimit, err := questionnaireImpl.GetQuestionnaireLimit(testCase.args.questionnaireID)
+		ctx := context.Background()
+
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimit(ctx, testCase.args.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1686,7 +1707,9 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(testCase.args.responseID)
+		ctx := context.Background()
+
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(ctx, testCase.args.responseID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1857,7 +1880,9 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(testCase.args.userID, testCase.args.responseID)
+		ctx := context.Background()
+
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(ctx, testCase.args.userID, testCase.args.responseID)
 
 		if testCase.expect.isErr {
 			if testCase.expect.err == nil {
@@ -1998,7 +2023,9 @@ func getResponseReadPrivilegeInfoByQuestionnaireIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByQuestionnaireID(testCase.args.userID, testCase.args.questionnaireID)
+		ctx := context.Background()
+
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByQuestionnaireID(ctx, testCase.args.userID, testCase.args.questionnaireID)
 
 		if testCase.expect.isErr {
 			if testCase.expect.err == nil {

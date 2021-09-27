@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -16,8 +17,9 @@ func TestInsertResponses(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -138,8 +140,9 @@ func TestDeleteResponse(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
