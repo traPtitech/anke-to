@@ -545,15 +545,15 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 	// GetTargettedQuestionnaires
 	// success
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires(string(userOne), "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), string(userOne), "", gomock.Any()).
 		Return(targettedQuestionnaires, nil).AnyTimes()
 	// empty
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("empty", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "empty", "", gomock.Any()).
 		Return([]model.TargettedQuestionnaire{}, nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("StatusInternalServerError", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "StatusInternalServerError", "", gomock.Any()).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
@@ -696,15 +696,15 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	// GetTargettedQuestionnaires
 	// success
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires(string(userOne), "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), string(userOne), "", gomock.Any()).
 		Return(targettedQuestionnaires, nil).AnyTimes()
 	// empty
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("empty", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "empty", "", gomock.Any()).
 		Return([]model.TargettedQuestionnaire{}, nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("StatusInternalServerError", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "StatusInternalServerError", "", gomock.Any()).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
