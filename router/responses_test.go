@@ -38,11 +38,11 @@ func TestPostResponseValidate(t *testing.T) {
 		{
 			description: "旧クライアントの一般的なリクエストなのでエラーなし",
 			request:     &Responses{
-				ID:          0,
+				ID:          1,
 				SubmittedAt: null.Time{},
 				Body:       []model.ResponseBody{
 					{
-						QuestionID:     0,
+						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
@@ -69,7 +69,7 @@ func TestPostResponseValidate(t *testing.T) {
 		{
 			description: "Bodyがnilなのでエラー",
 			request:     &Responses{
-				ID:          2,
+				ID:         0,
 				SubmittedAt: null.Time{},
 				Body:       nil,
 			},
