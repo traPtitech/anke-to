@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -52,8 +53,12 @@ type QuestionIDType struct {
 }
 
 //InsertQuestion 質問の追加
-func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
-	body string, isRequired bool) (int, error) {
+func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool) (int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	question := Questions{
 		QuestionnaireID: questionnaireID,
 		PageNum:         pageNum,
@@ -63,8 +68,7 @@ func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum in
 		IsRequired:      isRequired,
 	}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Create(&question).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a question record: %w", err)
@@ -74,8 +78,12 @@ func (*Question) InsertQuestion(questionnaireID int, pageNum int, questionNum in
 }
 
 //UpdateQuestion 質問の修正
-func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum int, questionType string,
-	body string, isRequired bool, questionID int) error {
+func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool, questionID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	question := map[string]interface{}{
 		"questionnaire_id": questionnaireID,
 		"page_num":         pageNum,
@@ -85,8 +93,7 @@ func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum in
 		"is_required":      isRequired,
 	}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Model(&Questions{}).
 		Where("id = ?", questionID).
 		Updates(question).Error
@@ -98,12 +105,16 @@ func (*Question) UpdateQuestion(questionnaireID int, pageNum int, questionNum in
 }
 
 //DeleteQuestion 質問の削除
-func (*Question) DeleteQuestion(questionID int) error {
+func (*Question) DeleteQuestion(ctx context.Context, questionID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("id = ?", questionID).
 		Delete(&Questions{})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete a question record: %w", err)
 	}
@@ -115,11 +126,15 @@ func (*Question) DeleteQuestion(questionID int) error {
 }
 
 //GetQuestions 質問一覧の取得
-func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
+func (*Question) GetQuestions(ctx context.Context, questionnaireID int) ([]Questions, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	questions := []Questions{}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
 		Find(&questions).Error
@@ -132,9 +147,13 @@ func (*Question) GetQuestions(questionnaireID int) ([]Questions, error) {
 }
 
 // CheckQuestionAdmin Questionの管理者か
-func (*Question) CheckQuestionAdmin(userID string, questionID int) (bool, error) {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Question) CheckQuestionAdmin(ctx context.Context, userID string, questionID int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	err = db.
 		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
 		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
 		Select("question.id").

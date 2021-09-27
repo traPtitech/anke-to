@@ -167,7 +167,7 @@ func TestInsertValidation(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			questionID = -1
@@ -292,7 +292,7 @@ func TestUpdateValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{}
@@ -420,7 +420,7 @@ func TestDeleteValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{
@@ -499,7 +499,7 @@ func TestGetValidations(t *testing.T) {
 	questionIDs := make([]int, 0, 3)
 	validationMap := make(map[int]Validations)
 	for _, validation := range validations {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "Text", true)
 		require.NoError(t, err)
 		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)

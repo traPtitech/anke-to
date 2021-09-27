@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"testing"
@@ -208,6 +209,7 @@ func insertQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		Questions
@@ -403,7 +405,7 @@ func insertQuestionTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		createdAt := time.Now()
-		questionID, err := questionImpl.InsertQuestion(testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(ctx, testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -440,6 +442,7 @@ func updateQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type before struct {
 		Questions
@@ -674,7 +677,7 @@ func updateQuestionTest(t *testing.T) {
 			t.Errorf("failed to insert question(%s): %w", testCase.description, err)
 		}
 
-		err = questionImpl.UpdateQuestion(testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
+		err = questionImpl.UpdateQuestion(ctx, testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -711,6 +714,7 @@ func deleteQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionID int
@@ -782,7 +786,7 @@ func deleteQuestionTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := questionImpl.DeleteQuestion(testCase.args.questionID)
+		err := questionImpl.DeleteQuestion(ctx, testCase.args.questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -812,6 +816,7 @@ func getQuestionsTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireID int
@@ -859,7 +864,7 @@ func getQuestionsTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questions, err := questionImpl.GetQuestions(testCase.args.questionnaireID)
+		questions, err := questionImpl.GetQuestions(ctx, testCase.args.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -917,6 +922,7 @@ func checkQuestionAdminTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		userID     string
@@ -976,7 +982,7 @@ func checkQuestionAdminTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualIsAdmin, err := questionImpl.CheckQuestionAdmin(testCase.args.userID, testCase.args.questionID)
+		actualIsAdmin, err := questionImpl.CheckQuestionAdmin(ctx, testCase.args.userID, testCase.args.questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
