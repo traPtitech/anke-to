@@ -2,6 +2,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -10,14 +11,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertValidation(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -164,7 +167,7 @@ func TestInsertValidation(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.QuestionType, testCase.QuestionType, true)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			questionID = -1
@@ -190,7 +193,10 @@ func TestInsertValidation(t *testing.T) {
 		}
 
 		validation = Validations{}
-		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&validation).Error
 		assertion.NoError(err, testCase.description, "get validations")
 
 		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
@@ -204,8 +210,9 @@ func TestUpdateValidation(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -285,7 +292,7 @@ func TestUpdateValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{}
@@ -334,7 +341,10 @@ func TestUpdateValidation(t *testing.T) {
 		}
 
 		validation = Validations{}
-		err = db.Where("question_id = ?", questionID).First(&validation).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("question_id = ?", questionID).
+			First(&validation).Error
 		assertion.NoError(err, testCase.description, "get validations")
 
 		assertion.Equal(questionID, validation.QuestionID, testCase.description, "questionID")
@@ -348,8 +358,9 @@ func TestDeleteValidation(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -409,7 +420,7 @@ func TestDeleteValidation(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, testCase.args.QuestionType, testCase.args.QuestionType, true)
 		require.NoError(t, err)
 
 		validation := Validations{
@@ -445,8 +456,9 @@ func TestGetValidations(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
@@ -487,7 +499,7 @@ func TestGetValidations(t *testing.T) {
 	questionIDs := make([]int, 0, 3)
 	validationMap := make(map[int]Validations)
 	for _, validation := range validations {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "Text", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "Text", true)
 		require.NoError(t, err)
 		err = validationImpl.InsertValidation(questionID, validation)
 		require.NoError(t, err)

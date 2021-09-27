@@ -418,15 +418,15 @@ func TestPostResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
-		Return(null.NewTime(time.Time{}, false), gorm.ErrRecordNotFound).AnyTimes()
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
+		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -924,7 +924,7 @@ func TestGetResponse(t *testing.T) {
 	// NotFound
 	mockRespondent.EXPECT().
 		GetRespondentDetail(responseIDNotFound).
-		Return(model.RespondentDetail{}, gorm.ErrRecordNotFound).AnyTimes()
+		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
 	type request struct {
 		user       users
@@ -1082,15 +1082,15 @@ func TestEditResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
 		Return(null.NewTime(time.Time{}, false), errMock).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -1170,15 +1170,6 @@ func TestEditResponse(t *testing.T) {
 	mockRespondent.EXPECT().
 		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
-	// CheckRespondentByResponseID
-	// success
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDSuccess).
-		Return(true, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDFailure).
-		Return(false, nil).AnyTimes()
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
@@ -1500,7 +1491,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "response doe not exist",
+			description: "response does not exist",
 			request: request{
 				user:       userOne,
 				responseID: responseIDFailure,
@@ -1519,13 +1510,23 @@ func TestEditResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusForbidden,
+				code:  http.StatusInternalServerError, //middlewareで弾くので500で良い
 			},
 		},
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			responseID, err := strconv.Atoi(c.Param("responseID"))
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, "responseID is not number")
+			}
+
+			c.Set(responseIDKey, responseID)
+			return next(c)
+		}
+	})
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -1567,6 +1568,7 @@ func TestDeleteResponse(t *testing.T) {
 		GetQuestionnaireLimitError error
 		ExecutesDeletion           bool
 		DeleteRespondentError      error
+		DeleteResponseError        error
 	}
 	type expect struct {
 		statusCode int
@@ -1585,6 +1587,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1597,6 +1600,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1609,6 +1613,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusMethodNotAllowed,
@@ -1618,9 +1623,10 @@ func TestDeleteResponse(t *testing.T) {
 			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
 			request: request{
 				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
-				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				GetQuestionnaireLimitError: model.ErrRecordNotFound,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusNotFound,
@@ -1633,6 +1639,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: errors.New("error"),
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1645,6 +1652,20 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      errors.New("error"),
+				DeleteResponseError:        nil,
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "DeleteResponseがエラーを吐くので500",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      nil,
+				DeleteResponseError:        errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1668,13 +1689,19 @@ func TestDeleteResponse(t *testing.T) {
 
 		mockQuestionnaire.
 			EXPECT().
-			GetQuestionnaireLimitByResponseID(responseID).
+			GetQuestionnaireLimitByResponseID(gomock.Any(), responseID).
 			Return(testCase.request.QuestionnaireLimit, testCase.request.GetQuestionnaireLimitError)
 		if testCase.request.ExecutesDeletion {
 			mockRespondent.
 				EXPECT().
-				DeleteRespondent(userID, responseID).
+				DeleteRespondent(responseID).
 				Return(testCase.request.DeleteRespondentError)
+			if testCase.request.DeleteRespondentError == nil {
+				mockResponse.
+					EXPECT().
+					DeleteResponse(responseID).
+					Return(testCase.request.DeleteResponseError)
+			}
 		}
 
 		e.HTTPErrorHandler(r.DeleteResponse(c), c)

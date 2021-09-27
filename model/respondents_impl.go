@@ -1,14 +1,15 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 // Respondent RespondentRepositoryの実装
@@ -21,30 +22,25 @@ func NewRespondent() *Respondent {
 
 //Respondents respondentsテーブルの構造体
 type Respondents struct {
-	ResponseID      int       `json:"responseID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;primary_key"`
-	QuestionnaireID int       `json:"questionnaireID" gorm:"type:int(11) NOT NULL;"`
-	UserTraqid      string    `json:"user_traq_id,omitempty" gorm:"type:char(30) NOT NULL;"`
-	ModifiedAt      time.Time `json:"modified_at,omitempty" gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
-	SubmittedAt     null.Time `json:"submitted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
-	DeletedAt       null.Time `json:"deleted_at,omitempty" gorm:"type:timestamp NULL;default:NULL;"`
+	ResponseID      int            `json:"responseID" gorm:"column:response_id;type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	QuestionnaireID int            `json:"questionnaireID" gorm:"type:int(11);not null"`
+	UserTraqid      string         `json:"user_traq_id,omitempty" gorm:"type:char(30);size:30;default:NULL"`
+	ModifiedAt      time.Time      `json:"modified_at,omitempty" gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	SubmittedAt     null.Time      `json:"submitted_at,omitempty" gorm:"type:TIMESTAMP NULL;default:NULL"`
+	DeletedAt       gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"type:TIMESTAMP NULL;default:NULL"`
+	Responses       []Responses    `json:"-"  gorm:"foreignKey:ResponseID;references:ResponseID"`
 }
 
 //BeforeCreate insert時に自動でmodifiedAt更新
-func (*Respondents) BeforeCreate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ModifiedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set ModifiedAt: %w", err)
-	}
+func (r *Respondents) BeforeCreate(tx *gorm.DB) error {
+	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (*Respondents) BeforeUpdate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ModifiedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set ModifiedAt: %w", err)
-	}
+func (r *Respondents) BeforeUpdate(tx *gorm.DB) error {
+	r.ModifiedAt = time.Now()
 
 	return nil
 }
@@ -82,21 +78,11 @@ func (*Respondent) InsertRespondent(userID string, questionnaireID int, submited
 		}
 	}
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&respondent).Error
-		if err != nil {
-			return fmt.Errorf("failed to insert a respondent record: %w", err)
-		}
-
-		err = tx.Select("response_id").Order("response_id DESC").Last(&respondent).Error
-		if err != nil {
-			return fmt.Errorf("failed to get the last respondent record: %w", err)
-		}
-
-		return nil
-	})
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&respondent).Error
 	if err != nil {
-		return 0, fmt.Errorf("failed in transaction: %w", err)
+		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
 
 	return respondent.ResponseID, nil
@@ -105,6 +91,7 @@ func (*Respondent) InsertRespondent(userID string, questionnaireID int, submited
 // UpdateSubmittedAt 投稿日時更新
 func (*Respondent) UpdateSubmittedAt(responseID int) error {
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Model(&Respondents{}).
 		Where("response_id = ?", responseID).
 		Update("submitted_at", time.Now()).Error
@@ -116,25 +103,38 @@ func (*Respondent) UpdateSubmittedAt(responseID int) error {
 }
 
 // DeleteRespondent 回答の削除
-func (*Respondent) DeleteRespondent(userID string, responseID int) error {
-	return db.Transaction(func(tx *gorm.DB) error {
-		result := tx.Exec("UPDATE `respondents` INNER JOIN administrators ON administrators.questionnaire_id = respondents.questionnaire_id SET `respondents`.`deleted_at` = ? WHERE (respondents.response_id = ? AND (administrators.user_traqid = ? OR respondents.user_traqid = ?))", time.Now(), responseID, userID, userID)
-		err := result.Error
-		if err != nil {
-			return fmt.Errorf("failed to delete respondents: %w", err)
-		}
-		if result.RowsAffected == 0 {
-			return fmt.Errorf("failed to delete respondents : %w", ErrNoRecordDeleted)
-		}
+func (*Respondent) DeleteRespondent(responseID int) error {
+	result := db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("response_id = ?", responseID).
+		Delete(&Respondents{})
+	if err := result.Error; err != nil {
+		return fmt.Errorf("failed to delete respondent: %w", err)
+	}
 
-		err = tx.
-			Where("response_id = ?", responseID).
-			Delete(&Responses{}).Error
-		if err != nil {
-			return fmt.Errorf("failed to delete response: %w", err)
-		}
-		return nil
-	})
+	if result.RowsAffected == 0 {
+		return ErrNoRecordDeleted
+	}
+
+	return nil
+}
+
+// CheckRespondentByResponseID 回答者かどうかの確認
+func (*Respondent) GetRespondent(responseID int) (*Respondents, error) {
+	var respondent Respondents
+
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("response_id = ?", responseID).
+		First(&respondent).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response: %w", err)
+	}
+
+	return &respondent, nil
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
@@ -142,6 +142,7 @@ func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([
 	respondentInfos := []RespondentInfo{}
 
 	query := db.
+		Session(&gorm.Session{NewDB: true}).
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
 		Order("respondents.submitted_at DESC").
@@ -152,28 +153,14 @@ func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([
 		query = query.Where("questionnaire_id = ?", questionnaireID)
 	} else if len(questionnaireIDs) > 1 {
 		// 空配列か1要素の取得にしか用いない
-		return nil, fmt.Errorf("ilegal function usase")
+		return nil, errors.New("illegal function usage")
 	}
 
-	rows, err := query.
-		Select("respondents.questionnaire_id, respondents.response_id, respondents.modified_at, respondents.submitted_at, questionnaires.title, " +
-			"questionnaires.res_time_limit").
-		Rows()
+	err := query.
+		Select("respondents.questionnaire_id, respondents.response_id, respondents.modified_at, respondents.submitted_at, questionnaires.title, questionnaires.res_time_limit").
+		Find(&respondentInfos).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get my responses: %w", err)
-	}
-
-	for rows.Next() {
-		respondentInfo := RespondentInfo{
-			Respondents: Respondents{},
-		}
-
-		err := db.ScanRows(rows, &respondentInfo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan responses: %w", err)
-		}
-
-		respondentInfos = append(respondentInfos, respondentInfo)
 	}
 
 	return respondentInfos, nil
@@ -181,64 +168,61 @@ func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([
 
 // GetRespondentDetail 回答のIDから回答の詳細情報を取得
 func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error) {
-	rows, err := db.
-		Table("respondents").
-		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
-		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id AND response.deleted_at IS NULL").
-		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
-		Select("respondents.questionnaire_id, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
-		Rows()
+	respondent := Respondents{}
+
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("respondents.response_id = ?", responseID).
+		Select("QuestionnaireID", "UserTraqid", "ModifiedAt", "SubmittedAt").
+		Take(&respondent).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return RespondentDetail{}, ErrRecordNotFound
+	}
+	if err != nil {
+		return RespondentDetail{}, fmt.Errorf("failed to get respondent: %w", err)
+	}
+
+	questions := []Questions{}
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("questionnaire_id = ?", respondent.QuestionnaireID).
+		Preload("Responses", func(db *gorm.DB) *gorm.DB {
+			return db.Select("QuestionID", "Body")
+		}).
+		Select("ID", "Type").
+		Find(&questions).Error
 	if err != nil {
 		return RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
-	isNoRows := true
-	isRespondentSetted := false
-	respondentDetail := RespondentDetail{}
-	responseBodyMap := map[int][]string{}
-	for rows.Next() {
-		isNoRows = false
-		res := struct {
-			Respondents  `gorm:"embedded"`
-			ResponseBody `gorm:"embedded"`
-		}{}
-		err := db.ScanRows(rows, &res)
-		if err != nil {
-			return RespondentDetail{}, fmt.Errorf("failed to scan response detail: %w", err)
-		}
-		if !isRespondentSetted {
-			respondentDetail.QuestionnaireID = res.Respondents.QuestionnaireID
-			respondentDetail.SubmittedAt = res.Respondents.SubmittedAt
-			respondentDetail.ModifiedAt = res.Respondents.ModifiedAt
-			isRespondentSetted = true
-		}
-
-		respondentDetail.Responses = append(respondentDetail.Responses, ResponseBody{
-			QuestionID:   res.ResponseBody.QuestionID,
-			QuestionType: res.ResponseBody.QuestionType,
-		})
-
-		if res.ResponseBody.Body.Valid {
-			responseBodyMap[res.ResponseBody.QuestionID] = append(responseBodyMap[res.ResponseBody.QuestionID], res.ResponseBody.Body.String)
-		}
-	}
-	if isNoRows {
-		return RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", gorm.ErrRecordNotFound)
+	respondentDetail := RespondentDetail{
+		ResponseID:      responseID,
+		TraqID:          respondent.UserTraqid,
+		QuestionnaireID: respondent.QuestionnaireID,
+		ModifiedAt:      respondent.ModifiedAt,
+		SubmittedAt:     respondent.SubmittedAt,
 	}
 
-	for i := range respondentDetail.Responses {
-		response := &respondentDetail.Responses[i]
-		responseBody := responseBodyMap[response.QuestionID]
-		switch response.QuestionType {
+	for _, question := range questions {
+		responseBody := ResponseBody{
+			QuestionID:   question.ID,
+			QuestionType: question.Type,
+		}
+
+		switch question.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			response.OptionResponse = responseBody
+			for _, response := range question.Responses {
+				responseBody.OptionResponse = append(responseBody.OptionResponse, response.Body.String)
+			}
 		default:
-			if len(responseBody) == 0 {
-				response.Body = null.NewString("", false)
+			if len(question.Responses) == 0 {
+				responseBody.Body = null.NewString("", false)
 			} else {
-				response.Body = null.NewString(responseBody[0], true)
+				responseBody.Body = question.Responses[0].Body
 			}
 		}
+
+		respondentDetail.Responses = append(respondentDetail.Responses, responseBody)
 	}
 
 	return respondentDetail, nil
@@ -246,92 +230,99 @@ func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error)
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
 func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
+	respondents := []Respondents{}
+
+	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
 	query := db.
-		Table("respondents").
-		Joins("LEFT OUTER JOIN question ON respondents.questionnaire_id = question.questionnaire_id").
-		Joins("LEFT OUTER JOIN response ON respondents.response_id = response.response_id AND question.id = response.question_id")
+		Session(&gorm.Session{NewDB: true}).
+		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+
 	query, sortNum, err := setRespondentsOrder(query, sort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set order: %w", err)
 	}
 
-	rows, err := query.
-		Where("respondents.questionnaire_id = ? AND respondents.deleted_at IS NULL AND respondents.submitted_at IS NOT NULL AND question.deleted_at IS NULL AND response.deleted_at IS NULL", questionnaireID).
-		Select("respondents.response_id, respondents.user_traqid, respondents.modified_at, respondents.submitted_at, question.id, question.type, response.body").
-		Order("respondents.response_id, question.question_num").
-		Rows()
+	err = query.
+		Find(&respondents).Error
 	if err != nil {
-		if !gorm.IsRecordNotFoundError(err) {
-			return []RespondentDetail{}, nil
-		}
+		return nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
-	respondentDetails := []RespondentDetail{}
-	responseBodyMap := map[int][]ResponseBody{}
-	for rows.Next() {
-		res := struct {
-			Respondents  `gorm:"embedded"`
-			ResponseBody `gorm:"embedded"`
-		}{}
-		err := db.ScanRows(rows, &res)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan response detail: %w", err)
-		}
-
-		if _, ok := responseBodyMap[res.ResponseID]; !ok {
-			respondentDetails = append(respondentDetails, RespondentDetail{
-				ResponseID:      res.Respondents.ResponseID,
-				TraqID:          res.UserTraqid,
-				QuestionnaireID: res.Respondents.QuestionnaireID,
-				SubmittedAt:     res.Respondents.SubmittedAt,
-				ModifiedAt:      res.ModifiedAt,
-			})
-		}
-
-		responseBodyMap[res.ResponseID] = append(responseBodyMap[res.ResponseID], res.ResponseBody)
+	if len(respondents) == 0 {
+		return []RespondentDetail{}, nil
 	}
 
-	for i := range respondentDetails {
-		responseDetail := &respondentDetails[i]
-		responseBodies := responseBodyMap[responseDetail.ResponseID]
+	responseIDs := make([]int, 0, len(respondents))
+	for _, respondent := range respondents {
+		responseIDs = append(responseIDs, respondent.ResponseID)
+	}
 
-		responseBodyList := []ResponseBody{}
-		bodyMap := map[int][]string{}
-		for _, v := range responseBodies {
-			if _, ok := bodyMap[v.QuestionID]; !ok {
-				responseBodyList = append(responseBodyList, ResponseBody{
-					QuestionID:   v.QuestionID,
-					QuestionType: v.QuestionType,
-				})
-			}
+	respondentDetails := make([]RespondentDetail, 0, len(respondents))
+	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
+	for i, respondent := range respondents {
+		respondentDetails = append(respondentDetails, RespondentDetail{
+			ResponseID:      respondent.ResponseID,
+			TraqID:          respondent.UserTraqid,
+			QuestionnaireID: questionnaireID,
+			SubmittedAt:     respondent.SubmittedAt,
+			ModifiedAt:      respondent.ModifiedAt,
+		})
 
-			if v.Body.Valid {
-				bodyMap[v.QuestionID] = append(bodyMap[v.QuestionID], v.Body.String)
+		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
+	}
+
+	questions := []Questions{}
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Preload("Responses", func(db *gorm.DB) *gorm.DB {
+			return db.
+				Select("ResponseID", "QuestionID", "Body").
+				Where("response_id IN (?)", responseIDs)
+		}).
+		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
+		Select("ID", "Type").
+		Find(&questions).Error
+	if err != nil {
+		return []RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", err)
+	}
+
+	for _, question := range questions {
+		responseBodyMap := make(map[int][]string, len(respondents))
+		for _, response := range question.Responses {
+			if response.Body.Valid {
+				responseBodyMap[response.ResponseID] = append(responseBodyMap[response.ResponseID], response.Body.String)
 			}
 		}
 
-		for i := range responseBodyList {
-			responseBody := &responseBodyList[i]
-			body := bodyMap[responseBody.QuestionID]
+		for i := range respondentDetails {
+			responseBodies := responseBodyMap[respondentDetails[i].ResponseID]
+			responseBody := ResponseBody{
+				QuestionID:   question.ID,
+				QuestionType: question.Type,
+			}
+
 			switch responseBody.QuestionType {
 			case "MultipleChoice", "Checkbox", "Dropdown":
-				if body == nil {
+				if responseBodies == nil {
 					responseBody.OptionResponse = []string{}
 				} else {
-					responseBody.OptionResponse = body
+					responseBody.OptionResponse = responseBodies
 				}
 			default:
-				if len(body) == 0 {
+				if len(responseBodies) == 0 {
 					responseBody.Body = null.NewString("", false)
 				} else {
-					responseBody.Body = null.NewString(body[0], true)
+					responseBody.Body = null.NewString(responseBodies[0], true)
 				}
 			}
+
+			respondentDetails[i].Responses = append(respondentDetails[i].Responses, responseBody)
 		}
-		responseDetail.Responses = responseBodyList
 	}
 
-	respondentDetails, err = sortRespondentDetail(sortNum, respondentDetails)
+	respondentDetails, err = sortRespondentDetail(sortNum, len(questions), respondentDetails)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sort RespondentDetails: %w", err)
 	}
@@ -343,6 +334,7 @@ func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]Res
 func (*Respondent) GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
 	respondents := []Respondents{}
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Select("questionnaire_id, user_traqid").
 		Find(&respondents).Error
@@ -356,24 +348,10 @@ func (*Respondent) GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents,
 // CheckRespondent 回答者かどうかの確認
 func (*Respondent) CheckRespondent(userID string, questionnaireID int) (bool, error) {
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Respondents{}).Error
-	if gorm.IsRecordNotFoundError(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to get response: %w", err)
-	}
-
-	return true, nil
-}
-
-// CheckRespondentByResponseID 回答者かどうかの確認
-func (*Respondent) CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
-	err := db.
-		Where("user_traqid = ? AND response_id = ?", userID, responseID).
-		First(&Respondents{}).Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
 	}
 	if err != nil {
@@ -387,13 +365,13 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 	var sortNum int
 	switch sort {
 	case "traqid":
-		query = query.Order("respondents.user_traqid")
+		query = query.Order("user_traqid")
 	case "-traqid":
-		query = query.Order("respondents.user_traqid DESC")
+		query = query.Order("user_traqid DESC")
 	case "submitted_at":
-		query = query.Order("respondents.submitted_at")
+		query = query.Order("submitted_at")
 	case "-submitted_at":
-		query = query.Order("respondents.submitted_at DESC")
+		query = query.Order("submitted_at DESC")
 	case "":
 	default:
 		var err error
@@ -403,14 +381,20 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 		}
 	}
 
+	query = query.Order("response_id")
+
 	return query, sortNum, nil
 }
 
-func sortRespondentDetail(sortNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
+func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
 	if sortNum == 0 {
 		return respondentDetails, nil
 	}
 	sortNumAbs := int(math.Abs(float64(sortNum)))
+	if sortNumAbs > questionNum {
+		return nil, fmt.Errorf("sort param is too large: %d", sortNum)
+	}
+
 	sort.Slice(respondentDetails, func(i, j int) bool {
 		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
 		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]

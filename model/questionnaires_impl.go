@@ -2,13 +2,13 @@ package model
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 // Questionnaire QuestionnaireRepositoryの実装
@@ -21,36 +21,32 @@ func NewQuestionnaire() *Questionnaire {
 
 //Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
-	ID           int       `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT NOT NULL PRIMARY KEY;"`
-	Title        string    `json:"title"           gorm:"type:char(50) NOT NULL;"`
-	Description  string    `json:"description"     gorm:"type:text NOT NULL;"`
-	ResTimeLimit null.Time `json:"res_time_limit,omitempty"  gorm:"type:timestamp NULL;default:NULL;"`
-	DeletedAt    null.Time `json:"deleted_at,omitempty"      gorm:"type:timestamp NULL;default:NULL;"`
-	ResSharedTo  string    `json:"res_shared_to"   gorm:"type:char(30) NOT NULL;default:\"administrators\";"`
-	CreatedAt    time.Time `json:"created_at"      gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
-	ModifiedAt   time.Time `json:"modified_at"     gorm:"type:timestamp NOT NULL;default:CURRENT_TIMESTAMP;"`
+	ID             int              `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	Title          string           `json:"title"           gorm:"type:char(50);size:50;not null"`
+	Description    string           `json:"description"     gorm:"type:text;not null"`
+	ResTimeLimit   null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	DeletedAt      gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	ResSharedTo    string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	CreatedAt      time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeCreate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ModifiedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set ModifiedAt: %w", err)
-	}
-	err = scope.SetColumn("CreatedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set CreatedAt: %w", err)
-	}
+func (questionnaire *Questionnaires) BeforeCreate(tx *gorm.DB) error {
+	now := time.Now()
+	questionnaire.ModifiedAt = now
+	questionnaire.CreatedAt = now
 
 	return nil
 }
 
 //BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeUpdate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ModifiedAt", time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set ModifiedAt: %w", err)
-	}
+func (questionnaire *Questionnaires) BeforeUpdate(tx *gorm.DB) error {
+	questionnaire.ModifiedAt = time.Now()
 
 	return nil
 }
@@ -83,7 +79,12 @@ type ResponseReadPrivilegeInfo struct {
 }
 
 //InsertQuestionnaire アンケートの追加
-func (*Questionnaire) InsertQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
 		questionnaire = Questionnaires{
@@ -100,65 +101,43 @@ func (*Questionnaire) InsertQuestionnaire(title string, description string, resT
 		}
 	}
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&questionnaire).Error
-		if err != nil {
-			return fmt.Errorf("failed to insert a questionnaire: %w", err)
-		}
-
-		err = tx.
-			Select("id").
-			Last(&questionnaire).Error
-		if err != nil {
-			return fmt.Errorf("failed to get the last id: %w", err)
-		}
-
-		return nil
-	})
+	err = db.Create(&questionnaire).Error
 	if err != nil {
-		return 0, fmt.Errorf("failed in the transaction: %w", err)
+		return 0, fmt.Errorf("failed to insert a questionnaire: %w", err)
 	}
 
 	return questionnaire.ID, nil
 }
 
 //UpdateQuestionnaire アンケートの更新
-func (*Questionnaire) UpdateQuestionnaire(title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
-	if !resTimeLimit.Valid {
-		questionnaire := map[string]interface{}{
+func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	var questionnaire interface{}
+	if resTimeLimit.Valid {
+		questionnaire = Questionnaires{
+			Title:        title,
+			Description:  description,
+			ResTimeLimit: resTimeLimit,
+			ResSharedTo:  resSharedTo,
+		}
+	} else {
+		questionnaire = map[string]interface{}{
 			"title":          title,
 			"description":    description,
 			"res_time_limit": gorm.Expr("NULL"),
 			"res_shared_to":  resSharedTo,
 		}
-
-		result := db.
-			Model(&Questionnaires{}).
-			Where("id = ?", questionnaireID).
-			Update(questionnaire)
-		err := result.Error
-		if err != nil {
-			return fmt.Errorf("failed to update a questionnaire record: %w", err)
-		}
-		if result.RowsAffected == 0 {
-			return fmt.Errorf("failed to update a questionnaire record: %w", ErrNoRecordUpdated)
-		}
-
-		return nil
-	}
-
-	questionnaire := Questionnaires{
-		Title:        title,
-		Description:  description,
-		ResTimeLimit: resTimeLimit,
-		ResSharedTo:  resSharedTo,
 	}
 
 	result := db.
 		Model(&Questionnaires{}).
 		Where("id = ?", questionnaireID).
-		Update(&questionnaire)
-	err := result.Error
+		Updates(questionnaire)
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update a questionnaire record: %w", err)
 	}
@@ -170,9 +149,14 @@ func (*Questionnaire) UpdateQuestionnaire(title string, description string, resT
 }
 
 //DeleteQuestionnaire アンケートの削除
-func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
+func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	result := db.Delete(&Questionnaires{ID: questionnaireID})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete questionnaire: %w", err)
 	}
@@ -185,24 +169,22 @@ func (*Questionnaire) DeleteQuestionnaire(questionnaireID int) error {
 
 /*GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値*/
-func (*Questionnaire) GetQuestionnaires(userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
-	questionnaires := make([]QuestionnaireInfo, 0, 20)
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 
-	db := db
-	if len(search) != 0 {
-		ctx := context.Background()
-		ctx, cancel := context.WithTimeout(ctx, time.Second*3)
-		defer cancel()
-
-		db = db.BeginTx(ctx, &sql.TxOptions{})
-		defer db.Commit()
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tx: %w", err)
 	}
+
+	questionnaires := make([]QuestionnaireInfo, 0, 20)
 
 	query := db.
 		Table("questionnaires").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
-	query, err := setQuestionnairesOrder(query, sort)
+	query, err = setQuestionnairesOrder(query, sort)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
@@ -221,10 +203,14 @@ func (*Questionnaire) GetQuestionnaires(userID string, sort string, search strin
 		query = query.Where("questionnaires.title REGEXP ?", search)
 	}
 
-	count := 0
+	var count int64
 	err = query.
+		Session(&gorm.Session{}).
 		Group("questionnaires.id").
 		Count(&count).Error
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, 0, ErrDeadlineExceeded
+	}
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
@@ -232,20 +218,24 @@ func (*Questionnaire) GetQuestionnaires(userID string, sort string, search strin
 	if count == 0 {
 		return []QuestionnaireInfo{}, 0, nil
 	}
-	pageMax := (count + 19) / 20
+	pageMax := (int(count) + 19) / 20
 
 	if pageNum > pageMax {
 		return nil, 0, fmt.Errorf("failed to set page offset: %w", ErrTooLargePageNum)
 	}
 
 	offset := (pageNum - 1) * 20
-	query = query.Limit(20).Offset(offset)
 
 	err = query.
+		Limit(20).
+		Offset(offset).
 		Group("questionnaires.id").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
-	if err != nil && !gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, 0, ErrDeadlineExceeded
+	}
+	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
@@ -253,9 +243,14 @@ func (*Questionnaire) GetQuestionnaires(userID string, sort string, search strin
 }
 
 // GetAdminQuestionnaires 自分が管理者のアンケートの取得
-func (*Questionnaire) GetAdminQuestionnaires(userID string) ([]Questionnaires, error) {
+func (*Questionnaire) GetAdminQuestionnaires(ctx context.Context, userID string) ([]Questionnaires, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	questionnaires := []Questionnaires{}
-	err := db.
+	err = db.
 		Table("questionnaires").
 		Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
 		Where("administrators.user_traqid = ?", userID).
@@ -269,14 +264,18 @@ func (*Questionnaire) GetAdminQuestionnaires(userID string) ([]Questionnaires, e
 }
 
 //GetQuestionnaireInfo アンケートの詳細な情報取得
-func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	questionnaire := Questionnaires{}
 	targets := []string{}
 	administrators := []string{}
 	respondents := []string{}
 
-	err := db.
-		Model(&Questionnaires{}).
+	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if err != nil {
@@ -284,6 +283,7 @@ func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires
 	}
 
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Table("targets").
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
@@ -292,6 +292,7 @@ func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires
 	}
 
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Table("administrators").
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
@@ -300,6 +301,7 @@ func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires
 	}
 
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Table("respondents").
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
@@ -311,7 +313,12 @@ func (*Questionnaire) GetQuestionnaireInfo(questionnaireID int) (*Questionnaires
 }
 
 //GetTargettedQuestionnaires targetになっているアンケートの取得
-func (*Questionnaire) GetTargettedQuestionnaires(userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
+func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	query := db.
 		Table("questionnaires").
 		Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now()).
@@ -321,7 +328,7 @@ func (*Questionnaire) GetTargettedQuestionnaires(userID string, answered string,
 		Group("questionnaires.id,respondents.user_traqid").
 		Select("questionnaires.*, MAX(respondents.submitted_at) AS responded_at, COUNT(respondents.response_id) != 0 AS has_response")
 
-	query, err := setQuestionnairesOrder(query, sort)
+	query, err = setQuestionnairesOrder(query, sort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
@@ -350,14 +357,21 @@ func (*Questionnaire) GetTargettedQuestionnaires(userID string, answered string,
 }
 
 //GetQuestionnaireLimit アンケートの回答期限の取得
-func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, error) {
-	res := Questionnaires{}
+func (*Questionnaire) GetQuestionnaireLimit(ctx context.Context, questionnaireID int) (null.Time, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get tx: %w", err)
+	}
 
-	err := db.
-		Model(Questionnaires{}).
+	var res Questionnaires
+
+	err = db.
 		Where("id = ?", questionnaireID).
 		Select("res_time_limit").
-		Scan(&res).Error
+		First(&res).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return null.NewTime(time.Time{}, false), ErrRecordNotFound
+	}
 	if err != nil {
 		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
@@ -366,15 +380,22 @@ func (*Questionnaire) GetQuestionnaireLimit(questionnaireID int) (null.Time, err
 }
 
 // GetQuestionnaireLimitByResponseID 回答のIDからアンケートの回答期限を取得
-func (*Questionnaire) GetQuestionnaireLimitByResponseID(responseID int) (null.Time, error) {
-	res := Questionnaires{}
+func (*Questionnaire) GetQuestionnaireLimitByResponseID(ctx context.Context, responseID int) (null.Time, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get tx: %w", err)
+	}
 
-	err := db.
-		Table("respondents").
-		Joins("INNER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
+	var res Questionnaires
+
+	err = db.
+		Joins("INNER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
 		Where("respondents.response_id = ? AND respondents.deleted_at IS NULL", responseID).
 		Select("questionnaires.res_time_limit").
-		Scan(&res).Error
+		First(&res).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return null.NewTime(time.Time{}, false), ErrRecordNotFound
+	}
 	if err != nil {
 		return null.NewTime(time.Time{}, false), fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
@@ -382,17 +403,22 @@ func (*Questionnaire) GetQuestionnaireLimitByResponseID(responseID int) (null.Ti
 	return res.ResTimeLimit, nil
 }
 
-func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
-	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
-	err := db.
+func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(ctx context.Context, userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	var responseReadPrivilegeInfo ResponseReadPrivilegeInfo
+	err = db.
 		Table("respondents").
 		Where("respondents.response_id = ? AND respondents.submitted_at IS NOT NULL", responseID).
 		Joins("INNER JOIN questionnaires ON questionnaires.id = respondents.questionnaire_id").
 		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
 		Joins("LEFT OUTER JOIN respondents AS respondents2 ON questionnaires.id = respondents2.questionnaire_id AND respondents2.user_traqid = ? AND respondents2.submitted_at IS NOT NULL", userID).
 		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents2.response_id IS NOT NULL AS is_respondent").
-		Scan(&responseReadPrivilegeInfo).Error
-	if gorm.IsRecordNotFoundError(err) {
+		Take(&responseReadPrivilegeInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrRecordNotFound
 	}
 	if err != nil {
@@ -402,16 +428,21 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(userID string, re
 	return &responseReadPrivilegeInfo, nil
 }
 
-func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error) {
-	responseReadPrivilegeInfo := ResponseReadPrivilegeInfo{}
-	err := db.
+func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.Context, userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	var responseReadPrivilegeInfo ResponseReadPrivilegeInfo
+	err = db.
 		Table("questionnaires").
 		Where("questionnaires.id = ?", questionnaireID).
 		Joins("LEFT OUTER JOIN administrators ON questionnaires.id = administrators.questionnaire_id AND administrators.user_traqid = ?", userID).
 		Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL", userID).
 		Select("questionnaires.res_shared_to, administrators.questionnaire_id IS NOT NULL AS is_administrator, respondents.response_id IS NOT NULL AS is_respondent").
-		Scan(&responseReadPrivilegeInfo).Error
-	if gorm.IsRecordNotFoundError(err) {
+		Take(&responseReadPrivilegeInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrRecordNotFound
 	}
 	if err != nil {

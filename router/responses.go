@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v3"
 
@@ -67,9 +66,9 @@ func (r *Response) PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest,err.Error())
 	}
 
-	limit, err := r.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -197,10 +196,11 @@ func (r *Response) GetResponse(c echo.Context) error {
 	}
 
 	respondentDetail, err := r.GetRespondentDetail(responseID)
+	if errors.Is(err, model.ErrRecordNotFound) {
+		c.Logger().Info(err)
+		return echo.NewHTTPError(http.StatusNotFound, "response not found")
+	}
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -220,9 +220,9 @@ func (r *Response) EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	limit, err := r.GetQuestionnaireLimit(req.ID)
+	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -345,21 +345,15 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 // DeleteResponse DELETE /responses/:responseID
 func (r *Response) DeleteResponse(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-	}
-
 	responseID, err := getResponseID(c)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
-	limit, err := r.GetQuestionnaireLimitByResponseID(responseID)
+	limit, err := r.GetQuestionnaireLimitByResponseID(c.Request().Context(), responseID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of responseID:%d(error: %w)", responseID, err))
 		}
@@ -373,7 +367,14 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
-	if err := r.DeleteRespondent(userID, responseID); err != nil {
+	err = r.DeleteRespondent(responseID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = r.IResponse.DeleteResponse(responseID)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
