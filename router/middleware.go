@@ -173,7 +173,13 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return next(c)
 		}
 
-		// TODO: 回答者以外は一時保存の回答は閲覧できない
+		// 回答者以外は一時保存の回答は閲覧できない
+		if !respondent.SubmittedAt.Valid {
+			c.Logger().Info("not submitted")
+
+			// Note: 一時保存の回答の存在もわかってはいけないので、Respondentが見つからない時と全く同じエラーを返す
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 
 		// アンケートごとの回答閲覧権限チェック
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
