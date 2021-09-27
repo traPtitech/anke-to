@@ -156,12 +156,20 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		// 回答者ならOK
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		respondent, err := m.GetRespondent(responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid == userID {
 			return next(c)
 		}
 
@@ -206,12 +214,20 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		respondent, err := m.GetRespondent(responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if !isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid != userID {
 			return c.String(http.StatusForbidden, "You are not a respondent of this response.")
 		}
 
