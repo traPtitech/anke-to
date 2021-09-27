@@ -162,7 +162,7 @@ func (mc *MetricsCollector) collectQuestionMetrics(ctx context.Context, p *gormP
 	var questionCounts []struct {
 		IsDeleted bool   `gorm:"column:is_deleted"`
 		Type      string `gorm:"column:type"`
-		Required  bool   `gorm:"column:required"`
+		Required  bool   `gorm:"column:is_required"`
 		Count     int64  `gorm:"column:count"`
 	}
 
