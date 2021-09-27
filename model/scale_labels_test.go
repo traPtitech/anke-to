@@ -116,7 +116,7 @@ func TestInsertScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 		if !testCase.args.validID {
 			questionID = -1
@@ -223,7 +223,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 
 		label := ScaleLabels{
@@ -333,7 +333,7 @@ func TestDeleteScaleLabel(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 
 		label := ScaleLabels{
@@ -413,7 +413,7 @@ func TestGetScaleLabels(t *testing.T) {
 	questionIDs := make([]int, 0, 3)
 	labelMap := make(map[int]ScaleLabels)
 	for _, label := range labels {
-		questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
 		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
 		require.NoError(t, err)
@@ -495,7 +495,7 @@ func TestCheckScaleLabel(t *testing.T) {
 	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "LinearScale", "Linear", true)
+	questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 	require.NoError(t, err)
 
 	label := ScaleLabels{
