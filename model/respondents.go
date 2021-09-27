@@ -8,7 +8,7 @@ import "gopkg.in/guregu/null.v3"
 type IRespondent interface {
 	InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error)
 	UpdateSubmittedAt(responseID int) error
-	DeleteRespondent(userID string, responseID int) error
+	DeleteRespondent(responseID int) error
 	GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error)
 	GetRespondentDetail(responseID int) (RespondentDetail, error)
 	GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error)
