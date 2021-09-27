@@ -285,7 +285,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	allquestions, err := q.IQuestion.GetQuestions(questionnaireID)
+	allquestions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

@@ -240,7 +240,7 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionAdmin(userID, questionID)
+		isAdmin, err := m.CheckQuestionAdmin(c.Request().Context(), userID, questionID)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
