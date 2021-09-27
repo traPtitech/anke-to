@@ -298,17 +298,6 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			}
 		}
 
-		mockRespondent.
-			EXPECT().
-			CheckRespondentByResponseID(userID, responseID).
-			Return(testCase.args.isRespondent, testCase.args.CheckRespondentByResponseIDError)
-		if !testCase.args.isRespondent && testCase.args.CheckRespondentByResponseIDError == nil {
-			mockQuestionnaire.
-				EXPECT().
-				GetResponseReadPrivilegeInfoByResponseID(userID, responseID).
-				Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
-		}
-
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -317,6 +306,17 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		c.SetParamNames("responseID")
 		c.SetParamValues(strconv.Itoa(responseID))
 		c.Set(userIDKey, userID)
+
+		mockRespondent.
+			EXPECT().
+			CheckRespondentByResponseID(userID, responseID).
+			Return(testCase.args.isRespondent, testCase.args.CheckRespondentByResponseIDError)
+		if !testCase.args.isRespondent && testCase.args.CheckRespondentByResponseIDError == nil {
+			mockQuestionnaire.
+				EXPECT().
+				GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID).
+				Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
+		}
 
 		callChecker := CallChecker{}
 
@@ -431,11 +431,6 @@ func TestResultAuthenticate(t *testing.T) {
 			}
 		}
 
-		mockQuestionnaire.
-			EXPECT().
-			GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID).
-			Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
-
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/results/%d", questionnaireID), nil)
 		rec := httptest.NewRecorder()
@@ -444,6 +439,11 @@ func TestResultAuthenticate(t *testing.T) {
 		c.SetParamNames("questionnaireID")
 		c.SetParamValues(strconv.Itoa(questionnaireID))
 		c.Set(userIDKey, userID)
+
+		mockQuestionnaire.
+			EXPECT().
+			GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID).
+			Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
 
 		callChecker := CallChecker{}
 

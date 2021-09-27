@@ -23,18 +23,16 @@ func NewTransaction() *Transaction {
 
 // Do トランザクション用の関数
 func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx context.Context) error) error {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Transaction(func(tx *gorm.DB) error {
-			ctx = context.WithValue(ctx, txKey, tx)
+	err := db.Transaction(func(tx *gorm.DB) error {
+		ctx = context.WithValue(ctx, txKey, tx)
 
-			err := f(ctx)
-			if err != nil {
-				return err
-			}
+		err := f(ctx)
+		if err != nil {
+			return err
+		}
 
-			return nil
-		}, txOption)
+		return nil
+	}, txOption)
 	if err != nil {
 		return fmt.Errorf("failed in transaction: %w", err)
 	}
@@ -56,5 +54,8 @@ func getTx(ctx context.Context) (*gorm.DB, error) {
 		return nil, ErrInvalidTx
 	}
 
-	return db, nil
+	return db.Session(&gorm.Session{
+		NewDB:   true,
+		Context: ctx,
+	}), nil
 }
