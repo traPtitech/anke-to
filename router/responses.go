@@ -333,12 +333,6 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 // DeleteResponse DELETE /responses/:responseID
 func (r *Response) DeleteResponse(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-	}
-
 	responseID, err := getResponseID(c)
 	if err != nil {
 		c.Logger().Error(err)
@@ -361,7 +355,14 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
-	if err := r.DeleteRespondent(userID, responseID); err != nil {
+	err = r.DeleteRespondent(responseID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	err = r.IResponse.DeleteResponse(responseID)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
