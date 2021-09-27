@@ -608,6 +608,11 @@ func TestGetRespondentDetails(t *testing.T) {
 			UserTraqid:      userThree,
 			SubmittedAt:     null.NewTime(time.Now().Add(time.Second*2), true),
 		},
+		{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      userOne,
+			SubmittedAt:     null.NewTime(time.Now(), false),
+		},
 	}
 
 	responseMetasList := [][]*ResponseMeta{
@@ -625,6 +630,11 @@ func TestGetRespondentDetails(t *testing.T) {
 			{QuestionID: questionIDs[0], Data: "リマインダーBOTを作った話3"},
 			{QuestionID: questionIDs[1], Data: "選択肢3"},
 			{QuestionID: questionIDs[2], Data: "0"},
+		},
+		{
+			{QuestionID: questionIDs[0], Data: "リマインダーBOTを作った話1"},
+			{QuestionID: questionIDs[1], Data: "選択肢1"},
+			{QuestionID: questionIDs[2], Data: "10"},
 		},
 	}
 
