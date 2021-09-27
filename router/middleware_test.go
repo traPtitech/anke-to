@@ -7,12 +7,14 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
+	"gopkg.in/guregu/null.v3"
 )
 
 type CallChecker struct {
@@ -248,11 +250,26 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "この回答の回答者でなくてもhaveReadPrivilegeがtrueの場合通す",
+			description: "responseがsubmitされていない場合404",
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Time{}, false),
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusNotFound,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "この回答の回答者でなくてもsubmitされていてhaveReadPrivilegeがtrueの場合通す",
+			args: args{
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: true,
@@ -263,11 +280,12 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "この回答の回答者でなく、haveReadPrivilegeがfalseの場合403",
+			description: "この回答の回答者でなく、submitされていてhaveReadPrivilegeがfalseの場合403",
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
@@ -283,6 +301,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
@@ -299,6 +318,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
@@ -315,6 +335,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege:               false,
