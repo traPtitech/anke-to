@@ -214,6 +214,7 @@ func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error)
 func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
 	respondents := []Respondents{}
 
+	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
 	query := db.
 		Session(&gorm.Session{NewDB: true}).
 		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
