@@ -5,19 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/golang/mock/gomock"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/anke-to/model"
-	"github.com/traPtitech/anke-to/model/mock_model"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/golang/mock/gomock"
+	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/model/mock_model"
+	"gopkg.in/guregu/null.v3"
 )
 
 type responseBody struct {
