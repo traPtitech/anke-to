@@ -38,13 +38,43 @@ func TestPostResponseValidate(t *testing.T) {
 		isErr       bool
 	}{
 		{
-			description: "旧クライアントの一般的なリクエストなのでエラーなし",
+			description: "一般的なリクエストなのでエラーなし",
 			request:     &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
 				Body:       []model.ResponseBody{
 					{
 						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+		},
+		{
+			description: "IDが0でもエラーなし",
+			request:     &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+		},
+		{
+			description: "BodyのQuestionIDが0でもエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     0,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
@@ -71,11 +101,43 @@ func TestPostResponseValidate(t *testing.T) {
 		{
 			description: "Bodyがnilなのでエラー",
 			request:     &Responses{
-				ID:         0,
+				ID:         1,
 				SubmittedAt: null.Time{},
 				Body:       nil,
 			},
 			isErr:       true,
+		},
+		{
+			description: "BodyのQuestionIDが負なのでエラー",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     -1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				} ,
+			},
+			isErr: true,
+		},
+		{
+			description: "TextタイプでoptionResponseが50文字以上でエラー",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "text",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				} ,
+			},
+			isErr: true,
 		},
 	}
 
