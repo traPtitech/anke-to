@@ -119,6 +119,24 @@ func (*Respondent) DeleteRespondent(responseID int) error {
 	return nil
 }
 
+// CheckRespondentByResponseID 回答者かどうかの確認
+func (*Respondent) GetRespondent(responseID int) (*Respondents, error) {
+	var respondent Respondents
+
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Where("response_id = ?", responseID).
+		First(&respondent).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response: %w", err)
+	}
+
+	return &respondent, nil
+}
+
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
 func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
 	respondentInfos := []RespondentInfo{}
@@ -331,22 +349,6 @@ func (*Respondent) CheckRespondent(userID string, questionnaireID int) (bool, er
 	err := db.
 		Session(&gorm.Session{NewDB: true}).
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
-		First(&Respondents{}).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to get response: %w", err)
-	}
-
-	return true, nil
-}
-
-// CheckRespondentByResponseID 回答者かどうかの確認
-func (*Respondent) CheckRespondentByResponseID(userID string, responseID int) (bool, error) {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Where("user_traqid = ? AND response_id = ?", userID, responseID).
 		First(&Respondents{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil

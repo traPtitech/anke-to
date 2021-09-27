@@ -279,6 +279,86 @@ func TestDeleteRespondent(t *testing.T) {
 	}
 }
 
+func TestGetRespondent(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := Questionnaires{
+		Title:       "第1回集会らん☆ぷろ募集アンケート",
+		Description: "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！",
+		ResTimeLimit: null.NewTime(time.Now(), false),
+		ResSharedTo: "private",
+	}
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&questionnaire).Error
+	require.NoError(t, err)
+
+	respondent := Respondents{
+		UserTraqid: userOne,
+		QuestionnaireID: questionnaire.ID,
+		SubmittedAt: null.NewTime(time.Now(), true),
+	}
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&respondent).Error
+	require.NoError(t, err)
+
+	type args struct {
+		responseID int
+	}
+	type expect struct {
+		respondent   Respondents
+		isErr        bool
+		err          error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				responseID: respondent.ResponseID,
+			},
+			expect: expect{
+				respondent: respondent,
+			},
+		},
+		{
+			description: "questionnaireID does not exist",
+			args: args{
+				responseID: -1,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrRecordNotFound,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualRespondent, err := respondentImpl.GetRespondent(testCase.args.responseID)
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.respondent, *actualRespondent, testCase.description, "respondent")
+	}
+}
+
 func TestGetRespondentInfos(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
@@ -953,87 +1033,6 @@ func TestTestCheckRespondent(t *testing.T) {
 
 	for _, testCase := range testCases {
 		isRespondent, err := respondentImpl.CheckRespondent(testCase.args.userID, testCase.args.questionnaireID)
-		if !testCase.expect.isErr {
-			assertion.NoError(err, testCase.description, "no error")
-		} else if testCase.expect.err != nil {
-			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
-		} else if testCase.expect.isErr {
-			assertion.Error(err, testCase.description, "any error")
-		}
-		if err != nil {
-			continue
-		}
-
-		assertion.Equal(testCase.expect.isRespondent, isRespondent, testCase.description, "isRespondent")
-	}
-}
-
-func TestCheckRespondentByResponseID(t *testing.T) {
-	t.Parallel()
-
-	assertion := assert.New(t)
-	ctx := context.Background()
-
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
-	require.NoError(t, err)
-
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
-	require.NoError(t, err)
-
-	responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
-	require.NoError(t, err)
-
-	type args struct {
-		userID     string
-		responseID int
-	}
-	type expect struct {
-		isErr        bool
-		err          error
-		isRespondent bool
-	}
-
-	type test struct {
-		description string
-		args
-		expect
-	}
-
-	testCases := []test{
-		{
-			description: "valid",
-			args: args{
-				userID:     userTwo,
-				responseID: responseID,
-			},
-			expect: expect{
-				isRespondent: true,
-			},
-		},
-		{
-			description: "not respondents",
-			args: args{
-				userID:     userThree,
-				responseID: responseID,
-			},
-			expect: expect{
-				isRespondent: false,
-			},
-		},
-		{
-			description: "questionnaireID does not exist",
-			args: args{
-				userID:     userTwo,
-				responseID: -1,
-			},
-			expect: expect{
-				isRespondent: false,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		isRespondent, err := respondentImpl.CheckRespondentByResponseID(testCase.args.userID, testCase.args.responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
