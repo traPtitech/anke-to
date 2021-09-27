@@ -9,10 +9,10 @@ type IRespondent interface {
 	InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error)
 	UpdateSubmittedAt(responseID int) error
 	DeleteRespondent(responseID int) error
+	GetRespondent(responseID int) (*Respondents, error)
 	GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error)
 	GetRespondentDetail(responseID int) (RespondentDetail, error)
 	GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error)
 	GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error)
 	CheckRespondent(userID string, questionnaireID int) (bool, error)
-	CheckRespondentByResponseID(userID string, responseID int) (bool, error)
 }

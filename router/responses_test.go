@@ -855,15 +855,6 @@ func TestEditResponse(t *testing.T) {
 	mockRespondent.EXPECT().
 		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
-	// CheckRespondentByResponseID
-	// success
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDSuccess).
-		Return(true, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDFailure).
-		Return(false, nil).AnyTimes()
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
@@ -1185,7 +1176,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "response doe not exist",
+			description: "response does not exist",
 			request: request{
 				user:       userOne,
 				responseID: responseIDFailure,
@@ -1204,13 +1195,23 @@ func TestEditResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusForbidden,
+				code:  http.StatusInternalServerError, //middlewareで弾くので500で良い
 			},
 		},
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			responseID, err := strconv.Atoi(c.Param("responseID"))
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, "responseID is not number")
+			}
+
+			c.Set(responseIDKey, responseID)
+			return next(c)
+		}
+	})
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)

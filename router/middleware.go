@@ -155,15 +155,33 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		// 回答者ならOK
+		respondent, err := m.GetRespondent(responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid == userID {
 			return next(c)
 		}
 
+		// 回答者以外は一時保存の回答は閲覧できない
+		if !respondent.SubmittedAt.Valid {
+			c.Logger().Info("not submitted")
+
+			// Note: 一時保存の回答の存在もわかってはいけないので、Respondentが見つからない時と全く同じエラーを返す
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
+
+		// アンケートごとの回答閲覧権限チェック
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
@@ -202,12 +220,20 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		respondent, err := m.GetRespondent(responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if !isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid != userID {
 			return c.String(http.StatusForbidden, "You are not a respondent of this response.")
 		}
 
