@@ -155,6 +155,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
+		// 回答者ならOK
 		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
 		if err != nil {
 			c.Logger().Error(err)
@@ -164,6 +165,9 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return next(c)
 		}
 
+		// TODO: 回答者以外は一時保存の回答は閲覧できない
+
+		// アンケートごとの回答閲覧権限チェック
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
