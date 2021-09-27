@@ -216,7 +216,7 @@ func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]Res
 
 	query := db.
 		Session(&gorm.Session{NewDB: true}).
-		Where("respondents.questionnaire_id = ?", questionnaireID).
+		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
 
 	query, sortNum, err := setRespondentsOrder(query, sort)
