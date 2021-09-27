@@ -355,7 +355,18 @@ func TestGetRespondent(t *testing.T) {
 			continue
 		}
 
-		assertion.Equal(testCase.expect.respondent, *actualRespondent, testCase.description, "respondent")
+		assertion.Equal(testCase.expect.respondent.ResponseID, actualRespondent.ResponseID, testCase.description, "responseID")
+		assertion.Equal(testCase.expect.respondent.QuestionnaireID, actualRespondent.QuestionnaireID, testCase.description, "questionnaireID")
+		assertion.Equal(testCase.expect.respondent.UserTraqid, actualRespondent.UserTraqid, testCase.description, "traQ ID")
+		assertion.Equal(testCase.expect.respondent.SubmittedAt.Valid, actualRespondent.SubmittedAt.Valid, testCase.description, "submittedAt valid")
+		if testCase.expect.respondent.SubmittedAt.Valid {
+			assertion.WithinDuration(testCase.expect.respondent.SubmittedAt.Time, actualRespondent.SubmittedAt.Time, 2*time.Second, testCase.description, "submittedAt")
+		}
+		assertion.WithinDuration(testCase.expect.respondent.ModifiedAt, actualRespondent.ModifiedAt, 2*time.Second, testCase.description, "modifiedAt")
+		assertion.Equal(testCase.expect.respondent.DeletedAt.Valid, actualRespondent.DeletedAt.Valid, testCase.description, "deletedAt valid")
+		if testCase.expect.respondent.DeletedAt.Valid {
+			assertion.WithinDuration(testCase.expect.respondent.DeletedAt.Time, actualRespondent.DeletedAt.Time, 2*time.Second, testCase.description, "deletedAt")
+		}
 	}
 }
 
