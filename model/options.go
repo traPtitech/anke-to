@@ -2,10 +2,12 @@
 
 package model
 
+import "context"
+
 // IOption OptionのRepository
 type IOption interface {
-	InsertOption(lastID int, num int, body string) error
-	UpdateOptions(options []string, questionID int) error
-	DeleteOptions(questionID int) error
-	GetOptions(questionIDs []int) ([]Options, error)
+	InsertOption(ctx context.Context, lastID int, num int, body string) error
+	UpdateOptions(ctx context.Context, options []string, questionID int) error
+	DeleteOptions(ctx context.Context, questionID int) error
+	GetOptions(ctx context.Context, questionIDs []int) ([]Options, error)
 }

@@ -89,7 +89,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if err := q.InsertOption(lastID, i+1, v); err != nil {
+			if err := q.InsertOption(c.Request().Context(), lastID, i+1, v); err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
@@ -183,7 +183,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := q.UpdateOptions(req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+		if err := q.UpdateOptions(c.Request().Context(), req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
@@ -221,7 +221,7 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteOptions(questionID); err != nil {
+	if err := q.DeleteOptions(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
