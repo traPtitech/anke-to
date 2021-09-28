@@ -151,7 +151,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := r.InsertRespondent(userID, req.ID, req.SubmittedAt)
+	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, req.SubmittedAt)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -195,7 +195,7 @@ func (r *Response) GetResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to parse responseID(%s) to integer: %w", strResponseID, err))
 	}
 
-	respondentDetail, err := r.GetRespondentDetail(responseID)
+	respondentDetail, err := r.GetRespondentDetail(c.Request().Context(), responseID)
 	if errors.Is(err, model.ErrRecordNotFound) {
 		c.Logger().Info(err)
 		return echo.NewHTTPError(http.StatusNotFound, "response not found")
@@ -306,7 +306,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 	}
 
 	if req.SubmittedAt.Valid {
-		err := r.UpdateSubmittedAt(responseID)
+		err := r.UpdateSubmittedAt(c.Request().Context(), responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))
 		}
@@ -367,7 +367,7 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
-	err = r.DeleteRespondent(responseID)
+	err = r.DeleteRespondent(c.Request().Context(), responseID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -63,7 +64,12 @@ type RespondentDetail struct {
 }
 
 //InsertRespondent 回答の追加
-func (*Respondent) InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error) {
+func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submitedAt null.Time) (int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	var respondent Respondents
 	if submitedAt.Valid {
 		respondent = Respondents{
@@ -78,9 +84,7 @@ func (*Respondent) InsertRespondent(userID string, questionnaireID int, submited
 		}
 	}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&respondent).Error
+	err = db.Create(&respondent).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
@@ -89,9 +93,13 @@ func (*Respondent) InsertRespondent(userID string, questionnaireID int, submited
 }
 
 // UpdateSubmittedAt 投稿日時更新
-func (*Respondent) UpdateSubmittedAt(responseID int) error {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Respondent) UpdateSubmittedAt(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.
 		Model(&Respondents{}).
 		Where("response_id = ?", responseID).
 		Update("submitted_at", time.Now()).Error
@@ -103,9 +111,13 @@ func (*Respondent) UpdateSubmittedAt(responseID int) error {
 }
 
 // DeleteRespondent 回答の削除
-func (*Respondent) DeleteRespondent(responseID int) error {
+func (*Respondent) DeleteRespondent(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("response_id = ?", responseID).
 		Delete(&Respondents{})
 	if err := result.Error; err != nil {
@@ -120,11 +132,15 @@ func (*Respondent) DeleteRespondent(responseID int) error {
 }
 
 // CheckRespondentByResponseID 回答者かどうかの確認
-func (*Respondent) GetRespondent(responseID int) (*Respondents, error) {
+func (*Respondent) GetRespondent(ctx context.Context, responseID int) (*Respondents, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	var respondent Respondents
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Where("response_id = ?", responseID).
 		First(&respondent).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -138,11 +154,15 @@ func (*Respondent) GetRespondent(responseID int) (*Respondents, error) {
 }
 
 // GetRespondentInfos ユーザーの回答とその周辺情報一覧の取得
-func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
+func (*Respondent) GetRespondentInfos(ctx context.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	respondentInfos := []RespondentInfo{}
 
 	query := db.
-		Session(&gorm.Session{NewDB: true}).
 		Table("respondents").
 		Joins("LEFT OUTER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
 		Order("respondents.submitted_at DESC").
@@ -156,7 +176,7 @@ func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([
 		return nil, errors.New("illegal function usage")
 	}
 
-	err := query.
+	err = query.
 		Select("respondents.questionnaire_id, respondents.response_id, respondents.modified_at, respondents.submitted_at, questionnaires.title, questionnaires.res_time_limit").
 		Find(&respondentInfos).Error
 	if err != nil {
@@ -167,11 +187,16 @@ func (*Respondent) GetRespondentInfos(userID string, questionnaireIDs ...int) ([
 }
 
 // GetRespondentDetail 回答のIDから回答の詳細情報を取得
-func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error) {
+func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (RespondentDetail, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return RespondentDetail{}, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	respondent := Respondents{}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
+		Session(&gorm.Session{}).
 		Where("respondents.response_id = ?", responseID).
 		Select("QuestionnaireID", "UserTraqid", "ModifiedAt", "SubmittedAt").
 		Take(&respondent).Error
@@ -184,7 +209,6 @@ func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error)
 
 	questions := []Questions{}
 	err = db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("questionnaire_id = ?", respondent.QuestionnaireID).
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
 			return db.Select("QuestionID", "Body")
@@ -229,12 +253,17 @@ func (*Respondent) GetRespondentDetail(responseID int) (RespondentDetail, error)
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error) {
+func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	respondents := []Respondents{}
 
 	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
 	query := db.
-		Session(&gorm.Session{NewDB: true}).
+		Session(&gorm.Session{}).
 		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
 
@@ -274,7 +303,6 @@ func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]Res
 
 	questions := []Questions{}
 	err = db.
-		Session(&gorm.Session{NewDB: true}).
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("ResponseID", "QuestionID", "Body").
@@ -331,10 +359,15 @@ func (*Respondent) GetRespondentDetails(questionnaireID int, sort string) ([]Res
 }
 
 // GetRespondentsUserIDs 回答者のユーザーID取得
-func (*Respondent) GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error) {
+func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
 	respondents := []Respondents{}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+
+	err = db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Select("questionnaire_id, user_traqid").
 		Find(&respondents).Error
@@ -346,9 +379,13 @@ func (*Respondent) GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents,
 }
 
 // CheckRespondent 回答者かどうかの確認
-func (*Respondent) CheckRespondent(userID string, questionnaireID int) (bool, error) {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Respondent) CheckRespondent(ctx context.Context, userID string, questionnaireID int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Respondents{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

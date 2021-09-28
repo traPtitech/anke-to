@@ -49,7 +49,7 @@ func (u *User) GetMyResponses(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	myResponses, err := u.GetRespondentInfos(userID)
+	myResponses, err := u.GetRespondentInfos(c.Request().Context(), userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -70,7 +70,7 @@ func (u *User) GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := u.GetRespondentInfos(userID, questionnaireID)
+	myresponses, err := u.GetRespondentInfos(c.Request().Context(), userID, questionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -126,7 +126,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	respondents, err := u.GetRespondentsUserIDs(questionnaireIDs)
+	respondents, err := u.GetRespondentsUserIDs(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondents: %w", err))
 	}

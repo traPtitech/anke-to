@@ -2,17 +2,21 @@
 
 package model
 
-import "gopkg.in/guregu/null.v3"
+import (
+	"context"
+
+	"gopkg.in/guregu/null.v3"
+)
 
 // IRespondent RespondentのRepository
 type IRespondent interface {
-	InsertRespondent(userID string, questionnaireID int, submitedAt null.Time) (int, error)
-	UpdateSubmittedAt(responseID int) error
-	DeleteRespondent(responseID int) error
-	GetRespondent(responseID int) (*Respondents, error)
-	GetRespondentInfos(userID string, questionnaireIDs ...int) ([]RespondentInfo, error)
-	GetRespondentDetail(responseID int) (RespondentDetail, error)
-	GetRespondentDetails(questionnaireID int, sort string) ([]RespondentDetail, error)
-	GetRespondentsUserIDs(questionnaireIDs []int) ([]Respondents, error)
-	CheckRespondent(userID string, questionnaireID int) (bool, error)
+	InsertRespondent(ctx context.Context, userID string, questionnaireID int, submitedAt null.Time) (int, error)
+	UpdateSubmittedAt(ctx context.Context, responseID int) error
+	DeleteRespondent(ctx context.Context, responseID int) error
+	GetRespondent(ctx context.Context, responseID int) (*Respondents, error)
+	GetRespondentInfos(ctx context.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error)
+	GetRespondentDetail(ctx context.Context, responseID int) (RespondentDetail, error)
+	GetRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]RespondentDetail, error)
+	GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error)
+	CheckRespondent(ctx context.Context, userID string, questionnaireID int) (bool, error)
 }

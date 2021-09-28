@@ -219,15 +219,15 @@ func TestGetMyResponses(t *testing.T) {
 	// GetRespondentInfos
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne)).
+		GetRespondentInfos(gomock.Any(), string(userOne)).
 		Return(respondentInfos, nil).AnyTimes()
 	// empty
 	mockRespondent.EXPECT().
-		GetRespondentInfos("empty").
+		GetRespondentInfos(gomock.Any(), "empty").
 		Return([]model.RespondentInfo{}, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentInfos("StatusInternalServerError").
+		GetRespondentInfos(gomock.Any(), "StatusInternalServerError").
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
@@ -376,15 +376,15 @@ func TestGetMyResponsesByID(t *testing.T) {
 	// GetRespondentInfos
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne), questionnaireIDSuccess).
+		GetRespondentInfos(gomock.Any(), string(userOne), questionnaireIDSuccess).
 		Return(respondentInfos, nil).AnyTimes()
 	// questionnaireIDNotFound
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne), questionnaireIDNotFound).
+		GetRespondentInfos(gomock.Any(), string(userOne), questionnaireIDNotFound).
 		Return([]model.RespondentInfo{}, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentInfos("StatusInternalServerError", questionnaireIDSuccess).
+		GetRespondentInfos(gomock.Any(), "StatusInternalServerError", questionnaireIDSuccess).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
