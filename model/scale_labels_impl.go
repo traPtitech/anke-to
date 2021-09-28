@@ -1,10 +1,9 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"strconv"
-
-	"gorm.io/gorm"
 )
 
 // ScaleLabel ScaleLabelRepositoryの実装
@@ -25,11 +24,14 @@ type ScaleLabels struct {
 }
 
 // InsertScaleLabel IDを指定してlabelを挿入する
-func (*ScaleLabel) InsertScaleLabel(lastID int, label ScaleLabels) error {
+func (*ScaleLabel) InsertScaleLabel(ctx context.Context, lastID int, label ScaleLabels) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a transaction: %w", err)
+	}
+
 	label.QuestionID = lastID
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&label).Error
+	err = db.Create(&label).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert the scale label (lastID: %d): %w", lastID, err)
 	}
@@ -37,9 +39,13 @@ func (*ScaleLabel) InsertScaleLabel(lastID int, label ScaleLabels) error {
 }
 
 // UpdateScaleLabel questionIDを指定してlabelを更新する
-func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
+func (*ScaleLabel) UpdateScaleLabel(ctx context.Context, questionID int, label ScaleLabels) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Model(&ScaleLabels{}).
 		Where("question_id = ?", questionID).
 		Updates(map[string]interface{}{
@@ -49,7 +55,7 @@ func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
 			"scale_min":         label.ScaleMin,
 			"scale_max":         label.ScaleMax,
 		})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update the scale label (questionID: %d): %w", questionID, err)
 	}
@@ -60,12 +66,16 @@ func (*ScaleLabel) UpdateScaleLabel(questionID int, label ScaleLabels) error {
 }
 
 // DeleteScaleLabel questionIDを指定してlabelを削除する
-func (*ScaleLabel) DeleteScaleLabel(questionID int) error {
+func (*ScaleLabel) DeleteScaleLabel(ctx context.Context, questionID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("question_id = ?", questionID).
 		Delete(&ScaleLabels{})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete the scale label (questionID: %d): %w", questionID, err)
 	}
@@ -76,10 +86,14 @@ func (*ScaleLabel) DeleteScaleLabel(questionID int) error {
 }
 
 // GetScaleLabels 指定されたquestionIDの配列のlabelを取得する
-func (*ScaleLabel) GetScaleLabels(questionIDs []int) ([]ScaleLabels, error) {
+func (*ScaleLabel) GetScaleLabels(ctx context.Context, questionIDs []int) ([]ScaleLabels, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a transaction: %w", err)
+	}
+
 	labels := []ScaleLabels{}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Where("question_id IN (?)", questionIDs).
 		Find(&labels).Error
 	if err != nil {
