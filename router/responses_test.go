@@ -423,7 +423,7 @@ func TestPostResponse(t *testing.T) {
 	// failure
 	mockQuestionnaire.EXPECT().
 		GetQuestionnaireLimit(questionnaireIDFailure).
-		Return(null.NewTime(time.Time{}, false), gorm.ErrRecordNotFound).AnyTimes()
+		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
 		GetQuestionnaireLimit(questionnaireIDLimit).
@@ -924,7 +924,7 @@ func TestGetResponse(t *testing.T) {
 	// NotFound
 	mockRespondent.EXPECT().
 		GetRespondentDetail(responseIDNotFound).
-		Return(model.RespondentDetail{}, gorm.ErrRecordNotFound).AnyTimes()
+		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
 	type request struct {
 		user       users
