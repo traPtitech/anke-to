@@ -131,13 +131,28 @@ func TestPostResponseValidate(t *testing.T) {
 				Body:       []model.ResponseBody{
 					{
 						QuestionID:     1,
-						QuestionType:   "text",
+						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
 				} ,
 			},
 			isErr: true,
+		},
+		{
+			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
 		},
 		{
 			description: "一般的なTextAreaタイプの回答なのでエラーなし",
@@ -171,6 +186,21 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
+			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "TextArea",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
+		},
+		{
 			description: "一般的なNumberタイプの回答なのでエラーなし",
 			request:     &Responses{
 				ID:          1,
@@ -200,6 +230,21 @@ func TestPostResponseValidate(t *testing.T) {
 				} ,
 			},
 			isErr: true,
+		},
+		{
+			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Number",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
 		},
 		{
 			description: "Checkboxタイプで一般的な回答なのでエラーなし",
@@ -249,6 +294,21 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
+			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
+		},
+		{
 			description: "MultipleChoiceタイプで一般的な回答なのでエラーなし",
 			request:     &Responses{
 				ID:          1,
@@ -296,6 +356,21 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
+			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "MultipleChoice",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
+		},
+		{
 			description: "一般的なLinearScaleタイプの回答なのでエラーなし",
 			request:     &Responses{
 				ID:          1,
@@ -325,6 +400,21 @@ func TestPostResponseValidate(t *testing.T) {
 				} ,
 			},
 			isErr: true,
+		},
+		{
+			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
+			request:     &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:       []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "LinearScale",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				} ,
+			},
 		},
 	}
 
