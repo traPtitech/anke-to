@@ -1,30 +1,31 @@
 package model
 
 import (
+	"context"
+	"errors"
 	"sort"
 	"testing"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 const questionsTestUserID = "questionsUser"
 const invalidQuestionsTestUserID = "invalidQuestionsUser"
 
 type QuestionsTestQuestionnaireData struct {
-	Questionnaires
+	*Questionnaires
 	administrators []string
 }
 
 type QuestionsTestData struct {
-	Questions
+	*Questions
 }
 
 var (
-	questionnaireDatas       = []QuestionsTestQuestionnaireData{}
-	questionDatas            = []QuestionsTestData{}
+	questionnaireDatas       = []*QuestionsTestQuestionnaireData{}
+	questionDatas            = []*QuestionsTestData{}
 	questionQuestionnaireMap = map[int][]*Questions{}
 )
 
@@ -41,16 +42,16 @@ func TestQuestions(t *testing.T) {
 }
 
 func setupQuestionsTest(t *testing.T) {
-	questionnaireDatas = []QuestionsTestQuestionnaireData{
+	questionnaireDatas = []*QuestionsTestQuestionnaireData{
 		{
-			Questionnaires: Questionnaires{
+			Questionnaires: &Questionnaires{
 				Title:       "第1回集会らん☆ぷろ募集アンケート",
 				Description: "第1回集会らん☆ぷろ参加者募集",
 			},
 			administrators: []string{questionsTestUserID},
 		},
 		{
-			Questionnaires: Questionnaires{
+			Questionnaires: &Questionnaires{
 				Title:       "第1回集会らん☆ぷろ募集アンケート",
 				Description: "第1回集会らん☆ぷろ参加者募集",
 			},
@@ -59,25 +60,29 @@ func setupQuestionsTest(t *testing.T) {
 	}
 
 	for i, questionnaireData := range questionnaireDatas {
-		err := db.Create(&questionnaireDatas[i].Questionnaires).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(questionnaireData.Questionnaires).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", questionnaireData, err)
 		}
 
 		for _, administrator := range questionnaireData.administrators {
-			err = db.Create(&Administrators{
-				QuestionnaireID: questionnaireDatas[i].Questionnaires.ID,
-				UserTraqid:      administrator,
-			}).Error
+			err = db.
+				Session(&gorm.Session{NewDB: true}).
+				Create(&Administrators{
+					QuestionnaireID: questionnaireDatas[i].Questionnaires.ID,
+					UserTraqid:      administrator,
+				}).Error
 			if err != nil {
 				t.Errorf("failed to create administrator(%s): %w", administrator, err)
 			}
 		}
 	}
 
-	questionDatas = []QuestionsTestData{
+	questionDatas = []*QuestionsTestData{
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     0,
@@ -86,7 +91,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     1,
@@ -95,7 +100,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     2,
@@ -104,7 +109,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     3,
@@ -113,7 +118,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     4,
@@ -122,7 +127,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     5,
@@ -131,7 +136,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     6,
@@ -140,7 +145,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     7,
@@ -149,7 +154,7 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     8,
@@ -158,20 +163,20 @@ func setupQuestionsTest(t *testing.T) {
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[1].ID,
 				PageNum:         1,
 				QuestionNum:     8,
 				Type:            "Text",
 				Body:            "",
-				DeletedAt: mysql.NullTime{
+				DeletedAt: gorm.DeletedAt{
 					Time:  time.Now(),
 					Valid: true,
 				},
 			},
 		},
 		{
-			Questions: Questions{
+			Questions: &Questions{
 				QuestionnaireID: questionnaireDatas[0].ID,
 				PageNum:         1,
 				QuestionNum:     0,
@@ -181,8 +186,10 @@ func setupQuestionsTest(t *testing.T) {
 		},
 	}
 
-	for i, questionData := range questionDatas {
-		err := db.Create(&questionDatas[i].Questions).Error
+	for _, questionData := range questionDatas {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(questionData.Questions).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", questionData, err)
 		}
@@ -192,7 +199,7 @@ func setupQuestionsTest(t *testing.T) {
 			if !ok {
 				questionQuestionnaireMap[questionData.Questions.QuestionnaireID] = []*Questions{}
 			}
-			questionQuestionnaireMap[questionData.Questions.QuestionnaireID] = append(questions, &questionDatas[i].Questions)
+			questionQuestionnaireMap[questionData.Questions.QuestionnaireID] = append(questions, questionData.Questions)
 		}
 	}
 }
@@ -202,6 +209,7 @@ func insertQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		Questions
@@ -218,8 +226,11 @@ func insertQuestionTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -394,7 +405,7 @@ func insertQuestionTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		createdAt := time.Now()
-		questionID, err := questionImpl.InsertQuestion(testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(ctx, testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -406,7 +417,10 @@ func insertQuestionTest(t *testing.T) {
 		}
 
 		question := Questions{}
-		err = db.Where("id = ?", questionID).First(&question).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", questionID).
+			First(&question).Error
 		if err != nil {
 			t.Errorf("failed to get question(%s): %w", testCase.description, err)
 		}
@@ -428,6 +442,7 @@ func updateQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type before struct {
 		Questions
@@ -448,8 +463,11 @@ func updateQuestionTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -652,12 +670,14 @@ func updateQuestionTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		question := &testCase.before.Questions
-		err := db.Create(question).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(question).Error
 		if err != nil {
 			t.Errorf("failed to insert question(%s): %w", testCase.description, err)
 		}
 
-		err = questionImpl.UpdateQuestion(testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
+		err = questionImpl.UpdateQuestion(ctx, testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -669,7 +689,10 @@ func updateQuestionTest(t *testing.T) {
 		}
 
 		actualQuestion := Questions{}
-		err = db.Where("id = ?", question.ID).First(&actualQuestion).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", question.ID).
+			First(&actualQuestion).Error
 		if err != nil {
 			t.Errorf("failed to get question(%s): %w", testCase.description, err)
 		}
@@ -691,6 +714,7 @@ func deleteQuestionTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionID int
@@ -707,8 +731,11 @@ func deleteQuestionTest(t *testing.T) {
 
 	invalidQuestionID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionID).First(&Questions{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionID).
+			First(&Questions{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -731,7 +758,9 @@ func deleteQuestionTest(t *testing.T) {
 	}
 
 	for _, question := range testQuestions {
-		err := db.Create(question).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(question).Error
 		if err != nil {
 			t.Errorf("failed to insert question: %w", err)
 		}
@@ -757,7 +786,7 @@ func deleteQuestionTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := questionImpl.DeleteQuestion(testCase.args.questionID)
+		err := questionImpl.DeleteQuestion(ctx, testCase.args.questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -769,7 +798,11 @@ func deleteQuestionTest(t *testing.T) {
 		}
 
 		actualQuestion := Questions{}
-		err = db.Unscoped().Where("id = ?", testCase.args.questionID).First(&actualQuestion).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Unscoped().
+			Where("id = ?", testCase.args.questionID).
+			First(&actualQuestion).Error
 		if err != nil {
 			t.Errorf("failed to get question(%s): %w", testCase.description, err)
 		}
@@ -783,6 +816,7 @@ func getQuestionsTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireID int
@@ -799,8 +833,11 @@ func getQuestionsTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -827,7 +864,7 @@ func getQuestionsTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questions, err := questionImpl.GetQuestions(testCase.args.questionnaireID)
+		questions, err := questionImpl.GetQuestions(ctx, testCase.args.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -856,8 +893,17 @@ func getQuestionsTest(t *testing.T) {
 
 		assertion.True(sort.SliceIsSorted(questions, func(i, j int) bool { return questions[i].QuestionNum <= questions[j].QuestionNum }), testCase.description, "sort")
 
-		for i, actualQuestion := range questions {
-			expectQuestion := expectQuestions[i]
+		expectQuestionMap := make(map[int]*Questions, len(expectQuestions))
+		for _, question := range expectQuestions {
+			expectQuestionMap[question.ID] = question
+		}
+
+		for _, actualQuestion := range questions {
+			expectQuestion, ok := expectQuestionMap[actualQuestion.ID]
+			if !ok {
+				continue
+			}
+
 			assertion.Equal(expectQuestion.QuestionnaireID, actualQuestion.QuestionnaireID, testCase.description, "questionnaire_id")
 			assertion.Equal(expectQuestion.PageNum, actualQuestion.PageNum, testCase.description, "page_num")
 			assertion.Equal(expectQuestion.QuestionNum, actualQuestion.QuestionNum, testCase.description, "question_num")
@@ -876,6 +922,7 @@ func checkQuestionAdminTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		userID     string
@@ -935,7 +982,7 @@ func checkQuestionAdminTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualIsAdmin, err := questionImpl.CheckQuestionAdmin(testCase.args.userID, testCase.args.questionID)
+		actualIsAdmin, err := questionImpl.CheckQuestionAdmin(ctx, testCase.args.userID, testCase.args.questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

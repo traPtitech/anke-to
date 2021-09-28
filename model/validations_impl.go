@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 // Validation ValidationRepositoryの実装
@@ -16,16 +18,19 @@ func NewValidation() *Validation {
 
 //Validations validationsテーブルの構造体
 type Validations struct {
-	QuestionID   int    `json:"questionID"    gorm:"type:int(11) PRIMARY KEY;"`
-	RegexPattern string `json:"regex_pattern" gorm:"type:text;default:NULL;"`
-	MinBound     string `json:"min_bound"     gorm:"type:text;default:NULL;"`
-	MaxBound     string `json:"max_bound"     gorm:"type:text;default:NULL;"`
+	QuestionID   int    `json:"questionID"    gorm:"type:int(11);not null;primaryKey"`
+	RegexPattern string `json:"regex_pattern" gorm:"type:text;default:NULL"`
+	MinBound     string `json:"min_bound"     gorm:"type:text;default:NULL"`
+	MaxBound     string `json:"max_bound"     gorm:"type:text;default:NULL"`
 }
 
 // InsertValidation IDを指定してvalidationsを挿入する
 func (*Validation) InsertValidation(lastID int, validation Validations) error {
 	validation.QuestionID = lastID
-	if err := db.Create(&validation).Error; err != nil {
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&validation).Error
+	if err != nil {
 		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
 	}
 	return nil
@@ -34,13 +39,15 @@ func (*Validation) InsertValidation(lastID int, validation Validations) error {
 // UpdateValidation questionIDを指定してvalidationを更新する
 func (*Validation) UpdateValidation(questionID int, validation Validations) error {
 	result := db.
+		Session(&gorm.Session{NewDB: true}).
 		Model(&Validations{}).
 		Where("question_id = ?", questionID).
-		Update(map[string]interface{}{
+		Updates(map[string]interface{}{
 			"question_id":   questionID,
 			"regex_pattern": validation.RegexPattern,
 			"min_bound":     validation.MinBound,
-			"max_bound":     validation.MaxBound})
+			"max_bound":     validation.MaxBound,
+		})
 	err := result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update the validation (questionID: %d): %w", questionID, err)
@@ -54,6 +61,7 @@ func (*Validation) UpdateValidation(questionID int, validation Validations) erro
 // DeleteValidation questionIDを指定してvalidationを削除する
 func (*Validation) DeleteValidation(questionID int) error {
 	result := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id = ?", questionID).
 		Delete(&Validations{})
 	err := result.Error
@@ -70,6 +78,7 @@ func (*Validation) DeleteValidation(questionID int) error {
 func (*Validation) GetValidations(qustionIDs []int) ([]Validations, error) {
 	validations := []Validations{}
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("question_id IN (?)", qustionIDs).
 		Find(&validations).
 		Error

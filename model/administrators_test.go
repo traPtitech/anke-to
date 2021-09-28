@@ -1,10 +1,11 @@
 package model
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 type administratorsTestQuestionnairesTestData struct {
@@ -51,16 +52,20 @@ func setupAdministratorTest(t *testing.T) {
 	}
 
 	for i, questionnaireData := range administratorTestQuestionnaireDatas {
-		err := db.Create(&administratorTestQuestionnaireDatas[i].questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&administratorTestQuestionnaireDatas[i].questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", questionnaireData, err)
 		}
 
 		for _, administrator := range questionnaireData.administrators {
-			err = db.Create(&Administrators{
-				QuestionnaireID: administratorTestQuestionnaireDatas[i].questionnaire.ID,
-				UserTraqid:      administrator,
-			}).Error
+			err = db.
+				Session(&gorm.Session{NewDB: true}).
+				Create(&Administrators{
+					QuestionnaireID: administratorTestQuestionnaireDatas[i].questionnaire.ID,
+					UserTraqid:      administrator,
+				}).Error
 			if err != nil {
 				t.Errorf("failed to create administrator(%s): %w", administrator, err)
 			}
@@ -90,8 +95,11 @@ func insertAdministratorsTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -162,7 +170,9 @@ func insertAdministratorsTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := db.Create(&testCase.args.questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&testCase.args.questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
 		}
@@ -180,9 +190,12 @@ func insertAdministratorsTest(t *testing.T) {
 
 		for _, administrator := range testCase.administrators {
 			var actualAdministrators Administrators
-			err = db.Where("questionnaire_id = ? AND user_traqid = ?", testCase.args.questionnaire.ID, administrator).First(&actualAdministrators).Error
+			err = db.
+				Session(&gorm.Session{NewDB: true}).
+				Where("questionnaire_id = ? AND user_traqid = ?", testCase.args.questionnaire.ID, administrator).
+				First(&actualAdministrators).Error
 
-			if gorm.IsRecordNotFoundError(err) {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				t.Errorf("no administrator(%s): %w", administrator, err)
 			}
 		}
@@ -269,7 +282,9 @@ func deleteAdministratorsTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := db.Create(&testCase.args.questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&testCase.args.questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
 		}
@@ -286,7 +301,10 @@ func deleteAdministratorsTest(t *testing.T) {
 		}
 
 		var administrators []Administrators
-		err = db.Where("questionnaire_id = ?", testCase.args.questionnaire.ID).Find(&administrators).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("questionnaire_id = ?", testCase.args.questionnaire.ID).
+			Find(&administrators).Error
 		if err != nil {
 			t.Errorf("failed to get administrators(%s): %w", testCase.description, err)
 		}
@@ -403,8 +421,11 @@ func checkQuestionnaireAdminTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {

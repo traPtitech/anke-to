@@ -81,7 +81,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 		}
 	}
 
-	lastID, err := q.InsertQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	lastID, err := q.InsertQuestion(c.Request().Context(), req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -176,8 +176,8 @@ func (q *Question) EditQuestion(c echo.Context) error {
 		}
 	}
 
-	if err := q.UpdateQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
-		req.IsRequired, questionID); err != nil {
+	err = q.UpdateQuestion(c.Request().Context(), req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired, questionID)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -217,7 +217,7 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	if err := q.IQuestion.DeleteQuestion(questionID); err != nil {
+	if err := q.IQuestion.DeleteQuestion(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

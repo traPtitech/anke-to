@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
-
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v3"
 
@@ -72,12 +70,13 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
 	}
 
-	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(userID, sort, search, pageNum, nontargetedBool)
+	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(c.Request().Context(), userID, sort, search, pageNum, nontargetedBool)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		} else if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
+		if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		if errors.Is(err, model.ErrDeadlineExceeded) {
+			return echo.NewHTTPError(http.StatusServiceUnavailable, "deadline exceeded")
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -127,7 +126,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	lastID, err := q.InsertQuestionnaire(req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+	lastID, err := q.InsertQuestionnaire(c.Request().Context(), req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 	if err != nil {
 		return err
 	}
@@ -184,9 +183,9 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(questionnaireID)
+	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, model.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -232,8 +231,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	if err := q.UpdateQuestionnaire(
-		req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID); err != nil {
+	err = q.UpdateQuestionnaire(c.Request().Context(), req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -263,7 +262,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
 	}
 
-	if err := q.IQuestionnaire.DeleteQuestionnaire(questionnaireID); err != nil {
+	if err := q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -286,11 +285,8 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
-	allquestions, err := q.IQuestion.GetQuestions(questionnaireID)
+	allquestions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

@@ -418,15 +418,15 @@ func TestPostResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -1082,15 +1082,15 @@ func TestEditResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.NewTime(time.Time{}, false), errMock).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation

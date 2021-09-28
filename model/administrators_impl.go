@@ -1,9 +1,10 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Administrator AdministratorRepositoryの実装
@@ -16,30 +17,40 @@ func NewAdministrator() *Administrator {
 
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
-	QuestionnaireID int    `sql:"type:int(11);not null;primary_key;"`
-	UserTraqid      string `sql:"type:char(32);not null;primary_key;"`
+	QuestionnaireID int    `gorm:"type:int(11);not null;primaryKey"`
+	UserTraqid      string `gorm:"type:char(30);size:30;not null;primaryKey"`
 }
 
 // InsertAdministrators アンケートの管理者を追加
 func (*Administrator) InsertAdministrators(questionnaireID int, administrators []string) error {
-	var administrator Administrators
+	dbAdministrators := make([]Administrators, 0, len(administrators))
+
+	if len(administrators) == 0 {
+		return nil
+	}
+
 	var err error
 	for _, v := range administrators {
-		administrator = Administrators{
+		dbAdministrators = append(dbAdministrators, Administrators{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      v,
-		}
-		err = db.Create(&administrator).Error
-		if err != nil {
-			return fmt.Errorf("failed to insert administrators: %w", err)
-		}
+		})
 	}
+
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&dbAdministrators).Error
+	if err != nil {
+		return fmt.Errorf("failed to insert administrators: %w", err)
+	}
+
 	return nil
 }
 
 // DeleteAdministrators アンケートの管理者の削除
 func (*Administrator) DeleteAdministrators(questionnaireID int) error {
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(Administrators{}).Error
 	if err != nil {
@@ -53,6 +64,7 @@ func (*Administrator) DeleteAdministrators(questionnaireID int) error {
 func (*Administrator) GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
 	administrators := []Administrators{}
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Find(&administrators).Error
 	if err != nil {
@@ -65,9 +77,10 @@ func (*Administrator) GetAdministrators(questionnaireIDs []int) ([]Administrator
 // CheckQuestionnaireAdmin 自分がアンケートの管理者か判定
 func (*Administrator) CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error) {
 	err := db.
+		Session(&gorm.Session{NewDB: true}).
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
-		Find(&Administrators{}).Error
-	if gorm.IsRecordNotFoundError(err) {
+		First(&Administrators{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
 	}
 	if err != nil {

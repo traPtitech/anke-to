@@ -7,12 +7,14 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
+	"gopkg.in/guregu/null.v3"
 )
 
 type CallChecker struct {
@@ -183,8 +185,10 @@ func TestResponseReadAuthenticate(t *testing.T) {
 	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
 
 	type args struct {
-		isRespondent                                  bool
-		CheckRespondentByResponseIDError              error
+		userID string
+		respondent *model.Respondents
+		GetRespondentError              error
+		ExecutesResponseReadPrivilegeCheck bool
 		haveReadPrivilege                             bool
 		GetResponseReadPrivilegeInfoByResponseIDError error
 		checkResponseReadPrivilegeError               error
@@ -203,7 +207,10 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "この回答の回答者である場合通す",
 			args: args{
-				isRespondent: true,
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user1",
+				},
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -211,9 +218,21 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "CheckRespondentByResponseIDがエラーの場合500",
+			description: "GetRespondentがErrRecordNotFoundの場合404",
 			args: args{
-				CheckRespondentByResponseIDError: errors.New("error"),
+				userID: "user1",
+				GetRespondentError: model.ErrRecordNotFound,
+			},
+			expect: expect{
+				statusCode: http.StatusNotFound,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "respondentがnilの場合500",
+			args: args{
+				userID: "user1",
+				respondent: nil,
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -221,9 +240,38 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "この回答の回答者でなくてもhaveReadPrivilegeがtrueの場合通す",
+			description: "GetRespondentがエラー(ErrRecordNotFound以外)の場合500",
 			args: args{
-				isRespondent:      false,
+				GetRespondentError: errors.New("error"),
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "responseがsubmitされていない場合404",
+			args: args{
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Time{}, false),
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusNotFound,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "この回答の回答者でなくてもsubmitされていてhaveReadPrivilegeがtrueの場合通す",
+			args: args{
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
+				},
+				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: true,
 			},
 			expect: expect{
@@ -232,9 +280,14 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			description: "この回答の回答者でなく、haveReadPrivilegeがfalseの場合403",
+			description: "この回答の回答者でなく、submitされていてhaveReadPrivilegeがfalseの場合403",
 			args: args{
-				isRespondent:      false,
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
+				},
+				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
 			},
 			expect: expect{
@@ -245,7 +298,12 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "GetResponseReadPrivilegeInfoByResponseIDがErrRecordNotFoundの場合400",
 			args: args{
-				isRespondent:      false,
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
+				},
+				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
 				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrRecordNotFound,
 			},
@@ -257,7 +315,12 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "GetResponseReadPrivilegeInfoByResponseIDがエラー(ErrRecordNotFound以外)の場合500",
 			args: args{
-				isRespondent:      false,
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
+				},
+				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege: false,
 				GetResponseReadPrivilegeInfoByResponseIDError: errors.New("error"),
 			},
@@ -269,7 +332,12 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "checkResponseReadPrivilegeがエラーの場合500",
 			args: args{
-				isRespondent:                    false,
+				userID: "user1",
+				respondent: &model.Respondents{
+					UserTraqid: "user2",
+					SubmittedAt: null.NewTime(time.Now(), true),
+				},
+				ExecutesResponseReadPrivilegeCheck: true,
 				haveReadPrivilege:               false,
 				checkResponseReadPrivilegeError: errors.New("error"),
 			},
@@ -281,8 +349,8 @@ func TestResponseReadAuthenticate(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		userID := "testUser"
 		responseID := 1
+
 		var responseReadPrivilegeInfo model.ResponseReadPrivilegeInfo
 		if testCase.args.checkResponseReadPrivilegeError != nil {
 			responseReadPrivilegeInfo = model.ResponseReadPrivilegeInfo{
@@ -298,17 +366,6 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			}
 		}
 
-		mockRespondent.
-			EXPECT().
-			CheckRespondentByResponseID(userID, responseID).
-			Return(testCase.args.isRespondent, testCase.args.CheckRespondentByResponseIDError)
-		if !testCase.args.isRespondent && testCase.args.CheckRespondentByResponseIDError == nil {
-			mockQuestionnaire.
-				EXPECT().
-				GetResponseReadPrivilegeInfoByResponseID(userID, responseID).
-				Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
-		}
-
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -316,7 +373,18 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		c.SetPath("/responses/:responseID")
 		c.SetParamNames("responseID")
 		c.SetParamValues(strconv.Itoa(responseID))
-		c.Set(userIDKey, userID)
+		c.Set(userIDKey, testCase.args.userID)
+
+		mockRespondent.
+			EXPECT().
+			GetRespondent(responseID).
+			Return(testCase.args.respondent, testCase.args.GetRespondentError)
+		if testCase.args.ExecutesResponseReadPrivilegeCheck {
+			mockQuestionnaire.
+				EXPECT().
+				GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), testCase.args.userID, responseID).
+				Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
+		}
 
 		callChecker := CallChecker{}
 
@@ -431,11 +499,6 @@ func TestResultAuthenticate(t *testing.T) {
 			}
 		}
 
-		mockQuestionnaire.
-			EXPECT().
-			GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID).
-			Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
-
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/results/%d", questionnaireID), nil)
 		rec := httptest.NewRecorder()
@@ -444,6 +507,11 @@ func TestResultAuthenticate(t *testing.T) {
 		c.SetParamNames("questionnaireID")
 		c.SetParamValues(strconv.Itoa(questionnaireID))
 		c.Set(userIDKey, userID)
+
+		mockQuestionnaire.
+			EXPECT().
+			GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID).
+			Return(&responseReadPrivilegeInfo, testCase.args.GetResponseReadPrivilegeInfoByResponseIDError)
 
 		callChecker := CallChecker{}
 
