@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -78,6 +79,7 @@ func insertAdministratorsTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaire  Questionnaires
@@ -177,7 +179,7 @@ func insertAdministratorsTest(t *testing.T) {
 			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
 		}
 
-		err = administratorImpl.InsertAdministrators(testCase.args.questionnaire.ID, testCase.args.administrators)
+		err = administratorImpl.InsertAdministrators(ctx, testCase.args.questionnaire.ID, testCase.args.administrators)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -207,6 +209,7 @@ func deleteAdministratorsTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaire  Questionnaires
@@ -289,7 +292,7 @@ func deleteAdministratorsTest(t *testing.T) {
 			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
 		}
 
-		err = administratorImpl.DeleteAdministrators(testCase.args.questionnaire.ID)
+		err = administratorImpl.DeleteAdministrators(ctx, testCase.args.questionnaire.ID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -318,6 +321,7 @@ func getAdministratorsTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireIDs []int
@@ -383,7 +387,7 @@ func getAdministratorsTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualAdministrators, err := administratorImpl.GetAdministrators(testCase.args.questionnaireIDs)
+		actualAdministrators, err := administratorImpl.GetAdministrators(ctx, testCase.args.questionnaireIDs)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -403,6 +407,7 @@ func checkQuestionnaireAdminTest(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		userID          string
@@ -470,7 +475,7 @@ func checkQuestionnaireAdminTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualIsAdmin, err := administratorImpl.CheckQuestionnaireAdmin(testCase.args.userID, testCase.args.questionnaireID)
+		actualIsAdmin, err := administratorImpl.CheckQuestionnaireAdmin(ctx, testCase.args.userID, testCase.args.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

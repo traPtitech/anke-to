@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -22,14 +23,18 @@ type Administrators struct {
 }
 
 // InsertAdministrators アンケートの管理者を追加
-func (*Administrator) InsertAdministrators(questionnaireID int, administrators []string) error {
+func (*Administrator) InsertAdministrators(ctx context.Context, questionnaireID int, administrators []string) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	dbAdministrators := make([]Administrators, 0, len(administrators))
 
 	if len(administrators) == 0 {
 		return nil
 	}
 
-	var err error
 	for _, v := range administrators {
 		dbAdministrators = append(dbAdministrators, Administrators{
 			QuestionnaireID: questionnaireID,
@@ -37,9 +42,7 @@ func (*Administrator) InsertAdministrators(questionnaireID int, administrators [
 		})
 	}
 
-	err = db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&dbAdministrators).Error
+	err = db.Create(&dbAdministrators).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert administrators: %w", err)
 	}
@@ -48,9 +51,13 @@ func (*Administrator) InsertAdministrators(questionnaireID int, administrators [
 }
 
 // DeleteAdministrators アンケートの管理者の削除
-func (*Administrator) DeleteAdministrators(questionnaireID int) error {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Administrator) DeleteAdministrators(ctx context.Context, questionnaireID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	err = db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(Administrators{}).Error
 	if err != nil {
@@ -61,10 +68,14 @@ func (*Administrator) DeleteAdministrators(questionnaireID int) error {
 }
 
 // GetAdministrators アンケートの管理者を取得
-func (*Administrator) GetAdministrators(questionnaireIDs []int) ([]Administrators, error) {
+func (*Administrator) GetAdministrators(ctx context.Context, questionnaireIDs []int) ([]Administrators, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	administrators := []Administrators{}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Find(&administrators).Error
 	if err != nil {
@@ -75,9 +86,13 @@ func (*Administrator) GetAdministrators(questionnaireIDs []int) ([]Administrator
 }
 
 // CheckQuestionnaireAdmin 自分がアンケートの管理者か判定
-func (*Administrator) CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error) {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Administrator) CheckQuestionnaireAdmin(ctx context.Context, userID string, questionnaireID int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	err = db.
 		Where("user_traqid = ? AND questionnaire_id = ?", userID, questionnaireID).
 		First(&Administrators{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

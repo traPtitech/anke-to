@@ -140,7 +140,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	administrators, err := u.GetAdministrators(questionnaireIDs)
+	administrators, err := u.GetAdministrators(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get administrators: %w", err))
 	}

@@ -124,7 +124,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
