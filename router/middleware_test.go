@@ -377,7 +377,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 
 		mockRespondent.
 			EXPECT().
-			GetRespondent(responseID).
+			GetRespondent(c.Request().Context(), responseID).
 			Return(testCase.args.respondent, testCase.args.GetRespondentError)
 		if testCase.args.ExecutesResponseReadPrivilegeCheck {
 			mockQuestionnaire.

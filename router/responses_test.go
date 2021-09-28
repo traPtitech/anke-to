@@ -185,11 +185,11 @@ func TestPostResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDSuccess, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDSuccess, gomock.Any()).
 		Return(responseIDSuccess, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
 
 	// Response
@@ -600,15 +600,15 @@ func TestGetResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDSuccess).
+		GetRespondentDetail(gomock.Any(), responseIDSuccess).
 		Return(respondentDetail, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDFailure).
+		GetRespondentDetail(gomock.Any(), responseIDFailure).
 		Return(model.RespondentDetail{}, errMock).AnyTimes()
 	// NotFound
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDNotFound).
+		GetRespondentDetail(gomock.Any(), responseIDNotFound).
 		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
 	type request struct {
@@ -849,16 +849,16 @@ func TestEditResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDSuccess, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDSuccess, gomock.Any()).
 		Return(responseIDSuccess, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
-		UpdateSubmittedAt(gomock.Any()).
+		UpdateSubmittedAt(gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 
 	// Response
@@ -1379,7 +1379,7 @@ func TestDeleteResponse(t *testing.T) {
 		if testCase.request.ExecutesDeletion {
 			mockRespondent.
 				EXPECT().
-				DeleteRespondent(responseID).
+				DeleteRespondent(gomock.Any(), responseID).
 				Return(testCase.request.DeleteRespondentError)
 			if testCase.request.DeleteRespondentError == nil {
 				mockResponse.
