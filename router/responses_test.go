@@ -32,388 +32,388 @@ type responseBody struct {
 func TestPostResponseValidate(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		description string
 		request     *Responses
 		isErr       bool
 	}{
 		{
 			description: "一般的なリクエストなのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "IDが0でもエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          0,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "BodyのQuestionIDが0でもエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     0,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "ResponsesのIDが負なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          -1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
-			isErr:       true,
+			isErr: true,
 		},
 		{
 			description: "Bodyがnilなのでエラー",
-			request:     &Responses{
-				ID:         1,
+			request: &Responses{
+				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       nil,
+				Body:        nil,
 			},
-			isErr:       true,
+			isErr: true,
 		},
 		{
 			description: "BodyのQuestionIDが負なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     -1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "TextタイプでoptionResponseが50文字以上でエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "一般的なTextAreaタイプの回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "TextArea",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "TextAreaタイプでoptionResponseが50文字以上でもエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "TextArea",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "TextArea",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "一般的なNumberタイプの回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Number",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "NumberタイプでoptionResponseが50文字以上でもエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Number",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Number",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "Checkboxタイプで一般的な回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
-						OptionResponse: []string{"a","b"},
+						OptionResponse: []string{"a", "b"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "CheckboxタイプでOptionResponseがnilな回答なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "CheckboxタイプでOptionResponseが50文字以上な回答なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "MultipleChoiceタイプで一般的な回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
-						OptionResponse: []string{"a","b"},
+						OptionResponse: []string{"a", "b"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "MultipleChoiceタイプでOptionResponseがnilな回答なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "MultipleChoiceタイプでOptionResponseが50文字以上な回答なのでエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "一般的なLinearScaleタイプの回答なのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "LinearScale",
 						Body:           null.String{},
 						OptionResponse: nil,
 					},
-				} ,
+				},
 			},
 		},
 		{
 			description: "LinearScaleタイプでoptionResponseが50文字以上でもエラー",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "LinearScale",
 						Body:           null.String{},
 						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
 					},
-				} ,
+				},
 			},
 			isErr: true,
 		},
 		{
 			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
-			request:     &Responses{
+			request: &Responses{
 				ID:          1,
 				SubmittedAt: null.Time{},
-				Body:       []model.ResponseBody{
+				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
 						QuestionType:   "LinearScale",
 						Body:           null.String{},
 						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
 					},
-				} ,
+				},
 			},
 		},
 	}
@@ -425,7 +425,7 @@ func TestPostResponseValidate(t *testing.T) {
 
 			if test.isErr {
 				assert.Error(t, err)
-			}else {
+			} else {
 				assert.NoError(t, err)
 			}
 		})
@@ -910,7 +910,7 @@ func TestPostResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware,m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
+	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
