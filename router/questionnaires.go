@@ -135,7 +135,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.InsertAdministrators(lastID, req.Administrators); err != nil {
+	if err := q.InsertAdministrators(c.Request().Context(), lastID, req.Administrators); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -244,11 +244,11 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteAdministrators(questionnaireID); err != nil {
+	if err := q.DeleteAdministrators(c.Request().Context(), questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.InsertAdministrators(questionnaireID, req.Administrators); err != nil {
+	if err := q.InsertAdministrators(c.Request().Context(), questionnaireID, req.Administrators); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -270,7 +270,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteAdministrators(questionnaireID); err != nil {
+	if err := q.DeleteAdministrators(c.Request().Context(), questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
