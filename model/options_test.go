@@ -408,3 +408,113 @@ func TestUpdateOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteOptions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	questionnaire := Questionnaires{}
+	err := db.
+		Session(&gorm.Session{}).
+		Create(&questionnaire).Error
+	if err != nil {
+		t.Errorf("failed to create Questionnaire: %v", err)
+	}
+
+	type test struct {
+		description   string
+		beforeOptions []Options
+		isErr         bool
+		err           error
+	}
+
+	testCases := []test{
+		{
+			description: "選択肢が1つでもエラーなし",
+			beforeOptions: []Options{
+				{
+					OptionNum: 1,
+					Body:      "a",
+				},
+			},
+		},
+		{
+			description: "選択肢が複数でもエラーなし",
+			beforeOptions: []Options{
+				{
+					OptionNum: 1,
+					Body:      "a",
+				},
+				{
+					OptionNum: 2,
+					Body:      "b",
+				},
+			},
+		},
+		{
+			description:   "選択肢がなくてもエラーなし",
+			beforeOptions: []Options{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			question := &Questions{
+				QuestionnaireID: questionnaire.ID,
+				Type:            "Checkbox",
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&question).Error
+			if err != nil {
+				t.Errorf("failed to create question: %v", err)
+			}
+
+			if len(testCase.beforeOptions) > 0 {
+				for i := range testCase.beforeOptions {
+					testCase.beforeOptions[i].QuestionID = question.ID
+				}
+				err = db.
+					Session(&gorm.Session{}).
+					Create(&testCase.beforeOptions).Error
+				if err != nil {
+					t.Errorf("failed to create options: %v", err)
+				}
+			}
+
+			/*
+				質問が削除されていないと外部キー制約でエラーになるので、
+				先に質問を削除する
+			*/
+			err = db.
+				Session(&gorm.Session{}).
+				Where("id = ?", question.ID).
+				Delete(&Questions{}).Error
+			if err != nil {
+				t.Errorf("failed to delete question: %v", err)
+			}
+
+			err = optionImpl.DeleteOptions(ctx, question.ID)
+
+			if !testCase.isErr {
+				assert.NoErrorf(t, err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.err, err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			err = db.
+				Session(&gorm.Session{}).
+				Where("question_id = ?", question.ID).
+				First(&Options{}).Error
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, gorm.ErrRecordNotFound, err)
+			}
+		})
+	}
+}
