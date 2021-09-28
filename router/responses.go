@@ -174,7 +174,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(responseID, responseMetas)
+	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
@@ -313,7 +313,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := r.IResponse.DeleteResponse(responseID); err != nil {
+	if err := r.IResponse.DeleteResponse(c.Request().Context(), responseID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -335,7 +335,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(responseID, responseMetas)
+	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
@@ -373,7 +373,7 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	err = r.IResponse.DeleteResponse(responseID)
+	err = r.IResponse.DeleteResponse(c.Request().Context(), responseID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)

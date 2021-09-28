@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -59,7 +60,12 @@ type ResponseMeta struct {
 }
 
 // InsertResponses 質問に対する回答の追加
-func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) error {
+func (*Response) InsertResponses(ctx context.Context, responseID int, responseMetas []*ResponseMeta) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	responses := make([]Responses, 0, len(responseMetas))
 	for _, responseMeta := range responseMetas {
 		responses = append(responses, Responses{
@@ -68,9 +74,7 @@ func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) 
 			Body:       null.NewString(responseMeta.Data, true),
 		})
 	}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&responses).Error
+	err = db.Create(&responses).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert responses: %w", err)
 	}
@@ -79,12 +83,16 @@ func (*Response) InsertResponses(responseID int, responseMetas []*ResponseMeta) 
 }
 
 // DeleteResponse 質問に対する回答の削除
-func (*Response) DeleteResponse(responseID int) error {
+func (*Response) DeleteResponse(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("response_id = ?", responseID).
 		Delete(&Responses{})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete response: %w", err)
 	}
