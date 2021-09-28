@@ -23,10 +23,10 @@ import (
 )
 
 type responseBody struct {
-	QuestionID     int         `json:"questionID"`
-	QuestionType   string      `json:"question_type"`
-	Body           null.String `json:"response"`
-	OptionResponse []string    `json:"option_response"`
+	QuestionID     int         `json:"questionID" validate:"min=0"`
+	QuestionType   string      `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
+	Body           null.String `json:"response"  validate:"required"`
+	OptionResponse []string    `json:"option_response"  validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
 }
 
 func TestPostResponseValidate(t *testing.T) {
@@ -344,15 +344,15 @@ func TestPostResponseValidate(t *testing.T) {
 
 func TestPostResponse(t *testing.T) {
 	type responseRequestBody struct {
-		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
-		Body            []responseBody `json:"body"`
+		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
+		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
+		Body            []responseBody `json:"body" validate:"required"`
 	}
 	type responseResponseBody struct {
-		Body            []responseBody `json:"body"`
-		QuestionnaireID int            `json:"questionnaireID"`
-		ResponseID      int            `json:"responseID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
+		Body            []responseBody `json:"body" validate:"required"`
+		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
+		ResponseID      int            `json:"responseID" validate:"min=0"`
+		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
 	}
 
 	t.Parallel()
