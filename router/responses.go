@@ -35,9 +35,9 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
-	ID          int                  `json:"questionnaireID"`
+	ID          int                  `json:"questionnaireID" validate:"min=0"`
 	SubmittedAt null.Time            `json:"submitted_at"`
-	Body        []model.ResponseBody `json:"body"`
+	Body        []model.ResponseBody `json:"body" validate:"required,dive"`
 }
 
 // PostResponse POST /responses
@@ -52,6 +52,18 @@ func (r *Response) PostResponse(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	validate,err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w",err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(),req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w",err))
+		return echo.NewHTTPError(http.StatusBadRequest,err.Error())
 	}
 
 	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)

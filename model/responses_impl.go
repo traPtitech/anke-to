@@ -46,10 +46,10 @@ func (*Responses) TableName() string {
 
 // ResponseBody 質問に対する回答の構造体
 type ResponseBody struct {
-	QuestionID     int         `json:"questionID" gorm:"column:id"`
-	QuestionType   string      `json:"question_type" gorm:"column:type"`
-	Body           null.String `json:"response"`
-	OptionResponse []string    `json:"option_response"`
+	QuestionID     int         `json:"questionID" gorm:"column:id" validate:"min=0"`
+	QuestionType   string      `json:"question_type" gorm:"column:type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
+	Body           null.String `json:"response" validate:"required"`
+	OptionResponse []string    `json:"option_response" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
 }
 
 // ResponseMeta 質問に対する回答の構造体
