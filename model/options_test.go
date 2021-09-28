@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -514,6 +515,176 @@ func TestDeleteOptions(t *testing.T) {
 				First(&Options{}).Error
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, gorm.ErrRecordNotFound, err)
+			}
+		})
+	}
+}
+
+func TestGetOptions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description       string
+		questions         []Questions
+		questionIDIndexes []int
+		isErr             bool
+		err               error
+	}
+
+	testCases := []test{
+		{
+			description: "questionが1つ、選択肢が1つでもエラーなし",
+			questions: []Questions{
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+			},
+			questionIDIndexes: []int{0},
+		},
+		{
+			description: "questionが2つ、選択肢がそれぞれ1つでもエラーなし",
+			questions: []Questions{
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+			},
+			questionIDIndexes: []int{0, 1},
+		},
+		{
+			description: "一部のquestionの取得でもエラーなし",
+			questions: []Questions{
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+			},
+			questionIDIndexes: []int{0},
+		},
+		{
+			description: "選択肢がなくてもエラーなし",
+			questions: []Questions{
+				{
+					Type:    "Checkbox",
+					Options: []Options{},
+				},
+			},
+			questionIDIndexes: []int{0},
+		},
+		{
+			description: "questionIDがなくてもエラーなし",
+			questions: []Questions{
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "a",
+						},
+					},
+				},
+			},
+			questionIDIndexes: []int{0},
+		},
+		{
+			description: "bodyがnullでもエラーなし",
+			questions: []Questions{
+				{
+					Type: "Checkbox",
+					Options: []Options{
+						{
+							OptionNum: 1,
+							Body:      "",
+						},
+					},
+				},
+			},
+			questionIDIndexes: []int{0},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			questionnaire := Questionnaires{
+				Questions: testCase.questions,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			questionIDs := make([]int, 0, len(testCase.questionIDIndexes))
+			for _, index := range testCase.questionIDIndexes {
+				questionIDs = append(questionIDs, questionnaire.Questions[index].ID)
+			}
+
+			options, err := optionImpl.GetOptions(ctx, questionIDs)
+
+			if !testCase.isErr {
+				assert.NoErrorf(t, err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.err, err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			questions := make([]Questions, 0, len(testCase.questionIDIndexes))
+			for _, index := range testCase.questionIDIndexes {
+				questions = append(questions, questionnaire.Questions[index])
+			}
+			sort.Slice(questions, func(i, j int) bool {
+				return questions[i].ID < questions[j].ID
+			})
+
+			expectOptions := make([]Options, 0, len(testCase.questionIDIndexes))
+			for _, question := range questions {
+				expectOptions = append(expectOptions, question.Options...)
+			}
+
+			for i, option := range options {
+				assert.Equalf(t, expectOptions[i].QuestionID, option.QuestionID, testCase.description, "questionID")
+				assert.Equalf(t, expectOptions[i].Body, option.Body, testCase.description, "body")
 			}
 		})
 	}
