@@ -610,7 +610,7 @@ func TestPostResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusNotFound,
+				code:  http.StatusBadRequest,
 			},
 		},
 		{
