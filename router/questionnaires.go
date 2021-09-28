@@ -232,7 +232,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	}
 
 	err = q.UpdateQuestionnaire(c.Request().Context(), req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
-	if err != nil {
+	if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
