@@ -185,10 +185,10 @@ func TestResponseReadAuthenticate(t *testing.T) {
 	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
 
 	type args struct {
-		userID string
-		respondent *model.Respondents
-		GetRespondentError              error
-		ExecutesResponseReadPrivilegeCheck bool
+		userID                                        string
+		respondent                                    *model.Respondents
+		GetRespondentError                            error
+		ExecutesResponseReadPrivilegeCheck            bool
 		haveReadPrivilege                             bool
 		GetResponseReadPrivilegeInfoByResponseIDError error
 		checkResponseReadPrivilegeError               error
@@ -220,7 +220,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "GetRespondentがErrRecordNotFoundの場合404",
 			args: args{
-				userID: "user1",
+				userID:             "user1",
 				GetRespondentError: model.ErrRecordNotFound,
 			},
 			expect: expect{
@@ -231,7 +231,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 		{
 			description: "respondentがnilの場合500",
 			args: args{
-				userID: "user1",
+				userID:     "user1",
 				respondent: nil,
 			},
 			expect: expect{
@@ -254,7 +254,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Time{}, false),
 				},
 			},
@@ -268,11 +268,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
-				haveReadPrivilege: true,
+				haveReadPrivilege:                  true,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -284,11 +284,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
-				haveReadPrivilege: false,
+				haveReadPrivilege:                  false,
 			},
 			expect: expect{
 				statusCode: http.StatusForbidden,
@@ -300,11 +300,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Now(), true),
 				},
-				ExecutesResponseReadPrivilegeCheck: true,
-				haveReadPrivilege: false,
+				ExecutesResponseReadPrivilegeCheck:            true,
+				haveReadPrivilege:                             false,
 				GetResponseReadPrivilegeInfoByResponseIDError: model.ErrRecordNotFound,
 			},
 			expect: expect{
@@ -317,11 +317,11 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Now(), true),
 				},
-				ExecutesResponseReadPrivilegeCheck: true,
-				haveReadPrivilege: false,
+				ExecutesResponseReadPrivilegeCheck:            true,
+				haveReadPrivilege:                             false,
 				GetResponseReadPrivilegeInfoByResponseIDError: errors.New("error"),
 			},
 			expect: expect{
@@ -334,12 +334,12 @@ func TestResponseReadAuthenticate(t *testing.T) {
 			args: args{
 				userID: "user1",
 				respondent: &model.Respondents{
-					UserTraqid: "user2",
+					UserTraqid:  "user2",
 					SubmittedAt: null.NewTime(time.Now(), true),
 				},
 				ExecutesResponseReadPrivilegeCheck: true,
-				haveReadPrivilege:               false,
-				checkResponseReadPrivilegeError: errors.New("error"),
+				haveReadPrivilege:                  false,
+				checkResponseReadPrivilegeError:    errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
