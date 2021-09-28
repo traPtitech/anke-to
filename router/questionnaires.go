@@ -327,7 +327,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		}
 	}
 
-	options, err := q.GetOptions(optionIDs)
+	options, err := q.GetOptions(c.Request().Context(), optionIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
