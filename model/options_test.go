@@ -9,6 +9,148 @@ import (
 	"gorm.io/gorm"
 )
 
+func TestInsertOption(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	questionnaire := Questionnaires{}
+	err := db.
+		Session(&gorm.Session{}).
+		Create(&questionnaire).Error
+	if err != nil {
+		t.Errorf("failed to create Questionnaire: %v", err)
+	}
+
+	type args struct {
+		optionNum int
+		body      string
+	}
+	type test struct {
+		description   string
+		beforeOptions []Options
+		args
+		isErr bool
+		err   error
+	}
+
+	testCases := []test{
+		{
+			description:   "選択肢がない状態でエラーなし",
+			beforeOptions: []Options{},
+			args: args{
+				optionNum: 1,
+				body:      "a",
+			},
+		},
+		{
+			description:   "option_numが0なのでエラー",
+			beforeOptions: []Options{},
+			args: args{
+				optionNum: 1,
+				body:      "a",
+			},
+			isErr: true,
+		},
+		{
+			description: "既に選択肢があってもエラーなし",
+			beforeOptions: []Options{
+				{
+					OptionNum: 1,
+					Body:      "a",
+				},
+			},
+			args: args{
+				optionNum: 2,
+				body:      "b",
+			},
+		},
+		{
+			description: "option_numがとんでもエラーなし",
+			beforeOptions: []Options{
+				{
+					OptionNum: 1,
+					Body:      "a",
+				},
+			},
+			args: args{
+				optionNum: 3,
+				body:      "c",
+			},
+		},
+		{
+			/*
+				一応できるが、本番環境で起きたら壊れるので、
+				やってはいけない
+			*/
+			description: "option_numが被ってもエラーなし",
+			beforeOptions: []Options{
+				{
+					OptionNum: 1,
+					Body:      "a",
+				},
+			},
+			args: args{
+				optionNum: 1,
+				body:      "b",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			question := &Questions{
+				QuestionnaireID: questionnaire.ID,
+				Type:            "Checkbox",
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&question).Error
+			if err != nil {
+				t.Errorf("failed to create question: %v", err)
+			}
+
+			if len(testCase.beforeOptions) > 0 {
+				for i := range testCase.beforeOptions {
+					testCase.beforeOptions[i].QuestionID = question.ID
+				}
+				err = db.
+					Session(&gorm.Session{}).
+					Create(&testCase.beforeOptions).Error
+				if err != nil {
+					t.Errorf("failed to create options: %v", err)
+				}
+			}
+
+			err = optionImpl.InsertOption(ctx, question.ID, testCase.args.optionNum, testCase.args.body)
+
+			if !testCase.isErr {
+				assert.NoErrorf(t, err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.err, err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			var actualOptions []Options
+			err = db.
+				Session(&gorm.Session{}).
+				Where("question_id = ? AND option_num = ? AND body = ?", question.ID, testCase.args.optionNum, testCase.args.body).
+				Select("QuestionID", "OptionNum", "Body").
+				Take(&actualOptions).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				t.Errorf("failed to find options(%s): %v", testCase.description, err)
+			}
+			if err != nil {
+				t.Errorf("failed to get options: %v", err)
+			}
+		})
+	}
+}
+
 func TestUpdateOptions(t *testing.T) {
 	t.Parallel()
 
