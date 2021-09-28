@@ -1086,11 +1086,11 @@ func TestEditResponse(t *testing.T) {
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
 		Return(null.NewTime(time.Time{}, false), errMock).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -1170,7 +1170,6 @@ func TestEditResponse(t *testing.T) {
 	mockRespondent.EXPECT().
 		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
-
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
@@ -1492,7 +1491,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "response doe not exist",
+			description: "response does not exist",
 			request: request{
 				user:       userOne,
 				responseID: responseIDFailure,
@@ -1511,13 +1510,23 @@ func TestEditResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusForbidden,
+				code:  http.StatusInternalServerError, //middlewareで弾くので500で良い
 			},
 		},
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			responseID, err := strconv.Atoi(c.Param("responseID"))
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, "responseID is not number")
+			}
+
+			c.Set(responseIDKey, responseID)
+			return next(c)
+		}
+	})
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
