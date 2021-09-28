@@ -23,7 +23,7 @@ func TestInsertValidation(t *testing.T) {
 	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -215,7 +215,7 @@ func TestUpdateValidation(t *testing.T) {
 	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -363,7 +363,7 @@ func TestDeleteValidation(t *testing.T) {
 	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -461,7 +461,7 @@ func TestGetValidations(t *testing.T) {
 	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
