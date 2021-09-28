@@ -820,7 +820,7 @@ func TestPostResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
+	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware,m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
