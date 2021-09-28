@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/gorm"
+
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -1618,7 +1618,7 @@ func TestDeleteResponse(t *testing.T) {
 			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
 			request: request{
 				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
-				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				GetQuestionnaireLimitError: model.ErrRecordNotFound,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
 			},
