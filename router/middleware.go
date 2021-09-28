@@ -156,7 +156,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		// 回答者ならOK
-		respondent, err := m.GetRespondent(responseID)
+		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
@@ -220,7 +220,7 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		respondent, err := m.GetRespondent(responseID)
+		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))

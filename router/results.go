@@ -33,7 +33,7 @@ func (r *Result) GetResults(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	respondentDetails, err := r.GetRespondentDetails(questionnaireID, sort)
+	respondentDetails, err := r.GetRespondentDetails(c.Request().Context(), questionnaireID, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
