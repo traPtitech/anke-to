@@ -422,11 +422,11 @@ func TestPostResponse(t *testing.T) {
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
 		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
