@@ -285,10 +285,10 @@ func TestGetRespondent(t *testing.T) {
 	assertion := assert.New(t)
 
 	questionnaire := Questionnaires{
-		Title:       "第1回集会らん☆ぷろ募集アンケート",
-		Description: "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！",
+		Title:        "第1回集会らん☆ぷろ募集アンケート",
+		Description:  "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！",
 		ResTimeLimit: null.NewTime(time.Now(), false),
-		ResSharedTo: "private",
+		ResSharedTo:  "private",
 	}
 	err := db.
 		Session(&gorm.Session{NewDB: true}).
@@ -296,9 +296,9 @@ func TestGetRespondent(t *testing.T) {
 	require.NoError(t, err)
 
 	respondent := Respondents{
-		UserTraqid: userOne,
+		UserTraqid:      userOne,
 		QuestionnaireID: questionnaire.ID,
-		SubmittedAt: null.NewTime(time.Now(), true),
+		SubmittedAt:     null.NewTime(time.Now(), true),
 	}
 	err = db.
 		Session(&gorm.Session{NewDB: true}).
@@ -309,9 +309,9 @@ func TestGetRespondent(t *testing.T) {
 		responseID int
 	}
 	type expect struct {
-		respondent   Respondents
-		isErr        bool
-		err          error
+		respondent Respondents
+		isErr      bool
+		err        error
 	}
 
 	type test struct {
@@ -577,7 +577,7 @@ func TestGetRespondentDetail(t *testing.T) {
 		if !testCase.args.validresponseID {
 			responseID = -1
 		} else {
-			err := responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
+			err := responseImpl.InsertResponses(ctx, responseID, testCase.args.responseMetas)
 			require.NoError(t, err)
 		}
 
@@ -736,7 +736,7 @@ func TestGetRespondentDetails(t *testing.T) {
 		require.NoError(t, err)
 		responseIDs = append(responseIDs, responseID)
 
-		err = responseImpl.InsertResponses(responseIDs[i], responseMetasList[i])
+		err = responseImpl.InsertResponses(ctx, responseIDs[i], responseMetasList[i])
 		require.NoError(t, err)
 
 	}
