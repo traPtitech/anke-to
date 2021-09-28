@@ -1170,15 +1170,7 @@ func TestEditResponse(t *testing.T) {
 	mockRespondent.EXPECT().
 		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
-	// CheckRespondentByResponseID
-	// success
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDSuccess).
-		Return(true, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDFailure).
-		Return(false, nil).AnyTimes()
+
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
@@ -1668,12 +1660,12 @@ func TestDeleteResponse(t *testing.T) {
 
 		mockQuestionnaire.
 			EXPECT().
-			GetQuestionnaireLimitByResponseID(responseID).
+			GetQuestionnaireLimitByResponseID(gomock.Any(),responseID).
 			Return(testCase.request.QuestionnaireLimit, testCase.request.GetQuestionnaireLimitError)
 		if testCase.request.ExecutesDeletion {
 			mockRespondent.
 				EXPECT().
-				DeleteRespondent(userID, responseID).
+				DeleteRespondent(responseID).
 				Return(testCase.request.DeleteRespondentError)
 		}
 
