@@ -128,7 +128,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabels, err := r.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := r.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -282,7 +282,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	scaleLabels, err := r.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := r.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

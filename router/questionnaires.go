@@ -336,7 +336,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option.Body)
 	}
 
-	scaleLabels, err := q.GetScaleLabels(scaleLabelIDs)
+	scaleLabels, err := q.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

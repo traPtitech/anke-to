@@ -94,7 +94,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 			}
 		}
 	case "LinearScale":
-		if err := q.InsertScaleLabel(lastID,
+		if err := q.InsertScaleLabel(c.Request().Context(), lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -187,7 +187,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
-		if err := q.UpdateScaleLabel(questionID,
+		if err := q.UpdateScaleLabel(c.Request().Context(), questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -225,7 +225,7 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteScaleLabel(questionID); err != nil {
+	if err := q.DeleteScaleLabel(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
