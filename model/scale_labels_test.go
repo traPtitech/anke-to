@@ -130,7 +130,7 @@ func TestInsertScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(ctx, questionID, label)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -234,7 +234,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 			ScaleMax:        5,
 		}
 
-		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(ctx, questionID, label)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
@@ -249,7 +249,7 @@ func TestUpdateScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = scaleLabelImpl.UpdateScaleLabel(questionID, label)
+		err = scaleLabelImpl.UpdateScaleLabel(ctx, questionID, label)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -344,14 +344,14 @@ func TestDeleteScaleLabel(t *testing.T) {
 			ScaleMax:        testCase.args.ScaleMax,
 		}
 
-		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(ctx, questionID, label)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
 			questionID = -1
 		}
 
-		err = scaleLabelImpl.DeleteScaleLabel(questionID)
+		err = scaleLabelImpl.DeleteScaleLabel(ctx, questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -415,7 +415,7 @@ func TestGetScaleLabels(t *testing.T) {
 	for _, label := range labels {
 		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "LinearScale", "Linear", true)
 		require.NoError(t, err)
-		err = scaleLabelImpl.InsertScaleLabel(questionID, label)
+		err = scaleLabelImpl.InsertScaleLabel(ctx, questionID, label)
 		require.NoError(t, err)
 		label.QuestionID = questionID
 		questionIDs = append(questionIDs, questionID)
@@ -454,7 +454,7 @@ func TestGetScaleLabels(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		labels, err := scaleLabelImpl.GetScaleLabels(testCase.args.questionIDs)
+		labels, err := scaleLabelImpl.GetScaleLabels(ctx, testCase.args.questionIDs)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -506,7 +506,7 @@ func TestCheckScaleLabel(t *testing.T) {
 		ScaleMax:        5,
 	}
 
-	err = scaleLabelImpl.InsertScaleLabel(questionID, label)
+	err = scaleLabelImpl.InsertScaleLabel(ctx, questionID, label)
 	require.NoError(t, err)
 
 	type args struct {

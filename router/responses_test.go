@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/go-playground/validator/v10"
 
 	"net/http"
@@ -565,15 +566,15 @@ func TestPostResponse(t *testing.T) {
 	// GetScaleLabels
 	// success
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDSuccess}).
+		GetScaleLabels(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.ScaleLabels{scalelabel}, nil).AnyTimes()
 	// failure
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDFailure}).
+		GetScaleLabels(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 	// nothing
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{}).
+		GetScaleLabels(gomock.Any(), []int{}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 
 	// CheckScaleLabel
@@ -1229,15 +1230,15 @@ func TestEditResponse(t *testing.T) {
 	// GetScaleLabels
 	// success
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDSuccess}).
+		GetScaleLabels(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.ScaleLabels{scalelabel}, nil).AnyTimes()
 	// failure
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDFailure}).
+		GetScaleLabels(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 	// nothing
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{}).
+		GetScaleLabels(gomock.Any(), []int{}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 
 	// CheckScaleLabel
