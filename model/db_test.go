@@ -17,6 +17,7 @@ var (
 	questionImpl      = new(Question)
 	respondentImpl    = new(Respondent)
 	responseImpl      = new(Response)
+	optionImpl        = new(Option)
 	scaleLabelImpl    = new(ScaleLabel)
 	validationImpl    = new(Validation)
 )
