@@ -196,11 +196,11 @@ func TestPostResponse(t *testing.T) {
 	// InsertResponses
 	// success
 	mockResponse.EXPECT().
-		InsertResponses(responseIDSuccess, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDSuccess, gomock.Any()).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		InsertResponses(responseIDFailure, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDFailure, gomock.Any()).
 		Return(errMock).AnyTimes()
 
 	// responseID, err := mockRespondent.
@@ -865,20 +865,20 @@ func TestEditResponse(t *testing.T) {
 	// InsertResponses
 	// success
 	mockResponse.EXPECT().
-		InsertResponses(responseIDSuccess, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDSuccess, gomock.Any()).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		InsertResponses(responseIDFailure, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDFailure, gomock.Any()).
 		Return(errMock).AnyTimes()
 	// DeleteResponse
 	// success
 	mockResponse.EXPECT().
-		DeleteResponse(responseIDSuccess).
+		DeleteResponse(gomock.Any(), responseIDSuccess).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		DeleteResponse(responseIDFailure).
+		DeleteResponse(gomock.Any(), responseIDFailure).
 		Return(model.ErrNoRecordDeleted).AnyTimes()
 
 	// responseID, err := mockRespondent.
@@ -1384,7 +1384,7 @@ func TestDeleteResponse(t *testing.T) {
 			if testCase.request.DeleteRespondentError == nil {
 				mockResponse.
 					EXPECT().
-					DeleteResponse(responseID).
+					DeleteResponse(c.Request().Context(), responseID).
 					Return(testCase.request.DeleteResponseError)
 			}
 		}
