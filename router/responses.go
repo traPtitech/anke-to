@@ -37,7 +37,7 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 type Responses struct {
 	ID          int                  `json:"questionnaireID" validate:"min=0"`
 	SubmittedAt null.Time            `json:"submitted_at"`
-	Body        []model.ResponseBody `json:"body" validate:"required"`
+	Body        []model.ResponseBody `json:"body" validate:"required,dive"`
 }
 
 // PostResponse POST /responses
