@@ -282,25 +282,37 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	err = q.UpdateQuestionnaire(c.Request().Context(), req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
-	if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
+		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 
-	if err := q.DeleteTargets(c.Request().Context(), questionnaireID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+		if err := q.DeleteTargets(ctx, questionnaireID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 
-	if err := q.InsertTargets(c.Request().Context(), questionnaireID, req.Targets); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+		if err := q.InsertTargets(ctx, questionnaireID, req.Targets); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 
-	if err := q.DeleteAdministrators(c.Request().Context(), questionnaireID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+		if err := q.DeleteAdministrators(ctx, questionnaireID); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 
-	if err := q.InsertAdministrators(c.Request().Context(), questionnaireID, req.Administrators); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		if err := q.InsertAdministrators(ctx, questionnaireID, req.Administrators); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		var httpError *echo.HTTPError
+		if errors.As(err, &httpError) {
+			return httpError
+		}
+
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
 	}
 
 	return c.NoContent(http.StatusOK)
