@@ -21,9 +21,9 @@ type User struct {
 }
 
 type UserQueryparam struct {
-	Sort string `json:"sort" validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
-	Answered string `json:"answered" validate:"omitempty,oneof=answered unanswered"`
-	TraQID string `json:"traq_id" validate:"required,number"`
+	Sort string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Answered string `validate:"omitempty,oneof=answered unanswered"`
+	TraQID string `validate:"required,number"`
 }
 
 // NewUser Userのコンストラクタ
