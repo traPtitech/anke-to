@@ -212,14 +212,15 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
 
+	now := time.Now()
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"questionnaireID": questionnaireID,
 		"title":           req.Title,
 		"description":     req.Description,
 		"res_time_limit":  req.ResTimeLimit,
 		"deleted_at":      "NULL",
-		"created_at":      time.Now().Format(time.RFC3339),
-		"modified_at":     time.Now().Format(time.RFC3339),
+		"created_at":      now.Format(time.RFC3339),
+		"modified_at":     now.Format(time.RFC3339),
 		"res_shared_to":   req.ResSharedTo,
 		"targets":         req.Targets,
 		"administrators":  req.Administrators,
