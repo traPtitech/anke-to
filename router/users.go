@@ -112,7 +112,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		questionnaireIDs = append(questionnaireIDs, questionnaire.ID)
 	}
 
-	targets, err := u.GetTargets(questionnaireIDs)
+	targets, err := u.GetTargets(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get targets: %w", err))
 	}
