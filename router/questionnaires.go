@@ -345,7 +345,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 		scaleLabelMap[label.QuestionID] = label
 	}
 
-	validations, err := q.GetValidations(validationIDs)
+	validations, err := q.GetValidations(c.Request().Context(), validationIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
