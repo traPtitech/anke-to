@@ -2,10 +2,7 @@ package model
 
 import (
 	"context"
-	"errors"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 // Target TargetRepositoryの実装
@@ -77,7 +74,7 @@ func (*Target) GetTargets(ctx context.Context, questionnaireIDs []int) ([]Target
 	err = db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Find(&targets).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
