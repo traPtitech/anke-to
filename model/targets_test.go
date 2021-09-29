@@ -180,3 +180,131 @@ func TestDeleteTargets(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTargets(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description            string
+		questionnaires         []Questionnaires
+		questionnaireIDIndexes []int
+		isErr                  bool
+		err                    error
+	}
+
+	testCases := []test{
+		{
+			description: "questionnaireが1つ、targetが1人でもエラーなし",
+			questionnaires: []Questionnaires{
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+			},
+			questionnaireIDIndexes: []int{0},
+		},
+		{
+			description: "questionnaireが2つ、targetがそれぞれ1人でもエラーなし",
+			questionnaires: []Questionnaires{
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+			},
+			questionnaireIDIndexes: []int{0, 1},
+		},
+		{
+			description: "一部のquestionnaireの取得でもエラーなし",
+			questionnaires: []Questionnaires{
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+			},
+			questionnaireIDIndexes: []int{0},
+		},
+		{
+			description: "targetがなくてもエラーなし",
+			questionnaires: []Questionnaires{
+				{
+					Targets: []Targets{},
+				},
+			},
+			questionnaireIDIndexes: []int{0},
+		},
+		{
+			description: "questionnaireIDがなくてもエラーなし",
+			questionnaires: []Questionnaires{
+				{
+					Targets: []Targets{
+						{
+							UserTraqid: "a",
+						},
+					},
+				},
+			},
+			questionnaireIDIndexes: []int{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&testCase.questionnaires).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			questionnaireIDs := make([]int, 0, len(testCase.questionnaireIDIndexes))
+			for _, index := range testCase.questionnaireIDIndexes {
+				questionnaireIDs = append(questionnaireIDs, testCase.questionnaires[index].ID)
+			}
+
+			targets, err := targetImpl.GetTargets(ctx, questionnaireIDs)
+
+			if !testCase.isErr {
+				assert.NoErrorf(t, err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.err, err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			expectTargets := make([]Targets, 0, len(testCase.questionnaireIDIndexes))
+			for _, index := range testCase.questionnaireIDIndexes {
+				expectTargets = append(expectTargets, testCase.questionnaires[index].Targets...)
+			}
+
+			assert.ElementsMatchf(t, expectTargets, targets, testCase.description, "targets")
+		})
+	}
+}
