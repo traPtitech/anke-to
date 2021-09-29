@@ -44,10 +44,10 @@ func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, 
 }
 
 type GetQuestionnairesQueryParam struct {
-	Sort string `json:"sort" validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
-	Search string `json:"search" validate:"omitempty"`
-	Page string `json:"page" validate:"omitempty,number,min=0"`
-	Nontargeted string `json:"nontargeted" validate:"omitempty,boolean"`
+	Sort string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Search string `validate:"omitempty"`
+	Page string `validate:"omitempty,number,min=0"`
+	Nontargeted string `validate:"omitempty,boolean"`
 }
 
 // GetQuestionnaires GET /questionnaires
