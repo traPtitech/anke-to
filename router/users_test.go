@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"testing"
 	"time"
@@ -38,6 +39,55 @@ type targettedQuestionnaire struct {
 	ModifiedAt      time.Time `json:"modified_at"`
 	RespondedAt     null.Time `json:"responded_at"`
 	HasResponse     bool      `json:"has_response"`
+}
+
+func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{
+		description string
+		request *UserQueryparam
+		isErr bool
+	}{
+		{
+			description: "一般的なQueryParameterなのでエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "answered",
+				TraQID:   "12344566",
+			},
+		},
+		{
+			description: "Sort,Answeredが空文字でもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "",
+				Answered: "",
+				TraQID:   "12344566",
+			},
+		},
+		{
+			description: "traQIDが空文字なのでエラー",
+			request:     &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "answered",
+				TraQID:   "",
+			},
+			isErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		validate := validator.New()
+
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+			if test.isErr {
+				assert.Error(t, err)
+			}else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGetUsersMe(t *testing.T) {
