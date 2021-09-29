@@ -43,6 +43,12 @@ func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, 
 	}
 }
 
+type GetQuestionnairesQueryParam struct {
+	Sort string `json:"sort" validate:"oneof =created_at -created_at title -title modified_at -modified_at,omitempty"`
+	Search string `json:"search" validate:"omitempty"`
+	Page string `json:"page" validate:"number,omitempty"`
+}
+
 // GetQuestionnaires GET /questionnaires
 func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	userID, err := getUserID(c)
