@@ -24,13 +24,24 @@ type Questionnaire struct {
 	model.IOption
 	model.IScaleLabel
 	model.IValidation
+	model.ITransaction
 	traq.IWebhook
 }
 
 const MaxTitleLength = 50
 
 // NewQuestionnaire Questionnaireのコンストラクタ
-func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator, question model.IQuestion, option model.IOption, scaleLabel model.IScaleLabel, validation model.IValidation, webhook traq.IWebhook) *Questionnaire {
+func NewQuestionnaire(
+	questionnaire model.IQuestionnaire,
+	target model.ITarget,
+	administrator model.IAdministrator,
+	question model.IQuestion,
+	option model.IOption,
+	scaleLabel model.IScaleLabel,
+	validation model.IValidation,
+	transaction model.ITransaction,
+	webhook traq.IWebhook,
+) *Questionnaire {
 	return &Questionnaire{
 		IQuestionnaire: questionnaire,
 		ITarget:        target,
@@ -39,6 +50,7 @@ func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, 
 		IOption:        option,
 		IScaleLabel:    scaleLabel,
 		IValidation:    validation,
+		ITransaction:   transaction,
 		IWebhook:       webhook,
 	}
 }
