@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -634,7 +636,6 @@ func TestPostQuestionnaire(t *testing.T) {
 
 			e.HTTPErrorHandler(questionnaire.PostQuestionnaire(c), c)
 
-			t.Log(rec.Body.String())
 			assert.Equal(t, testCase.expect.statusCode, rec.Code, "status code")
 
 			if testCase.expect.statusCode == http.StatusCreated {
@@ -674,6 +675,298 @@ func TestPostQuestionnaire(t *testing.T) {
 				assert.ElementsMatch(t, testCase.request.Targets, questionnaire["targets"], "targets")
 				assert.ElementsMatch(t, testCase.request.Administrators, questionnaire["administrators"], "administrators")
 			}
+		})
+	}
+}
+
+func TestEditQuestionnaire(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockTarget := mock_model.NewMockITarget(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockOption := mock_model.NewMockIOption(ctrl)
+	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
+	mockValidation := mock_model.NewMockIValidation(ctrl)
+	mockTransaction := &model.MockTransaction{}
+	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
+
+	questionnaire := NewQuestionnaire(
+		mockQuestionnaire,
+		mockTarget,
+		mockAdministrator,
+		mockQuestion,
+		mockOption,
+		mockScaleLabel,
+		mockValidation,
+		mockTransaction,
+		mockWebhook,
+	)
+
+	type expect struct {
+		statusCode int
+	}
+	type test struct {
+		description               string
+		invalidRequest            bool
+		request                   PostAndEditQuestionnaireRequest
+		ExecutesCreation          bool
+		questionnaireID           int
+		InsertQuestionnaireError  error
+		DeleteTargetsError        error
+		InsertTargetsError        error
+		DeleteAdministratorsError error
+		InsertAdministratorsError error
+		PostMessageError          error
+		expect
+	}
+
+	testCases := []test{
+		{
+			description:    "リクエストの形式が誤っているので400",
+			invalidRequest: true,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "validationで落ちるので400",
+			request:     PostAndEditQuestionnaireRequest{},
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "InsertQuestionnaireがエラーなので500",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation:         true,
+			InsertQuestionnaireError: errors.New("InsertQuestionnaireError"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "DeleteTargetsがエラーなので500",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation:   true,
+			questionnaireID:    1,
+			DeleteTargetsError: errors.New("DeleteTargetsError"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "InsertTargetsがエラーなので500",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation:   true,
+			questionnaireID:    1,
+			InsertTargetsError: errors.New("InsertTargetsError"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "DeleteAdministratorsがエラーなので500",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation:          true,
+			questionnaireID:           1,
+			DeleteAdministratorsError: errors.New("DeleteAdministratorsError"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "InsertAdministratorsがエラーなので500",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation:          true,
+			questionnaireID:           1,
+			InsertAdministratorsError: errors.New("InsertAdministratorsError"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "一般的なリクエストなので200",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Time{}, false),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation: true,
+			questionnaireID:  1,
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			description: "resTimeLimitが現在時刻より前でも200",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Now().Add(-24*time.Hour), true),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation: true,
+			questionnaireID:  1,
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			description: "回答期限が設定されていてもでも200",
+			request: PostAndEditQuestionnaireRequest{
+				Title:          "第1回集会らん☆ぷろ募集アンケート",
+				Description:    "第1回集会らん☆ぷろ参加者募集",
+				ResTimeLimit:   null.NewTime(time.Now().Add(24*time.Hour), true),
+				ResSharedTo:    "public",
+				Targets:        []string{},
+				Administrators: []string{"mazrean"},
+			},
+			ExecutesCreation: true,
+			questionnaireID:  1,
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			var request io.Reader
+			if testCase.invalidRequest {
+				request = strings.NewReader("test")
+			} else {
+				buf := bytes.NewBuffer(nil)
+				err := json.NewEncoder(buf).Encode(testCase.request)
+				if err != nil {
+					t.Errorf("failed to encode request: %v", err)
+				}
+
+				request = buf
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d", testCase.questionnaireID), request)
+			rec := httptest.NewRecorder()
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			c := e.NewContext(req, rec)
+			c.SetParamNames("questionnaireID")
+			c.SetParamValues(strconv.Itoa(testCase.questionnaireID))
+
+			c.Set(questionnaireIDKey, testCase.questionnaireID)
+			c.Set(validatorKay, validator.New())
+
+			if testCase.ExecutesCreation {
+				// 時刻は完全一致しないためその対応
+				var mockTimeLimit interface{}
+				if testCase.request.ResTimeLimit.Valid {
+					mockTimeLimit = gomock.Any()
+				} else {
+					mockTimeLimit = testCase.request.ResTimeLimit
+				}
+
+				mockQuestionnaire.
+					EXPECT().
+					UpdateQuestionnaire(
+						c.Request().Context(),
+						testCase.request.Title,
+						testCase.request.Description,
+						mockTimeLimit,
+						testCase.request.ResSharedTo,
+						testCase.questionnaireID,
+					).
+					Return(testCase.InsertQuestionnaireError)
+
+				if testCase.InsertQuestionnaireError == nil {
+					mockTarget.
+						EXPECT().
+						DeleteTargets(
+							c.Request().Context(),
+							testCase.questionnaireID,
+						).
+						Return(testCase.DeleteTargetsError)
+
+					if testCase.DeleteTargetsError == nil {
+						mockTarget.
+							EXPECT().
+							InsertTargets(
+								c.Request().Context(),
+								testCase.questionnaireID,
+								testCase.request.Targets,
+							).
+							Return(testCase.InsertTargetsError)
+
+						if testCase.InsertTargetsError == nil {
+							mockAdministrator.
+								EXPECT().
+								DeleteAdministrators(
+									c.Request().Context(),
+									testCase.questionnaireID,
+								).
+								Return(testCase.DeleteAdministratorsError)
+
+							if testCase.DeleteAdministratorsError == nil {
+								mockAdministrator.
+									EXPECT().
+									InsertAdministrators(
+										c.Request().Context(),
+										testCase.questionnaireID,
+										testCase.request.Administrators,
+									).
+									Return(testCase.InsertAdministratorsError)
+							}
+						}
+					}
+				}
+			}
+
+			e.HTTPErrorHandler(questionnaire.EditQuestionnaire(c), c)
+
+			assert.Equal(t, testCase.expect.statusCode, rec.Code, "status code")
 		})
 	}
 }
