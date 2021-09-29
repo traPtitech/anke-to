@@ -23,7 +23,7 @@ func NewTransaction() *Transaction {
 
 // Do トランザクション用の関数
 func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx context.Context) error) error {
-	err := db.Transaction(func(tx *gorm.DB) error {
+	fc := func(tx *gorm.DB) error {
 		ctx = context.WithValue(ctx, txKey, tx)
 
 		err := f(ctx)
@@ -32,9 +32,18 @@ func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx 
 		}
 
 		return nil
-	}, txOption)
-	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	if txOption == nil {
+		err := db.Transaction(fc)
+		if err != nil {
+			return fmt.Errorf("failed in transaction: %w", err)
+		}
+	} else {
+		err := db.Transaction(fc, txOption)
+		if err != nil {
+			return fmt.Errorf("failed in transaction: %w", err)
+		}
 	}
 
 	return nil
