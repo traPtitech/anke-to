@@ -330,7 +330,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// DeleteQuestionnaire DELETE /questonnaires/:questionnaireID
+// DeleteQuestionnaire DELETE /questionnaires/:questionnaireID
 func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
