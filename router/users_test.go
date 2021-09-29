@@ -54,7 +54,7 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			request:     &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "answered",
-				TraQID:   "12344566",
+				TraQID:   string(userOne),
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			request:     &UserQueryparam{
 				Sort:     "",
 				Answered: "",
-				TraQID:   "12344566",
+				TraQID:   string(userOne),
 			},
 		},
 		{
