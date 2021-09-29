@@ -111,3 +111,72 @@ func TestInsertTargets(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteTargets(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description   string
+		beforeTargets []string
+		isErr         bool
+		err           error
+	}
+
+	testCases := []test{
+		{
+			description:   "targetが1人でもエラーなし",
+			beforeTargets: []string{"a"},
+		},
+		{
+			description:   "targetが複数でもエラーなし",
+			beforeTargets: []string{"a", "b"},
+		},
+		{
+			description:   "targetがなくてもエラーなし",
+			beforeTargets: []string{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.beforeTargets))
+			for _, target := range testCase.beforeTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			err = targetImpl.DeleteTargets(ctx, questionnaire.ID)
+
+			if !testCase.isErr {
+				assert.NoErrorf(t, err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, testCase.err, err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			err = db.
+				Session(&gorm.Session{}).
+				Where("questionnaire_id = ?", questionnaire.ID).
+				Take(&Targets{}).Error
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				t.Errorf("invalid error(%s): expected: %+v, actual: %+v", testCase.description, gorm.ErrRecordNotFound, err)
+			}
+		})
+	}
+}
