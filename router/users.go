@@ -23,7 +23,7 @@ type User struct {
 type UserQueryparam struct {
 	Sort string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
 	Answered string `validate:"omitempty,oneof=answered unanswered"`
-	TraQID string `validate:"required,number"`
+	TraQID string `validate:"required"`
 }
 
 // NewUser Userのコンストラクタ
