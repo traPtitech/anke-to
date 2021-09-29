@@ -131,7 +131,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := q.InsertTargets(lastID, req.Targets); err != nil {
+	if err := q.InsertTargets(c.Request().Context(), lastID, req.Targets); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -236,11 +236,11 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteTargets(questionnaireID); err != nil {
+	if err := q.DeleteTargets(c.Request().Context(), questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.InsertTargets(questionnaireID, req.Targets); err != nil {
+	if err := q.InsertTargets(c.Request().Context(), questionnaireID, req.Targets); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -266,7 +266,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteTargets(questionnaireID); err != nil {
+	if err := q.DeleteTargets(c.Request().Context(), questionnaireID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
