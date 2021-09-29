@@ -811,7 +811,7 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
+	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware,m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/users/", testCase.request.targetUser, "/targeted"), typeNone, "")
