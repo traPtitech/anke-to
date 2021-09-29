@@ -44,7 +44,6 @@ func getTx(ctx context.Context) (*gorm.DB, error) {
 	iDB := ctx.Value(txKey)
 	if iDB == nil {
 		return db.Session(&gorm.Session{
-			NewDB:   true,
 			Context: ctx,
 		}), nil
 	}
@@ -55,7 +54,6 @@ func getTx(ctx context.Context) (*gorm.DB, error) {
 	}
 
 	return db.Session(&gorm.Session{
-		NewDB:   true,
 		Context: ctx,
 	}), nil
 }
