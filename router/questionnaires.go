@@ -141,27 +141,28 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 	req := PostAndEditQuestionnaireRequest{}
 
 	// JSONを構造体につける
-	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
+	err := c.Bind(&req)
+	if err != nil {
+		c.Logger().Infof("invalid request body: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		c.Logger().Errorf("failed to get validator: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		c.Logger().Infof("failed to validate: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if req.ResTimeLimit.Valid {
 		isBefore := req.ResTimeLimit.ValueOrZero().Before(time.Now())
 		if isBefore {
-			c.Logger().Info(fmt.Sprintf(": %+v", req.ResTimeLimit))
+			c.Logger().Infof("invalid resTimeLimit: %+v", req.ResTimeLimit)
 			return echo.NewHTTPError(http.StatusBadRequest, "res time limit is before now")
 		}
 	}
@@ -170,15 +171,20 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 		if err != nil {
+			c.Logger().Errorf("failed to insert a questionnaire: %w", err)
 			return err
 		}
 
-		if err := q.InsertTargets(ctx, questionnaireID, req.Targets); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err := q.InsertTargets(ctx, questionnaireID, req.Targets)
+		if err != nil {
+			c.Logger().Errorf("failed to insert targets: %w", err)
+			return err
 		}
 
-		if err := q.InsertAdministrators(ctx, questionnaireID, req.Administrators); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.InsertAdministrators(ctx, questionnaireID, req.Administrators)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrators: %w", err)
+			return err
 		}
 
 		message := createQuestionnaireMessage(
@@ -191,14 +197,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		)
 		err = q.PostMessage(message)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to post message: %w", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
 		}
 
 		return nil
 	})
 	if err != nil {
-		return err
+		var httpError *echo.HTTPError
+		if errors.As(err, &httpError) {
+			return httpError
+		}
+
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
