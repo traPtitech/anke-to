@@ -260,48 +260,59 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
+		c.Logger().Errorf("failed to get questionnaireID: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	req := PostAndEditQuestionnaireRequest{}
 
-	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
+	err = c.Bind(&req)
+	if err != nil {
+		c.Logger().Infof("failed to bind request: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		c.Logger().Errorf("failed to get validator: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		c.Logger().Infof("failed to validate: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+			c.Logger().Errorf("failed to update questionnaire: %w", err)
+			return err
 		}
 
-		if err := q.DeleteTargets(ctx, questionnaireID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.DeleteTargets(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete targets: %w", err)
+			return err
 		}
 
-		if err := q.InsertTargets(ctx, questionnaireID, req.Targets); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.InsertTargets(ctx, questionnaireID, req.Targets)
+		if err != nil {
+			c.Logger().Errorf("failed to insert targets: %w", err)
+			return err
 		}
 
-		if err := q.DeleteAdministrators(ctx, questionnaireID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.DeleteAdministrators(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrators: %w", err)
+			return err
 		}
 
-		if err := q.InsertAdministrators(ctx, questionnaireID, req.Administrators); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.InsertAdministrators(ctx, questionnaireID, req.Administrators)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrators: %w", err)
+			return err
 		}
 
 		return nil
