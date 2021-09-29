@@ -1,11 +1,10 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"gorm.io/gorm"
 )
 
 // Validation ValidationRepositoryの実装
@@ -25,21 +24,29 @@ type Validations struct {
 }
 
 // InsertValidation IDを指定してvalidationsを挿入する
-func (*Validation) InsertValidation(lastID int, validation Validations) error {
+func (*Validation) InsertValidation(ctx context.Context, lastID int, validation Validations) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get the transaction: %w", err)
+	}
+
 	validation.QuestionID = lastID
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&validation).Error
+	err = db.Create(&validation).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert the validation (lastID: %d): %w", lastID, err)
 	}
+
 	return nil
 }
 
 // UpdateValidation questionIDを指定してvalidationを更新する
-func (*Validation) UpdateValidation(questionID int, validation Validations) error {
+func (*Validation) UpdateValidation(ctx context.Context, questionID int, validation Validations) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get the transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Model(&Validations{}).
 		Where("question_id = ?", questionID).
 		Updates(map[string]interface{}{
@@ -48,38 +55,48 @@ func (*Validation) UpdateValidation(questionID int, validation Validations) erro
 			"min_bound":     validation.MinBound,
 			"max_bound":     validation.MaxBound,
 		})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to update the validation (questionID: %d): %w", questionID, err)
 	}
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("failed to update a validation record: %w", ErrNoRecordUpdated)
 	}
+
 	return nil
 }
 
 // DeleteValidation questionIDを指定してvalidationを削除する
-func (*Validation) DeleteValidation(questionID int) error {
+func (*Validation) DeleteValidation(ctx context.Context, questionID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get the transaction: %w", err)
+	}
+
 	result := db.
-		Session(&gorm.Session{NewDB: true}).
 		Where("question_id = ?", questionID).
 		Delete(&Validations{})
-	err := result.Error
+	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete the validation (questionID: %d): %w", questionID, err)
 	}
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("failed to delete a validation : %w", ErrNoRecordDeleted)
 	}
+
 	return nil
 }
 
-// GetValidations qustionIDのリストから対応するvalidationsのリストを取得する
-func (*Validation) GetValidations(qustionIDs []int) ([]Validations, error) {
+// GetValidations questionIDのリストから対応するvalidationsのリストを取得する
+func (*Validation) GetValidations(ctx context.Context, questionIDs []int) ([]Validations, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the transaction: %w", err)
+	}
+
 	validations := []Validations{}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Where("question_id IN (?)", qustionIDs).
+	err = db.
+		Where("question_id IN (?)", questionIDs).
 		Find(&validations).
 		Error
 	if err != nil {
