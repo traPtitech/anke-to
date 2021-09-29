@@ -23,8 +23,9 @@ type User struct {
 type UserQueryparam struct {
 	Sort string `json:"sort" validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
 	Answered string `json:"answered" validate:"omitempty,oneof=answered unanswered"`
-	TraQID string `json:"traq_id" validate:"omitempty,required,number"`
+	TraQID string `json:"traq_id" validate:"required,number"`
 }
+
 // NewUser Userのコンストラクタ
 func NewUser(respondent model.IRespondent, questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator) *User {
 	return &User{
@@ -228,6 +229,25 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	sort := c.QueryParam("sort")
 	answered := c.QueryParam("answered")
+
+	p := UserQueryparam{
+		Sort:     sort,
+		Answered: answered,
+		TraQID:   traQID,
+	}
+
+	validate,err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator:%w",err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(),p)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate:%w",err))
+		return echo.NewHTTPError(http.StatusBadRequest,err.Error())
+	}
+
 	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), traQID, answered, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
