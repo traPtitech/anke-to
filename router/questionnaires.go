@@ -47,6 +47,7 @@ type GetQuestionnairesQueryParam struct {
 	Sort string `json:"sort" validate:"oneof =created_at -created_at title -title modified_at -modified_at,omitempty"`
 	Search string `json:"search" validate:"omitempty"`
 	Page string `json:"page" validate:"number,omitempty"`
+	Nontargeted string `json:"nontargeted" validate:"boolean,omitempty"`
 }
 
 // GetQuestionnaires GET /questionnaires
