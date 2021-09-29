@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/go-playground/validator/v10"
+
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,23 +24,426 @@ import (
 )
 
 type responseBody struct {
-	QuestionID     int         `json:"questionID"`
-	QuestionType   string      `json:"question_type"`
-	Body           null.String `json:"response"`
-	OptionResponse []string    `json:"option_response"`
+	QuestionID     int         `json:"questionID" validate:"min=0"`
+	QuestionType   string      `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
+	Body           null.String `json:"response"  validate:"required"`
+	OptionResponse []string    `json:"option_response"  validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+}
+
+func TestPostResponseValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		request     *Responses
+		isErr       bool
+	}{
+		{
+			description: "一般的なリクエストなのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "IDが0でもエラーなし",
+			request: &Responses{
+				ID:          0,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "BodyのQuestionIDが0でもエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     0,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "ResponsesのIDが負なのでエラー",
+			request: &Responses{
+				ID:          -1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "Bodyがnilなのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body:        nil,
+			},
+			isErr: true,
+		},
+		{
+			description: "BodyのQuestionIDが負なのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     -1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "TextタイプでoptionResponseが50文字以上でエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+		{
+			description: "一般的なTextAreaタイプの回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "TextArea",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "TextAreaタイプでoptionResponseが50文字以上でもエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "TextArea",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "TextArea",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+		{
+			description: "一般的なNumberタイプの回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Number",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "NumberタイプでoptionResponseが50文字以上でもエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Number",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Number",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+		{
+			description: "Checkboxタイプで一般的な回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: []string{"a", "b"},
+					},
+				},
+			},
+		},
+		{
+			description: "CheckboxタイプでOptionResponseがnilな回答なのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "CheckboxタイプでOptionResponseが50文字以上な回答なのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+		{
+			description: "MultipleChoiceタイプで一般的な回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "MultipleChoice",
+						Body:           null.String{},
+						OptionResponse: []string{"a", "b"},
+					},
+				},
+			},
+		},
+		{
+			description: "MultipleChoiceタイプでOptionResponseがnilな回答なのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "MultipleChoice",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "MultipleChoiceタイプでOptionResponseが50文字以上な回答なのでエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "MultipleChoice",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "MultipleChoice",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+		{
+			description: "一般的なLinearScaleタイプの回答なのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "LinearScale",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+		},
+		{
+			description: "LinearScaleタイプでoptionResponseが50文字以上でもエラー",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "LinearScale",
+						Body:           null.String{},
+						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
+			request: &Responses{
+				ID:          1,
+				SubmittedAt: null.Time{},
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "LinearScale",
+						Body:           null.String{},
+						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		validate := validator.New()
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+
+			if test.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestPostResponse(t *testing.T) {
 	type responseRequestBody struct {
-		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
-		Body            []responseBody `json:"body"`
+		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
+		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
+		Body            []responseBody `json:"body" validate:"required"`
 	}
 	type responseResponseBody struct {
-		Body            []responseBody `json:"body"`
-		QuestionnaireID int            `json:"questionnaireID"`
-		ResponseID      int            `json:"responseID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
+		Body            []responseBody `json:"body" validate:"required"`
+		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
+		ResponseID      int            `json:"responseID" validate:"min=0"`
+		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
 	}
 
 	t.Parallel()
@@ -104,15 +509,15 @@ func TestPostResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
-		Return(null.NewTime(time.Time{}, false), gorm.ErrRecordNotFound).AnyTimes()
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
+		Return(null.NewTime(time.Time{}, false), model.ErrRecordNotFound).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -161,15 +566,15 @@ func TestPostResponse(t *testing.T) {
 	// GetScaleLabels
 	// success
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDSuccess}).
+		GetScaleLabels(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.ScaleLabels{scalelabel}, nil).AnyTimes()
 	// failure
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDFailure}).
+		GetScaleLabels(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 	// nothing
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{}).
+		GetScaleLabels(gomock.Any(), []int{}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 
 	// CheckScaleLabel
@@ -186,22 +591,22 @@ func TestPostResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDSuccess, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDSuccess, gomock.Any()).
 		Return(responseIDSuccess, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
 
 	// Response
 	// InsertResponses
 	// success
 	mockResponse.EXPECT().
-		InsertResponses(responseIDSuccess, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDSuccess, gomock.Any()).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		InsertResponses(responseIDFailure, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDFailure, gomock.Any()).
 		Return(errMock).AnyTimes()
 
 	// responseID, err := mockRespondent.
@@ -296,7 +701,7 @@ func TestPostResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusNotFound,
+				code:  http.StatusBadRequest,
 			},
 		},
 		{
@@ -506,7 +911,7 @@ func TestPostResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
+	e.POST("/api/responses", r.PostResponse, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -601,16 +1006,16 @@ func TestGetResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDSuccess).
+		GetRespondentDetail(gomock.Any(), responseIDSuccess).
 		Return(respondentDetail, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDFailure).
+		GetRespondentDetail(gomock.Any(), responseIDFailure).
 		Return(model.RespondentDetail{}, errMock).AnyTimes()
 	// NotFound
 	mockRespondent.EXPECT().
-		GetRespondentDetail(responseIDNotFound).
-		Return(model.RespondentDetail{}, gorm.ErrRecordNotFound).AnyTimes()
+		GetRespondentDetail(gomock.Any(), responseIDNotFound).
+		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
 	type request struct {
 		user       users
@@ -768,15 +1173,15 @@ func TestEditResponse(t *testing.T) {
 	// GetQuestionnaireLimit
 	// success
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDSuccess).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDSuccess).
 		Return(null.TimeFrom(nowTime.Add(time.Minute)), nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDFailure).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDFailure).
 		Return(null.NewTime(time.Time{}, false), errMock).AnyTimes()
 	// limit
 	mockQuestionnaire.EXPECT().
-		GetQuestionnaireLimit(questionnaireIDLimit).
+		GetQuestionnaireLimit(gomock.Any(), questionnaireIDLimit).
 		Return(null.TimeFrom(nowTime.Add(-time.Minute)), nil).AnyTimes()
 
 	// Validation
@@ -825,15 +1230,15 @@ func TestEditResponse(t *testing.T) {
 	// GetScaleLabels
 	// success
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDSuccess}).
+		GetScaleLabels(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.ScaleLabels{scalelabel}, nil).AnyTimes()
 	// failure
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{questionIDFailure}).
+		GetScaleLabels(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 	// nothing
 	mockScaleLabel.EXPECT().
-		GetScaleLabels([]int{}).
+		GetScaleLabels(gomock.Any(), []int{}).
 		Return([]model.ScaleLabels{}, nil).AnyTimes()
 
 	// CheckScaleLabel
@@ -850,45 +1255,36 @@ func TestEditResponse(t *testing.T) {
 	// InsertRespondent
 	// success
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDSuccess, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDSuccess, gomock.Any()).
 		Return(responseIDSuccess, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		InsertRespondent(string(userOne), questionnaireIDFailure, gomock.Any()).
+		InsertRespondent(gomock.Any(), string(userOne), questionnaireIDFailure, gomock.Any()).
 		Return(responseIDFailure, nil).AnyTimes()
-	// CheckRespondentByResponseID
-	// success
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDSuccess).
-		Return(true, nil).AnyTimes()
-	// failure
-	mockRespondent.EXPECT().
-		CheckRespondentByResponseID(gomock.Any(), responseIDFailure).
-		Return(false, nil).AnyTimes()
 	// UpdateSubmittedAt
 	// success
 	mockRespondent.EXPECT().
-		UpdateSubmittedAt(gomock.Any()).
+		UpdateSubmittedAt(gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 
 	// Response
 	// InsertResponses
 	// success
 	mockResponse.EXPECT().
-		InsertResponses(responseIDSuccess, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDSuccess, gomock.Any()).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		InsertResponses(responseIDFailure, gomock.Any()).
+		InsertResponses(gomock.Any(), responseIDFailure, gomock.Any()).
 		Return(errMock).AnyTimes()
 	// DeleteResponse
 	// success
 	mockResponse.EXPECT().
-		DeleteResponse(responseIDSuccess).
+		DeleteResponse(gomock.Any(), responseIDSuccess).
 		Return(nil).AnyTimes()
 	// failure
 	mockResponse.EXPECT().
-		DeleteResponse(responseIDFailure).
+		DeleteResponse(gomock.Any(), responseIDFailure).
 		Return(model.ErrNoRecordDeleted).AnyTimes()
 
 	// responseID, err := mockRespondent.
@@ -1186,7 +1582,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "response doe not exist",
+			description: "response does not exist",
 			request: request{
 				user:       userOne,
 				responseID: responseIDFailure,
@@ -1205,13 +1601,23 @@ func TestEditResponse(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				code:  http.StatusForbidden,
+				code:  http.StatusInternalServerError, //middlewareで弾くので500で良い
 			},
 		},
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, m.RespondentAuthenticate)
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			responseID, err := strconv.Atoi(c.Param("responseID"))
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, "responseID is not number")
+			}
+
+			c.Set(responseIDKey, responseID)
+			return next(c)
+		}
+	})
 
 	for _, testCase := range testCases {
 		requestByte, jsonErr := json.Marshal(testCase.request.requestBody)
@@ -1253,6 +1659,7 @@ func TestDeleteResponse(t *testing.T) {
 		GetQuestionnaireLimitError error
 		ExecutesDeletion           bool
 		DeleteRespondentError      error
+		DeleteResponseError        error
 	}
 	type expect struct {
 		statusCode int
@@ -1271,6 +1678,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1283,6 +1691,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusOK,
@@ -1295,6 +1704,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusMethodNotAllowed,
@@ -1304,9 +1714,10 @@ func TestDeleteResponse(t *testing.T) {
 			description: "GetQuestionnaireLimitByResponseIDがエラーRecordNotFoundを吐くので404",
 			request: request{
 				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
-				GetQuestionnaireLimitError: gorm.ErrRecordNotFound,
+				GetQuestionnaireLimitError: model.ErrRecordNotFound,
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusNotFound,
@@ -1319,6 +1730,7 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: errors.New("error"),
 				ExecutesDeletion:           false,
 				DeleteRespondentError:      nil,
+				DeleteResponseError:        nil,
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1331,6 +1743,20 @@ func TestDeleteResponse(t *testing.T) {
 				GetQuestionnaireLimitError: nil,
 				ExecutesDeletion:           true,
 				DeleteRespondentError:      errors.New("error"),
+				DeleteResponseError:        nil,
+			},
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "DeleteResponseがエラーを吐くので500",
+			request: request{
+				QuestionnaireLimit:         null.NewTime(time.Time{}, false),
+				GetQuestionnaireLimitError: nil,
+				ExecutesDeletion:           true,
+				DeleteRespondentError:      nil,
+				DeleteResponseError:        errors.New("error"),
 			},
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1354,13 +1780,19 @@ func TestDeleteResponse(t *testing.T) {
 
 		mockQuestionnaire.
 			EXPECT().
-			GetQuestionnaireLimitByResponseID(responseID).
+			GetQuestionnaireLimitByResponseID(gomock.Any(), responseID).
 			Return(testCase.request.QuestionnaireLimit, testCase.request.GetQuestionnaireLimitError)
 		if testCase.request.ExecutesDeletion {
 			mockRespondent.
 				EXPECT().
-				DeleteRespondent(userID, responseID).
+				DeleteRespondent(gomock.Any(), responseID).
 				Return(testCase.request.DeleteRespondentError)
+			if testCase.request.DeleteRespondentError == nil {
+				mockResponse.
+					EXPECT().
+					DeleteResponse(c.Request().Context(), responseID).
+					Return(testCase.request.DeleteResponseError)
+			}
 		}
 
 		e.HTTPErrorHandler(r.DeleteResponse(c), c)

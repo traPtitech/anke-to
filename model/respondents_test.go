@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -9,17 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 func TestInsertRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -92,7 +95,7 @@ func TestInsertRespondent(t *testing.T) {
 			questionnaireID = -1
 		}
 
-		responseID, err := respondentImpl.InsertRespondent(testCase.args.userID, questionnaireID, testCase.args.submittedAt)
+		responseID, err := respondentImpl.InsertRespondent(ctx, testCase.args.userID, questionnaireID, testCase.args.submittedAt)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -105,7 +108,10 @@ func TestInsertRespondent(t *testing.T) {
 		}
 
 		respondent := Respondents{}
-		err = db.Where("response_id = ?", responseID).First(&respondent).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
 		assertion.NoError(err, testCase.description, "get respondent")
 
 		assertion.Equal(responseID, respondent.ResponseID, testCase.description, "responseID")
@@ -113,7 +119,7 @@ func TestInsertRespondent(t *testing.T) {
 		assertion.Equal(testCase.args.userID, respondent.UserTraqid, testCase.description, "userID")
 		assertion.WithinDuration(testCase.args.submittedAt.ValueOrZero(), respondent.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 		assertion.WithinDuration(time.Now(), respondent.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 	}
 }
 
@@ -121,11 +127,12 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -156,13 +163,13 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		responseID, err := respondentImpl.InsertRespondent(ctx, userTwo, questionnaireID, null.NewTime(time.Now(), false))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
 
-		err = respondentImpl.UpdateSubmittedAt(responseID)
+		err = respondentImpl.UpdateSubmittedAt(ctx, responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -175,7 +182,10 @@ func TestUpdateSubmittedAt(t *testing.T) {
 		}
 
 		respondent := Respondents{}
-		err = db.Where("response_id = ?", responseID).First(&respondent).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
 		assertion.NoError(err, testCase.description, "get respondent")
 
 		assertion.Equal(responseID, respondent.ResponseID, testCase.description, "responseID")
@@ -183,7 +193,7 @@ func TestUpdateSubmittedAt(t *testing.T) {
 		assertion.Equal(testCase.args.userID, respondent.UserTraqid, testCase.description, "userID")
 		assertion.WithinDuration(testCase.args.submittedAt.ValueOrZero(), respondent.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 		assertion.WithinDuration(time.Now(), respondent.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 	}
 }
 
@@ -191,17 +201,17 @@ func TestDeleteRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
 		validresponseID bool
 		insertUserID    string
-		deleteUserID    string
 	}
 	type expect struct {
 		isErr bool
@@ -216,31 +226,10 @@ func TestDeleteRespondent(t *testing.T) {
 
 	testCases := []test{
 		{
-			description: "delete by administrator",
-			args: args{
-				validresponseID: true,
-				insertUserID:    userTwo,
-				deleteUserID:    userOne,
-			},
-		},
-		{
 			description: "delete by respondents",
 			args: args{
 				validresponseID: true,
 				insertUserID:    userTwo,
-				deleteUserID:    userTwo,
-			},
-		},
-		{
-			description: "delete by another user",
-			args: args{
-				validresponseID: true,
-				insertUserID:    userTwo,
-				deleteUserID:    userThree,
-			},
-			expect: expect{
-				isErr: true,
-				err:   ErrNoRecordDeleted,
 			},
 		},
 		{
@@ -248,7 +237,6 @@ func TestDeleteRespondent(t *testing.T) {
 			args: args{
 				validresponseID: false,
 				insertUserID:    userTwo,
-				deleteUserID:    userThree,
 			},
 			expect: expect{
 				isErr: true,
@@ -258,13 +246,14 @@ func TestDeleteRespondent(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := respondentImpl.InsertRespondent(testCase.args.insertUserID, questionnaireID, null.NewTime(time.Now(), true))
+		responseID, err := respondentImpl.InsertRespondent(ctx, testCase.args.insertUserID, questionnaireID, null.NewTime(time.Now(), true))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		}
 
-		err = respondentImpl.DeleteRespondent(testCase.args.deleteUserID, responseID)
+		err = respondentImpl.DeleteRespondent(ctx, responseID)
+
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -275,12 +264,117 @@ func TestDeleteRespondent(t *testing.T) {
 		if err != nil {
 			continue
 		}
+
+		respondent := Respondents{}
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Unscoped().
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
+		if err != nil {
+			t.Errorf("failed to get respondent: %v", err)
+		}
+
+		assertion.WithinDuration(time.Now(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
+	}
+}
+
+func TestGetRespondent(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	questionnaire := Questionnaires{
+		Title:        "第1回集会らん☆ぷろ募集アンケート",
+		Description:  "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！",
+		ResTimeLimit: null.NewTime(time.Now(), false),
+		ResSharedTo:  "private",
+	}
+	err := db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&questionnaire).Error
+	require.NoError(t, err)
+
+	respondent := Respondents{
+		UserTraqid:      userOne,
+		QuestionnaireID: questionnaire.ID,
+		SubmittedAt:     null.NewTime(time.Now(), true),
+	}
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Create(&respondent).Error
+	require.NoError(t, err)
+
+	type args struct {
+		responseID int
+	}
+	type expect struct {
+		respondent Respondents
+		isErr      bool
+		err        error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				responseID: respondent.ResponseID,
+			},
+			expect: expect{
+				respondent: respondent,
+			},
+		},
+		{
+			description: "questionnaireID does not exist",
+			args: args{
+				responseID: -1,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrRecordNotFound,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actualRespondent, err := respondentImpl.GetRespondent(ctx, testCase.args.responseID)
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.respondent.ResponseID, actualRespondent.ResponseID, testCase.description, "responseID")
+		assertion.Equal(testCase.expect.respondent.QuestionnaireID, actualRespondent.QuestionnaireID, testCase.description, "questionnaireID")
+		assertion.Equal(testCase.expect.respondent.UserTraqid, actualRespondent.UserTraqid, testCase.description, "traQ ID")
+		assertion.Equal(testCase.expect.respondent.SubmittedAt.Valid, actualRespondent.SubmittedAt.Valid, testCase.description, "submittedAt valid")
+		if testCase.expect.respondent.SubmittedAt.Valid {
+			assertion.WithinDuration(testCase.expect.respondent.SubmittedAt.Time, actualRespondent.SubmittedAt.Time, 2*time.Second, testCase.description, "submittedAt")
+		}
+		assertion.WithinDuration(testCase.expect.respondent.ModifiedAt, actualRespondent.ModifiedAt, 2*time.Second, testCase.description, "modifiedAt")
+		assertion.Equal(testCase.expect.respondent.DeletedAt.Valid, actualRespondent.DeletedAt.Valid, testCase.description, "deletedAt valid")
+		if testCase.expect.respondent.DeletedAt.Valid {
+			assertion.WithinDuration(testCase.expect.respondent.DeletedAt.Time, actualRespondent.DeletedAt.Time, 2*time.Second, testCase.description, "deletedAt")
+		}
 	}
 }
 
 func TestGetRespondentInfos(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireIDs []int
@@ -296,13 +390,14 @@ func TestGetRespondentInfos(t *testing.T) {
 		args
 		expect
 	}
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
-	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
@@ -333,7 +428,7 @@ func TestGetRespondentInfos(t *testing.T) {
 
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
-		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(ctx, respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
 		respondentMap[responseID] = respondent
@@ -385,7 +480,7 @@ func TestGetRespondentInfos(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		respondentInfos, err := respondentImpl.GetRespondentInfos(testCase.args.userID, testCase.args.questionnaireIDs...)
+		respondentInfos, err := respondentImpl.GetRespondentInfos(ctx, testCase.args.userID, testCase.args.questionnaireIDs...)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -415,7 +510,7 @@ func TestGetRespondentInfos(t *testing.T) {
 			assertion.WithinDuration(questionnaire.ResTimeLimit.ValueOrZero(), respondentInfo.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "ResTimeLimit")
 			assertion.WithinDuration(expectRespondent.SubmittedAt.ValueOrZero(), respondentInfo.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 			assertion.WithinDuration(time.Now(), respondentInfo.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
-			assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondentInfo.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "deleted_at")
+			assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondentInfo.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
 		}
 	}
 }
@@ -424,18 +519,20 @@ func TestGetRespondentDetail(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -454,11 +551,11 @@ func TestGetRespondentDetail(t *testing.T) {
 
 	questionIDs := make([]int, 0, 2)
 
-	questionID, err := questionImpl.InsertQuestion(questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "質問文", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
-	questionID, err = questionImpl.InsertQuestion(questionnaireID, 1, 3, "MultipleChoice", "radio", true)
+	questionID, err = questionImpl.InsertQuestion(ctx, questionnaireID, 1, 3, "MultipleChoice", "radio", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
@@ -476,16 +573,16 @@ func TestGetRespondentDetail(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		responseID, err := respondentImpl.InsertRespondent(ctx, userTwo, questionnaireID, null.NewTime(time.Now(), false))
 		require.NoError(t, err)
 		if !testCase.args.validresponseID {
 			responseID = -1
 		} else {
-			err := responseImpl.InsertResponses(responseID, testCase.args.responseMetas)
+			err := responseImpl.InsertResponses(ctx, responseID, testCase.args.responseMetas)
 			require.NoError(t, err)
 		}
 
-		respondentDetail, err := respondentImpl.GetRespondentDetail(responseID)
+		respondentDetail, err := respondentImpl.GetRespondentDetail(ctx, responseID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -519,18 +616,20 @@ func TestGetRespondentDetails(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
 	err = db.
+		Session(&gorm.Session{NewDB: true}).
 		Unscoped().
 		Where("id = ?", questionnaireID).
 		Find(&questionnaire).Error
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
 	type args struct {
@@ -579,7 +678,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	questionIDs := make([]int, 0, questionLength)
 
 	for _, question := range questions {
-		questionID, err := questionImpl.InsertQuestion(question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(ctx, question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
 		require.NoError(t, err)
 		questionIDs = append(questionIDs, questionID)
 
@@ -601,6 +700,11 @@ func TestGetRespondentDetails(t *testing.T) {
 			UserTraqid:      userThree,
 			SubmittedAt:     null.NewTime(time.Now().Add(time.Second*2), true),
 		},
+		{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      userOne,
+			SubmittedAt:     null.NewTime(time.Now(), false),
+		},
 	}
 
 	responseMetasList := [][]*ResponseMeta{
@@ -619,16 +723,21 @@ func TestGetRespondentDetails(t *testing.T) {
 			{QuestionID: questionIDs[1], Data: "選択肢3"},
 			{QuestionID: questionIDs[2], Data: "0"},
 		},
+		{
+			{QuestionID: questionIDs[0], Data: "リマインダーBOTを作った話1"},
+			{QuestionID: questionIDs[1], Data: "選択肢1"},
+			{QuestionID: questionIDs[2], Data: "10"},
+		},
 	}
 
 	responseLength := len(respondents)
 	responseIDs := make([]int, 0, responseLength)
 	for i, respondent := range respondents {
-		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(ctx, respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		responseIDs = append(responseIDs, responseID)
 
-		err = responseImpl.InsertResponses(responseIDs[i], responseMetasList[i])
+		err = responseImpl.InsertResponses(ctx, responseIDs[i], responseMetasList[i])
 		require.NoError(t, err)
 
 	}
@@ -757,7 +866,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		respondentDetails, err := respondentImpl.GetRespondentDetails(testCase.args.questionnaireID, testCase.args.sort)
+		respondentDetails, err := respondentImpl.GetRespondentDetails(ctx, testCase.args.questionnaireID, testCase.args.sort)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -780,6 +889,7 @@ func TestGetRespondentDetails(t *testing.T) {
 func TestGetRespondentsUserIDs(t *testing.T) {
 	t.Parallel()
 	assertion := assert.New(t)
+	ctx := context.Background()
 
 	type args struct {
 		questionnaireIDs []int
@@ -797,7 +907,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 	}
 	questionnaireIDs := make([]int, 0, 3)
 	for i := 0; i < 3; i++ {
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
 		require.NoError(t, err)
 		questionnaireIDs = append(questionnaireIDs, questionnaireID)
 	}
@@ -817,7 +927,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 
 	respondentMap := make(map[int]Respondents)
 	for _, respondent := range respondents {
-		responseID, err := respondentImpl.InsertRespondent(respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
+		responseID, err := respondentImpl.InsertRespondent(ctx, respondent.UserTraqid, respondent.QuestionnaireID, respondent.SubmittedAt)
 		require.NoError(t, err)
 		respondent.ResponseID = responseID
 		respondentMap[responseID] = respondent
@@ -856,7 +966,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		respondents, err := respondentImpl.GetRespondentsUserIDs(testCase.args.questionnaireIDs)
+		respondents, err := respondentImpl.GetRespondentsUserIDs(ctx, testCase.args.questionnaireIDs)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -883,14 +993,15 @@ func TestTestCheckRespondent(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
+	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
 	require.NoError(t, err)
 
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
 	require.NoError(t, err)
 
-	_, err = respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
+	_, err = respondentImpl.InsertRespondent(ctx, userTwo, questionnaireID, null.NewTime(time.Now(), true))
 	require.NoError(t, err)
 
 	type args struct {
@@ -943,87 +1054,7 @@ func TestTestCheckRespondent(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		isRespondent, err := respondentImpl.CheckRespondent(testCase.args.userID, testCase.args.questionnaireID)
-		if !testCase.expect.isErr {
-			assertion.NoError(err, testCase.description, "no error")
-		} else if testCase.expect.err != nil {
-			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
-		} else if testCase.expect.isErr {
-			assertion.Error(err, testCase.description, "any error")
-		}
-		if err != nil {
-			continue
-		}
-
-		assertion.Equal(testCase.expect.isRespondent, isRespondent, testCase.description, "isRespondent")
-	}
-}
-
-func TestCheckRespondentByResponseID(t *testing.T) {
-	t.Parallel()
-
-	assertion := assert.New(t)
-
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire("第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
-	require.NoError(t, err)
-
-	err = administratorImpl.InsertAdministrators(questionnaireID, []string{userOne})
-	require.NoError(t, err)
-
-	responseID, err := respondentImpl.InsertRespondent(userTwo, questionnaireID, null.NewTime(time.Now(), true))
-	require.NoError(t, err)
-
-	type args struct {
-		userID     string
-		responseID int
-	}
-	type expect struct {
-		isErr        bool
-		err          error
-		isRespondent bool
-	}
-
-	type test struct {
-		description string
-		args
-		expect
-	}
-
-	testCases := []test{
-		{
-			description: "valid",
-			args: args{
-				userID:     userTwo,
-				responseID: responseID,
-			},
-			expect: expect{
-				isRespondent: true,
-			},
-		},
-		{
-			description: "not respondents",
-			args: args{
-				userID:     userThree,
-				responseID: responseID,
-			},
-			expect: expect{
-				isRespondent: false,
-			},
-		},
-		{
-			description: "questionnaireID does not exist",
-			args: args{
-				userID:     userTwo,
-				responseID: -1,
-			},
-			expect: expect{
-				isRespondent: false,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		isRespondent, err := respondentImpl.CheckRespondentByResponseID(testCase.args.userID, testCase.args.responseID)
+		isRespondent, err := respondentImpl.CheckRespondent(ctx, testCase.args.userID, testCase.args.questionnaireID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {

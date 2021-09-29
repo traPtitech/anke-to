@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 type myResponse struct {
@@ -218,15 +219,15 @@ func TestGetMyResponses(t *testing.T) {
 	// GetRespondentInfos
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne)).
+		GetRespondentInfos(gomock.Any(), string(userOne)).
 		Return(respondentInfos, nil).AnyTimes()
 	// empty
 	mockRespondent.EXPECT().
-		GetRespondentInfos("empty").
+		GetRespondentInfos(gomock.Any(), "empty").
 		Return([]model.RespondentInfo{}, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentInfos("StatusInternalServerError").
+		GetRespondentInfos(gomock.Any(), "StatusInternalServerError").
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
@@ -375,15 +376,15 @@ func TestGetMyResponsesByID(t *testing.T) {
 	// GetRespondentInfos
 	// success
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne), questionnaireIDSuccess).
+		GetRespondentInfos(gomock.Any(), string(userOne), questionnaireIDSuccess).
 		Return(respondentInfos, nil).AnyTimes()
 	// questionnaireIDNotFound
 	mockRespondent.EXPECT().
-		GetRespondentInfos(string(userOne), questionnaireIDNotFound).
+		GetRespondentInfos(gomock.Any(), string(userOne), questionnaireIDNotFound).
 		Return([]model.RespondentInfo{}, nil).AnyTimes()
 	// failure
 	mockRespondent.EXPECT().
-		GetRespondentInfos("StatusInternalServerError", questionnaireIDSuccess).
+		GetRespondentInfos(gomock.Any(), "StatusInternalServerError", questionnaireIDSuccess).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
@@ -493,7 +494,7 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
+				DeletedAt:    gorm.DeletedAt(null.NewTime(nowTime, false)),
 				ResSharedTo:  "public",
 				CreatedAt:    nowTime,
 				ModifiedAt:   nowTime,
@@ -507,10 +508,13 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID2",
 				Description:  "questionnaireID2",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
@@ -541,15 +545,15 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 	// GetTargettedQuestionnaires
 	// success
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires(string(userOne), "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), string(userOne), "", gomock.Any()).
 		Return(targettedQuestionnaires, nil).AnyTimes()
 	// empty
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("empty", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "empty", "", gomock.Any()).
 		Return([]model.TargettedQuestionnaire{}, nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("StatusInternalServerError", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "StatusInternalServerError", "", gomock.Any()).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {
@@ -638,10 +642,13 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
@@ -652,10 +659,13 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 				Title:        "questionnaireID2",
 				Description:  "questionnaireID2",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    null.NewTime(nowTime, false),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
@@ -686,15 +696,15 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	// GetTargettedQuestionnaires
 	// success
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires(string(userOne), "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), string(userOne), "", gomock.Any()).
 		Return(targettedQuestionnaires, nil).AnyTimes()
 	// empty
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("empty", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "empty", "", gomock.Any()).
 		Return([]model.TargettedQuestionnaire{}, nil).AnyTimes()
 	// failure
 	mockQuestionnaire.EXPECT().
-		GetTargettedQuestionnaires("StatusInternalServerError", "", gomock.Any()).
+		GetTargettedQuestionnaires(gomock.Any(), "StatusInternalServerError", "", gomock.Any()).
 		Return(nil, errMock).AnyTimes()
 
 	type request struct {

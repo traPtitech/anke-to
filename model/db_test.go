@@ -17,17 +17,17 @@ var (
 	questionImpl      = new(Question)
 	respondentImpl    = new(Respondent)
 	responseImpl      = new(Response)
+	optionImpl        = new(Option)
 	scaleLabelImpl    = new(ScaleLabel)
 	validationImpl    = new(Validation)
 )
 
 //TestMain テストのmain
 func TestMain(m *testing.M) {
-	db, err := EstablishConnection()
+	err := EstablishConnection(true)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	err = Migrate()
 	if err != nil {

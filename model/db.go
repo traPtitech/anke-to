@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/plugin/prometheus"
 )
 
 var (
@@ -23,7 +26,7 @@ var (
 )
 
 // EstablishConnection DBと接続
-func EstablishConnection() (*gorm.DB, error) {
+func EstablishConnection(isProduction bool) error {
 	user, ok := os.LookupEnv("MARIADB_USERNAME")
 	if !ok {
 		user = "root"
@@ -44,89 +47,36 @@ func EstablishConnection() (*gorm.DB, error) {
 		dbname = "anke-to"
 	}
 
-	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname)+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
-	db = _db
-	db = db.BlockGlobalUpdate(true)
+	var logLevel logger.LogLevel
+	if isProduction {
+		logLevel = logger.Silent
+	} else {
+		logLevel = logger.Info
+	}
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname) + "?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4"
+	var err error
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logLevel),
+	})
 	db = db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
 
-	return db, err
+	db.Use(prometheus.New(prometheus.Config{
+		DBName:          "anke-to",
+		RefreshInterval: 15,
+		MetricsCollector: []prometheus.MetricsCollector{
+			&MetricsCollector{},
+		},
+	}))
+
+	return err
 }
 
 // Migrate DBのMigrationを行う
 func Migrate() error {
-	err := db.AutoMigrate(allTables...).Error
+	err := db.AutoMigrate(allTables...)
 	if err != nil {
 		return fmt.Errorf("failed in table's migration: %w", err)
-	}
-
-	err = db.
-		Model(&Options{}).
-		AddUniqueIndex("question_id", "question_id", "option_num").Error
-	if err != nil {
-		return fmt.Errorf("failed to add unique index(question_id): %w", err)
-	}
-
-	err = db.
-		Model(&Administrators{}).
-		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(administrators.questionnaire_id): %w", err)
-	}
-
-	err = db.
-		Model(&Options{}).
-		AddForeignKey("question_id", "question(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(options.question_id): %w", err)
-	}
-
-	err = db.
-		Model(&Questions{}).
-		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(question.questionnaire_id): %w", err)
-	}
-
-	err = db.
-		Model(&Respondents{}).
-		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(respondents.questionnaire_id): %w", err)
-	}
-
-	err = db.
-		Model(&Responses{}).
-		AddForeignKey("response_id", "respondents(response_id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(response.response_id): %w", err)
-	}
-
-	err = db.
-		Model(&Responses{}).
-		AddForeignKey("question_id", "question(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(response.question_id): %w", err)
-	}
-
-	err = db.
-		Model(&ScaleLabels{}).
-		AddForeignKey("question_id", "question(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(scale_labels.question_id): %w", err)
-	}
-
-	err = db.
-		Model(&Targets{}).
-		AddForeignKey("questionnaire_id", "questionnaires(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(targets.questionnaire_id): %w", err)
-	}
-
-	err = db.
-		Model(&Validations{}).
-		AddForeignKey("question_id", "question(id)", "RESTRICT", "RESTRICT").Error
-	if err != nil {
-		return fmt.Errorf("failed to add foreingkey(validations.question_id): %w", err)
 	}
 
 	return nil

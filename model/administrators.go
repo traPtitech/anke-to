@@ -2,10 +2,12 @@
 
 package model
 
+import "context"
+
 // IAdministrator AdministratorのRepository
 type IAdministrator interface {
-	InsertAdministrators(questionnaireID int, administrators []string) error
-	DeleteAdministrators(questionnaireID int) error
-	GetAdministrators(questionnaireIDs []int) ([]Administrators, error)
-	CheckQuestionnaireAdmin(userID string, questionnaireID int) (bool, error)
+	InsertAdministrators(ctx context.Context, questionnaireID int, administrators []string) error
+	DeleteAdministrators(ctx context.Context, questionnaireID int) error
+	GetAdministrators(ctx context.Context, questionnaireIDs []int) ([]Administrators, error)
+	CheckQuestionnaireAdmin(ctx context.Context, userID string, questionnaireID int) (bool, error)
 }

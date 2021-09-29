@@ -19,7 +19,7 @@ jobs:
         with:
           go-version: 1.17
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.6
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -35,13 +35,13 @@ jobs:
         with:
           go-version: 1.17
       - uses: actions/checkout@v1
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.6
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.6
         with:
           path: /tmp/go/cache
           key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
@@ -49,7 +49,7 @@ jobs:
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
       - run: go build -o anke-to
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v2.2.4
         with:
           name: anke-to
           path: anke-to
@@ -70,7 +70,7 @@ jobs:
         with:
           go-version: 1.17
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.6
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -85,11 +85,11 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2.1.0
         with:
           file: ./coverage.txt
           yml: ./codecov.yml
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v2.2.4
         with:
           name: coverage.txt
           path: coverage.txt
@@ -102,7 +102,7 @@ jobs:
           go-version: 1.17
       - uses: actions/checkout@v2
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v1
+        uses: reviewdog/action-golangci-lint@v2.0.1
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -113,7 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.6.1
+        uses: stoplightio/spectral-action@v0.8.1
         with:
           file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}

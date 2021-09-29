@@ -49,7 +49,7 @@ func (u *User) GetMyResponses(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	myResponses, err := u.GetRespondentInfos(userID)
+	myResponses, err := u.GetRespondentInfos(c.Request().Context(), userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -70,7 +70,7 @@ func (u *User) GetMyResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	myresponses, err := u.GetRespondentInfos(userID, questionnaireID)
+	myresponses, err := u.GetRespondentInfos(c.Request().Context(), userID, questionnaireID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -86,7 +86,7 @@ func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
 	}
 
 	sort := c.QueryParam("sort")
-	ret, err := u.GetTargettedQuestionnaires(userID, "", sort)
+	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), userID, "", sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -102,7 +102,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 	}
 
 	// 自分が管理者になっているアンケート一覧
-	questionnaires, err := u.GetAdminQuestionnaires(userID)
+	questionnaires, err := u.GetAdminQuestionnaires(c.Request().Context(), userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaires: %w", err))
 	}
@@ -126,7 +126,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	respondents, err := u.GetRespondentsUserIDs(questionnaireIDs)
+	respondents, err := u.GetRespondentsUserIDs(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondents: %w", err))
 	}
@@ -140,7 +140,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	administrators, err := u.GetAdministrators(questionnaireIDs)
+	administrators, err := u.GetAdministrators(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get administrators: %w", err))
 	}
@@ -223,7 +223,7 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	sort := c.QueryParam("sort")
 	answered := c.QueryParam("answered")
-	ret, err := u.GetTargettedQuestionnaires(traQID, answered, sort)
+	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), traQID, answered, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

@@ -2,8 +2,10 @@
 
 package model
 
+import "context"
+
 // IResponse ResponseのRepository
 type IResponse interface {
-	InsertResponses(responseID int, responseMetas []*ResponseMeta) error
-	DeleteResponse(responseID int) error
+	InsertResponses(ctx context.Context, responseID int, responseMetas []*ResponseMeta) error
+	DeleteResponse(ctx context.Context, responseID int) error
 }

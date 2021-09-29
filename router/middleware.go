@@ -124,7 +124,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionnaireAdmin(userID, questionnaireID)
+		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
@@ -155,16 +155,34 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		// 回答者ならOK
+		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid == userID {
 			return next(c)
 		}
 
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(userID, responseID)
+		// 回答者以外は一時保存の回答は閲覧できない
+		if !respondent.SubmittedAt.Valid {
+			c.Logger().Info("not submitted")
+
+			// Note: 一時保存の回答の存在もわかってはいけないので、Respondentが見つからない時と全く同じエラーを返す
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
+
+		// アンケートごとの回答閲覧権限チェック
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
@@ -202,12 +220,20 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		isRespondent, err := m.CheckRespondentByResponseID(userID, responseID)
+		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
+		}
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
-		if !isRespondent {
+		if respondent == nil {
+			c.Logger().Error("respondent is nil")
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if respondent.UserTraqid != userID {
 			return c.String(http.StatusForbidden, "You are not a respondent of this response.")
 		}
 
@@ -240,7 +266,7 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionAdmin(userID, questionID)
+		isAdmin, err := m.CheckQuestionAdmin(c.Request().Context(), userID, questionID)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
@@ -271,7 +297,7 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(userID, questionnaireID)
+		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Info(err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))

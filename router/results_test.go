@@ -163,7 +163,7 @@ func TestGetResults(t *testing.T) {
 		if testCase.request.questionnaireIDValid {
 			mockRespondent.
 				EXPECT().
-				GetRespondentDetails(testCase.request.questionnaireID, testCase.request.sortParam).
+				GetRespondentDetails(c.Request().Context(), testCase.request.questionnaireID, testCase.request.sortParam).
 				Return(testCase.request.respondentDetails, testCase.request.getRespondentDetailsError)
 		}
 

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"math"
 	"sort"
@@ -8,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
 )
 
 const questionnairesTestUserID = "questionnairesUser"
@@ -158,7 +159,10 @@ func setupQuestionnairesTest(t *testing.T) {
 				ResSharedTo:  "public",
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
-				DeletedAt:    null.NewTime(questionnairesNow, true),
+				DeletedAt: gorm.DeletedAt{
+					Time:  questionnairesNow,
+					Valid: true,
+				},
 			},
 			targets:        []string{},
 			administrators: []string{},
@@ -274,7 +278,9 @@ func setupQuestionnairesTest(t *testing.T) {
 			deletedQuestionnaireIDs = append(deletedQuestionnaireIDs, data.questionnaire.ID)
 		}
 
-		err := db.Create(data.questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(data.questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%+v): %w", data, err)
 		}
@@ -286,10 +292,12 @@ func setupQuestionnairesTest(t *testing.T) {
 			}
 			userTargetMap[target] = append(questionnaires, datas[i].questionnaire.ID)
 
-			err := db.Create(&Targets{
-				QuestionnaireID: data.questionnaire.ID,
-				UserTraqid:      target,
-			}).Error
+			err := db.
+				Session(&gorm.Session{NewDB: true}).
+				Create(&Targets{
+					QuestionnaireID: datas[i].questionnaire.ID,
+					UserTraqid:      target,
+				}).Error
 			if err != nil {
 				t.Errorf("failed to create target: %w", err)
 			}
@@ -302,10 +310,12 @@ func setupQuestionnairesTest(t *testing.T) {
 			}
 			userAdministratorMap[administrator] = append(questionnaires, datas[i].questionnaire.ID)
 
-			err := db.Create(&Administrators{
-				QuestionnaireID: data.questionnaire.ID,
-				UserTraqid:      administrator,
-			}).Error
+			err := db.
+				Session(&gorm.Session{NewDB: true}).
+				Create(&Administrators{
+					QuestionnaireID: datas[i].questionnaire.ID,
+					UserTraqid:      administrator,
+				}).Error
 			if err != nil {
 				t.Errorf("failed to create target: %w", err)
 			}
@@ -324,8 +334,9 @@ func setupQuestionnairesTest(t *testing.T) {
 			if respondentData.isSubmitted {
 				respondentData.respondent.SubmittedAt = null.NewTime(time.Now(), true)
 			}
-
-			err := db.Create(respondentData.respondent).Error
+			err := db.
+				Session(&gorm.Session{NewDB: true}).
+				Create(respondentData.respondent).Error
 			if err != nil {
 				t.Error("failed to create respondent: %w", err)
 			}
@@ -438,7 +449,9 @@ func insertQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
+		ctx := context.Background()
+
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -450,7 +463,10 @@ func insertQuestionnaireTest(t *testing.T) {
 		}
 
 		questionnaire := Questionnaires{}
-		err = db.Where("id = ?", questionnaireID).First(&questionnaire).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", questionnaireID).
+			First(&questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
 		}
@@ -628,6 +644,8 @@ func updateQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		ctx := context.Background()
+
 		before := &testCase.before
 		questionnaire := Questionnaires{
 			Title:        before.title,
@@ -635,7 +653,9 @@ func updateQuestionnaireTest(t *testing.T) {
 			ResTimeLimit: before.resTimeLimit,
 			ResSharedTo:  before.resSharedTo,
 		}
-		err := db.Create(&questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
 		}
@@ -643,7 +663,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		createdAt := questionnaire.CreatedAt
 		questionnaireID := questionnaire.ID
 		after := &testCase.after
-		err = questionnaireImpl.UpdateQuestionnaire(after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
+		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -655,7 +675,10 @@ func updateQuestionnaireTest(t *testing.T) {
 		}
 
 		questionnaire = Questionnaires{}
-		err = db.Where("id = ?", questionnaireID).First(&questionnaire).Error
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", questionnaireID).
+			First(&questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
 		}
@@ -671,8 +694,11 @@ func updateQuestionnaireTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -699,7 +725,9 @@ func updateQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, arg := range invalidTestCases {
-		err := questionnaireImpl.UpdateQuestionnaire(arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+		ctx := context.Background()
+
+		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
 		if !errors.Is(err, ErrNoRecordUpdated) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
@@ -743,19 +771,23 @@ func deleteQuestionnaireTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		ctx := context.Background()
+
 		questionnaire := Questionnaires{
 			Title:        testCase.args.title,
 			Description:  testCase.args.description,
 			ResTimeLimit: testCase.args.resTimeLimit,
 			ResSharedTo:  testCase.args.resSharedTo,
 		}
-		err := db.Create(&questionnaire).Error
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&questionnaire).Error
 		if err != nil {
 			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
 		}
 
 		questionnaireID := questionnaire.ID
-		err = questionnaireImpl.DeleteQuestionnaire(questionnaireID)
+		err = questionnaireImpl.DeleteQuestionnaire(ctx, questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -768,6 +800,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 
 		questionnaire = Questionnaires{}
 		err = db.
+			Session(&gorm.Session{NewDB: true}).
 			Unscoped().
 			Where("id = ?", questionnaireID).
 			Find(&questionnaire).Error
@@ -775,13 +808,17 @@ func deleteQuestionnaireTest(t *testing.T) {
 			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
 		}
 
-		assertion.WithinDuration(time.Now(), questionnaire.DeletedAt.ValueOrZero(), 2*time.Second)
+		assertion.True(questionnaire.DeletedAt.Valid, testCase.description, "id")
+		assertion.WithinDuration(time.Now(), questionnaire.DeletedAt.Time, 2*time.Second)
 	}
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -792,7 +829,9 @@ func deleteQuestionnaireTest(t *testing.T) {
 		invalidQuestionnaireID *= 10
 	}
 
-	err := questionnaireImpl.DeleteQuestionnaire(invalidQuestionnaireID)
+	ctx := context.Background()
+
+	err := questionnaireImpl.DeleteQuestionnaire(ctx, invalidQuestionnaireID)
 	if !errors.Is(err, ErrNoRecordDeleted) {
 		if err == nil {
 			t.Errorf("Succeeded with invalid questionnaireID")
@@ -1014,7 +1053,9 @@ func getQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
+		ctx := context.Background()
+
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1027,8 +1068,9 @@ func getQuestionnairesTest(t *testing.T) {
 			continue
 		}
 
-		var questionnaireNum int
+		var questionnaireNum int64
 		err = db.
+			Session(&gorm.Session{NewDB: true}).
 			Model(&Questionnaires{}).
 			Where("deleted_at IS NULL").
 			Count(&questionnaireNum).Error
@@ -1054,8 +1096,8 @@ func getQuestionnairesTest(t *testing.T) {
 		}
 
 		if len(testCase.args.search) == 0 && !testCase.args.nontargeted {
-			assertion.Equal((questionnaireNum+19)/20, pageMax, testCase.description, "pageMax")
-			assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(testCase.pageNum-1)), 20.0)), testCase.description, "page")
+			assertion.Equal((questionnaireNum+19)/20, int64(pageMax), testCase.description, "pageMax")
+			assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(int64(testCase.pageNum)-1)), 20.0)), testCase.description, "page")
 		}
 
 		if testCase.expect.isCheckLen {
@@ -1114,7 +1156,9 @@ func getAdminQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, err := questionnaireImpl.GetAdminQuestionnaires(testCase.userID)
+		ctx := context.Background()
+
+		questionnaires, err := questionnaireImpl.GetAdminQuestionnaires(ctx, testCase.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1142,6 +1186,7 @@ func getAdminQuestionnairesTest(t *testing.T) {
 
 		expectQuestionnaires := []Questionnaires{}
 		err = db.
+			Session(&gorm.Session{NewDB: true}).
 			Where("id IN (?)", actualQuestionnaireIDs).
 			Find(&expectQuestionnaires).Error
 		if err != nil {
@@ -1181,8 +1226,11 @@ func getQuestionnaireInfoTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1267,7 +1315,9 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(testCase.questionnaireID)
+		ctx := context.Background()
+
+		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1287,7 +1337,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		assertion.WithinDuration(testCase.expect.questionnaire.ResTimeLimit.ValueOrZero(), actualQuestionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(ResTimeLimit)")
 		assertion.WithinDuration(testCase.expect.questionnaire.CreatedAt, actualQuestionnaire.CreatedAt, 2*time.Second, testCase.description, "questionnaire(CreatedAt)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
-		assertion.WithinDuration(testCase.expect.questionnaire.DeletedAt.ValueOrZero(), actualQuestionnaire.DeletedAt.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(DeletedAt)")
+		assertion.WithinDuration(testCase.expect.questionnaire.DeletedAt.Time, actualQuestionnaire.DeletedAt.Time, 2*time.Second, testCase.description, "questionnaire(DeletedAt)")
 
 		sort.Slice(testCase.targets, func(i, j int) bool { return testCase.targets[i] < testCase.targets[j] })
 		sort.Slice(actualTargets, func(i, j int) bool { return actualTargets[i] < actualTargets[j] })
@@ -1449,7 +1499,9 @@ func getTargettedQuestionnairesTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaires, err := questionnaireImpl.GetTargettedQuestionnaires(testCase.args.userID, testCase.args.answered, testCase.args.sort)
+		ctx := context.Background()
+
+		questionnaires, err := questionnaireImpl.GetTargettedQuestionnaires(ctx, testCase.args.userID, testCase.args.answered, testCase.args.sort)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1508,8 +1560,11 @@ func getQuestionnaireLimitTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1559,13 +1614,15 @@ func getQuestionnaireLimitTest(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				err:   gorm.ErrRecordNotFound,
+				err:   ErrRecordNotFound,
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
-		actualLimit, err := questionnaireImpl.GetQuestionnaireLimit(testCase.args.questionnaireID)
+		ctx := context.Background()
+
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimit(ctx, testCase.args.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1590,8 +1647,11 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 
 	invalidResponseID := 1000
 	for {
-		err := db.Where("response_id = ?", invalidResponseID).First(&Respondents{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", invalidResponseID).
+			First(&Respondents{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1623,7 +1683,7 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				err:   gorm.ErrRecordNotFound,
+				err:   ErrRecordNotFound,
 			},
 		},
 		{
@@ -1647,7 +1707,9 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(testCase.args.responseID)
+		ctx := context.Background()
+
+		actualLimit, err := questionnaireImpl.GetQuestionnaireLimitByResponseID(ctx, testCase.args.responseID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1676,8 +1738,11 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1690,8 +1755,11 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 
 	invalidResponseID := 1000
 	for {
-		err := db.Where("response_id = ?", invalidResponseID).First(&Respondents{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", invalidResponseID).
+			First(&Respondents{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1812,7 +1880,9 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(testCase.args.userID, testCase.args.responseID)
+		ctx := context.Background()
+
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByResponseID(ctx, testCase.args.userID, testCase.args.responseID)
 
 		if testCase.expect.isErr {
 			if testCase.expect.err == nil {
@@ -1839,8 +1909,11 @@ func getResponseReadPrivilegeInfoByQuestionnaireIDTest(t *testing.T) {
 
 	invalidQuestionnaireID := 1000
 	for {
-		err := db.Where("id = ?", invalidQuestionnaireID).First(&Questionnaires{}).Error
-		if gorm.IsRecordNotFoundError(err) {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			break
 		}
 		if err != nil {
@@ -1950,7 +2023,9 @@ func getResponseReadPrivilegeInfoByQuestionnaireIDTest(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByQuestionnaireID(testCase.args.userID, testCase.args.questionnaireID)
+		ctx := context.Background()
+
+		responseReadPrivilegeInfo, err := questionnaireImpl.GetResponseReadPrivilegeInfoByQuestionnaireID(ctx, testCase.args.userID, testCase.args.questionnaireID)
 
 		if testCase.expect.isErr {
 			if testCase.expect.err == nil {

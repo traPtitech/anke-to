@@ -81,7 +81,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 		}
 	}
 
-	lastID, err := q.InsertQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	lastID, err := q.InsertQuestion(c.Request().Context(), req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -89,12 +89,12 @@ func (q *Question) PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if err := q.InsertOption(lastID, i+1, v); err != nil {
+			if err := q.InsertOption(c.Request().Context(), lastID, i+1, v); err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
 	case "LinearScale":
-		if err := q.InsertScaleLabel(lastID,
+		if err := q.InsertScaleLabel(c.Request().Context(), lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -176,18 +176,18 @@ func (q *Question) EditQuestion(c echo.Context) error {
 		}
 	}
 
-	if err := q.UpdateQuestion(req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
-		req.IsRequired, questionID); err != nil {
+	err = q.UpdateQuestion(c.Request().Context(), req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired, questionID)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := q.UpdateOptions(req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+		if err := q.UpdateOptions(c.Request().Context(), req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
-		if err := q.UpdateScaleLabel(questionID,
+		if err := q.UpdateScaleLabel(c.Request().Context(), questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -217,15 +217,15 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	if err := q.IQuestion.DeleteQuestion(questionID); err != nil {
+	if err := q.IQuestion.DeleteQuestion(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteOptions(questionID); err != nil {
+	if err := q.DeleteOptions(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteScaleLabel(questionID); err != nil {
+	if err := q.DeleteScaleLabel(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
