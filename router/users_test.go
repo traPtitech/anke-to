@@ -54,7 +54,6 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			request:     &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "answered",
-				TraQID:   string(userOne),
 			},
 		},
 		{
@@ -62,15 +61,21 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			request:     &UserQueryparam{
 				Sort:     "",
 				Answered: "",
-				TraQID:   string(userOne),
 			},
 		},
 		{
-			description: "traQIDが空文字なのでエラー",
+			description: "Sortが指定された文字列ではないためエラー",
+			request:     &UserQueryparam{
+				Sort:     "sort",
+				Answered: "answered",
+			},
+			isErr: true,
+		},
+		{
+			description: "Answeredが指定された文字列ではないためエラー",
 			request:     &UserQueryparam{
 				Sort:     "created_at",
-				Answered: "answered",
-				TraQID:   "",
+				Answered: "answer",
 			},
 			isErr: true,
 		},
