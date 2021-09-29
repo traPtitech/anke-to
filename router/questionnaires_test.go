@@ -214,3 +214,64 @@ func TestPostAndEditQuestionnaireValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestGetQuestionnaireValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		request     *GetQuestionnairesQueryParam
+		isErr       bool
+	}{
+		{
+			description: "一般的なQueryParameterなのでエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "一般的なQueryParameterなので空文字にしてもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "",
+				Search:      "",
+				Page:        "",
+				Nontargeted: "",
+			},
+		},
+		{
+			description: "Pageが数字ではないのでエラー",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "xx",
+				Nontargeted: "true",
+			},
+			isErr: true,
+		},
+		{
+			description: "Nontargetedがbool値ではないのでエラー",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "arupaka",
+			},
+			isErr: true,
+		},
+	}
+	for _, test := range tests {
+		validate := validator.New()
+
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+			if test.isErr {
+				assert.Error(t, err)
+			}else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
