@@ -245,7 +245,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	})
 }
 
-// EditQuestionnaire PATCH /questonnaires/:questionnaireID
+// EditQuestionnaire PATCH /questionnaires/:questionnaireID
 func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
