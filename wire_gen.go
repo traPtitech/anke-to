@@ -29,8 +29,9 @@ func InjectAPIServer() *router.API {
 	option := model.NewOption()
 	scaleLabel := model.NewScaleLabel()
 	validation := model.NewValidation()
+	transaction := model.NewTransaction()
 	webhook := traq.NewWebhook()
-	routerQuestionnaire := router.NewQuestionnaire(questionnaire, target, administrator, question, option, scaleLabel, validation, webhook)
+	routerQuestionnaire := router.NewQuestionnaire(questionnaire, target, administrator, question, option, scaleLabel, validation, transaction, webhook)
 	routerQuestion := router.NewQuestion(validation, question, option, scaleLabel)
 	response := model.NewResponse()
 	routerResponse := router.NewResponse(questionnaire, validation, scaleLabel, respondent, response)
@@ -52,6 +53,7 @@ var (
 	scaleLabelBind    = wire.Bind(new(model.IScaleLabel), new(*model.ScaleLabel))
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
+	transactionBind   = wire.Bind(new(model.ITransaction), new(*model.Transaction))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )

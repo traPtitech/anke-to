@@ -20,6 +20,7 @@ var (
 	scaleLabelBind    = wire.Bind(new(model.IScaleLabel), new(*model.ScaleLabel))
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
+	transactionBind   = wire.Bind(new(model.ITransaction), new(*model.Transaction))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )
@@ -42,6 +43,7 @@ func InjectAPIServer() *router.API {
 		model.NewScaleLabel,
 		model.NewTarget,
 		model.NewValidation,
+		model.NewTransaction,
 		traq.NewWebhook,
 		administratorBind,
 		optionBind,
@@ -52,6 +54,7 @@ func InjectAPIServer() *router.API {
 		scaleLabelBind,
 		targetBind,
 		validationBind,
+		transactionBind,
 		webhookBind,
 	)
 
