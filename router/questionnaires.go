@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -165,43 +166,43 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		}
 	}
 
-	lastID, err := q.InsertQuestionnaire(c.Request().Context(), req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+	var questionnaireID int
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+		if err != nil {
+			return err
+		}
+
+		if err := q.InsertTargets(ctx, questionnaireID, req.Targets); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+
+		if err := q.InsertAdministrators(ctx, questionnaireID, req.Administrators); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+
+		message := createQuestionnaireMessage(
+			questionnaireID,
+			req.Title,
+			req.Description,
+			req.Administrators,
+			req.ResTimeLimit,
+			req.Targets,
+		)
+		err = q.PostMessage(message)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	if err := q.InsertTargets(c.Request().Context(), lastID, req.Targets); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	if err := q.InsertAdministrators(c.Request().Context(), lastID, req.Administrators); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	timeLimit := "なし"
-	if req.ResTimeLimit.Valid {
-		timeLimit = req.ResTimeLimit.Time.Local().Format("2006/01/02 15:04")
-	}
-
-	targetsMentionText := "なし"
-	if len(req.Targets) != 0 {
-		targetsMentionText = "@" + strings.Join(req.Targets, " @")
-	}
-
-	if err := q.PostMessage(
-		"### アンケート『" + "[" + req.Title + "](https://anke-to.trap.jp/questionnaires/" +
-			strconv.Itoa(lastID) + ")" + "』が作成されました\n" +
-			"#### 管理者\n" + strings.Join(req.Administrators, ",") + "\n" +
-			"#### 説明\n" + req.Description + "\n" +
-			"#### 回答期限\n" + timeLimit + "\n" +
-			"#### 対象者\n" + targetsMentionText + "\n" +
-			"#### 回答リンク\n" +
-			"https://anke-to.trap.jp/responses/new/" + strconv.Itoa(lastID)); err != nil {
-		c.Logger().Error(err)
-	}
-
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"questionnaireID": lastID,
+		"questionnaireID": questionnaireID,
 		"title":           req.Title,
 		"description":     req.Description,
 		"res_time_limit":  req.ResTimeLimit,
