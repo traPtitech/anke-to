@@ -455,7 +455,7 @@ components:
       description: |
         traQ ID(ex:mazrean)
       schema:
-        type: integer
+        type: string
   schemas:
     AnsweredType:
       type: string
