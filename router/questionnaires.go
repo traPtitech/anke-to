@@ -441,3 +441,40 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, ret)
 }
+
+func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
+	var resTimeLimitText string
+	if resTimeLimit.Valid {
+		resTimeLimitText = resTimeLimit.Time.Local().Format("2006/01/02 15:04")
+	} else {
+		resTimeLimitText = "なし"
+	}
+
+	var targetsMentionText string
+	if len(targets) == 0 {
+		targetsMentionText = "なし"
+	} else {
+		targetsMentionText = "@" + strings.Join(targets, " @")
+	}
+
+	return fmt.Sprintf(
+		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』が作成されました
+#### 管理者
+%s
+#### 説明
+%s
+#### 回答期限
+%s
+#### 対象者
+%s
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/%d`,
+		title,
+		questionnaireID,
+		strings.Join(administrators, ","),
+		description,
+		resTimeLimitText,
+		targetsMentionText,
+		questionnaireID,
+	)
+}
