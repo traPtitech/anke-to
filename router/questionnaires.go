@@ -334,20 +334,27 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaireID: %w", err))
+		c.Logger().Errorf("failed to get questionnaireID: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		if err := q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete questionnaire: %w", err)
+			return err
 		}
 
-		if err := q.DeleteTargets(c.Request().Context(), questionnaireID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.DeleteTargets(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete targets: %w", err)
+			return err
 		}
 
-		if err := q.DeleteAdministrators(c.Request().Context(), questionnaireID); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrators: %w", err)
+			return err
 		}
 
 		return nil
