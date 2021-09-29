@@ -20,6 +20,11 @@ type User struct {
 	model.IAdministrator
 }
 
+type UserQueryparam struct {
+	Sort string `json:"sort" validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Answered string `json:"answered" validate:"omitempty,oneof=answered unanswered"`
+	TraQID string `json:"traq_id" validate:"omitempty,required,number"`
+}
 // NewUser Userのコンストラクタ
 func NewUser(respondent model.IRespondent, questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator) *User {
 	return &User{
