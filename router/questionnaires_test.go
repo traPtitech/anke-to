@@ -214,3 +214,145 @@ func TestPostAndEditQuestionnaireValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestGetQuestionnaireValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		request     *GetQuestionnairesQueryParam
+		isErr       bool
+	}{
+		{
+			description: "一般的なQueryParameterなのでエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-created_atでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがtitleでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "title",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-titleでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-title",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがmodified_atでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "modified_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-modified_atでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-modified_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Nontargetedをfalseにしてもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "false",
+			},
+		},
+		{
+			description: "Sortを空文字にしてもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Searchを空文字にしてもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Pageを空文字にしてもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Nontargetedを空文字にしてもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "",
+			},
+		},
+		{
+			description: "Pageが数字ではないのでエラー",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "xx",
+				Nontargeted: "true",
+			},
+			isErr: true,
+		},
+		{
+			description: "Nontargetedがbool値ではないのでエラー",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "arupaka",
+			},
+			isErr: true,
+		},
+	}
+	for _, test := range tests {
+		validate := validator.New()
+
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+			if test.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

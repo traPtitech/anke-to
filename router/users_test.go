@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"testing"
 	"time"
@@ -38,6 +39,109 @@ type targettedQuestionnaire struct {
 	ModifiedAt      time.Time `json:"modified_at"`
 	RespondedAt     null.Time `json:"responded_at"`
 	HasResponse     bool      `json:"has_response"`
+}
+
+func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		request     *UserQueryparam
+		isErr       bool
+	}{
+		{
+			description: "一般的なQueryParameterなのでエラーなし",
+			request: &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortが-created_atでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "-created_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortがtitleでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "title",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortが-titleでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "-title",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortがmodified_atでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "modified_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortが-modified_atでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "-modified_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Answeredがunansweredでもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "unanswered",
+			},
+		},
+		{
+			description: "Sortが空文字でもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Answeredが空文字でもエラーなし",
+			request: &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "",
+			},
+		},
+		{
+			description: "Sortが指定された文字列ではないためエラー",
+			request: &UserQueryparam{
+				Sort:     "sort",
+				Answered: "answered",
+			},
+			isErr: true,
+		},
+		{
+			description: "Answeredが指定された文字列ではないためエラー",
+			request: &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "answer",
+			},
+			isErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		validate := validator.New()
+
+		t.Run(test.description, func(t *testing.T) {
+			err := validate.Struct(test.request)
+			if test.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGetUsersMe(t *testing.T) {
@@ -761,7 +865,7 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware, m.TraPMemberAuthenticate)
+	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/users/", testCase.request.targetUser, "/targeted"), typeNone, "")

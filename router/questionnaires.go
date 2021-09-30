@@ -43,6 +43,13 @@ func NewQuestionnaire(questionnaire model.IQuestionnaire, target model.ITarget, 
 	}
 }
 
+type GetQuestionnairesQueryParam struct {
+	Sort        string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Search      string `validate:"omitempty"`
+	Page        string `validate:"omitempty,number,min=0"`
+	Nontargeted string `validate:"omitempty,boolean"`
+}
+
 // GetQuestionnaires GET /questionnaires
 func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	userID, err := getUserID(c)
@@ -53,6 +60,27 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	search := c.QueryParam("search")
 	page := c.QueryParam("page")
+	nontargeted := c.QueryParam("nontargeted")
+
+	p := GetQuestionnairesQueryParam{
+		Sort:        sort,
+		Search:      search,
+		Page:        page,
+		Nontargeted: nontargeted,
+	}
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator:%w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), p)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	if len(page) == 0 {
 		page = "1"
 	}
@@ -64,7 +92,6 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
 
-	nontargeted := c.QueryParam("nontargeted")
 	nontargetedBool, err := strconv.ParseBool(nontargeted)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
