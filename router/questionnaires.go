@@ -60,22 +60,8 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	search := c.QueryParam("search")
 	page := c.QueryParam("page")
-	if len(page) == 0 {
-		page = "1"
-	}
-	pageNum, err := strconv.Atoi(page)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
-	}
-	if pageNum <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
-	}
-
 	nontargeted := c.QueryParam("nontargeted")
-	nontargetedBool, err := strconv.ParseBool(nontargeted)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
-	}
+
 	p := GetQuestionnairesQueryParam{
 		Sort:        sort,
 		Search:      search,
@@ -94,6 +80,24 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 		c.Logger().Info(fmt.Errorf("failed to validate:%w",err))
 		return echo.NewHTTPError(http.StatusBadRequest,err.Error())
 	}
+
+	if len(page) == 0 {
+		page = "1"
+	}
+	pageNum, err := strconv.Atoi(page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
+	}
+	if pageNum <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
+	}
+
+
+	nontargetedBool, err := strconv.ParseBool(nontargeted)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
+	}
+
 
 	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(c.Request().Context(), userID, sort, search, pageNum, nontargetedBool)
 	if err != nil {
