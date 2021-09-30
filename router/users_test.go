@@ -57,9 +57,16 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "Sort,Answeredが空文字でもエラーなし",
+			description: "Sortが空文字でもエラーなし",
 			request:     &UserQueryparam{
 				Sort:     "",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Answeredが空文字でもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "created_at",
 				Answered: "",
 			},
 		},

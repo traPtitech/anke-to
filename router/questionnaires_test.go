@@ -233,11 +233,38 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "一般的なQueryParameterなので空文字にしてもエラーなし",
+			description: "Sortを空文字にしてもエラーなし",
 			request:     &GetQuestionnairesQueryParam{
 				Sort:        "",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Searchを空文字にしてもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
 				Search:      "",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Pageを空文字にしてもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
 				Page:        "",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Nontargetedを空文字にしてもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
 				Nontargeted: "",
 			},
 		},
