@@ -44,77 +44,77 @@ type targettedQuestionnaire struct {
 func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		description string
-		request *UserQueryparam
-		isErr bool
+		request     *UserQueryparam
+		isErr       bool
 	}{
 		{
 			description: "一般的なQueryParameterなのでエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Sortが-created_atでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "-created_at",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Sortがtitleでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "title",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Sortが-titleでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "-title",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Sortがmodified_atでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "modified_at",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Sortが-modified_atでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "-modified_at",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Answeredがunansweredでもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "unanswered",
 			},
 		},
 		{
 			description: "Sortが空文字でもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "",
 				Answered: "answered",
 			},
 		},
 		{
 			description: "Answeredが空文字でもエラーなし",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "",
 			},
 		},
 		{
 			description: "Sortが指定された文字列ではないためエラー",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "sort",
 				Answered: "answered",
 			},
@@ -122,7 +122,7 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 		},
 		{
 			description: "Answeredが指定された文字列ではないためエラー",
-			request:     &UserQueryparam{
+			request: &UserQueryparam{
 				Sort:     "created_at",
 				Answered: "answer",
 			},
@@ -137,7 +137,7 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			err := validate.Struct(test.request)
 			if test.isErr {
 				assert.Error(t, err)
-			}else {
+			} else {
 				assert.NoError(t, err)
 			}
 		})
@@ -865,7 +865,7 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware,m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
+	e.GET("api/users/:traQID/targeted", u.GetTargettedQuestionnairesBytraQID, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate)
 
 	for _, testCase := range testCases {
 		rec := createRecorder(e, testCase.request.user, methodGet, fmt.Sprint(rootPath, "/users/", testCase.request.targetUser, "/targeted"), typeNone, "")

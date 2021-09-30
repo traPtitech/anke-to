@@ -21,7 +21,7 @@ type User struct {
 }
 
 type UserQueryparam struct {
-	Sort string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Sort     string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
 	Answered string `validate:"omitempty,oneof=answered unanswered"`
 }
 
@@ -234,16 +234,16 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 		Answered: answered,
 	}
 
-	validate,err := getValidator(c)
+	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator:%w",err))
+		c.Logger().Error(fmt.Errorf("failed to get validator:%w", err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	err = validate.StructCtx(c.Request().Context(),p)
+	err = validate.StructCtx(c.Request().Context(), p)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate:%w",err))
-		return echo.NewHTTPError(http.StatusBadRequest,err.Error())
+		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), traQID, answered, sort)

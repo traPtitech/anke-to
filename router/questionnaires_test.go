@@ -225,7 +225,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 	}{
 		{
 			description: "一般的なQueryParameterなのでエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "2",
@@ -234,7 +234,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortが-created_atでもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "-created_at",
 				Search:      "a",
 				Page:        "2",
@@ -243,7 +243,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortがtitleでもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "title",
 				Search:      "a",
 				Page:        "2",
@@ -252,7 +252,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortが-titleでもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "-title",
 				Search:      "a",
 				Page:        "2",
@@ -261,7 +261,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortがmodified_atでもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "modified_at",
 				Search:      "a",
 				Page:        "2",
@@ -270,7 +270,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortが-modified_atでもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "-modified_at",
 				Search:      "a",
 				Page:        "2",
@@ -279,7 +279,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Nontargetedをfalseにしてもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "2",
@@ -288,7 +288,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Sortを空文字にしてもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "",
 				Search:      "a",
 				Page:        "2",
@@ -297,7 +297,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Searchを空文字にしてもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "",
 				Page:        "2",
@@ -306,7 +306,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Pageを空文字にしてもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "",
@@ -315,7 +315,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Nontargetedを空文字にしてもエラーなし",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "2",
@@ -324,7 +324,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Pageが数字ではないのでエラー",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "xx",
@@ -334,7 +334,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 		},
 		{
 			description: "Nontargetedがbool値ではないのでエラー",
-			request:     &GetQuestionnairesQueryParam{
+			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
 				Search:      "a",
 				Page:        "2",
@@ -350,7 +350,7 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 			err := validate.Struct(test.request)
 			if test.isErr {
 				assert.Error(t, err)
-			}else {
+			} else {
 				assert.NoError(t, err)
 			}
 		})
