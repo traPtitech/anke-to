@@ -29,7 +29,7 @@ func main() {
 		}
 	}
 
-	err := model.EstablishConnection(logOn)
+	err := model.EstablishConnection(!logOn)
 	if err != nil {
 		panic(err)
 	}
