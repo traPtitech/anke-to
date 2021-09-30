@@ -233,6 +233,60 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 			},
 		},
 		{
+			description: "Sortが-created_atでもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "-created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがtitleでもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "title",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-titleでもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "-title",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがmodified_atでもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "modified_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-modified_atでもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "-modified_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Nontargetedをfalseにしてもエラーなし",
+			request:     &GetQuestionnairesQueryParam{
+				Sort:        "created_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "false",
+			},
+		},
+		{
 			description: "Sortを空文字にしてもエラーなし",
 			request:     &GetQuestionnairesQueryParam{
 				Sort:        "",
