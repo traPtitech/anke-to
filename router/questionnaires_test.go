@@ -970,3 +970,143 @@ func TestEditQuestionnaire(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteQuestionnaire(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockTarget := mock_model.NewMockITarget(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockOption := mock_model.NewMockIOption(ctrl)
+	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
+	mockValidation := mock_model.NewMockIValidation(ctrl)
+	mockTransaction := &model.MockTransaction{}
+	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
+
+	questionnaire := NewQuestionnaire(
+		mockQuestionnaire,
+		mockTarget,
+		mockAdministrator,
+		mockQuestion,
+		mockOption,
+		mockScaleLabel,
+		mockValidation,
+		mockTransaction,
+		mockWebhook,
+	)
+
+	type expect struct {
+		statusCode int
+	}
+	type test struct {
+		description               string
+		questionnaireID           int
+		DeleteQuestionnaireError  error
+		DeleteTargetsError        error
+		DeleteAdministratorsError error
+		expect
+	}
+
+	testCases := []test{
+		{
+			description:               "エラーなしなので200",
+			questionnaireID:           1,
+			DeleteQuestionnaireError:  nil,
+			DeleteTargetsError:        nil,
+			DeleteAdministratorsError: nil,
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			description:               "questionnaireIDが0でも200",
+			questionnaireID:           0,
+			DeleteQuestionnaireError:  nil,
+			DeleteTargetsError:        nil,
+			DeleteAdministratorsError: nil,
+			expect: expect{
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			description:               "DeleteQuestionnaireがエラーなので500",
+			questionnaireID:           1,
+			DeleteQuestionnaireError:  errors.New("error"),
+			DeleteTargetsError:        nil,
+			DeleteAdministratorsError: nil,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description:               "DeleteTargetsがエラーなので500",
+			questionnaireID:           1,
+			DeleteQuestionnaireError:  nil,
+			DeleteTargetsError:        errors.New("error"),
+			DeleteAdministratorsError: nil,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description:               "DeleteAdministratorsがエラーなので500",
+			questionnaireID:           1,
+			DeleteQuestionnaireError:  nil,
+			DeleteTargetsError:        nil,
+			DeleteAdministratorsError: errors.New("error"),
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/questionnaire/%d", testCase.questionnaireID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/questionnaires/:questionnaire_id")
+			c.SetParamNames("questionnaire_id")
+			c.SetParamValues(strconv.Itoa(testCase.questionnaireID))
+
+			c.Set(questionnaireIDKey, testCase.questionnaireID)
+
+			mockQuestionnaire.
+				EXPECT().
+				DeleteQuestionnaire(
+					c.Request().Context(),
+					testCase.questionnaireID,
+				).
+				Return(testCase.DeleteQuestionnaireError)
+
+			if testCase.DeleteQuestionnaireError == nil {
+				mockTarget.
+					EXPECT().
+					DeleteTargets(
+						c.Request().Context(),
+						testCase.questionnaireID,
+					).
+					Return(testCase.DeleteTargetsError)
+
+				if testCase.DeleteTargetsError == nil {
+					mockAdministrator.
+						EXPECT().
+						DeleteAdministrators(
+							c.Request().Context(),
+							testCase.questionnaireID,
+						).
+						Return(testCase.DeleteAdministratorsError)
+				}
+			}
+
+			e.HTTPErrorHandler(questionnaire.DeleteQuestionnaire(c), c)
+
+			assert.Equal(t, testCase.expect.statusCode, rec.Code, "status code")
+		})
+	}
+}
