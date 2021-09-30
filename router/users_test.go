@@ -57,6 +57,48 @@ func TestGetTargettedQuestionnairesBytraQIDValidate(t *testing.T) {
 			},
 		},
 		{
+			description: "Sortが-created_atでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "-created_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortがtitleでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "title",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortが-titleでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "-title",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortがmodified_atでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "modified_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Sortが-modified_atでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "-modified_at",
+				Answered: "answered",
+			},
+		},
+		{
+			description: "Answeredがunansweredでもエラーなし",
+			request:     &UserQueryparam{
+				Sort:     "created_at",
+				Answered: "unanswered",
+			},
+		},
+		{
 			description: "Sortが空文字でもエラーなし",
 			request:     &UserQueryparam{
 				Sort:     "",
