@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -37,12 +36,14 @@ func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx 
 	if txOption == nil {
 		err := db.Transaction(fc)
 		if err != nil {
-			return fmt.Errorf("failed in transaction: %w", err)
+			// fmt.Errorfで包むとecho.HTTPError型周りが面倒なので、そのまま返す
+			return err
 		}
 	} else {
 		err := db.Transaction(fc, txOption)
 		if err != nil {
-			return fmt.Errorf("failed in transaction: %w", err)
+			// fmt.Errorfで包むとecho.HTTPError型周りが面倒なので、そのまま返す
+			return err
 		}
 	}
 
