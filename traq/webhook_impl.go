@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"io"
 
 	"fmt"
 	"net/http"
@@ -46,13 +47,13 @@ func (*Webhook) PostMessage(message string) error {
 	}
 	defer resp.Body.Close()
 
-	response := make([]byte, 512)
-	_, err = resp.Body.Read(response)
+	sb := &strings.Builder{}
+	_, err = io.Copy(sb, resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, response)
+	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, sb.String())
 
 	return nil
 }
