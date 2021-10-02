@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -23,7 +22,7 @@ func NewTransaction() *Transaction {
 
 // Do トランザクション用の関数
 func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx context.Context) error) error {
-	err := db.Transaction(func(tx *gorm.DB) error {
+	fc := func(tx *gorm.DB) error {
 		ctx = context.WithValue(ctx, txKey, tx)
 
 		err := f(ctx)
@@ -32,9 +31,20 @@ func (*Transaction) Do(ctx context.Context, txOption *sql.TxOptions, f func(ctx 
 		}
 
 		return nil
-	}, txOption)
-	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	if txOption == nil {
+		err := db.Transaction(fc)
+		if err != nil {
+			// fmt.Errorfで包むとecho.HTTPError型周りが面倒なので、そのまま返す
+			return err
+		}
+	} else {
+		err := db.Transaction(fc, txOption)
+		if err != nil {
+			// fmt.Errorfで包むとecho.HTTPError型周りが面倒なので、そのまま返す
+			return err
+		}
 	}
 
 	return nil
@@ -44,7 +54,6 @@ func getTx(ctx context.Context) (*gorm.DB, error) {
 	iDB := ctx.Value(txKey)
 	if iDB == nil {
 		return db.Session(&gorm.Session{
-			NewDB:   true,
 			Context: ctx,
 		}), nil
 	}
@@ -55,7 +64,6 @@ func getTx(ctx context.Context) (*gorm.DB, error) {
 	}
 
 	return db.Session(&gorm.Session{
-		NewDB:   true,
 		Context: ctx,
 	}), nil
 }

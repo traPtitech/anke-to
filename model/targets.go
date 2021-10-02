@@ -2,9 +2,11 @@
 
 package model
 
+import "context"
+
 // ITarget TargetのRepository
 type ITarget interface {
-	InsertTargets(questionnaireID int, targets []string) error
-	DeleteTargets(questionnaireID int) error
-	GetTargets(questionnaireIDs []int) ([]Targets, error)
+	InsertTargets(ctx context.Context, questionnaireID int, targets []string) error
+	DeleteTargets(ctx context.Context, questionnaireID int) error
+	GetTargets(ctx context.Context, questionnaireIDs []int) ([]Targets, error)
 }

@@ -20,6 +20,11 @@ type User struct {
 	model.IAdministrator
 }
 
+type UserQueryparam struct {
+	Sort     string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Answered string `validate:"omitempty,oneof=answered unanswered"`
+}
+
 // NewUser Userのコンストラクタ
 func NewUser(respondent model.IRespondent, questionnaire model.IQuestionnaire, target model.ITarget, administrator model.IAdministrator) *User {
 	return &User{
@@ -112,7 +117,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 		questionnaireIDs = append(questionnaireIDs, questionnaire.ID)
 	}
 
-	targets, err := u.GetTargets(questionnaireIDs)
+	targets, err := u.GetTargets(c.Request().Context(), questionnaireIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get targets: %w", err))
 	}
@@ -223,6 +228,24 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 	traQID := c.Param("traQID")
 	sort := c.QueryParam("sort")
 	answered := c.QueryParam("answered")
+
+	p := UserQueryparam{
+		Sort:     sort,
+		Answered: answered,
+	}
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator:%w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), p)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), traQID, answered, sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)

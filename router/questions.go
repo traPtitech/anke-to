@@ -104,7 +104,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := q.InsertValidation(lastID,
+		if err := q.InsertValidation(c.Request().Context(), lastID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
@@ -197,7 +197,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
-		if err := q.UpdateValidation(questionID,
+		if err := q.UpdateValidation(c.Request().Context(), questionID,
 			model.Validations{
 				RegexPattern: req.RegexPattern,
 				MinBound:     req.MinBound,
@@ -229,7 +229,7 @@ func (q *Question) DeleteQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if err := q.DeleteValidation(questionID); err != nil {
+	if err := q.DeleteValidation(c.Request().Context(), questionID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

@@ -88,7 +88,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := r.GetValidations(questionIDs)
+	validations, err := r.GetValidations(c.Request().Context(), questionIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -242,7 +242,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		QuestionTypes[body.QuestionID] = body
 	}
 
-	validations, err := r.GetValidations(questionIDs)
+	validations, err := r.GetValidations(c.Request().Context(), questionIDs)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

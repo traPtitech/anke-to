@@ -524,15 +524,15 @@ func TestPostResponse(t *testing.T) {
 	// GetValidations
 	// success
 	mockValidation.EXPECT().
-		GetValidations([]int{questionIDSuccess}).
+		GetValidations(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.Validations{validation}, nil).AnyTimes()
 	// failure
 	mockValidation.EXPECT().
-		GetValidations([]int{questionIDFailure}).
+		GetValidations(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.Validations{}, nil).AnyTimes()
 	// nothing
 	mockValidation.EXPECT().
-		GetValidations([]int{}).
+		GetValidations(gomock.Any(), []int{}).
 		Return([]model.Validations{}, nil).AnyTimes()
 	// CheckNumberValidation
 	// success
@@ -1188,15 +1188,15 @@ func TestEditResponse(t *testing.T) {
 	// GetValidations
 	// success
 	mockValidation.EXPECT().
-		GetValidations([]int{questionIDSuccess}).
+		GetValidations(gomock.Any(), []int{questionIDSuccess}).
 		Return([]model.Validations{validation}, nil).AnyTimes()
 	// failure
 	mockValidation.EXPECT().
-		GetValidations([]int{questionIDFailure}).
+		GetValidations(gomock.Any(), []int{questionIDFailure}).
 		Return([]model.Validations{}, nil).AnyTimes()
 	// nothing
 	mockValidation.EXPECT().
-		GetValidations([]int{}).
+		GetValidations(gomock.Any(), []int{}).
 		Return([]model.Validations{}, nil).AnyTimes()
 	// CheckNumberValidation
 	// success

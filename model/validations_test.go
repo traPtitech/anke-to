@@ -180,7 +180,7 @@ func TestInsertValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = validationImpl.InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(ctx, questionID, validation)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -313,7 +313,7 @@ func TestUpdateValidation(t *testing.T) {
 			}
 		}
 
-		err = validationImpl.InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(ctx, questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
@@ -327,7 +327,7 @@ func TestUpdateValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = validationImpl.UpdateValidation(questionID, validation)
+		err = validationImpl.UpdateValidation(ctx, questionID, validation)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -430,14 +430,14 @@ func TestDeleteValidation(t *testing.T) {
 			MaxBound:     testCase.args.MaxBound,
 		}
 
-		err = validationImpl.InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(ctx, questionID, validation)
 		require.NoError(t, err)
 
 		if !testCase.args.validID {
 			questionID = -1
 		}
 
-		err = validationImpl.DeleteValidation(questionID)
+		err = validationImpl.DeleteValidation(ctx, questionID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -501,7 +501,7 @@ func TestGetValidations(t *testing.T) {
 	for _, validation := range validations {
 		questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "Text", true)
 		require.NoError(t, err)
-		err = validationImpl.InsertValidation(questionID, validation)
+		err = validationImpl.InsertValidation(ctx, questionID, validation)
 		require.NoError(t, err)
 		validation.QuestionID = questionID
 		questionIDs = append(questionIDs, questionID)
@@ -540,7 +540,7 @@ func TestGetValidations(t *testing.T) {
 
 	for _, testCase := range testCases {
 
-		validations, err := validationImpl.GetValidations(testCase.args.questionIDs)
+		validations, err := validationImpl.GetValidations(ctx, testCase.args.questionIDs)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {

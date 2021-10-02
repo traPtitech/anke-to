@@ -20,6 +20,7 @@ var (
 	optionImpl        = new(Option)
 	scaleLabelImpl    = new(ScaleLabel)
 	validationImpl    = new(Validation)
+	targetImpl        = new(Target)
 )
 
 //TestMain テストのmain

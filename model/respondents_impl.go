@@ -211,7 +211,9 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 	err = db.
 		Where("questionnaire_id = ?", respondent.QuestionnaireID).
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
-			return db.Select("QuestionID", "Body")
+			return db.
+				Select("QuestionID", "Body").
+				Where("response_id = ?", responseID)
 		}).
 		Select("ID", "Type").
 		Find(&questions).Error

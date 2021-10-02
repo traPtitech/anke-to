@@ -1,10 +1,8 @@
 package model
 
 import (
-	"errors"
+	"context"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 // Target TargetRepositoryの実装
@@ -22,7 +20,12 @@ type Targets struct {
 }
 
 // InsertTargets アンケートの対象を追加
-func (*Target) InsertTargets(questionnaireID int, targets []string) error {
+func (*Target) InsertTargets(ctx context.Context, questionnaireID int, targets []string) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	if len(targets) == 0 {
 		return nil
 	}
@@ -35,9 +38,7 @@ func (*Target) InsertTargets(questionnaireID int, targets []string) error {
 		})
 	}
 
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
-		Create(&dbTargets).Error
+	err = db.Create(&dbTargets).Error
 	if err != nil {
 		return fmt.Errorf("failed to insert targets: %w", err)
 	}
@@ -46,9 +47,13 @@ func (*Target) InsertTargets(questionnaireID int, targets []string) error {
 }
 
 // DeleteTargets アンケートの対象を削除
-func (*Target) DeleteTargets(questionnaireID int) error {
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+func (*Target) DeleteTargets(ctx context.Context, questionnaireID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	err = db.
 		Where("questionnaire_id = ?", questionnaireID).
 		Delete(&Targets{}).Error
 	if err != nil {
@@ -59,13 +64,17 @@ func (*Target) DeleteTargets(questionnaireID int) error {
 }
 
 // GetTargets アンケートの対象一覧を取得
-func (*Target) GetTargets(questionnaireIDs []int) ([]Targets, error) {
+func (*Target) GetTargets(ctx context.Context, questionnaireIDs []int) ([]Targets, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
 	targets := []Targets{}
-	err := db.
-		Session(&gorm.Session{NewDB: true}).
+	err = db.
 		Where("questionnaire_id IN (?)", questionnaireIDs).
 		Find(&targets).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
