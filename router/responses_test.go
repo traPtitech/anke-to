@@ -42,7 +42,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なリクエストなのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -57,7 +57,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "IDが0でもエラーなし",
 			request: &Responses{
 				ID:          0,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -72,7 +72,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "BodyのQuestionIDが0でもエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     0,
@@ -87,7 +87,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "ResponsesのIDが負なのでエラー",
 			request: &Responses{
 				ID:          -1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -100,10 +100,26 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
+			description: "Temporarilyがtrueでもエラーなし",
+			request: &Responses{
+				ID:          1,
+				Temporarily: true,
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: false,
+		},
+		{
 			description: "Bodyがnilなのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body:        nil,
 			},
 			isErr: true,
@@ -112,7 +128,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "BodyのQuestionIDが負なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     -1,
@@ -128,7 +144,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextタイプでoptionResponseが50文字以上でエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -144,7 +160,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -159,7 +175,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なTextAreaタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -174,7 +190,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextAreaタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -190,7 +206,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -205,7 +221,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なNumberタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -220,7 +236,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "NumberタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -236,7 +252,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -251,7 +267,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "Checkboxタイプで一般的な回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -266,7 +282,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseがnilな回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -282,7 +298,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseが50文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -298,7 +314,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -313,7 +329,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプで一般的な回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -328,7 +344,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseがnilな回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -344,7 +360,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseが50文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -360,7 +376,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -375,7 +391,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なLinearScaleタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -390,7 +406,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "LinearScaleタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -406,7 +422,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,

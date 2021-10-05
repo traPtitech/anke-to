@@ -34,7 +34,7 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int                  `json:"questionnaireID" validate:"min=0"`
-	Temporarily bool `json:"temporarily"`
+	Temporarily bool `json:"temporarily" validate:"required,boolean"`
 	Body        []model.ResponseBody `json:"body" validate:"required,dive"`
 }
 
