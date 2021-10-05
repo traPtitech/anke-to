@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 	"time"
@@ -149,7 +150,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, time.Now())
+	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{Time: time.Now(), Valid: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
