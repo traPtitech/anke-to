@@ -9,10 +9,6 @@ import (
 // SetRouting ルーティングの設定
 func SetRouting(port string) {
 	e := echo.New()
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
-		AllowCredentials: true,
-	}))
 
 	// Middleware
 	e.Use(middleware.Recover())
