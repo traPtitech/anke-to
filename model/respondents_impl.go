@@ -64,18 +64,18 @@ type RespondentDetail struct {
 }
 
 //InsertRespondent 回答の追加
-func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submitedAt null.Time) (int, error) {
+func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tx: %w", err)
 	}
 
 	var respondent Respondents
-	if submitedAt.Valid {
+	if submittedAt.Valid {
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
 			UserTraqid:      userID,
-			SubmittedAt:     submitedAt,
+			SubmittedAt:     submittedAt,
 		}
 	} else {
 		respondent = Respondents{
