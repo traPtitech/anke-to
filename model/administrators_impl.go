@@ -19,7 +19,7 @@ func NewAdministrator() *Administrator {
 // Administrators administratorsテーブルの構造体
 type Administrators struct {
 	QuestionnaireID int    `gorm:"type:int(11);not null;primaryKey"`
-	UserTraqid      string `gorm:"type:char(30);size:30;not null;primaryKey"`
+	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`
 }
 
 // InsertAdministrators アンケートの管理者を追加
