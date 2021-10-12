@@ -82,6 +82,7 @@ func (*Option) UpdateOptions(ctx context.Context, options []string, questionID i
 				err := db.
 					Session(&gorm.Session{}).
 					Model(&Options{}).
+					Where("question_id = ?", questionID).
 					Where("option_num = ?", optionNum).
 					Update("body", optionLabel).Error
 				if err != nil {
