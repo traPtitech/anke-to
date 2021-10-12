@@ -105,9 +105,14 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
 
-	nontargetedBool, err := strconv.ParseBool(nontargeted)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
+	var nontargetedBool bool
+	if len(nontargeted) != 0 {
+		nontargetedBool, err = strconv.ParseBool(nontargeted)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
+		}
+	} else {
+		nontargetedBool = false
 	}
 
 	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(c.Request().Context(), userID, sort, search, pageNum, nontargetedBool)
