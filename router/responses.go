@@ -35,7 +35,7 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int                  `json:"questionnaireID" validate:"min=0"`
-	Temporarily bool `json:"temporarily"`
+	Temporarily bool                 `json:"temporarily"`
 	Body        []model.ResponseBody `json:"body" validate:"required,dive"`
 }
 
@@ -181,7 +181,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
-		"temporarily":    req.Temporarily,
+		"temporarily":     req.Temporarily,
 		"body":            req.Body,
 	})
 }

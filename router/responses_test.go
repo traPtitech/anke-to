@@ -452,14 +452,14 @@ func TestPostResponseValidate(t *testing.T) {
 func TestPostResponse(t *testing.T) {
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
-		Temporarily bool `json:"temporarily"`
+		Temporarily     bool           `json:"temporarily"`
 		Body            []responseBody `json:"body" validate:"required"`
 	}
 	type responseResponseBody struct {
 		Body            []responseBody `json:"body" validate:"required"`
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
 		ResponseID      int            `json:"responseID" validate:"min=0"`
-		Temporarily bool `json:"temporarily"`
+		Temporarily     bool           `json:"temporarily"`
 	}
 
 	t.Parallel()
@@ -652,7 +652,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -675,7 +675,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -698,7 +698,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -736,7 +736,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDLimit,
-					Temporarily: false,
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -751,7 +751,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -774,7 +774,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -796,7 +796,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -818,7 +818,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -841,7 +841,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -863,7 +863,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -885,7 +885,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -908,7 +908,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -947,7 +947,7 @@ func TestPostResponse(t *testing.T) {
 		response := responseResponseBody{
 			ResponseID:      testCase.expect.responseID,
 			QuestionnaireID: testCase.request.requestBody.QuestionnaireID,
-			Temporarily: false,
+			Temporarily:     false,
 			Body:            testCase.request.requestBody.Body,
 		}
 
@@ -1116,14 +1116,14 @@ func TestGetResponse(t *testing.T) {
 func TestEditResponse(t *testing.T) {
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID"`
-		Temporarily bool `json:"temporarily"`
+		Temporarily     bool           `json:"temporarily"`
 		Body            []responseBody `json:"body"`
 	}
 	type responseResponseBody struct {
 		Body            []responseBody `json:"body"`
 		QuestionnaireID int            `json:"questionnaireID"`
 		ResponseID      int            `json:"responseID"`
-		Temporarily bool `json:"temporarily"`
+		Temporarily     bool           `json:"temporarily"`
 	}
 
 	t.Parallel()
@@ -1331,7 +1331,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1354,7 +1354,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: true,
+					Temporarily:     true,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1377,7 +1377,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -1404,7 +1404,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDLimit,
-					Temporarily: false,
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -1420,7 +1420,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1443,7 +1443,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1466,7 +1466,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1489,7 +1489,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1512,7 +1512,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1535,7 +1535,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1558,7 +1558,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1581,7 +1581,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1604,7 +1604,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDFailure,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Temporarily: false,
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
