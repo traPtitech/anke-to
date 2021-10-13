@@ -760,11 +760,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ResponseBody'
-        submitted_at:
-          type: string
-          format: date-time
+        temporaily:
+          type: boolean
+          example: true
       required:
-        - submitted_at
+        - temporarily
         - questionnaireID
         - body
     Response:
