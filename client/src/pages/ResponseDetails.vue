@@ -145,8 +145,8 @@ export default {
       if (this.isNewResponse) {
         return undefined
       }
-      switch (this.responseData.submitted_at) {
-        case null:
+      switch (this.responseData.temporarily) {
+        case false:
           return 'ti-save'
         default:
           return 'ti-check'
@@ -302,7 +302,7 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.submitted_at = new Date()
+      data.temporarily = true
 
       this.isSubmitting = true
       this.sendResponse(data).then(() => {

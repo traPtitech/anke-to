@@ -26,13 +26,13 @@
               </td>
               <td class="table-item-date">
                 {{
-                  response.submitted_at == null
+                  response.temporarily == false
                     ? '未提出'
-                    : getRelativeDateStr(response.submitted_at)
+                    : getRelativeDateStr(response.temporarily)
                 }}
               </td>
               <td class="table-item-date">
-                {{ getRelativeDateStr(response.modified_at) }}
+                {{ getRelativeDateStr(response.temporarily) }}
               </td>
               <td>
                 <router-link
