@@ -760,7 +760,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ResponseBody'
-        temporaily:
+        temporarily:
           type: boolean
           example: true
       required:
