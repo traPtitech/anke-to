@@ -28,11 +28,11 @@
                 {{
                   response.temporarily == false
                     ? '未提出'
-                    : getRelativeDateStr(response.temporarily)
+                    : getRelativeDateStr(response.submitted_at)
                 }}
               </td>
               <td class="table-item-date">
-                {{ getRelativeDateStr(response.temporarily) }}
+                {{ getRelativeDateStr(response.submitted_at) }}
               </td>
               <td>
                 <router-link

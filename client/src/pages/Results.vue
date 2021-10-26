@@ -162,7 +162,7 @@ export default {
             modifiedAt: this.getDateStr(data.modified_at),
             responseId: data.responseID,
             responseBody: data.body,
-            temporarily: this.getDateStr(data.temporarily),
+            temporarily: this.getDateStr(data.submitted_at),
             traqId: data.traqID
           })
         })
