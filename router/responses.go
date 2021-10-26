@@ -182,6 +182,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
 		"temporarily":     req.Temporarily,
+		"submitted_at":    time.Now(),
 		"body":            req.Body,
 	})
 }
