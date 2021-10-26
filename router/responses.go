@@ -178,6 +178,16 @@ func (r *Response) PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
 
+	if req.Temporarily {
+		return c.JSON(http.StatusCreated, map[string]interface{}{
+			"responseID":      responseID,
+			"questionnaireID": req.ID,
+			"temporarily":     req.Temporarily,
+			"submitted_at":    nil,
+			"body":            req.Body,
+		})
+	}
+
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
