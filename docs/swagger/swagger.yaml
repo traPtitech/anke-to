@@ -182,7 +182,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewResponse'
+              $ref: '#/components/schemas/PostResponse'
       responses:
         '200':
           description: 正常に回答を作成できました．作成された回答を返します．
@@ -751,6 +751,23 @@ components:
           - questionID
           - created_at
     NewResponse:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+        submitted_at:
+          type: string
+          format: date-time
+      required:
+        - temporarily
+        - questionnaireID
+        - body
+    PostResponse:
       type: object
       properties:
         questionnaireID:
