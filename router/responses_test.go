@@ -454,14 +454,14 @@ func TestPostResponse(t *testing.T) {
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
 		Temporarily     bool           `json:"temporarily"`
 		Body            []responseBody `json:"body" validate:"required"`
-		Submitted_at time.Time `json:"submitted_at"`
+		Submitted_at    time.Time      `json:"submitted_at"`
 	}
 	type responseResponseBody struct {
 		Body            []responseBody `json:"body" validate:"required"`
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
 		ResponseID      int            `json:"responseID" validate:"min=0"`
 		Temporarily     bool           `json:"temporarily"`
-		Submitted_at time.Time `json:"submitted_at"`
+		Submitted_at    time.Time      `json:"submitted_at"`
 	}
 
 	t.Parallel()
@@ -655,7 +655,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -679,7 +679,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -703,7 +703,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body:            []responseBody{},
 				},
 			},
@@ -742,7 +742,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDLimit,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body:            []responseBody{},
 				},
 			},
@@ -758,7 +758,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -782,7 +782,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -805,7 +805,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -828,7 +828,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -852,7 +852,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -875,7 +875,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -897,7 +897,7 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Temporarily:     false,
 					Body: []responseBody{
 						{
@@ -922,7 +922,7 @@ func TestPostResponse(t *testing.T) {
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
 					Temporarily:     false,
-					Submitted_at: time.Now(),
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -963,7 +963,7 @@ func TestPostResponse(t *testing.T) {
 			QuestionnaireID: testCase.request.requestBody.QuestionnaireID,
 			Temporarily:     false,
 			Body:            testCase.request.requestBody.Body,
-			Submitted_at: time.Now(),
+			Submitted_at:    time.Now(),
 		}
 		var resActual responseResponseBody
 
@@ -971,11 +971,11 @@ func TestPostResponse(t *testing.T) {
 		if err != nil {
 			t.Errorf("failed to decode response body: %v", err)
 		}
-		assertion.Equal(response.ResponseID, resActual.ResponseID,"ResponseID")
-		assertion.Equal(response.QuestionnaireID, resActual.QuestionnaireID,"QuestionnaireID")
-		assertion.Equal(response.Temporarily,response.Temporarily,"Temporarily")
-		assertion.Equal(response.Body, resActual.Body,"Body")
-		assertion.WithinDuration(response.Submitted_at, resActual.Submitted_at,time.Second*2,"submitted_at")
+		assertion.Equal(response.ResponseID, resActual.ResponseID, "ResponseID")
+		assertion.Equal(response.QuestionnaireID, resActual.QuestionnaireID, "QuestionnaireID")
+		assertion.Equal(response.Temporarily, response.Temporarily, "Temporarily")
+		assertion.Equal(response.Body, resActual.Body, "Body")
+		assertion.WithinDuration(response.Submitted_at, resActual.Submitted_at, time.Second*2, "submitted_at")
 	}
 }
 
