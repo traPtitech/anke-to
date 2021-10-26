@@ -150,7 +150,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{Time: time.Now(), Valid: true})
+	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{Time: time.Now(), Valid: !req.Temporarily})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
