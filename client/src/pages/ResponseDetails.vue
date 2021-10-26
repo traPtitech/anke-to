@@ -145,7 +145,10 @@ export default {
       if (this.isNewResponse) {
         return undefined
       }
-      if (this.responseData.temporarily)
+      if (this.responseData.temporarily){
+        return undefined
+      }
+
       switch (this.responseData.submitted_at) {
         case false:
           return 'ti-save'
