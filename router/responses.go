@@ -149,10 +149,18 @@ func (r *Response) PostResponse(c echo.Context) error {
 			}
 		}
 	}
-
-	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{Time: time.Now(), Valid: !req.Temporarily})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	now := time.Now()
+	var responseID int
+	if req.Temporarily {
+		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}else {
+		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{Time: now,Valid: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 	}
 
 	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
@@ -192,7 +200,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
 		"temporarily":     req.Temporarily,
-		"submitted_at":    time.Now(),
+		"submitted_at":    now,
 		"body":            req.Body,
 	})
 }
