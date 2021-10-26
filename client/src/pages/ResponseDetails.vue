@@ -146,15 +146,9 @@ export default {
         return undefined
       }
       if (this.responseData.temporarily) {
-        return undefined
+        return 'ti-save'
       }
-
-      switch (this.responseData.submitted_at) {
-        case false:
-          return 'ti-save'
-        default:
-          return 'ti-check'
-      }
+      return 'ti-check'
     },
     summaryProps() {
       const ret = {
