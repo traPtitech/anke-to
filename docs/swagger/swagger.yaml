@@ -763,6 +763,9 @@ components:
         temporarily:
           type: boolean
           example: true
+        submitted_at:
+          type: string
+          format: date-time
       required:
         - temporarily
         - questionnaireID
