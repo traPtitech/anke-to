@@ -52,7 +52,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	gorm.io/gorm v1.21.16
+	gorm.io/gorm v1.22.0
 )
 
 require (
