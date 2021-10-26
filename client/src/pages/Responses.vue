@@ -32,7 +32,7 @@
                 }}
               </td>
               <td class="table-item-date">
-                {{ getRelativeDateStr(response.submitted_at) }}
+                {{ getRelativeDateStr(response.modified_at) }}
               </td>
               <td>
                 <router-link
