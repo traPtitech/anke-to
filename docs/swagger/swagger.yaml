@@ -132,7 +132,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewQuestion'
       responses:
-        '200':
+        '201':
           description: 正常に質問を作成できました．作成された質問を返します．
           content:
             application/json:
@@ -184,7 +184,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewResponse'
       responses:
-        '200':
+        '201':
           description: 正常に回答を作成できました．作成された回答を返します．
           content:
             application/json:
