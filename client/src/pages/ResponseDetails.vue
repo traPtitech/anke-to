@@ -145,7 +145,7 @@ export default {
       if (this.isNewResponse) {
         return undefined
       }
-      switch (this.responseData.submittedAt) {
+      switch (this.responseData.submitted_at) {
         case null:
           return 'ti-save'
         default:
