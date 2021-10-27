@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 

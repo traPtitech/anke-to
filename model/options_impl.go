@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -82,6 +82,7 @@ func (*Option) UpdateOptions(ctx context.Context, options []string, questionID i
 				err := db.
 					Session(&gorm.Session{}).
 					Model(&Options{}).
+					Where("question_id = ?", questionID).
 					Where("option_num = ?", optionNum).
 					Update("body", optionLabel).Error
 				if err != nil {

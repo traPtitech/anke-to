@@ -3,10 +3,9 @@ package model
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"time"
 )
 
 // Response ResponseRepositoryの実装

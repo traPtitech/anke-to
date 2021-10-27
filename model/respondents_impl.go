@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ func NewRespondent() *Respondent {
 type Respondents struct {
 	ResponseID      int            `json:"responseID" gorm:"column:response_id;type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	QuestionnaireID int            `json:"questionnaireID" gorm:"type:int(11);not null"`
-	UserTraqid      string         `json:"user_traq_id,omitempty" gorm:"type:char(30);size:30;default:NULL"`
+	UserTraqid      string         `json:"user_traq_id,omitempty" gorm:"type:varchar(32);size:32;default:NULL"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty" gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	SubmittedAt     null.Time      `json:"submitted_at,omitempty" gorm:"type:TIMESTAMP NULL;default:NULL"`
 	DeletedAt       gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"type:TIMESTAMP NULL;default:NULL"`
@@ -211,7 +211,9 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 	err = db.
 		Where("questionnaire_id = ?", respondent.QuestionnaireID).
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
-			return db.Select("QuestionID", "Body")
+			return db.
+				Select("QuestionID", "Body").
+				Where("response_id = ?", responseID)
 		}).
 		Select("ID", "Type").
 		Find(&questions).Error

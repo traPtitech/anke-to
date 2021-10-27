@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 

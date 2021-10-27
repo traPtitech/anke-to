@@ -3,11 +3,11 @@ name: Deploy
 on: 
   push:
     branches: 
-      - master
+      - main
 
 env:
   IMAGE_NAME: anke-to
-  IMAGE_TAG: master
+  IMAGE_TAG: main
 
 jobs:
   image:

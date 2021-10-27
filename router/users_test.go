@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 
@@ -598,10 +598,13 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    gorm.DeletedAt(null.NewTime(nowTime, false)),
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				DeletedAt: gorm.DeletedAt{
+					Time:  nowTime,
+					Valid: false,
+				},
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
