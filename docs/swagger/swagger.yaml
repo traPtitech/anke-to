@@ -456,8 +456,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseResult'
+        '400':
+          description: questionnaireIDの型を数値に変換できませんでした
         '403':
           description: 結果を閲覧する権限がありません。
+        '500':
+          description: アンケートの回答の詳細情報一覧が取得できませんでした
 components:
   parameters:
     answeredInQuery:
