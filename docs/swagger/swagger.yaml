@@ -323,6 +323,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Me'
+        '500':
+          description: Userが取得できませんでした
   /users/me/responses:
     get:
       operationId: getMyResponses
@@ -338,6 +340,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseSummary'
+        '500':
+          description: Userが取得できませんでした
   '/users/me/responses/{questionnaireID}':
     get:
       operationId: getMyResponsesByID
@@ -355,6 +359,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseSummary'
+        '400':
+          description: questionnaireIDの型が数値ではありません
+        '500':
+          description: 回答のリストを取得できませんでした
   /users/me/targeted:
     get:
       operationId: getTargetedQuestionnaire
@@ -372,6 +380,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
+        '500':
+          description: 自分のUserIDが取得できませんでした
   /users/{traQID}/targeted:
     get:
       operationId: getTargettedQuestionnairesBytraQID
@@ -391,6 +401,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
+       '400':
+         description: 与えらえた情報の形式が異なります
+       '500':
+         description: 対象となっているアンケートのリストを取得できませんでした
   /users/me/administrates:
     get:
       operationId: getMyQuestionnaire
@@ -406,6 +420,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyAdministrates'
+        '500':
+          description: 自分が管理者となっているアンケートのリストを取得できませんでした
   /groups:
     get:
       operationId: getGroups
