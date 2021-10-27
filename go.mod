@@ -20,7 +20,6 @@ require (
 	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-    gopkg.in/guregu/null.v4 v4.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
@@ -63,7 +62,6 @@ require (
 require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/prometheus/client_golang v1.11.0
+	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
 )
-
-
