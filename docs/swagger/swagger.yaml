@@ -86,7 +86,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestionnaireByID'
         '400':
-          description: 与えられた情報の形式が異なります
+          description: アンケートのIDが無効です
         '404':
           description: アンケートが存在しません
         '500':
@@ -108,7 +108,7 @@ paths:
         '200':
           description: 正常にアンケートを変更できました．
         '400':
-          description: 与えられた情報の形式が異なります
+          description: アンケートのIDが無効です
         '500':
           description: 正常にアンケートを変更できませんでした
     delete:
@@ -122,7 +122,7 @@ paths:
         '200':
           description: 正常にアンケートを削除できました．
         '400':
-          description: 与えられた情報の形式が異なります
+          description: アンケートのIDが無効です
         '500':
           description: アンケートの削除をできませんでした
   '/questionnaires/{questionnaireID}/questions':
