@@ -598,13 +598,13 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 				Title:        "questionnaireID1",
 				Description:  "questionnaireID1",
 				ResTimeLimit: null.TimeFrom(nowTime),
-				DeletedAt:    gorm.DeletedAt{
+				DeletedAt: gorm.DeletedAt{
 					Time:  nowTime,
 					Valid: false,
 				},
-				ResSharedTo:  "public",
-				CreatedAt:    nowTime,
-				ModifiedAt:   nowTime,
+				ResSharedTo: "public",
+				CreatedAt:   nowTime,
+				ModifiedAt:  nowTime,
 			},
 			RespondedAt: null.NewTime(nowTime, false),
 			HasResponse: false,
