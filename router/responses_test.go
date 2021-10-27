@@ -20,7 +20,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 )
 
 type responseBody struct {

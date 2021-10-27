@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 )
 
 type CallChecker struct {
@@ -255,7 +255,7 @@ func TestResponseReadAuthenticate(t *testing.T) {
 				userID: "user1",
 				respondent: &model.Respondents{
 					UserTraqid:  "user2",
-					SubmittedAt: null.NewTime(time.Time{}, false),
+					SubmittedAt: null.Time{},
 				},
 			},
 			expect: expect{
