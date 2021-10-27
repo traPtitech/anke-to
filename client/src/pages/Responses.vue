@@ -28,7 +28,7 @@
                 {{
                   response.submitted_at == null
                     ? '未提出'
-                    : getRelativeDateStr(response.submittedAt)
+                    : getRelativeDateStr(response.submitted_at)
                 }}
               </td>
               <td class="table-item-date">
