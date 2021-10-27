@@ -158,8 +158,8 @@ func (r *Response) PostResponse(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
-	}else {
-		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(now,true))
+	} else {
+		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(now, true))
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
