@@ -26,7 +26,7 @@
               </td>
               <td class="table-item-date">
                 {{
-                  response.temporarily == false
+                  response.temporarily === true
                     ? '未提出'
                     : getRelativeDateStr(response.submitted_at)
                 }}

@@ -300,7 +300,7 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.temporarily = true
+      data.temporarily = false
 
       this.isSubmitting = true
       this.sendResponse(data).then(() => {
