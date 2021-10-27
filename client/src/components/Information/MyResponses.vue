@@ -12,8 +12,8 @@
         >
           <span
             :class="{
-              'ti-save': response.temporarily === true,
-              'ti-check': response.temporarily === false
+              'ti-save': response.submitted_at === null,
+              'ti-check': response.submitted_at !== null
             }"
           ></span>
           <router-link
@@ -60,7 +60,7 @@ export default {
       // 回答を送信済みかどうかを調べて Information に送信
       let hasResponded = false
       newArr.forEach(response => {
-        if (response.temporarily === false) hasResponded = true
+        if (response.submitted_at !== null) hasResponded = true
       })
       this.$emit('set-has-responded', hasResponded)
     }
