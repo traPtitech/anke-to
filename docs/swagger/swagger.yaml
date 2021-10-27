@@ -223,6 +223,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDetails'
+        '400':
+          description: 与えられた情報の形式が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: 正常に回答が作成できませんでした
   '/responses/{responseID}':
     get:
       operationId: getResponses
@@ -238,6 +246,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+        '400':
+          description: responseIDが数値に変換できませんでした
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '500':
+          description: responseIDを取得できませんでした
     patch:
       operationId: editResponse
       tags:
@@ -254,6 +268,14 @@ paths:
       responses:
         '200':
           description: 正常に回答を変更できました．
+        '400':
+          description: 与えられた回答の情報が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: responseIDを取得できませんでした
     delete:
       operationId: deleteResponse
       tags:
@@ -264,6 +286,14 @@ paths:
       responses:
         '200':
           description: 正常に回答を削除できました．
+        '400':
+          description: 与えられた回答の情報が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: responseIDを取得できませんでした
   /users:
     get:
       operationId: getUsers
