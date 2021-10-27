@@ -20,7 +20,7 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
 	"github.com/traPtitech/anke-to/traq/mock_traq"
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
 )
 
 func TestPostAndEditQuestionnaireValidate(t *testing.T) {
