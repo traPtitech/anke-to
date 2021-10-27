@@ -121,7 +121,7 @@ export default {
       if (this.selectedTab === 'Individual') {
         ret.responseDetails = {
           timeLabel: '回答日時',
-          time: this.responseData.submitted_at,
+          time: this.responseData.submittedAt,
           respondent: this.responseData.traqId
         }
       }
@@ -162,7 +162,7 @@ export default {
             modifiedAt: this.getDateStr(data.modified_at),
             responseId: data.responseID,
             responseBody: data.body,
-            submitted_at: this.getDateStr(data.submitted_at),
+            submittedAt: this.getDateStr(data.submittedAt),
             traqId: data.traqID
           })
         })
