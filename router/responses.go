@@ -151,18 +151,18 @@ func (r *Response) PostResponse(c echo.Context) error {
 			}
 		}
 	}
-	now := time.Now()
-	var responseID int
+
+	var submittedAt time.Time
+	//一時保存のときはnull
 	if req.Temporarily {
-		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.Time{})
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
+		submittedAt = time.Time{}
 	} else {
-		responseID, err = r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(now, true))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
+		submittedAt = time.Now()
+	}
+
+	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(submittedAt, !req.Temporarily))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	responseMetas := make([]*model.ResponseMeta, 0, len(req.Body))
@@ -188,21 +188,11 @@ func (r *Response) PostResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 	}
 
-	if req.Temporarily {
-		return c.JSON(http.StatusCreated, map[string]interface{}{
-			"responseID":      responseID,
-			"questionnaireID": req.ID,
-			"temporarily":     req.Temporarily,
-			"submitted_at":    nil,
-			"body":            req.Body,
-		})
-	}
-
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
 		"temporarily":     req.Temporarily,
-		"submitted_at":    now,
+		"submitted_at":    submittedAt,
 		"body":            req.Body,
 	})
 }
