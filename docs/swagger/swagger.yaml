@@ -167,6 +167,8 @@ paths:
                 $ref: '#/components/schemas/Question'
         '400':
           description: 正常に作成できませんでした。リクエストが不正です。
+        '500':
+          description: 正常に作成できませんでした。リクエストが不正です。
   '/questions/{questionID}':
     patch:
       operationId: editQuestion
@@ -186,6 +188,8 @@ paths:
           description: 正常に質問を変更できました．
         '400':
           description: 正常に変更できませんでした。リクエストが不正です。
+        '500':
+          description: 正常に変更できませんでした。リクエストが不正です。
     delete:
       operationId: deleteQuestion
       tags:
@@ -197,6 +201,8 @@ paths:
         '200':
           description: 正常に質問を削除できました。
         '400':
+          description: 正常に削除できませんでした。存在しない質問です。
+        '500':
           description: 正常に削除できませんでした。存在しない質問です。
   /responses:
     post:
