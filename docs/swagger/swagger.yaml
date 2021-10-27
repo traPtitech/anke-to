@@ -124,7 +124,7 @@ paths:
         '400':
           description: アンケートのIDが無効です
         '500':
-          description: アンケートの削除をできませんでした
+          description: アンケートの削除ができませんでした
   '/questionnaires/{questionnaireID}/questions':
     get:
       operationId: getQuestions
@@ -168,7 +168,7 @@ paths:
         '400':
           description: 正常に作成できませんでした。リクエストが不正です。
         '500':
-          description: 正常に作成できませんでした。リクエストが不正です。
+          description: 正常に作成できません。主に正規表現が原因。
   '/questions/{questionID}':
     patch:
       operationId: editQuestion
@@ -189,7 +189,7 @@ paths:
         '400':
           description: 正常に変更できませんでした。リクエストが不正です。
         '500':
-          description: 正常に変更できませんでした。リクエストが不正です。
+          description: 正常に変更できませんでした。主に正規表現が原因。
     delete:
       operationId: deleteQuestion
       tags:
@@ -200,8 +200,6 @@ paths:
       responses:
         '200':
           description: 正常に質問を削除できました。
-        '400':
-          description: 正常に削除できませんでした。存在しない質問です。
         '500':
           description: 正常に削除できませんでした。存在しない質問です。
   /responses:
