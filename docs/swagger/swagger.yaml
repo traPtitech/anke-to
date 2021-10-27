@@ -401,10 +401,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
-       '400':
-         description: 与えらえた情報の形式が異なります
-       '500':
-         description: 対象となっているアンケートのリストを取得できませんでした
+        '400':
+          description: 与えらえた情報の形式が異なります
+        '500':
+          description: 対象となっているアンケートのリストを取得できませんでした
   /users/me/administrates:
     get:
       operationId: getMyQuestionnaire
