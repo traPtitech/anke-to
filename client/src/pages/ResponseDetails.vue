@@ -145,10 +145,10 @@ export default {
       if (this.isNewResponse) {
         return undefined
       }
-      if (this.responseData.temporarily) {
+      if (this.temporarily) {
         return 'ti-save'
       }
-      return 'ti-check'
+      return 'ti-save'
     },
     summaryProps() {
       const ret = {
@@ -300,9 +300,9 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.temporarily = false
 
       this.isSubmitting = true
+      data.temporarily = false
       this.sendResponse(data).then(() => {
         this.isSubmitting = false
         this.setMessage('回答を送信しました', 'green')
@@ -315,6 +315,7 @@ export default {
       let data = this.createResponseData()
 
       this.isSaving = true
+      data.temporarily = true
       this.sendResponse(data).then(() => {
         this.isSaving = false
         this.setMessage('回答を保存しました (まだ未送信です)', 'green')
