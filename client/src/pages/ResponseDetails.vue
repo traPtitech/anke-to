@@ -145,10 +145,12 @@ export default {
       if (this.isNewResponse) {
         return undefined
       }
-      if (this.temporarily) {
-        return 'ti-save'
+      switch (this.responseData.submittedAt) {
+        case null:
+          return 'ti-save'
+        default:
+          return 'ti-check'
       }
-      return 'ti-save'
     },
     summaryProps() {
       const ret = {
