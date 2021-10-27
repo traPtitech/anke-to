@@ -325,7 +325,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	if req.Temporarily {
+	if !req.Temporarily {
 		err := r.UpdateSubmittedAt(c.Request().Context(), responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))
