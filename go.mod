@@ -56,7 +56,7 @@ require (
 
 require (
 	github.com/jinzhu/now v1.1.2 // indirect
-	gorm.io/driver/mysql v1.1.2
+	gorm.io/driver/mysql v1.1.3
 )
 
 require (
