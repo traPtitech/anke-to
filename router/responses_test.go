@@ -42,7 +42,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なリクエストなのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -57,7 +57,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "IDが0でもエラーなし",
 			request: &Responses{
 				ID:          0,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -72,7 +72,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "BodyのQuestionIDが0でもエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     0,
@@ -87,7 +87,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "ResponsesのIDが負なのでエラー",
 			request: &Responses{
 				ID:          -1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -100,10 +100,26 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
+			description: "Temporarilyがtrueでもエラーなし",
+			request: &Responses{
+				ID:          1,
+				Temporarily: true,
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Text",
+						Body:           null.String{},
+						OptionResponse: nil,
+					},
+				},
+			},
+			isErr: false,
+		},
+		{
 			description: "Bodyがnilなのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body:        nil,
 			},
 			isErr: true,
@@ -112,7 +128,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "BodyのQuestionIDが負なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     -1,
@@ -128,7 +144,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextタイプでoptionResponseが50文字以上でエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -144,7 +160,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -159,7 +175,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なTextAreaタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -174,7 +190,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextAreaタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -190,7 +206,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -205,7 +221,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なNumberタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -220,7 +236,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "NumberタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -236,7 +252,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -251,7 +267,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "Checkboxタイプで一般的な回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -266,7 +282,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseがnilな回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -282,7 +298,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseが50文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -298,7 +314,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -313,7 +329,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプで一般的な回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -328,7 +344,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseがnilな回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -344,7 +360,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseが50文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -360,7 +376,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -375,7 +391,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "一般的なLinearScaleタイプの回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -390,7 +406,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "LinearScaleタイプでoptionResponseが50文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -406,7 +422,7 @@ func TestPostResponseValidate(t *testing.T) {
 			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
 			request: &Responses{
 				ID:          1,
-				SubmittedAt: null.Time{},
+				Temporarily: false,
 				Body: []model.ResponseBody{
 					{
 						QuestionID:     1,
@@ -436,14 +452,16 @@ func TestPostResponseValidate(t *testing.T) {
 func TestPostResponse(t *testing.T) {
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
-		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
+		Temporarily     bool           `json:"temporarily"`
 		Body            []responseBody `json:"body" validate:"required"`
+		Submitted_at    time.Time      `json:"submitted_at"`
 	}
 	type responseResponseBody struct {
 		Body            []responseBody `json:"body" validate:"required"`
 		QuestionnaireID int            `json:"questionnaireID" validate:"min=0"`
 		ResponseID      int            `json:"responseID" validate:"min=0"`
-		SubmittedAt     null.Time      `json:"submitted_at" validate:"-"`
+		Temporarily     bool           `json:"temporarily"`
+		Submitted_at    time.Time      `json:"submitted_at"`
 	}
 
 	t.Parallel()
@@ -636,7 +654,32 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
+					Body: []responseBody{
+						{
+							QuestionID:     questionIDSuccess,
+							QuestionType:   "Text",
+							Body:           null.StringFrom("success case"),
+							OptionResponse: []string{},
+						},
+					},
+				},
+			},
+			expect: expect{
+				isErr:      false,
+				code:       http.StatusCreated,
+				responseID: responseIDSuccess,
+			},
+		},
+		{
+			description: "true Temporarily",
+			request: request{
+				user: userOne,
+				requestBody: responseRequestBody{
+					QuestionnaireID: questionnaireIDSuccess,
+					Temporarily:     true,
+					Submitted_at:    time.Time{},
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -659,7 +702,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -682,7 +726,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body:            []responseBody{},
 				},
 			},
@@ -720,7 +765,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDLimit,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body:            []responseBody{},
 				},
 			},
@@ -735,7 +781,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -758,7 +805,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -780,7 +828,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -802,7 +851,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -825,7 +875,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -847,7 +898,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -869,7 +921,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Submitted_at:    time.Now(),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -892,7 +945,8 @@ func TestPostResponse(t *testing.T) {
 				user: userOne,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
+					Submitted_at:    time.Now(),
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -931,14 +985,21 @@ func TestPostResponse(t *testing.T) {
 		response := responseResponseBody{
 			ResponseID:      testCase.expect.responseID,
 			QuestionnaireID: testCase.request.requestBody.QuestionnaireID,
-			SubmittedAt:     testCase.request.requestBody.SubmittedAt,
+			Temporarily:     testCase.request.requestBody.Temporarily,
 			Body:            testCase.request.requestBody.Body,
+			Submitted_at:    testCase.request.requestBody.Submitted_at,
 		}
+		var resActual responseResponseBody
 
-		responseByte, jsonErr := json.Marshal(response)
-		require.NoError(t, jsonErr)
-		responseStr := string(responseByte) + "\n"
-		assertion.Equal(responseStr, rec.Body.String(), testCase.description, "responseBody")
+		err := json.NewDecoder(rec.Body).Decode(&resActual)
+		if err != nil {
+			t.Errorf("failed to decode response body: %v", err)
+		}
+		assertion.Equal(response.ResponseID, resActual.ResponseID, "ResponseID")
+		assertion.Equal(response.QuestionnaireID, resActual.QuestionnaireID, "QuestionnaireID")
+		assertion.Equal(response.Temporarily, response.Temporarily, "Temporarily")
+		assertion.Equal(response.Body, resActual.Body, "Body")
+		assertion.WithinDuration(response.Submitted_at, resActual.Submitted_at, time.Second*2, "submitted_at")
 	}
 }
 
@@ -1100,14 +1161,14 @@ func TestGetResponse(t *testing.T) {
 func TestEditResponse(t *testing.T) {
 	type responseRequestBody struct {
 		QuestionnaireID int            `json:"questionnaireID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
+		Temporarily     bool           `json:"temporarily"`
 		Body            []responseBody `json:"body"`
 	}
 	type responseResponseBody struct {
 		Body            []responseBody `json:"body"`
 		QuestionnaireID int            `json:"questionnaireID"`
 		ResponseID      int            `json:"responseID"`
-		SubmittedAt     null.Time      `json:"submitted_at"`
+		Temporarily     bool           `json:"temporarily"`
 	}
 
 	t.Parallel()
@@ -1315,7 +1376,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1332,13 +1393,13 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "null submittedat",
+			description: "true Temporarily",
 			request: request{
 				user:       userOne,
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     true,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1361,7 +1422,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -1388,7 +1449,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDLimit,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
 					Body:            []responseBody{},
 				},
 			},
@@ -1404,7 +1465,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1427,7 +1488,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1450,7 +1511,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1473,7 +1534,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1496,7 +1557,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1519,7 +1580,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1542,7 +1603,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1565,7 +1626,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDSuccess,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.NewTime(nowTime, false),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,
@@ -1588,7 +1649,7 @@ func TestEditResponse(t *testing.T) {
 				responseID: responseIDFailure,
 				requestBody: responseRequestBody{
 					QuestionnaireID: questionnaireIDSuccess,
-					SubmittedAt:     null.TimeFrom(nowTime),
+					Temporarily:     false,
 					Body: []responseBody{
 						{
 							QuestionID:     questionIDSuccess,

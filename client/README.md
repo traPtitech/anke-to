@@ -14,12 +14,10 @@ npm run serve
 ```
 npm run build
 ```
-
-### Run your tests
+### builds a production app in staging mode
 ```
-npm run test
+npm run staging-build
 ```
-
 ### Lints and fixes files
 ```
 npm run lint
