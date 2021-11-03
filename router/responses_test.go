@@ -673,6 +673,30 @@ func TestPostResponse(t *testing.T) {
 			},
 		},
 		{
+			description: "true Temporarily",
+			request: request{
+				user: userOne,
+				requestBody: responseRequestBody{
+					QuestionnaireID: questionnaireIDSuccess,
+					Temporarily:     true,
+					Submitted_at:    time.Time{},
+					Body: []responseBody{
+						{
+							QuestionID:     questionIDSuccess,
+							QuestionType:   "Text",
+							Body:           null.StringFrom("success case"),
+							OptionResponse: []string{},
+						},
+					},
+				},
+			},
+			expect: expect{
+				isErr:      false,
+				code:       http.StatusCreated,
+				responseID: responseIDSuccess,
+			},
+		},
+		{
 			description: "null submittedat",
 			request: request{
 				user: userOne,
@@ -961,9 +985,9 @@ func TestPostResponse(t *testing.T) {
 		response := responseResponseBody{
 			ResponseID:      testCase.expect.responseID,
 			QuestionnaireID: testCase.request.requestBody.QuestionnaireID,
-			Temporarily:     false,
+			Temporarily:     testCase.request.requestBody.Temporarily,
 			Body:            testCase.request.requestBody.Body,
-			Submitted_at:    time.Now(),
+			Submitted_at: testCase.request.requestBody.Submitted_at,
 		}
 		var resActual responseResponseBody
 
