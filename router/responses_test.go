@@ -987,7 +987,7 @@ func TestPostResponse(t *testing.T) {
 			QuestionnaireID: testCase.request.requestBody.QuestionnaireID,
 			Temporarily:     testCase.request.requestBody.Temporarily,
 			Body:            testCase.request.requestBody.Body,
-			Submitted_at: testCase.request.requestBody.Submitted_at,
+			Submitted_at:    testCase.request.requestBody.Submitted_at,
 		}
 		var resActual responseResponseBody
 
