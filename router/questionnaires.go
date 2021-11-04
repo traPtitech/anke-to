@@ -264,7 +264,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 }
 
 // PostByQuestionnaireID POST /questionnaires/:questionnaireID/questions
-func (q *Question) PostByQuestionnaireID(c echo.Context) error {
+func (q *Questionnaire) PostByQuestionnaireID(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {

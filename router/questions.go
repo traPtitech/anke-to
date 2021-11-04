@@ -45,7 +45,6 @@ type PostAndEditQuestionRequest struct {
 	MaxBound        string   `json:"max_bound" validate:"omitempty,number"`
 }
 
-
 // EditQuestion PATCH /questions/:id
 func (q *Question) EditQuestion(c echo.Context) error {
 	questionID, err := getQuestionID(c)
