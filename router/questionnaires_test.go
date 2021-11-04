@@ -681,6 +681,67 @@ func TestPostQuestionnaire(t *testing.T) {
 
 func TestPostQuestionByQuestionnaireID(t *testing.T) {
 	//todo:mockを使ってテストを書く
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockTarget := mock_model.NewMockITarget(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
+	mockOption := mock_model.NewMockIOption(ctrl)
+	mockValidation := mock_model.NewMockIValidation(ctrl)
+	mockTransaction := &model.MockTransaction{}
+	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
+
+	questionnaire := NewQuestionnaire(
+		mockQuestionnaire,
+		mockTarget,
+		mockAdministrator,
+		mockQuestion,
+		mockOption,
+		mockScaleLabel,
+		mockValidation,
+		mockTransaction,
+		mockWebhook,
+	)
+
+	type expect struct {
+		statusCode int
+	}
+	type test struct {
+		description               string
+		invalidRequest            bool
+		request                   PostAndEditQuestionnaireRequest
+		ExecutesCreation          bool
+		questionnaireID           int
+		InsertQuestionnaireError  error
+		DeleteTargetsError        error
+		InsertTargetsError        error
+		DeleteAdministratorsError error
+		InsertAdministratorsError error
+		PostMessageError          error
+		expect
+	}
+	testCases := []test{}
+
+	for _, test := range testCases {
+		t.Run(test.description, func(t *testing.T) {
+			var request io.Reader
+			if test.invalidRequest {
+				request = strings.NewReader("test")
+			}else {
+				buf := bytes.NewBuffer(nil)
+				err := json.NewEncoder(buf).Encode(test.request)
+				if err != nil {
+					t.Errorf("failed to encode request: %w",err)
+				}
+
+				request = buf
+			}
+		})
+	}
 }
 
 func TestEditQuestionnaire(t *testing.T) {
