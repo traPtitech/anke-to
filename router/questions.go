@@ -3,11 +3,9 @@ package router
 import (
 	"errors"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"regexp"
-	"strconv"
-
-	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -30,7 +28,7 @@ func NewQuestion(validation model.IValidation, question model.IQuestion, option 
 	}
 }
 
-type PostQuestionRequest struct {
+type PostAndEditQuestionRequest struct {
 	QuestionnaireID int      `json:"questionnaireID" validate:"min=0"`
 	QuestionType    string   `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
 	QuestionNum     int      `json:"question_num" validate:"min=0"`
@@ -47,96 +45,6 @@ type PostQuestionRequest struct {
 	MaxBound        string   `json:"max_bound" validate:"omitempty,number"`
 }
 
-// PostByQuestionnaireID POST /questionnaires/:questionnaireID/questions
-func (q *Question) PostByQuestionnaireID(c echo.Context) error {
-	strQuestionnaireID := c.Param("questionnaireID")
-	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
-	}
-	req := PostQuestionRequest{}
-	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	validate, err := getValidator(c)
-	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	err = validate.StructCtx(c.Request().Context(), req)
-	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	switch req.QuestionType {
-	case "Text":
-		//正規表現のチェック
-		if _, err := regexp.Compile(req.RegexPattern); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
-	case "Number":
-		//数字か，min<=maxになってるか
-		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-	}
-
-	lastID, err := q.InsertQuestion(c.Request().Context(), questionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	switch req.QuestionType {
-	case "MultipleChoice", "Checkbox", "Dropdown":
-		for i, v := range req.Options {
-			if err := q.InsertOption(c.Request().Context(), lastID, i+1, v); err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
-		}
-	case "LinearScale":
-		if err := q.InsertScaleLabel(c.Request().Context(), lastID,
-			model.ScaleLabels{
-				ScaleLabelLeft:  req.ScaleLabelLeft,
-				ScaleLabelRight: req.ScaleLabelRight,
-				ScaleMax:        req.ScaleMax,
-				ScaleMin:        req.ScaleMin,
-			}); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-	case "Text", "Number":
-		if err := q.InsertValidation(c.Request().Context(), lastID,
-			model.Validations{
-				RegexPattern: req.RegexPattern,
-				MinBound:     req.MinBound,
-				MaxBound:     req.MaxBound,
-			}); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
-		}
-	}
-
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"questionID":        int(lastID),
-		"questionnaireID":   questionnaireID,
-		"question_type":     req.QuestionType,
-		"question_num":      req.QuestionNum,
-		"page_num":          req.PageNum,
-		"body":              req.Body,
-		"is_required":       req.IsRequired,
-		"options":           req.Options,
-		"scale_label_right": req.ScaleLabelRight,
-		"scale_label_left":  req.ScaleLabelLeft,
-		"scale_max":         req.ScaleMax,
-		"scale_min":         req.ScaleMin,
-		"regex_pattern":     req.RegexPattern,
-		"min_bound":         req.MinBound,
-		"max_bound":         req.MaxBound,
-	})
-}
 
 // EditQuestion PATCH /questions/:id
 func (q *Question) EditQuestion(c echo.Context) error {
@@ -145,22 +53,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	req := struct {
-		QuestionnaireID int      `json:"questionnaireID"`
-		QuestionType    string   `json:"question_type"`
-		QuestionNum     int      `json:"question_num"`
-		PageNum         int      `json:"page_num"`
-		Body            string   `json:"body"`
-		IsRequired      bool     `json:"is_required"`
-		Options         []string `json:"options"`
-		ScaleLabelRight string   `json:"scale_label_right"`
-		ScaleLabelLeft  string   `json:"scale_label_left"`
-		ScaleMax        int      `json:"scale_max"`
-		ScaleMin        int      `json:"scale_min"`
-		RegexPattern    string   `json:"regex_pattern"`
-		MinBound        string   `json:"min_bound"`
-		MaxBound        string   `json:"max_bound"`
-	}{}
+	req :=PostAndEditQuestionRequest{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
