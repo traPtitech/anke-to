@@ -713,15 +713,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 	type test struct {
 		description               string
 		invalidRequest            bool
-		request                   PostAndEditQuestionnaireRequest
+		request                   PostAndEditQuestionRequest
 		ExecutesCreation          bool
-		questionnaireID           int
-		InsertQuestionnaireError  error
-		DeleteTargetsError        error
-		InsertTargetsError        error
-		DeleteAdministratorsError error
-		InsertAdministratorsError error
-		PostMessageError          error
+		questionID           int
+		InsertQuestionError  error
 		expect
 	}
 	testCases := []test{}
@@ -740,6 +735,23 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 				request = buf
 			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost,"/questionnaires/:questionnaireID/questions",request)
+			rec := httptest.NewRecorder()
+			req.Header.Set(echo.HeaderContentType,echo.MIMEApplicationJSON)
+			c := e.NewContext(req,rec)
+
+			c.Set(validatorKay,validator.New())
+
+			if test.ExecutesCreation {
+				mockQuestion.
+					EXPECT().
+					InsertQuestion(c.Request().Context(),test.request.QuestionnaireID,test.request.PageNum,test.request.QuestionNum,test.request.QuestionType,test.request.Body,test.request.IsRequired).
+					Return(test.questionID,test.InsertQuestionError)
+			}
+
+			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c),c)
 		})
 	}
 }
