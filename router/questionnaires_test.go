@@ -779,10 +779,22 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					InsertQuestion(c.Request().Context(),test.request.QuestionnaireID,test.request.PageNum,test.request.QuestionNum,test.request.QuestionType,test.request.Body,test.request.IsRequired).
 					Return(test.questionID,test.InsertQuestionError)
 			}
-			if test.InsertQuestionError == nil {
-
+			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
+				mockScaleLabel.
+					EXPECT().
+					InsertScaleLabel(c.Request().Context(),test.questionID,model.ScaleLabels{
+					ScaleLabelRight: test.request.ScaleLabelRight,
+					ScaleLabelLeft:  test.request.ScaleLabelLeft,
+					ScaleMin:        test.request.ScaleMin,
+					ScaleMax:        test.request.ScaleMax,
+				}).Return(test.InsertScaleLabelError)
 			}
-			if test.InsertValidationError == nil {
+			if test.InsertQuestionError == nil && (test.request.QuestionType=="MultipleChoice" || test.request.QuestionType == "Checkbox"|| test.request.QuestionType == "Dropdown") {
+				mockOption.
+					EXPECT().
+					InsertOption(c.Request().Context(),test.questionID,gomock.Any(),gomock.Any()).Return(test.InsertOptionError)
+			}
+			if test.InsertQuestionError == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
 					EXPECT().
 					InsertValidation(c.Request().Context(),test.questionID,model.Validations{
