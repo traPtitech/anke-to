@@ -770,6 +770,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			c := e.NewContext(req,rec)
 			c.SetParamNames("questionnaireID")
 			c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
+
 			c.Set(questionnaireIDKey,test.request.QuestionnaireID)
 			c.Set(validatorKay,validator.New())
 
@@ -815,6 +816,21 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				if err != nil {
 					t.Errorf("failed to decode response body: %v", err)
 				}
+
+				assert.Equal(t, float64(test.questionID),question["questionID"],"questionID")
+				assert.Equal(t, test.request.QuestionType,question["question_type"],"question_type")
+				assert.Equal(t, float64(test.request.QuestionNum),question["question_num"],"question_num")
+				assert.Equal(t, float64(test.request.PageNum),question["page_num"],"page_num")
+				assert.Equal(t, test.request.Body,question["body"],"body")
+				assert.Equal(t, test.request.IsRequired,question["is_required"],"is_required")
+				assert.ElementsMatch(t, test.request.Options,question["options"],"options")
+				assert.Equal(t, test.request.ScaleLabelRight,question["scale_label_right"],"scale_label_right")
+				assert.Equal(t, test.request.ScaleLabelLeft,question["scale_label_left"],"scale_label_left")
+				assert.Equal(t, float64(test.request.ScaleMax),question["scale_max"],"scale_max")
+				assert.Equal(t, float64(test.request.ScaleMin),question["scale_min"],"scale_min")
+				assert.Equal(t, test.request.RegexPattern,question["regex_pattern"],"regex_pattern")
+				assert.Equal(t, test.request.MinBound,question["min_bound"],"min_bound")
+				assert.Equal(t, test.request.MaxBound,question["max_bound"],"max_bound")
 
 			}
 		})
