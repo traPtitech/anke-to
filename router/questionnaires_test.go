@@ -745,6 +745,41 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				statusCode: http.StatusCreated,
 			},
 		},
+		{
+			description:           "questionIDが0でも201",
+
+			request:               PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{},
+				ScaleLabelRight: "",
+				ScaleLabelLeft:  "",
+				ScaleMin:        0,
+				ScaleMax:        0,
+			},
+			ExecutesCreation:      true,
+			questionID:            0,
+			expect:              expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description:           "リクエストの形式が異なっているので400",
+			invalidRequest:        true,
+			expect:              expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "validationで落ちるので400",
+			request:     PostAndEditQuestionRequest{},
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -778,7 +813,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				mockQuestion.
 					EXPECT().
 					InsertQuestion(c.Request().Context(),test.request.QuestionnaireID,test.request.PageNum,test.request.QuestionNum,test.request.QuestionType,test.request.Body,test.request.IsRequired).
-					Return(test.questionID,test.InsertQuestionError)
+					Return(test.questionID,nil)
 			}
 			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
 				mockScaleLabel.
@@ -788,12 +823,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					ScaleLabelLeft:  test.request.ScaleLabelLeft,
 					ScaleMin:        test.request.ScaleMin,
 					ScaleMax:        test.request.ScaleMax,
-				}).Return(test.InsertScaleLabelError)
+				}).Return(nil)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType=="MultipleChoice" || test.request.QuestionType == "Checkbox"|| test.request.QuestionType == "Dropdown") {
 				mockOption.
 					EXPECT().
-					InsertOption(c.Request().Context(),test.questionID,gomock.Any(),gomock.Any()).Return(test.InsertOptionError)
+					InsertOption(c.Request().Context(),test.questionID,gomock.Any(),gomock.Any()).Return(nil)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
@@ -803,7 +838,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					MinBound:     test.request.MinBound,
 					MaxBound:     test.request.MaxBound,
 				}).
-					Return(test.InsertValidationError)
+					Return(nil)
 			}
 
 			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c),c)
