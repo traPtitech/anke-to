@@ -717,9 +717,35 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		ExecutesCreation          bool
 		questionID           int
 		InsertQuestionError  error
+		InsertOptionError   error
+		InsertValidationError error
+		InsertScaleLabelError error
+
 		expect
 	}
-	testCases := []test{}
+	testCases := []test{
+		{
+			description:         "一般的なリクエストなので201",
+			invalidRequest:      false,
+			request:             PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{},
+				ScaleLabelRight: "",
+				ScaleLabelLeft:  "",
+				ScaleMin:        0,
+				ScaleMax:        0,
+			},
+			ExecutesCreation:    true,
+			questionID:          1,
+			expect:              expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+	}
 
 	for _, test := range testCases {
 		t.Run(test.description, func(t *testing.T) {
@@ -737,11 +763,14 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			}
 
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost,"/questionnaires/:questionnaireID/questions",request)
+
+			req := httptest.NewRequest(http.MethodPost,fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID),request)
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType,echo.MIMEApplicationJSON)
 			c := e.NewContext(req,rec)
-
+			c.SetParamNames("questionnaireID")
+			c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
+			c.Set(questionnaireIDKey,test.request.QuestionnaireID)
 			c.Set(validatorKay,validator.New())
 
 			if test.ExecutesCreation {
@@ -750,8 +779,32 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					InsertQuestion(c.Request().Context(),test.request.QuestionnaireID,test.request.PageNum,test.request.QuestionNum,test.request.QuestionType,test.request.Body,test.request.IsRequired).
 					Return(test.questionID,test.InsertQuestionError)
 			}
+			if test.InsertQuestionError == nil {
+
+			}
+			if test.InsertValidationError == nil {
+				mockValidation.
+					EXPECT().
+					InsertValidation(c.Request().Context(),test.questionID,model.Validations{
+					RegexPattern: test.request.RegexPattern,
+					MinBound:     test.request.MinBound,
+					MaxBound:     test.request.MaxBound,
+				}).
+					Return(test.InsertValidationError)
+			}
 
 			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c),c)
+			
+			assert.Equal(t, test.expect.statusCode,rec.Code,"status code")
+
+			if test.expect.statusCode == http.StatusCreated {
+				var question map[string]interface{}
+				err := json.NewDecoder(rec.Body).Decode(&question)
+				if err != nil {
+					t.Errorf("failed to decode response body: %v", err)
+				}
+
+			}
 		})
 	}
 }
