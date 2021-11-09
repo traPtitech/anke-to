@@ -680,7 +680,6 @@ func TestPostQuestionnaire(t *testing.T) {
 }
 
 func TestPostQuestionByQuestionnaireID(t *testing.T) {
-	//todo:mockを使ってテストを書く
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
