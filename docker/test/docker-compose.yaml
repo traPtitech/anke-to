@@ -2,7 +2,9 @@ version: "3"
 
 services:
   anke-to:
-    image: golang:1.17.1-alpine
+    build:
+      context: ../..
+      dockerfile: docker/test/Dockerfile
     environment:
       ANKE-TO_ENV: dev
       CGO_ENABLED: 0
@@ -15,12 +17,6 @@ services:
       TRAQ_WEBHOOK_SECRET:
     volumes:
       - ../../:/go/src/github.com/traPtitech/anke-to
-    working_dir: /go/src/github.com/traPtitech/anke-to
-    command: >
-      sh -c '
-      go install github.com/golang/mock/mockgen &&
-      go generate ./model ./traq &&
-      go test ./model ./router -v -cover'
     restart: on-failure
     depends_on:
       - mysql
