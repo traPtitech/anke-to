@@ -788,7 +788,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"arupaka"},
+				Options:         []string{"arupaka", "mazrean"},
 				ScaleLabelRight: "arupaka",
 				ScaleLabelLeft:  "xxarupakaxx",
 				ScaleMin:        1,
@@ -1011,10 +1011,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					}).Return(test.InsertScaleLabelError)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "MultipleChoice" || test.request.QuestionType == "Checkbox" || test.request.QuestionType == "Dropdown") {
+				for i, option := range test.request.Options {
 					mockOption.
 						EXPECT().
-						InsertOption(c.Request().Context(), test.questionID, gomock.Any(),test.request.Options[0]).Return(test.InsertOptionError)
-
+						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
+				}
 			}
 			if test.request.QuestionType == "Number" {
 				mockValidation.
