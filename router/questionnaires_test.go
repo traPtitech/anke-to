@@ -728,6 +728,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description:         "一般的なリクエストなので201",
 			invalidRequest:      false,
 			request:             PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
 				PageNum:         1,
@@ -749,6 +750,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description:           "questionIDが0でも201",
 
 			request:               PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
 				PageNum:         1,
@@ -838,7 +840,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					MinBound:     test.request.MinBound,
 					MaxBound:     test.request.MaxBound,
 				}).
-					Return(nil)
+					Return(test.InsertValidationError)
 			}
 
 			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c),c)
