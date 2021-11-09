@@ -726,7 +726,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		InsertOptionError     error
 		InsertValidationError error
 		InsertScaleLabelError error
-		CheckNumberValid error
+		CheckNumberValid      error
 		expect
 	}
 	testCases := []test{
@@ -870,8 +870,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertQuestionError: errors.New("InsertQuestionError"),
-			ExecutesCreation: false,
-			questionID:       1,
+			ExecutesCreation:    false,
+			questionID:          1,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -895,8 +895,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertValidationError: errors.New("InsertValidationError"),
-			ExecutesCreation: true,
-			questionID:       1,
+			ExecutesCreation:      true,
+			questionID:            1,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -945,8 +945,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertQuestionError: errors.New("InsertQuestionError"),
-			ExecutesCreation: true,
-			questionID:       1,
+			ExecutesCreation:    true,
+			questionID:          1,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -970,8 +970,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertScaleLabelError: errors.New("InsertScaleLabelError"),
-			ExecutesCreation: true,
-			questionID:       1,
+			ExecutesCreation:      true,
+			questionID:            1,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -995,8 +995,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertOptionError: errors.New("InsertOptionError"),
-			ExecutesCreation: true,
-			questionID:       1,
+			ExecutesCreation:  true,
+			questionID:        1,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -1070,10 +1070,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			if test.request.QuestionType == "Number" {
 				mockValidation.
 					EXPECT().
-					CheckNumberValid(test.request.MinBound,test.request.MaxBound).
+					CheckNumberValid(test.request.MinBound, test.request.MaxBound).
 					Return(test.CheckNumberValid)
 			}
-			if test.InsertQuestionError == nil && test.CheckNumberValid ==nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
+			if test.InsertQuestionError == nil && test.CheckNumberValid == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
 					EXPECT().
 					InsertValidation(c.Request().Context(), test.questionID, model.Validations{
