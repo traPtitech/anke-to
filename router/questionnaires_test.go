@@ -903,6 +903,31 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "CheckNumberValidがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "Number",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			CheckNumberValid: errors.New("CheckNumberValidError"),
+			ExecutesCreation: false,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			description: "InsertQuestionがエラーで500",
 			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
