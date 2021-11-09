@@ -902,6 +902,31 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "InsertScaleLabelErrorがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "LinearScale",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertScaleLabelError: errors.New("InsertScaleLabelError"),
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
 			description:    "リクエストの形式が異なっているので400",
 			invalidRequest: true,
 			expect: expect{
