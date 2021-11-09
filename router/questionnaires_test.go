@@ -684,7 +684,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockTarget := mock_model.NewMockITarget(ctrl)
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
@@ -711,23 +711,22 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		statusCode int
 	}
 	type test struct {
-		description               string
-		invalidRequest            bool
-		request                   PostAndEditQuestionRequest
-		ExecutesCreation          bool
-		questionID           int
-		InsertQuestionError  error
-		InsertOptionError   error
+		description           string
+		invalidRequest        bool
+		request               PostAndEditQuestionRequest
+		ExecutesCreation      bool
+		questionID            int
+		InsertQuestionError   error
+		InsertOptionError     error
 		InsertValidationError error
 		InsertScaleLabelError error
-
 		expect
 	}
 	testCases := []test{
 		{
-			description:         "一般的なリクエストなので201",
-			invalidRequest:      false,
-			request:             PostAndEditQuestionRequest{
+			description:    "一般的なリクエストなので201",
+			invalidRequest: false,
+			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -740,16 +739,15 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				ScaleMin:        0,
 				ScaleMax:        0,
 			},
-			ExecutesCreation:    true,
-			questionID:          1,
-			expect:              expect{
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
 				statusCode: http.StatusCreated,
 			},
 		},
 		{
-			description:           "questionIDが0でも201",
-
-			request:               PostAndEditQuestionRequest{
+			description: "questionIDが0でも201",
+			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -762,16 +760,16 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				ScaleMin:        0,
 				ScaleMax:        0,
 			},
-			ExecutesCreation:      true,
-			questionID:            0,
-			expect:              expect{
+			ExecutesCreation: true,
+			questionID:       0,
+			expect: expect{
 				statusCode: http.StatusCreated,
 			},
 		},
 		{
-			description:           "リクエストの形式が異なっているので400",
-			invalidRequest:        true,
-			expect:              expect{
+			description:    "リクエストの形式が異なっているので400",
+			invalidRequest: true,
+			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
 		},
@@ -789,11 +787,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			var request io.Reader
 			if test.invalidRequest {
 				request = strings.NewReader("test")
-			}else {
+			} else {
 				buf := bytes.NewBuffer(nil)
 				err := json.NewEncoder(buf).Encode(test.request)
 				if err != nil {
-					t.Errorf("failed to encode request: %w",err)
+					t.Errorf("failed to encode request: %w", err)
 				}
 
 				request = buf
@@ -801,51 +799,54 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 			e := echo.New()
 
-			req := httptest.NewRequest(http.MethodPost,fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID),request)
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID), request)
 			rec := httptest.NewRecorder()
-			req.Header.Set(echo.HeaderContentType,echo.MIMEApplicationJSON)
-			c := e.NewContext(req,rec)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			c := e.NewContext(req, rec)
 			c.SetParamNames("questionnaireID")
 			c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
 
-			c.Set(questionnaireIDKey,test.request.QuestionnaireID)
-			c.Set(validatorKay,validator.New())
+			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
+			c.Set(validatorKay, validator.New())
 
 			if test.ExecutesCreation {
 				mockQuestion.
 					EXPECT().
-					InsertQuestion(c.Request().Context(),test.request.QuestionnaireID,test.request.PageNum,test.request.QuestionNum,test.request.QuestionType,test.request.Body,test.request.IsRequired).
-					Return(test.questionID,nil)
+					InsertQuestion(c.Request().Context(), test.request.QuestionnaireID, test.request.PageNum, test.request.QuestionNum, test.request.QuestionType, test.request.Body, test.request.IsRequired).
+					Return(test.questionID, nil)
 			}
 			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
 				mockScaleLabel.
 					EXPECT().
-					InsertScaleLabel(c.Request().Context(),test.questionID,model.ScaleLabels{
-					ScaleLabelRight: test.request.ScaleLabelRight,
-					ScaleLabelLeft:  test.request.ScaleLabelLeft,
-					ScaleMin:        test.request.ScaleMin,
-					ScaleMax:        test.request.ScaleMax,
-				}).Return(nil)
+					InsertScaleLabel(c.Request().Context(), test.questionID, model.ScaleLabels{
+						ScaleLabelRight: test.request.ScaleLabelRight,
+						ScaleLabelLeft:  test.request.ScaleLabelLeft,
+						ScaleMin:        test.request.ScaleMin,
+						ScaleMax:        test.request.ScaleMax,
+					}).Return(test.InsertScaleLabelError)
 			}
-			if test.InsertQuestionError == nil && (test.request.QuestionType=="MultipleChoice" || test.request.QuestionType == "Checkbox"|| test.request.QuestionType == "Dropdown") {
-				mockOption.
-					EXPECT().
-					InsertOption(c.Request().Context(),test.questionID,gomock.Any(),gomock.Any()).Return(nil)
+			if test.InsertQuestionError == nil && (test.request.QuestionType == "MultipleChoice" || test.request.QuestionType == "Checkbox" || test.request.QuestionType == "Dropdown") {
+				for i, option := range test.request.Options {
+					mockOption.
+						EXPECT().
+						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
+				}
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
 					EXPECT().
-					InsertValidation(c.Request().Context(),test.questionID,model.Validations{
-					RegexPattern: test.request.RegexPattern,
-					MinBound:     test.request.MinBound,
-					MaxBound:     test.request.MaxBound,
-				}).
+					InsertValidation(c.Request().Context(), test.questionID, model.Validations{
+						QuestionID:   test.questionID,
+						RegexPattern: test.request.RegexPattern,
+						MinBound:     test.request.MinBound,
+						MaxBound:     test.request.MaxBound,
+					}).
 					Return(test.InsertValidationError)
 			}
 
-			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c),c)
-			
-			assert.Equal(t, test.expect.statusCode,rec.Code,"status code")
+			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c), c)
+
+			assert.Equal(t, test.expect.statusCode, rec.Code, "status code")
 
 			if test.expect.statusCode == http.StatusCreated {
 				var question map[string]interface{}
@@ -854,20 +855,20 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					t.Errorf("failed to decode response body: %v", err)
 				}
 
-				assert.Equal(t, float64(test.questionID),question["questionID"],"questionID")
-				assert.Equal(t, test.request.QuestionType,question["question_type"],"question_type")
-				assert.Equal(t, float64(test.request.QuestionNum),question["question_num"],"question_num")
-				assert.Equal(t, float64(test.request.PageNum),question["page_num"],"page_num")
-				assert.Equal(t, test.request.Body,question["body"],"body")
-				assert.Equal(t, test.request.IsRequired,question["is_required"],"is_required")
-				assert.ElementsMatch(t, test.request.Options,question["options"],"options")
-				assert.Equal(t, test.request.ScaleLabelRight,question["scale_label_right"],"scale_label_right")
-				assert.Equal(t, test.request.ScaleLabelLeft,question["scale_label_left"],"scale_label_left")
-				assert.Equal(t, float64(test.request.ScaleMax),question["scale_max"],"scale_max")
-				assert.Equal(t, float64(test.request.ScaleMin),question["scale_min"],"scale_min")
-				assert.Equal(t, test.request.RegexPattern,question["regex_pattern"],"regex_pattern")
-				assert.Equal(t, test.request.MinBound,question["min_bound"],"min_bound")
-				assert.Equal(t, test.request.MaxBound,question["max_bound"],"max_bound")
+				assert.Equal(t, float64(test.questionID), question["questionID"], "questionID")
+				assert.Equal(t, test.request.QuestionType, question["question_type"], "question_type")
+				assert.Equal(t, float64(test.request.QuestionNum), question["question_num"], "question_num")
+				assert.Equal(t, float64(test.request.PageNum), question["page_num"], "page_num")
+				assert.Equal(t, test.request.Body, question["body"], "body")
+				assert.Equal(t, test.request.IsRequired, question["is_required"], "is_required")
+				assert.ElementsMatch(t, test.request.Options, question["options"], "options")
+				assert.Equal(t, test.request.ScaleLabelRight, question["scale_label_right"], "scale_label_right")
+				assert.Equal(t, test.request.ScaleLabelLeft, question["scale_label_left"], "scale_label_left")
+				assert.Equal(t, float64(test.request.ScaleMax), question["scale_max"], "scale_max")
+				assert.Equal(t, float64(test.request.ScaleMin), question["scale_min"], "scale_min")
+				assert.Equal(t, test.request.RegexPattern, question["regex_pattern"], "regex_pattern")
+				assert.Equal(t, test.request.MinBound, question["min_bound"], "min_bound")
+				assert.Equal(t, test.request.MaxBound, question["max_bound"], "max_bound")
 
 			}
 		})
