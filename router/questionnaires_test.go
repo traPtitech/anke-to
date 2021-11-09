@@ -788,7 +788,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"arupaka", "mazrean"},
+				Options:         []string{"arupaka"},
 				ScaleLabelRight: "arupaka",
 				ScaleLabelLeft:  "xxarupakaxx",
 				ScaleMin:        1,
@@ -927,6 +927,31 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "InsertOptionErrorがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "MultipleChoice",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertOptionError: errors.New("InsertOptionError"),
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
 			description:    "リクエストの形式が異なっているので400",
 			invalidRequest: true,
 			expect: expect{
@@ -986,11 +1011,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					}).Return(test.InsertScaleLabelError)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "MultipleChoice" || test.request.QuestionType == "Checkbox" || test.request.QuestionType == "Dropdown") {
-				for i, option := range test.request.Options {
 					mockOption.
 						EXPECT().
-						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
-				}
+						InsertOption(c.Request().Context(), test.questionID, gomock.Any(),test.request.Options[0]).Return(test.InsertOptionError)
+
 			}
 			if test.request.QuestionType == "Number" {
 				mockValidation.
