@@ -828,6 +828,55 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "QuestionTypeがNumberでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "Number",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "QuestionTypeが存在しないものは400",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "aaa",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertQuestionError: errors.New("InsertQuestionError"),
+			ExecutesCreation: false,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			description:    "リクエストの形式が異なっているので400",
 			invalidRequest: true,
 			expect: expect{
@@ -892,6 +941,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 						EXPECT().
 						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
 				}
+			}
+			if test.request.QuestionType == "Number" {
+				mockValidation.
+					EXPECT().
+					CheckNumberValid(test.request.MinBound,test.request.MaxBound).
+					Return(nil)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
