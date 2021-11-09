@@ -18,16 +18,6 @@ services:
       - "1323:1323"
     volumes:
       - "../../:/go/src/github.com/traPtitech/anke-to"
-    entrypoint:
-      - dockerize
-      - -timeout
-      - 10s
-      - -wait
-      - tcp://mysql:3306
-    command:
-      - air
-      - -c
-      - docker/dev/.air.toml
     depends_on:
       - mysql
 
