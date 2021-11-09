@@ -727,6 +727,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		InsertOptionError     error
 		InsertValidationError error
 		InsertScaleLabelError error
+		CheckNumberValid error
 		expect
 	}
 	testCases := []test{
@@ -1046,9 +1047,9 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				mockValidation.
 					EXPECT().
 					CheckNumberValid(test.request.MinBound,test.request.MaxBound).
-					Return(nil)
+					Return(test.CheckNumberValid)
 			}
-			if test.InsertQuestionError == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
+			if test.InsertQuestionError == nil && test.CheckNumberValid ==nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
 					EXPECT().
 					InsertValidation(c.Request().Context(), test.questionID, model.Validations{
