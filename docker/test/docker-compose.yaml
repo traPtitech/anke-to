@@ -20,6 +20,7 @@ services:
     restart: on-failure
     depends_on:
       - mysql
+      - dockerize
 
   mysql:
     image: mariadb:10.3.9
@@ -30,3 +31,12 @@ services:
       TZ: Asia/Tokyo
     expose:
       - "3306"
+
+  dockerize:
+    build:
+      context: ../..
+      dockerfile: docker/test/Dockerfile.dockerize
+    stdin_open: true
+    tty: true
+    depends_on:
+      - mysql
