@@ -707,6 +707,13 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		mockWebhook,
 	)
 
+	type validations struct {
+		questionID   int
+		regexPattern string
+		minBound     string
+		maxBound     string
+	}
+
 	type expect struct {
 		statusCode int
 	}
@@ -733,11 +740,14 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{},
-				ScaleLabelRight: "",
-				ScaleLabelLeft:  "",
-				ScaleMin:        0,
-				ScaleMax:        0,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
 			},
 			ExecutesCreation: true,
 			questionID:       1,
@@ -754,14 +764,17 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{},
-				ScaleLabelRight: "",
-				ScaleLabelLeft:  "",
-				ScaleMin:        0,
-				ScaleMax:        0,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
 			},
 			ExecutesCreation: true,
-			questionID:       0,
+			questionID:       1,
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -813,7 +826,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				mockQuestion.
 					EXPECT().
 					InsertQuestion(c.Request().Context(), test.request.QuestionnaireID, test.request.PageNum, test.request.QuestionNum, test.request.QuestionType, test.request.Body, test.request.IsRequired).
-					Return(test.questionID, nil)
+					Return(test.questionID, test.InsertQuestionError)
 			}
 			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
 				mockScaleLabel.
@@ -836,7 +849,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				mockValidation.
 					EXPECT().
 					InsertValidation(c.Request().Context(), test.questionID, model.Validations{
-						QuestionID:   test.questionID,
 						RegexPattern: test.request.RegexPattern,
 						MinBound:     test.request.MinBound,
 						MaxBound:     test.request.MaxBound,
