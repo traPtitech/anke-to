@@ -28,7 +28,7 @@ func NewQuestion(validation model.IValidation, question model.IQuestion, option 
 	}
 }
 
-type PostQuestionRequest struct {
+type PostAndEditQuestionRequest struct {
 	QuestionnaireID int      `json:"questionnaireID" validate:"min=0"`
 	QuestionType    string   `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
 	QuestionNum     int      `json:"question_num" validate:"min=0"`
@@ -52,7 +52,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
-	req :=PostQuestionRequest{}
+	req :=PostAndEditQuestionRequest{}
 
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
