@@ -1249,7 +1249,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "LinearScaleタイプでscaleLabelRightがないとエラー",
+			description: "LinearScaleタイプでscaleLabelRightがなくてもエラーなし",
 			request: &PostQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
@@ -1263,10 +1263,10 @@ func TestPostQuestionValidate(t *testing.T) {
 				ScaleMin:        0,
 				ScaleMax:        0,
 			},
-			isErr: true,
+			isErr: false,
 		},
 		{
-			description: "LinearScaleタイプでscaleLabelLeftがないとエラー",
+			description: "LinearScaleタイプでscaleLabelLeftがなくてもエラーなし",
 			request: &PostQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
@@ -1280,7 +1280,24 @@ func TestPostQuestionValidate(t *testing.T) {
 				ScaleMin:        0,
 				ScaleMax:        0,
 			},
-			isErr: true,
+			isErr: false,
+		},
+		{
+			description: "LinearScaleタイプでscaleLabelLeft＆Rightがなくてもエラーなし",
+			request: &PostQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "LinearScale",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{},
+				ScaleLabelRight: "",
+				ScaleLabelLeft:  "",
+				ScaleMin:        0,
+				ScaleMax:        0,
+			},
+			isErr: false,
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelRightが50字を超えていたらエラー",
