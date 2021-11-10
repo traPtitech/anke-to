@@ -717,18 +717,16 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		statusCode int
 	}
 	type test struct {
-		description           string
-		invalidRequest        bool
-		request               PostAndEditQuestionRequest
-		ExecutesCreation      bool
-		questionID            int
-		QuestionnaireID float64
-		QuestionnaireIDParseError error
-		InsertQuestionError   error
-		InsertOptionError     error
-		InsertValidationError error
-		InsertScaleLabelError error
-		CheckNumberValid      error
+		description               string
+		invalidRequest            bool
+		request                   PostAndEditQuestionRequest
+		ExecutesCreation          bool
+		questionID                int
+		InsertQuestionError       error
+		InsertOptionError         error
+		InsertValidationError     error
+		InsertScaleLabelError     error
+		CheckNumberValid          error
 		expect
 	}
 	testCases := []test{
@@ -779,17 +777,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			questionID:       0,
 			expect: expect{
 				statusCode: http.StatusCreated,
-			},
-		},
-		{
-			description: "questionnaireIDが整数値ではないのでエラー",
-			request: PostAndEditQuestionRequest{},
-			ExecutesCreation: false,
-			QuestionnaireIDParseError: errors.New("QuestionnaireIDがintじゃない"),
-			QuestionnaireID: 0.2,
-			questionID:       1,
-			expect: expect{
-				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
@@ -1046,12 +1033,9 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			}
 
 			e := echo.New()
-			var req *http.Request
-			if test.QuestionnaireIDParseError == nil {
-				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID), request)
-			}else {
-				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%v/questions", test.QuestionnaireID), request)
-			}
+
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID), request)
+
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			c := e.NewContext(req, rec)
