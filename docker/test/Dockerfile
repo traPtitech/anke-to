@@ -20,4 +20,3 @@ RUN go install github.com/golang/mock/mockgen  \
  && go generate ./model ./traq
 
 ENTRYPOINT dockerize -timeout 10s -wait tcp://mysql:3306 go test ./model ./router -v cover
-
