@@ -19,8 +19,8 @@ services:
       - ../../:/go/src/github.com/traPtitech/anke-to
     restart: on-failure
     depends_on:
-      - mysql
-      - dockerize
+      dockerize:
+        condition: service_completed_successfully
 
   mysql:
     image: mariadb:10.3.9
