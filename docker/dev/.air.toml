@@ -1,0 +1,31 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/main ."
+bin = "./tmp/main"
+include_ext = ["go", "tpl", "tmpl", "html"]
+exclude_dir = ["assets", "tmp", "vendor", "node_modules","client","tuning",".github"]
+exclude_regex = ["_test.go"]
+exclude_unchanged = false
+follow_symlink = false
+log = "air.log"
+delay = 600
+stop_on_error = true
+send_interrupt = false
+kill_delay = 0
+
+[log]
+# Show log time
+time = true
+
+[color]
+# Customize each part's color. If no color found, use the raw app log.
+main = "cyan"
+watcher = "magenta"
+build = "yellow"
+runner = "green"
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true
