@@ -1,7 +1,7 @@
 FROM golang:1.17.3-alpine as builder
-RUN apk add --update --no-cache ca-certificates git
-RUN apk add --no-cache gcc libc-dev
-RUN apk add --no-cache openssl
+RUN apk add --update --no-cache ca-certificates git \
+ && apk add --no-cache gcc libc-dev \
+ && apk add --no-cache openssl
 
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
