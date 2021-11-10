@@ -41,6 +41,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionnairesWithPageMax'
+        '400':
+          description: 与えられた情報の形式が異なります
+        '500':
+          description: アンケートを正常に取得できませんでした
         '503':
           description: SQLの実行時間が3sを超えた場合。主に正規表現が原因。
     post:
@@ -61,6 +65,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewQuestionnaireResponse'
+        '400':
+          description: 与えられた情報の形式が異なります
+        '500':
+          description: アンケートを正常に作成できませんでした
+
   '/questionnaires/{questionnaireID}':
     get:
       operationId: getQuestionnaire
@@ -76,6 +85,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionnaireByID'
+        '400':
+          description: アンケートのIDが無効です
+        '404':
+          description: アンケートが存在しません
+        '500':
+          description: アンケートを正常に取得できませんでした
     patch:
       operationId: editQuestionnaire
       tags:
@@ -92,6 +107,10 @@ paths:
       responses:
         '200':
           description: 正常にアンケートを変更できました．
+        '400':
+          description: アンケートのIDが無効です
+        '500':
+          description: 正常にアンケートを変更できませんでした
     delete:
       operationId: delteQuestionnaire
       tags:
@@ -102,6 +121,10 @@ paths:
       responses:
         '200':
           description: 正常にアンケートを削除できました．
+        '400':
+          description: アンケートのIDが無効です
+        '500':
+          description: アンケートの削除ができませんでした
   '/questionnaires/{questionnaireID}/questions':
     get:
       operationId: getQuestions
@@ -119,6 +142,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionDetails'
+        '400':
+          description: アンケートのIDが無効です
+        '500':
+          description: 質問のリストを取得できませんでした
   /questions:
     post:
       operationId: postQuestion
@@ -132,7 +159,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewQuestion'
       responses:
-        '200':
+        '201':
           description: 正常に質問を作成できました．作成された質問を返します．
           content:
             application/json:
@@ -140,6 +167,8 @@ paths:
                 $ref: '#/components/schemas/Question'
         '400':
           description: 正常に作成できませんでした。リクエストが不正です。
+        '500':
+          description: 正常に作成できません。主に正規表現が原因。
   '/questions/{questionID}':
     patch:
       operationId: editQuestion
@@ -159,6 +188,8 @@ paths:
           description: 正常に質問を変更できました．
         '400':
           description: 正常に変更できませんでした。リクエストが不正です。
+        '500':
+          description: 正常に変更できませんでした。主に正規表現が原因。
     delete:
       operationId: deleteQuestion
       tags:
@@ -169,7 +200,7 @@ paths:
       responses:
         '200':
           description: 正常に質問を削除できました。
-        '400':
+        '500':
           description: 正常に削除できませんでした。存在しない質問です。
   /responses:
     post:
@@ -182,14 +213,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewResponse'
+              $ref: '#/components/schemas/PostResponse'
       responses:
-        '200':
+        '201':
           description: 正常に回答を作成できました．作成された回答を返します．
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDetails'
+        '400':
+          description: 与えられた情報の形式が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: 正常に回答が作成できませんでした
   '/responses/{responseID}':
     get:
       operationId: getResponses
@@ -205,6 +244,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+        '400':
+          description: responseIDが数値に変換できませんでした
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '500':
+          description: responseIDを取得できませんでした
     patch:
       operationId: editResponse
       tags:
@@ -221,6 +266,14 @@ paths:
       responses:
         '200':
           description: 正常に回答を変更できました．
+        '400':
+          description: 与えられた回答の情報が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: responseIDを取得できませんでした
     delete:
       operationId: deleteResponse
       tags:
@@ -231,6 +284,14 @@ paths:
       responses:
         '200':
           description: 正常に回答を削除できました．
+        '400':
+          description: 与えられた回答の情報が異なります
+        '404':
+          description: アンケートの回答の期限がきれたため回答が存在しません
+        '405':
+          description: 回答期限が過ぎたため回答できません
+        '500':
+          description: responseIDを取得できませんでした
   /users:
     get:
       operationId: getUsers
@@ -260,6 +321,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Me'
+        '500':
+          description: Userが取得できませんでした
   /users/me/responses:
     get:
       operationId: getMyResponses
@@ -275,6 +338,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseSummary'
+        '500':
+          description: Userが取得できませんでした
   '/users/me/responses/{questionnaireID}':
     get:
       operationId: getMyResponsesByID
@@ -292,6 +357,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseSummary'
+        '400':
+          description: questionnaireIDの型が数値ではありません
+        '500':
+          description: 回答のリストを取得できませんでした
   /users/me/targeted:
     get:
       operationId: getTargetedQuestionnaire
@@ -309,6 +378,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
+        '500':
+          description: 自分のUserIDが取得できませんでした
   /users/{traQID}/targeted:
     get:
       operationId: getTargettedQuestionnairesBytraQID
@@ -328,6 +399,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyTargeted'
+        '400':
+          description: 与えらえた情報の形式が異なります
+        '500':
+          description: 対象となっているアンケートのリストを取得できませんでした
   /users/me/administrates:
     get:
       operationId: getMyQuestionnaire
@@ -343,6 +418,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionnaireMyAdministrates'
+        '500':
+          description: 自分が管理者となっているアンケートのリストを取得できませんでした
   /groups:
     get:
       operationId: getGroups
@@ -377,8 +454,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseResult'
+        '400':
+          description: questionnaireIDの型を数値に変換できませんでした
         '403':
           description: 結果を閲覧する権限がありません。
+        '500':
+          description: アンケートの回答の詳細情報一覧が取得できませんでした
 components:
   parameters:
     answeredInQuery:
@@ -764,7 +845,27 @@ components:
           type: string
           format: date-time
       required:
-        - submitted_at
+        - temporarily
+        - questionnaireID
+        - body
+    PostResponse:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+        temporarily:
+          type: boolean
+          example: true
+        submitted_at:
+          type: string
+          format: date-time
+      required:
+        - temporarily
         - questionnaireID
         - body
     Response:

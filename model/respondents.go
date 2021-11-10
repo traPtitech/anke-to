@@ -5,12 +5,13 @@ package model
 import (
 	"context"
 
-	"gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v4"
+
 )
 
 // IRespondent RespondentのRepository
 type IRespondent interface {
-	InsertRespondent(ctx context.Context, userID string, questionnaireID int, submitedAt null.Time) (int, error)
+	InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error)
 	UpdateSubmittedAt(ctx context.Context, responseID int) error
 	DeleteRespondent(ctx context.Context, responseID int) error
 	GetRespondent(ctx context.Context, responseID int) (*Respondents, error)

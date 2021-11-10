@@ -1,11 +1,11 @@
-FROM golang:1.17.2-alpine as build-step
+FROM golang:1.17.3-alpine as build-step
 RUN apk add --update --no-cache ca-certificates git
 
 WORKDIR /go/src/github.com/traPtitech/anke-to
 
-RUN go get -u github.com/pilu/fresh
+RUN go install github.com/cosmtrek/air@v1.27.3
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-ENTRYPOINT fresh -c docker/dev/fresh.conf
+CMD ["air", "-c", "docker/dev/.air.toml"]

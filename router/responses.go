@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"gopkg.in/guregu/null.v3"
+
+	"gopkg.in/guregu/null.v4"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -36,7 +37,7 @@ func NewResponse(questionnaire model.IQuestionnaire, validation model.IValidatio
 // Responses 質問に対する回答一覧の構造体
 type Responses struct {
 	ID          int                  `json:"questionnaireID" validate:"min=0"`
-	SubmittedAt null.Time            `json:"submitted_at"`
+	Temporarily bool                 `json:"temporarily"`
 	Body        []model.ResponseBody `json:"body" validate:"required,dive"`
 }
 
@@ -151,7 +152,15 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, req.SubmittedAt)
+	var submittedAt time.Time
+	//一時保存のときはnull
+	if req.Temporarily {
+		submittedAt = time.Time{}
+	} else {
+		submittedAt = time.Now()
+	}
+
+	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(submittedAt, !req.Temporarily))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -182,7 +191,8 @@ func (r *Response) PostResponse(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"responseID":      responseID,
 		"questionnaireID": req.ID,
-		"submitted_at":    req.SubmittedAt,
+		"temporarily":     req.Temporarily,
+		"submitted_at":    submittedAt,
 		"body":            req.Body,
 	})
 }
@@ -305,7 +315,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	if req.SubmittedAt.Valid {
+	if !req.Temporarily {
 		err := r.UpdateSubmittedAt(c.Request().Context(), responseID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))

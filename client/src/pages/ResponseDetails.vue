@@ -302,9 +302,9 @@ export default {
 
       // 回答の送信
       let data = this.createResponseData()
-      data.submitted_at = new Date()
 
       this.isSubmitting = true
+      data.temporarily = false
       this.sendResponse(data).then(() => {
         this.isSubmitting = false
         this.setMessage('回答を送信しました', 'green')
@@ -317,6 +317,7 @@ export default {
       let data = this.createResponseData()
 
       this.isSaving = true
+      data.temporarily = true
       this.sendResponse(data).then(() => {
         this.isSaving = false
         this.setMessage('回答を保存しました (まだ未送信です)', 'green')

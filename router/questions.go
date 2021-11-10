@@ -37,8 +37,8 @@ type PostQuestionRequest struct {
 	Body            string   `json:"body" validate:"required"`
 	IsRequired      bool     `json:"is_required"`
 	Options         []string `json:"options" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
-	ScaleLabelRight string   `json:"scale_label_right" validate:"required_if=QuestionType LinearScale,max=50"`
-	ScaleLabelLeft  string   `json:"scale_label_left" validate:"required_if=QuestionType LinearScale,max=50"`
+	ScaleLabelRight string   `json:"scale_label_right" validate:"max=50"`
+	ScaleLabelLeft  string   `json:"scale_label_left" validate:"max=50"`
 	ScaleMin        int      `json:"scale_min"`
 	ScaleMax        int      `json:"scale_max" validate:"gtecsfield=ScaleMin"`
 	RegexPattern    string   `json:"regex_pattern"`
@@ -114,7 +114,7 @@ func (q *Question) PostQuestion(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"questionID":        int(lastID),
 		"questionnaireID":   req.QuestionnaireID,
 		"question_type":     req.QuestionType,
