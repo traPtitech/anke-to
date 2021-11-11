@@ -1093,7 +1093,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			c := e.NewContext(req, rec)
 			c.SetParamNames("questionnaireID")
-			c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
+			if test.questionnaireID != "" {
+				c.SetParamValues(test.questionnaireID)
+			}else{
+				c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
+			}
+
 
 			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
 			if test.validator != ""{
