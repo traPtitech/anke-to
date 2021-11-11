@@ -1043,7 +1043,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description: "正規表現が間違っているので400",
 			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
-				RegexPattern: `^\/\/(.*?)`,
+				QuestionType: "Text",
+				RegexPattern: "(?<=\\$)\\d/",
 			},
 			ExecutesCreation: false,
 			expect: expect{
@@ -1098,7 +1099,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			}else{
 				c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
 			}
-
 
 			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
 			if test.validator != ""{
