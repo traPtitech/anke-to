@@ -1026,16 +1026,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			request: PostAndEditQuestionRequest{},
 			validator: "arupaka",
 			ExecutesCreation: false,
-			questionID:       1,
-			expect: expect{
-				statusCode: http.StatusInternalServerError,
-			},
-		},
-		{
-			description: "validatorが\"validator\"ではないので500",
-			request: PostAndEditQuestionRequest{},
-			validator: "arupaka",
-			ExecutesCreation: false,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
