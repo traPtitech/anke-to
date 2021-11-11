@@ -1022,6 +1022,15 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "questionnaireIDが数値ではないので400",
+			request: PostAndEditQuestionRequest{},
+			questionnaireID: "arupaka",
+			ExecutesCreation: false,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			description: "validatorが\"validator\"ではないので500",
 			request: PostAndEditQuestionRequest{},
 			validator: "arupaka",
