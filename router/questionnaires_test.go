@@ -1042,6 +1042,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		{
 			description: "正規表現が間違っているので400",
 			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
 				RegexPattern: `^\/\/(.*?)`,
 			},
 			ExecutesCreation: false,
