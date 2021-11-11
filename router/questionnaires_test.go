@@ -1022,6 +1022,26 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "validatorが\"validator\"ではないので500",
+			request: PostAndEditQuestionRequest{},
+			validator: "arupaka",
+			ExecutesCreation: false,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "validatorが\"validator\"ではないので500",
+			request: PostAndEditQuestionRequest{},
+			validator: "arupaka",
+			ExecutesCreation: false,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
 			description:    "リクエストの形式が異なっているので400",
 			invalidRequest: true,
 			expect: expect{
