@@ -775,6 +775,31 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "questionnaireIDがstringでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			questionnaireID: "1",
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
 			description: "QuestionTypeがMultipleChoiceでも201",
 			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
@@ -1044,6 +1069,8 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
 			if test.validator != ""{
 				c.Set(test.validator,validator.New())
+			}else {
+				c.Set(validatorKay,validator.New())
 			}
 
 			if test.ExecutesCreation {
