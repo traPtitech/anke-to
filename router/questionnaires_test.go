@@ -1036,7 +1036,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			request: PostAndEditQuestionRequest{},
 			validator: "arupaka",
 			ExecutesCreation: false,
-			questionID:       1,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
