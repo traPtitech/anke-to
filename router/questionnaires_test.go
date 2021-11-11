@@ -1028,8 +1028,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			}
 
 			e := echo.New()
-
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID), request)
+			var req *http.Request
+			if test.questionnaireID != "" {
+				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%s/questions", test.questionnaireID), request)
+			}else {
+				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", test.request.QuestionnaireID), request)
+			}
 
 			rec := httptest.NewRecorder()
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -1038,7 +1042,9 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			c.SetParamValues(strconv.Itoa(test.request.QuestionnaireID))
 
 			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
-			c.Set(validatorKay, validator.New())
+			if test.validator != ""{
+				c.Set(test.validator,validator.New())
+			}
 
 			if test.ExecutesCreation {
 				mockQuestion.
