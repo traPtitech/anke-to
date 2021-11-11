@@ -1042,6 +1042,16 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
+			description: "正規表現が間違っているので400",
+			request: PostAndEditQuestionRequest{
+				RegexPattern: `^\/\/(.*?)`,
+			},
+			ExecutesCreation: false,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			description:    "リクエストの形式が異なっているので400",
 			invalidRequest: true,
 			expect: expect{
