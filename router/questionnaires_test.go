@@ -706,27 +706,22 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		mockWebhook,
 	)
 
-	type validations struct {
-		questionID   int
-		regexPattern string
-		minBound     string
-		maxBound     string
-	}
-
 	type expect struct {
 		statusCode int
 	}
 	type test struct {
-		description               string
-		invalidRequest            bool
-		request                   PostAndEditQuestionRequest
-		ExecutesCreation          bool
-		questionID                int
-		InsertQuestionError       error
-		InsertOptionError         error
-		InsertValidationError     error
-		InsertScaleLabelError     error
-		CheckNumberValid          error
+		description           string
+		invalidRequest        bool
+		request               PostAndEditQuestionRequest
+		ExecutesCreation      bool
+		questionID            int
+		questionnaireID       string
+		validator             string
+		InsertQuestionError   error
+		InsertOptionError     error
+		InsertValidationError error
+		InsertScaleLabelError error
+		CheckNumberValid      error
 		expect
 	}
 	testCases := []test{
