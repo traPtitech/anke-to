@@ -1058,7 +1058,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 		},
 		{
-			description: "validationで落ちるので400",
+			description: "validation(妥当性確認)で落ちるので400",
 			request:     PostAndEditQuestionRequest{},
 			expect: expect{
 				statusCode: http.StatusBadRequest,
