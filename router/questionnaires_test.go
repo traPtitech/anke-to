@@ -1044,7 +1044,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType: "Text",
-				RegexPattern: "[[[[",
+				RegexPattern: "[",
 			},
 			InsertQuestionError: errors.New("正規表現が間違っています"),
 			ExecutesCreation: false,
