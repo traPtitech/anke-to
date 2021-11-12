@@ -1043,8 +1043,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description: "正規表現が間違っているので400",
 			request: PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
-				RegexPattern: "(?<=\\$)\\d/",
+				QuestionType: "Text",
+				RegexPattern: "[[[[",
 			},
+			InsertQuestionError: errors.New("正規表現が間違っています"),
 			ExecutesCreation: false,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
