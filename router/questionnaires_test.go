@@ -745,7 +745,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			ExecutesCreation: true,
 			questionID:       1,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -769,7 +769,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			ExecutesCreation: true,
 			questionID:       0,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -791,7 +791,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			ExecutesCreation: true,
 			questionID:       1,
 			expect: expect{
@@ -817,7 +817,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			ExecutesCreation: true,
 			questionID:       1,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -841,7 +841,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			ExecutesCreation: true,
 			questionID:       1,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -865,7 +865,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			ExecutesCreation: true,
 			questionID:       1,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -890,7 +890,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertQuestionError: errors.New("InsertQuestionError"),
 			ExecutesCreation:    false,
 			questionID:          1,
-			questionnaireID: "1",
+			questionnaireID:     "1",
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -915,7 +915,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertValidationError: errors.New("InsertValidationError"),
 			ExecutesCreation:      true,
 			questionID:            1,
-			questionnaireID: "1",
+			questionnaireID:       "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -940,7 +940,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			CheckNumberValid: errors.New("CheckNumberValidError"),
 			ExecutesCreation: false,
 			questionID:       1,
-			questionnaireID: "1",
+			questionnaireID:  "1",
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -965,7 +965,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertQuestionError: errors.New("InsertQuestionError"),
 			ExecutesCreation:    true,
 			questionID:          1,
-			questionnaireID: "1",
+			questionnaireID:     "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -990,7 +990,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertScaleLabelError: errors.New("InsertScaleLabelError"),
 			ExecutesCreation:      true,
 			questionID:            1,
-			questionnaireID: "1",
+			questionnaireID:       "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -1015,25 +1015,25 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertOptionError: errors.New("InsertOptionError"),
 			ExecutesCreation:  true,
 			questionID:        1,
-			questionnaireID: "1",
+			questionnaireID:   "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
 		},
 		{
-			description: "questionnaireIDが数値ではないので400",
-			request: PostAndEditQuestionRequest{},
-			questionnaireID: "arupaka",
+			description:      "questionnaireIDが数値ではないので400",
+			request:          PostAndEditQuestionRequest{},
+			questionnaireID:  "arupaka",
 			ExecutesCreation: false,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			description: "validatorが\"validator\"ではないので500",
-			request: PostAndEditQuestionRequest{},
-			validator: "arupaka",
-			questionnaireID: "1",
+			description:      "validatorが\"validator\"ではないので500",
+			request:          PostAndEditQuestionRequest{},
+			validator:        "arupaka",
+			questionnaireID:  "1",
 			ExecutesCreation: false,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
@@ -1057,7 +1057,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertQuestionError: errors.New("正規表現が間違っています"),
-			ExecutesCreation: false,
+			ExecutesCreation:    false,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -1095,10 +1095,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 			e := echo.New()
 			var req *http.Request
-			intQuestionnaireID,err := strconv.Atoi(test.questionnaireID)
-			if err!= nil  {
+			intQuestionnaireID, err := strconv.Atoi(test.questionnaireID)
+			if err != nil {
 				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%s/questions", test.questionnaireID), request)
-			}else {
+			} else {
 				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", intQuestionnaireID), request)
 			}
 
@@ -1107,22 +1107,19 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetParamNames("questionnaireID")
 
-				c.SetParamValues(test.questionnaireID)
-
-
-
+			c.SetParamValues(test.questionnaireID)
 
 			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
-			if test.validator != ""{
-				c.Set(test.validator,validator.New())
-			}else {
-				c.Set(validatorKay,validator.New())
+			if test.validator != "" {
+				c.Set(test.validator, validator.New())
+			} else {
+				c.Set(validatorKay, validator.New())
 			}
 
 			if test.ExecutesCreation {
 				mockQuestion.
 					EXPECT().
-				InsertQuestion(c.Request().Context(), intQuestionnaireID, test.request.PageNum, test.request.QuestionNum, test.request.QuestionType, test.request.Body, test.request.IsRequired).
+					InsertQuestion(c.Request().Context(), intQuestionnaireID, test.request.PageNum, test.request.QuestionNum, test.request.QuestionType, test.request.Body, test.request.IsRequired).
 					Return(test.questionID, test.InsertQuestionError)
 			}
 			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
