@@ -337,7 +337,6 @@ func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"questionID":        int(lastID),
-		"questionnaireID":   questionnaireID,
 		"question_type":     req.QuestionType,
 		"question_num":      req.QuestionNum,
 		"page_num":          req.PageNum,
