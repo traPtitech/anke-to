@@ -374,7 +374,10 @@ export default {
 
       if (this.isNewQuestion(question)) {
         return axios
-          .post('/questionnaires/' + this.questionnaireId + '/questions', data)
+          .post(
+            '/questionnaires/' + this.newQuestionnaireId + '/questions',
+            data
+          )
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
