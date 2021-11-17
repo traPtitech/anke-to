@@ -942,6 +942,7 @@ components:
             example: lolico
         required:
           - traqID
+          - submitted_at
     Users:
       type: array
       items:
