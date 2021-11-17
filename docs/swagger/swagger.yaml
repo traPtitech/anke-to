@@ -146,11 +146,10 @@ paths:
           description: アンケートのIDが無効です
         '500':
           description: 質問のリストを取得できませんでした
-  /questions:
     post:
-      operationId: postQuestion
+      operationId: PostQuestionByQuestionnaireID
       tags:
-        - question
+        - questionnaire
       description: 新しい質問を作成します．
       requestBody:
         required: true

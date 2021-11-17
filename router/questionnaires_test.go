@@ -679,6 +679,514 @@ func TestPostQuestionnaire(t *testing.T) {
 	}
 }
 
+func TestPostQuestionByQuestionnaireID(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockTarget := mock_model.NewMockITarget(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
+	mockOption := mock_model.NewMockIOption(ctrl)
+	mockValidation := mock_model.NewMockIValidation(ctrl)
+	mockTransaction := &model.MockTransaction{}
+	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
+
+	questionnaire := NewQuestionnaire(
+		mockQuestionnaire,
+		mockTarget,
+		mockAdministrator,
+		mockQuestion,
+		mockOption,
+		mockScaleLabel,
+		mockValidation,
+		mockTransaction,
+		mockWebhook,
+	)
+
+	type expect struct {
+		statusCode int
+	}
+	type test struct {
+		description           string
+		invalidRequest        bool
+		request               PostAndEditQuestionRequest
+		ExecutesCreation      bool
+		questionID            int
+		questionnaireID       string
+		validator             string
+		InsertQuestionError   error
+		InsertOptionError     error
+		InsertValidationError error
+		InsertScaleLabelError error
+		CheckNumberValid      error
+		expect
+	}
+	testCases := []test{
+		{
+			description:    "一般的なリクエストなので201",
+			invalidRequest: false,
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       1,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "questionIDが0でも201",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       0,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "questionnaireIDがstringでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			questionnaireID:  "1",
+			ExecutesCreation: true,
+			questionID:       1,
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "QuestionTypeがMultipleChoiceでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "MultipleChoice",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       1,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "QuestionTypeがLinearScaleでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "LinearScale",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       1,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "QuestionTypeがNumberでも201",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Number",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			ExecutesCreation: true,
+			questionID:       1,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusCreated,
+			},
+		},
+		{
+			description: "QuestionTypeが存在しないものは400",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "aaa",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertQuestionError: errors.New("InsertQuestionError"),
+			ExecutesCreation:    false,
+			questionID:          1,
+			questionnaireID:     "1",
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "InsertValidationがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertValidationError: errors.New("InsertValidationError"),
+			ExecutesCreation:      true,
+			questionID:            1,
+			questionnaireID:       "1",
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "CheckNumberValidがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Number",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			CheckNumberValid: errors.New("CheckNumberValidError"),
+			ExecutesCreation: false,
+			questionID:       1,
+			questionnaireID:  "1",
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "InsertQuestionがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertQuestionError: errors.New("InsertQuestionError"),
+			ExecutesCreation:    true,
+			questionID:          1,
+			questionnaireID:     "1",
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "InsertScaleLabelErrorがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "LinearScale",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka", "mazrean"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertScaleLabelError: errors.New("InsertScaleLabelError"),
+			ExecutesCreation:      true,
+			questionID:            1,
+			questionnaireID:       "1",
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "InsertOptionErrorがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "MultipleChoice",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "^\\d*\\.\\d*$",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertOptionError: errors.New("InsertOptionError"),
+			ExecutesCreation:  true,
+			questionID:        1,
+			questionnaireID:   "1",
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description:      "questionnaireIDが数値ではないので400",
+			request:          PostAndEditQuestionRequest{},
+			questionnaireID:  "arupaka",
+			ExecutesCreation: false,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description:      "validatorが\"validator\"ではないので500",
+			request:          PostAndEditQuestionRequest{},
+			validator:        "arupaka",
+			questionnaireID:  "1",
+			ExecutesCreation: false,
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "正規表現が間違っているので400",
+			request: PostAndEditQuestionRequest{
+				QuestionType:    "Text",
+				QuestionNum:     1,
+				PageNum:         1,
+				Body:            "発表タイトル",
+				IsRequired:      true,
+				Options:         []string{"arupaka"},
+				ScaleLabelRight: "arupaka",
+				ScaleLabelLeft:  "xxarupakaxx",
+				ScaleMin:        1,
+				ScaleMax:        2,
+				RegexPattern:    "[[",
+				MinBound:        "0",
+				MaxBound:        "10",
+			},
+			InsertQuestionError: errors.New("正規表現が間違っています"),
+			ExecutesCreation:    false,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description:    "リクエストの形式が異なっているので400",
+			invalidRequest: true,
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "validation(妥当性確認)で落ちるので400",
+			request:     PostAndEditQuestionRequest{},
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.description, func(t *testing.T) {
+			var request io.Reader
+			if test.invalidRequest {
+				request = strings.NewReader("test")
+			} else {
+				buf := bytes.NewBuffer(nil)
+				err := json.NewEncoder(buf).Encode(test.request)
+				if err != nil {
+					t.Errorf("failed to encode request: %w", err)
+				}
+
+				request = buf
+			}
+
+			e := echo.New()
+			var req *http.Request
+			intQuestionnaireID, err := strconv.Atoi(test.questionnaireID)
+			if err != nil {
+				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%s/questions", test.questionnaireID), request)
+			} else {
+				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/questions", intQuestionnaireID), request)
+			}
+
+			rec := httptest.NewRecorder()
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			c := e.NewContext(req, rec)
+			c.SetParamNames("questionnaireID")
+
+			c.SetParamValues(test.questionnaireID)
+
+			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
+			if test.validator != "" {
+				c.Set(test.validator, validator.New())
+			} else {
+				c.Set(validatorKay, validator.New())
+			}
+
+			if test.ExecutesCreation {
+				mockQuestion.
+					EXPECT().
+					InsertQuestion(c.Request().Context(), intQuestionnaireID, test.request.PageNum, test.request.QuestionNum, test.request.QuestionType, test.request.Body, test.request.IsRequired).
+					Return(test.questionID, test.InsertQuestionError)
+			}
+			if test.InsertQuestionError == nil && test.request.QuestionType == "LinearScale" {
+				mockScaleLabel.
+					EXPECT().
+					InsertScaleLabel(c.Request().Context(), test.questionID, model.ScaleLabels{
+						ScaleLabelRight: test.request.ScaleLabelRight,
+						ScaleLabelLeft:  test.request.ScaleLabelLeft,
+						ScaleMin:        test.request.ScaleMin,
+						ScaleMax:        test.request.ScaleMax,
+					}).Return(test.InsertScaleLabelError)
+			}
+			if test.InsertQuestionError == nil && (test.request.QuestionType == "MultipleChoice" || test.request.QuestionType == "Checkbox" || test.request.QuestionType == "Dropdown") {
+				for i, option := range test.request.Options {
+					mockOption.
+						EXPECT().
+						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
+				}
+			}
+			if test.request.QuestionType == "Number" {
+				mockValidation.
+					EXPECT().
+					CheckNumberValid(test.request.MinBound, test.request.MaxBound).
+					Return(test.CheckNumberValid)
+			}
+			if test.InsertQuestionError == nil && test.CheckNumberValid == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
+				mockValidation.
+					EXPECT().
+					InsertValidation(c.Request().Context(), test.questionID, model.Validations{
+						RegexPattern: test.request.RegexPattern,
+						MinBound:     test.request.MinBound,
+						MaxBound:     test.request.MaxBound,
+					}).
+					Return(test.InsertValidationError)
+			}
+
+			e.HTTPErrorHandler(questionnaire.PostQuestionByQuestionnaireID(c), c)
+
+			assert.Equal(t, test.expect.statusCode, rec.Code, "status code")
+
+			if test.expect.statusCode == http.StatusCreated {
+				var question map[string]interface{}
+				err := json.NewDecoder(rec.Body).Decode(&question)
+				if err != nil {
+					t.Errorf("failed to decode response body: %v", err)
+				}
+
+				assert.Equal(t, float64(test.questionID), question["questionID"], "questionID")
+				assert.Equal(t, test.request.QuestionType, question["question_type"], "question_type")
+				assert.Equal(t, float64(test.request.QuestionNum), question["question_num"], "question_num")
+				assert.Equal(t, float64(test.request.PageNum), question["page_num"], "page_num")
+				assert.Equal(t, test.request.Body, question["body"], "body")
+				assert.Equal(t, test.request.IsRequired, question["is_required"], "is_required")
+				assert.ElementsMatch(t, test.request.Options, question["options"], "options")
+				assert.Equal(t, test.request.ScaleLabelRight, question["scale_label_right"], "scale_label_right")
+				assert.Equal(t, test.request.ScaleLabelLeft, question["scale_label_left"], "scale_label_left")
+				assert.Equal(t, float64(test.request.ScaleMax), question["scale_max"], "scale_max")
+				assert.Equal(t, float64(test.request.ScaleMin), question["scale_min"], "scale_min")
+				assert.Equal(t, test.request.RegexPattern, question["regex_pattern"], "regex_pattern")
+				assert.Equal(t, test.request.MinBound, question["min_bound"], "min_bound")
+				assert.Equal(t, test.request.MaxBound, question["max_bound"], "max_bound")
+
+			}
+		})
+	}
+}
+
 func TestEditQuestionnaire(t *testing.T) {
 	t.Parallel()
 

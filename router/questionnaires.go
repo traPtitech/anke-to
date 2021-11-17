@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -259,6 +260,96 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 		"targets":         targets,
 		"administrators":  administrators,
 		"respondents":     respondents,
+	})
+}
+
+// PostQuestionByQuestionnaireID POST /questionnaires/:questionnaireID/questions
+func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+	}
+	req := PostAndEditQuestionRequest{}
+	if err := c.Bind(&req); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	switch req.QuestionType {
+	case "Text":
+		//正規表現のチェック
+		if _, err := regexp.Compile(req.RegexPattern); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+	case "Number":
+		//数字か，min<=maxになってるか
+		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+	}
+
+	lastID, err := q.InsertQuestion(c.Request().Context(), questionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	switch req.QuestionType {
+	case "MultipleChoice", "Checkbox", "Dropdown":
+		for i, v := range req.Options {
+			if err := q.InsertOption(c.Request().Context(), lastID, i+1, v); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+		}
+	case "LinearScale":
+		if err := q.InsertScaleLabel(c.Request().Context(), lastID,
+			model.ScaleLabels{
+				ScaleLabelLeft:  req.ScaleLabelLeft,
+				ScaleLabelRight: req.ScaleLabelRight,
+				ScaleMax:        req.ScaleMax,
+				ScaleMin:        req.ScaleMin,
+			}); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	case "Text", "Number":
+		if err := q.InsertValidation(c.Request().Context(), lastID,
+			model.Validations{
+				RegexPattern: req.RegexPattern,
+				MinBound:     req.MinBound,
+				MaxBound:     req.MaxBound,
+			}); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"questionID":        int(lastID),
+		"question_type":     req.QuestionType,
+		"question_num":      req.QuestionNum,
+		"page_num":          req.PageNum,
+		"body":              req.Body,
+		"is_required":       req.IsRequired,
+		"options":           req.Options,
+		"scale_label_right": req.ScaleLabelRight,
+		"scale_label_left":  req.ScaleLabelLeft,
+		"scale_max":         req.ScaleMax,
+		"scale_min":         req.ScaleMin,
+		"regex_pattern":     req.RegexPattern,
+		"min_bound":         req.MinBound,
+		"max_bound":         req.MaxBound,
 	})
 }
 
