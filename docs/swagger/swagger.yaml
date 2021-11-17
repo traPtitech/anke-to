@@ -150,6 +150,8 @@ paths:
       operationId: PostQuestionByQuestionnaireID
       tags:
         - questionnaire
+      parameters:
+        - $ref: '#/components/parameters/questionnaireIDInPath'
       description: 新しい質問を作成します．
       requestBody:
         required: true
@@ -942,7 +944,8 @@ components:
             example: lolico
         required:
           - traqID
-          - submitted_at
+      required:
+        - submitted_at
     Users:
       type: array
       items:
