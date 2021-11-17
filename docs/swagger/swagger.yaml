@@ -147,7 +147,7 @@ paths:
         '500':
           description: 質問のリストを取得できませんでした
     post:
-      operationId: postQuestionByQuestionID
+      operationId: PostQuestionByQuestionnaireID
       tags:
         - questionnaire
       description: 新しい質問を作成します．
