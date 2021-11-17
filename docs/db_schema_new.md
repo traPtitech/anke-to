@@ -44,7 +44,7 @@
 | Field  | Type       | Null | Key  | Default           | Extra          | 説明など |
 | ------ | ---------- | ---- | ---- | ----------------- | -------------- | -------- |
 | id     | int(11)    | NO   | PRI  | _NULL_            | AUTO_INCREMENT |          |
-| name   | int(11)    | NO   |      | _NULL_            |                |          |
+| name   | varchar(30)    | NO   |      | _NULL_            |                |          |
 | active | boolean    | NO   |      | true              |                |          |
 
 ### questionnaires
@@ -70,7 +70,7 @@
 | Field  | Type       | Null | Key  | Default           | Extra          | 説明など |
 | ------ | ---------- | ---- | ---- | ----------------- | -------------- | -------- |
 | id     | int(11)    | NO   | PRI  | _NULL_            | AUTO_INCREMENT |          |
-| name   | int(11)    | NO   |      | _NULL_            |                |          |
+| name   | varchar(30)    | NO   |      | _NULL_            |                |          |
 | active | boolean    | NO   |      | true              |                |          |
 
 ### respondents
