@@ -34,7 +34,7 @@ type Questions struct {
 	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
 }
 
-//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+// BeforeCreate Update時に自動でmodified_atを現在時刻に
 func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
 	questionnaire.CreatedAt = time.Now()
 
