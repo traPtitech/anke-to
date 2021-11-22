@@ -99,9 +99,6 @@ func (r *Response) PostResponse(c echo.Context) error {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
 		case "Number":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -109,9 +106,6 @@ func (r *Response) PostResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -262,9 +256,6 @@ func (r *Response) EditResponse(c echo.Context) error {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
 		case "Number":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -272,9 +263,6 @@ func (r *Response) EditResponse(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
 					return echo.NewHTTPError(http.StatusBadRequest, err)
