@@ -31,7 +31,7 @@ func NewMiddleware(administrator model.IAdministrator, respondent model.IRespond
 }
 
 const (
-	validatorKay       = "validator"
+	validatorKey       = "validator"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"
@@ -41,7 +41,7 @@ const (
 func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		validate := validator.New()
-		c.Set(validatorKay, validate)
+		c.Set(validatorKey, validate)
 
 		return next(c)
 	}
@@ -333,7 +333,7 @@ func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPri
 }
 
 func getValidator(c echo.Context) (*validator.Validate, error) {
-	rowValidate := c.Get(validatorKay)
+	rowValidate := c.Get(validatorKey)
 	validate, ok := rowValidate.(*validator.Validate)
 	if !ok {
 		return nil, fmt.Errorf("failed to get validator")

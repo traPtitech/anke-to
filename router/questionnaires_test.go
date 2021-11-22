@@ -582,7 +582,7 @@ func TestPostQuestionnaire(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			c := e.NewContext(req, rec)
 
-			c.Set(validatorKay, validator.New())
+			c.Set(validatorKey, validator.New())
 
 			if testCase.ExecutesCreation {
 				// 時刻は完全一致しないためその対応
@@ -1113,7 +1113,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			if test.validator != "" {
 				c.Set(test.validator, validator.New())
 			} else {
-				c.Set(validatorKay, validator.New())
+				c.Set(validatorKey, validator.New())
 			}
 
 			if test.ExecutesCreation {
@@ -1406,7 +1406,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			c.SetParamValues(strconv.Itoa(testCase.questionnaireID))
 
 			c.Set(questionnaireIDKey, testCase.questionnaireID)
-			c.Set(validatorKay, validator.New())
+			c.Set(validatorKey, validator.New())
 
 			if testCase.ExecutesCreation {
 				// 時刻は完全一致しないためその対応
