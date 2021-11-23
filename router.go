@@ -33,7 +33,7 @@ func SetRouting(port string) {
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")
 		{
-			apiQuestionnnaires.GET("", api.GetQuestionnaires, api.TrapReteLimitMiddlewareFunc())
+			apiQuestionnnaires.GET("", api.GetQuestionnaires, api.TrapRateLimitMiddlewareFunc())
 			apiQuestionnnaires.POST("", api.PostQuestionnaire)
 			apiQuestionnnaires.GET("/:questionnaireID", api.GetQuestionnaire)
 			apiQuestionnnaires.PATCH("/:questionnaireID", api.EditQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
