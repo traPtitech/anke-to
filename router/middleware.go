@@ -364,12 +364,12 @@ func getQuestionnaireID(c echo.Context) (int, error) {
 
 func getResponseID(c echo.Context) (int, error) {
 	rowResponseID := c.Get(responseIDKey)
-	questionnaireID, ok := rowResponseID.(int)
+	responseID, ok := rowResponseID.(int)
 	if !ok {
 		return 0, errors.New("invalid context userID")
 	}
 
-	return questionnaireID, nil
+	return responseID, nil
 }
 
 func getQuestionID(c echo.Context) (int, error) {
