@@ -31,7 +31,7 @@ func NewMiddleware(administrator model.IAdministrator, respondent model.IRespond
 }
 
 const (
-	validatorKay       = "validator"
+	validatorKey       = "validator"
 	userIDKey          = "userID"
 	questionnaireIDKey = "questionnaireID"
 	responseIDKey      = "responseID"
@@ -41,7 +41,7 @@ const (
 func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		validate := validator.New()
-		c.Set(validatorKay, validate)
+		c.Set(validatorKey, validate)
 
 		return next(c)
 	}
@@ -49,7 +49,7 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 
 /* 消せないアンケートの発生を防ぐための管理者
 暫定的にハードコーディングで対応*/
-var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "YumizSui", "pure_white_404"}
+var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "xxarupakaxx", "asari"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
 func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -83,8 +83,8 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 	}
 }
 
-// TrapReteLimitMiddleware traP IDベースのリクエスト制限
-func (*Middleware) TrapReteLimitMiddlewareFunc() echo.MiddlewareFunc {
+// TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
+func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStore(5),
 		IdentifierExtractor: func(c echo.Context) (string, error) {
@@ -333,7 +333,7 @@ func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPri
 }
 
 func getValidator(c echo.Context) (*validator.Validate, error) {
-	rowValidate := c.Get(validatorKay)
+	rowValidate := c.Get(validatorKey)
 	validate, ok := rowValidate.(*validator.Validate)
 	if !ok {
 		return nil, fmt.Errorf("failed to get validator")
@@ -356,7 +356,7 @@ func getQuestionnaireID(c echo.Context) (int, error) {
 	rowQuestionnaireID := c.Get(questionnaireIDKey)
 	questionnaireID, ok := rowQuestionnaireID.(int)
 	if !ok {
-		return 0, errors.New("invalid context userID")
+		return 0, errors.New("invalid context questionnaireID")
 	}
 
 	return questionnaireID, nil
@@ -364,19 +364,19 @@ func getQuestionnaireID(c echo.Context) (int, error) {
 
 func getResponseID(c echo.Context) (int, error) {
 	rowResponseID := c.Get(responseIDKey)
-	questionnaireID, ok := rowResponseID.(int)
+	responseID, ok := rowResponseID.(int)
 	if !ok {
-		return 0, errors.New("invalid context userID")
+		return 0, errors.New("invalid context responseID")
 	}
 
-	return questionnaireID, nil
+	return responseID, nil
 }
 
 func getQuestionID(c echo.Context) (int, error) {
 	rowQuestionID := c.Get(questionIDKey)
 	questionID, ok := rowQuestionID.(int)
 	if !ok {
-		return 0, errors.New("invalid context userID")
+		return 0, errors.New("invalid context questionID")
 	}
 
 	return questionID, nil
