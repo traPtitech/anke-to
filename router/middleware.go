@@ -76,6 +76,7 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 
 		// トークンを持たないユーザはアクセスできない
 		if userID == "-" {
+			c.Logger().Info("not logged in")
 			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 		}
 

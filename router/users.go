@@ -39,6 +39,7 @@ func NewUser(respondent model.IRespondent, questionnaire model.IQuestionnaire, t
 func (*User) GetUsersMe(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
@@ -51,11 +52,13 @@ func (*User) GetUsersMe(c echo.Context) error {
 func (u *User) GetMyResponses(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	myResponses, err := u.GetRespondentInfos(c.Request().Context(), userID)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -66,17 +69,19 @@ func (u *User) GetMyResponses(c echo.Context) error {
 func (u *User) GetMyResponsesByID(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Info(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	myresponses, err := u.GetRespondentInfos(c.Request().Context(), userID, questionnaireID)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -87,12 +92,14 @@ func (u *User) GetMyResponsesByID(c echo.Context) error {
 func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	sort := c.QueryParam("sort")
 	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), userID, "", sort)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -103,12 +110,14 @@ func (u *User) GetTargetedQuestionnaire(c echo.Context) error {
 func (u *User) GetMyQuestionnaire(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	// 自分が管理者になっているアンケート一覧
 	questionnaires, err := u.GetAdminQuestionnaires(c.Request().Context(), userID)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaires: %w", err))
 	}
 
@@ -119,6 +128,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 
 	targets, err := u.GetTargets(c.Request().Context(), questionnaireIDs)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get targets: %w", err))
 	}
 	targetMap := map[int][]string{}
@@ -133,6 +143,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 
 	respondents, err := u.GetRespondentsUserIDs(c.Request().Context(), questionnaireIDs)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondents: %w", err))
 	}
 	respondentMap := map[int][]string{}
@@ -147,6 +158,7 @@ func (u *User) GetMyQuestionnaire(c echo.Context) error {
 
 	administrators, err := u.GetAdministrators(c.Request().Context(), questionnaireIDs)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get administrators: %w", err))
 	}
 	administratorMap := map[int][]string{}
@@ -248,6 +260,7 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 
 	ret, err := u.GetTargettedQuestionnaires(c.Request().Context(), traQID, answered, sort)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

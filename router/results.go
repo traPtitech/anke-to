@@ -29,12 +29,13 @@ func (r *Result) GetResults(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Info(err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	respondentDetails, err := r.GetRespondentDetails(c.Request().Context(), questionnaireID, sort)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
