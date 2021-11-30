@@ -39,7 +39,7 @@ func SetRouting(port string) {
 			apiQuestionnnaires.PATCH("/:questionnaireID", api.EditQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
 			apiQuestionnnaires.DELETE("/:questionnaireID", api.DeleteQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
 			apiQuestionnnaires.GET("/:questionnaireID/questions", api.GetQuestions)
-			apiQuestionnnaires.POST("/:questionnaireID/questions",api.PostQuestionByQuestionnaireID)
+			apiQuestionnnaires.POST("/:questionnaireID/questions", api.PostQuestionByQuestionnaireID)
 		}
 
 		apiQuestions := echoAPI.Group("/questions")
