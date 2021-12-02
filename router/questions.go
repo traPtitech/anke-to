@@ -49,14 +49,14 @@ type PostAndEditQuestionRequest struct {
 func (q *Question) EditQuestion(c echo.Context) error {
 	questionID, err := getQuestionID(c)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get question id: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
 	req := PostAndEditQuestionRequest{}
 
 	if err := c.Bind(&req); err != nil {
-		c.Logger().Info(err)
+		c.Logger().Infof("failed to bind PostAndEditQuestionRequest: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -64,27 +64,27 @@ func (q *Question) EditQuestion(c echo.Context) error {
 	case "Text":
 		//正規表現のチェック
 		if _, err := regexp.Compile(req.RegexPattern); err != nil {
-			c.Logger().Info(err)
+			c.Logger().Infof("invalid regex pattern: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	case "Number":
 		//数字か，min<=maxになってるか
 		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
-			c.Logger().Info(err)
+			c.Logger().Info("invalid number: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
 	err = q.UpdateQuestion(c.Request().Context(), req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired, questionID)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to update question: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		if err := q.UpdateOptions(c.Request().Context(), req.Options, questionID); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to update options: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "LinearScale":
@@ -95,7 +95,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 				ScaleMax:        req.ScaleMax,
 				ScaleMin:        req.ScaleMin,
 			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to update scale label: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	case "Text", "Number":
@@ -105,7 +105,7 @@ func (q *Question) EditQuestion(c echo.Context) error {
 				MinBound:     req.MinBound,
 				MaxBound:     req.MaxBound,
 			}); err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to update validation: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
@@ -117,27 +117,27 @@ func (q *Question) EditQuestion(c echo.Context) error {
 func (q *Question) DeleteQuestion(c echo.Context) error {
 	questionID, err := getQuestionID(c)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get question id: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionID: %w", err))
 	}
 
 	if err := q.IQuestion.DeleteQuestion(c.Request().Context(), questionID); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to delete question: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := q.DeleteOptions(c.Request().Context(), questionID); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to delete options: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := q.DeleteScaleLabel(c.Request().Context(), questionID); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to delete scale label: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := q.DeleteValidation(c.Request().Context(), questionID); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to delete validation: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
