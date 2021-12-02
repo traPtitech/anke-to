@@ -58,13 +58,13 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Errorf("failed to get validator: %w", err)
+		c.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Infof("failed to validate: %w", err)
+		c.Logger().Infof("failed to validate: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
