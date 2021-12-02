@@ -86,13 +86,13 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get validator: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), p)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		c.Logger().Infof("failed to validate:%w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -101,11 +101,11 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	}
 	pageNum, err := strconv.Atoi(page)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to convert page to int:%w", err))
+		c.Logger().Infof("failed to convert page to int:%w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
 	}
 	if pageNum <= 0 {
-		c.Logger().Info(fmt.Errorf("page must be greater than 0"))
+		c.Logger().Infof("page must be greater than 0")
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
 
@@ -113,7 +113,7 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	if len(nontargeted) != 0 {
 		nontargetedBool, err = strconv.ParseBool(nontargeted)
 		if err != nil {
-			c.Logger().Info(fmt.Errorf("failed to convert nontargeted to bool:%w", err))
+			c.Logger().Infof("failed to convert nontargeted to bool:%w", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
 		}
 	} else {
@@ -290,13 +290,13 @@ func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get validator: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		c.Logger().Infof("failed to validate: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

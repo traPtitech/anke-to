@@ -248,13 +248,13 @@ func (u *User) GetTargettedQuestionnairesBytraQID(c echo.Context) error {
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator:%w", err))
+		c.Logger().Errorf("failed to get validator: %w", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), p)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		c.Logger().Infof("failed to validate:%w", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
