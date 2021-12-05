@@ -70,12 +70,13 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		// トークンを持たないユーザはアクセスできない
 		if userID == "-" {
+			c.Logger().Info("not logged in")
 			return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 		}
 
@@ -90,7 +91,7 @@ func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 		IdentifierExtractor: func(c echo.Context) (string, error) {
 			userID, err := getUserID(c)
 			if err != nil {
-				c.Logger().Error(err)
+				c.Logger().Errorf("failed to get userID: %+v", err)
 				return "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 			}
 
@@ -106,14 +107,14 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionnaireID := c.Param("questionnaireID")
 		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 		if err != nil {
-			c.Logger().Info(err)
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
@@ -126,7 +127,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 		}
 		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -144,25 +145,25 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strResponseID := c.Param("responseID")
 		responseID, err := strconv.Atoi(strResponseID)
 		if err != nil {
-			c.Logger().Info(err)
+			c.Logger().Info("failed to convert responseID to int: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
 		// 回答者ならOK
 		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Info(err)
+			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
 		}
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check if you are a respondent: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
 		if respondent == nil {
@@ -184,16 +185,16 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		// アンケートごとの回答閲覧権限チェック
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Info(err)
+			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
 		} else if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get response read privilege info: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
 		}
 
 		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check response read privilege: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
 		}
 		if !haveReadPrivilege {
@@ -209,24 +210,24 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strResponseID := c.Param("responseID")
 		responseID, err := strconv.Atoi(strResponseID)
 		if err != nil {
-			c.Logger().Info(err)
+			c.Logger().Infof("failed to convert responseID to int: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
 		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Info(err)
+			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
 		}
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check if you are a respondent: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are a respondent: %w", err))
 		}
 		if respondent == nil {
@@ -248,14 +249,14 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionID := c.Param("questionID")
 		questionID, err := strconv.Atoi(strQuestionID)
 		if err != nil {
-			c.Logger().Info(err)
+			c.Logger().Infof("failed to convert questionID to int: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionID:%s(error: %w)", strQuestionID, err))
 		}
 
@@ -268,7 +269,7 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 		}
 		isAdmin, err := m.CheckQuestionAdmin(c.Request().Context(), userID, questionID)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check if you are a question administrator: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
 		}
 		if !isAdmin {
@@ -286,29 +287,29 @@ func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc 
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 		}
 
 		strQuestionnaireID := c.Param("questionnaireID")
 		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 		if err != nil {
-			c.Logger().Info(err)
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 		}
 
 		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID)
 		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Info(err)
+			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
 		} else if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to get responseReadPrivilegeInfo: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
 		}
 
 		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
 		if err != nil {
-			c.Logger().Error(err)
+			c.Logger().Errorf("failed to check response read privilege: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
 		}
 		if !haveReadPrivilege {

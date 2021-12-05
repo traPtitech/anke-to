@@ -6,7 +6,6 @@ import (
 	"context"
 
 	"gopkg.in/guregu/null.v4"
-
 )
 
 // IRespondent RespondentのRepository
