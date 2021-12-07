@@ -168,6 +168,7 @@ func (*Question) CheckQuestionAdmin(ctx context.Context, userID string, question
 	return true, nil
 }
 
+// CheckQuestionNum questionNumが存在するか
 func (*Question) CheckQuestionNum(ctx context.Context, questionnaireID, questionNum int) (bool, error) {
 	db, err := getTx(ctx)
 	if err != nil {
