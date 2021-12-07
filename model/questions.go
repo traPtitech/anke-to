@@ -11,4 +11,5 @@ type IQuestion interface {
 	DeleteQuestion(ctx context.Context, questionID int) error
 	GetQuestions(ctx context.Context, questionnaireID int) ([]Questions, error)
 	CheckQuestionAdmin(ctx context.Context, userID string, questionID int) (bool, error)
+	CheckQuestionNum(ctx context.Context, questionnaireID, questionNum int) (bool, error)
 }

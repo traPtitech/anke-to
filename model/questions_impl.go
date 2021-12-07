@@ -167,3 +167,22 @@ func (*Question) CheckQuestionAdmin(ctx context.Context, userID string, question
 
 	return true, nil
 }
+
+func (*Question) CheckQuestionNum(ctx context.Context, questionnaireID, questionNum int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	err = db.
+		Where("questionnaire_id = ? AND question_num = ?", questionnaireID, questionNum).
+		First(&Questions{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get question_id: %w", err)
+	}
+
+	return true, nil
+}
