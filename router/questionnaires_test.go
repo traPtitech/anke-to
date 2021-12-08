@@ -717,11 +717,13 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		questionID            int
 		questionnaireID       string
 		validator             string
+		questionNumExists     bool
 		InsertQuestionError   error
 		InsertOptionError     error
 		InsertValidationError error
 		InsertScaleLabelError error
 		CheckNumberValid      error
+		CheckQuestionNumError error
 		expect
 	}
 	testCases := []test{
@@ -1115,6 +1117,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			} else {
 				c.Set(validatorKey, validator.New())
 			}
+
+			mockQuestion.
+				EXPECT().
+				CheckQuestionNum(c.Request().Context(), intQuestionnaireID, test.request.QuestionNum).
+				Return(test.questionNumExists, test.CheckQuestionNumError).
+				MinTimes(0)
 
 			if test.ExecutesCreation {
 				mockQuestion.
