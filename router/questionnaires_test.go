@@ -924,7 +924,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			},
 			InsertValidationError:    errors.New("InsertValidationError"),
 			ExecutesCreation:         true,
-			ExecutesCheckQuestionNum: true, // TODO: わかりにくい
+			ExecutesCheckQuestionNum: true,
 			questionID:               1,
 			questionnaireID:          "1",
 			expect: expect{
