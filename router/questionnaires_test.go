@@ -710,20 +710,21 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		statusCode int
 	}
 	type test struct {
-		description           string
-		invalidRequest        bool
-		request               PostAndEditQuestionRequest
-		ExecutesCreation      bool
-		questionID            int
-		questionnaireID       string
-		validator             string
-		questionNumExists     bool
-		InsertQuestionError   error
-		InsertOptionError     error
-		InsertValidationError error
-		InsertScaleLabelError error
-		CheckNumberValid      error
-		CheckQuestionNumError error
+		description              string
+		invalidRequest           bool
+		request                  PostAndEditQuestionRequest
+		ExecutesCreation         bool
+		ExecutesCheckQuestionNum bool
+		questionID               int
+		questionnaireID          string
+		validator                string
+		questionNumExists        bool
+		InsertQuestionError      error
+		InsertOptionError        error
+		InsertValidationError    error
+		InsertScaleLabelError    error
+		CheckNumberValid         error
+		CheckQuestionNumError    error
 		expect
 	}
 	testCases := []test{
@@ -745,9 +746,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			ExecutesCreation: true,
-			questionID:       1,
-			questionnaireID:  "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -769,9 +771,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			ExecutesCreation: true,
-			questionID:       0,
-			questionnaireID:  "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               0,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -793,9 +796,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			questionnaireID:  "1",
-			ExecutesCreation: true,
-			questionID:       1,
+			questionnaireID:          "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -817,9 +821,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			ExecutesCreation: true,
-			questionID:       1,
-			questionnaireID:  "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -841,9 +846,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			ExecutesCreation: true,
-			questionID:       1,
-			questionnaireID:  "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -865,9 +871,10 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			ExecutesCreation: true,
-			questionID:       1,
-			questionnaireID:  "1",
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusCreated,
 			},
@@ -889,10 +896,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertQuestionError: errors.New("InsertQuestionError"),
-			ExecutesCreation:    false,
-			questionID:          1,
-			questionnaireID:     "1",
+			InsertQuestionError:      errors.New("InsertQuestionError"),
+			ExecutesCreation:         false,
+			ExecutesCheckQuestionNum: false,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -914,10 +922,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertValidationError: errors.New("InsertValidationError"),
-			ExecutesCreation:      true,
-			questionID:            1,
-			questionnaireID:       "1",
+			InsertValidationError:    errors.New("InsertValidationError"),
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true, // TODO: わかりにくい
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -939,10 +948,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			CheckNumberValid: errors.New("CheckNumberValidError"),
-			ExecutesCreation: false,
-			questionID:       1,
-			questionnaireID:  "1",
+			CheckNumberValid:         errors.New("CheckNumberValidError"),
+			ExecutesCreation:         false,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -964,10 +974,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertQuestionError: errors.New("InsertQuestionError"),
-			ExecutesCreation:    true,
-			questionID:          1,
-			questionnaireID:     "1",
+			InsertQuestionError:      errors.New("InsertQuestionError"),
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -989,10 +1000,11 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertScaleLabelError: errors.New("InsertScaleLabelError"),
-			ExecutesCreation:      true,
-			questionID:            1,
-			questionnaireID:       "1",
+			InsertScaleLabelError:    errors.New("InsertScaleLabelError"),
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -1014,29 +1026,32 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertOptionError: errors.New("InsertOptionError"),
-			ExecutesCreation:  true,
-			questionID:        1,
-			questionnaireID:   "1",
+			InsertOptionError:        errors.New("InsertOptionError"),
+			ExecutesCreation:         true,
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
 		},
 		{
-			description:      "questionnaireIDが数値ではないので400",
-			request:          PostAndEditQuestionRequest{},
-			questionnaireID:  "arupaka",
-			ExecutesCreation: false,
+			description:              "questionnaireIDが数値ではないので400",
+			request:                  PostAndEditQuestionRequest{},
+			questionnaireID:          "arupaka",
+			ExecutesCreation:         false,
+			ExecutesCheckQuestionNum: false,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			description:      "validatorが\"validator\"ではないので500",
-			request:          PostAndEditQuestionRequest{},
-			validator:        "arupaka",
-			questionnaireID:  "1",
-			ExecutesCreation: false,
+			description:              "validatorが\"validator\"ではないので500",
+			request:                  PostAndEditQuestionRequest{},
+			validator:                "arupaka",
+			questionnaireID:          "1",
+			ExecutesCreation:         false,
+			ExecutesCheckQuestionNum: false,
 			expect: expect{
 				statusCode: http.StatusInternalServerError,
 			},
@@ -1058,8 +1073,9 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MinBound:        "0",
 				MaxBound:        "10",
 			},
-			InsertQuestionError: errors.New("正規表現が間違っています"),
-			ExecutesCreation:    false,
+			InsertQuestionError:      errors.New("正規表現が間違っています"),
+			ExecutesCreation:         false,
+			ExecutesCheckQuestionNum: false,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -1074,6 +1090,44 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		{
 			description: "validation(妥当性確認)で落ちるので400",
 			request:     PostAndEditQuestionRequest{},
+			expect: expect{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			description: "CheckQuestionNumがエラーで500",
+			request: PostAndEditQuestionRequest{
+				QuestionType: "Text",
+				QuestionNum:  1,
+				PageNum:      1,
+				Body:         "発表タイトル",
+				IsRequired:   true,
+				MinBound:     "0",
+				MaxBound:     "10",
+			},
+			ExecutesCheckQuestionNum: true,
+			CheckQuestionNumError:    errors.New("CheckQuestionNumError"),
+			questionID:               1,
+			questionnaireID:          "1",
+			expect: expect{
+				statusCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			description: "questionNumは重複できないので400",
+			request: PostAndEditQuestionRequest{
+				QuestionType: "Text",
+				QuestionNum:  1,
+				PageNum:      1,
+				Body:         "発表タイトル",
+				IsRequired:   true,
+				MinBound:     "0",
+				MaxBound:     "10",
+			},
+			ExecutesCheckQuestionNum: true,
+			questionID:               1,
+			questionnaireID:          "1",
+			questionNumExists:        true,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -1118,12 +1172,12 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				c.Set(validatorKey, validator.New())
 			}
 
-			mockQuestion.
-				EXPECT().
-				CheckQuestionNum(c.Request().Context(), intQuestionnaireID, test.request.QuestionNum).
-				Return(test.questionNumExists, test.CheckQuestionNumError).
-				MinTimes(0)
-
+			if test.ExecutesCheckQuestionNum {
+				mockQuestion.
+					EXPECT().
+					CheckQuestionNum(c.Request().Context(), intQuestionnaireID, test.request.QuestionNum).
+					Return(test.questionNumExists, test.CheckQuestionNumError)
+			}
 			if test.ExecutesCreation {
 				mockQuestion.
 					EXPECT().
@@ -1138,13 +1192,15 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 						ScaleLabelLeft:  test.request.ScaleLabelLeft,
 						ScaleMin:        test.request.ScaleMin,
 						ScaleMax:        test.request.ScaleMax,
-					}).Return(test.InsertScaleLabelError)
+					}).
+					Return(test.InsertScaleLabelError)
 			}
 			if test.InsertQuestionError == nil && (test.request.QuestionType == "MultipleChoice" || test.request.QuestionType == "Checkbox" || test.request.QuestionType == "Dropdown") {
 				for i, option := range test.request.Options {
 					mockOption.
 						EXPECT().
-						InsertOption(c.Request().Context(), test.questionID, i+1, option).Return(test.InsertOptionError)
+						InsertOption(c.Request().Context(), test.questionID, i+1, option).
+						Return(test.InsertOptionError)
 				}
 			}
 			if test.request.QuestionType == "Number" {
@@ -1153,7 +1209,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 					CheckNumberValid(test.request.MinBound, test.request.MaxBound).
 					Return(test.CheckNumberValid)
 			}
-			if test.InsertQuestionError == nil && test.CheckNumberValid == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
+			if test.ExecutesCreation && test.InsertQuestionError == nil && test.CheckNumberValid == nil && (test.request.QuestionType == "Text" || test.request.QuestionType == "Number") {
 				mockValidation.
 					EXPECT().
 					InsertValidation(c.Request().Context(), test.questionID, model.Validations{

@@ -301,11 +301,11 @@ func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
 	}
 
 	// 重複したquestionNumを持つ質問をPOSTできないように
-	questionNumExists, err := q.CheckQuestionNum(c.Request().Context(), questionnaireID, req.QuestionNum)
+	questionNumAlreadyExists, err := q.CheckQuestionNum(c.Request().Context(), questionnaireID, req.QuestionNum)
 	if err != nil {
 		c.Logger().Errorf("failed to check questionNum: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	} else if questionNumExists {
+	} else if questionNumAlreadyExists {
 		c.Logger().Info("questionNum already exists")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
