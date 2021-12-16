@@ -300,15 +300,25 @@ func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	// 重複したquestionNumを持つ質問をPOSTできないように
+	questionNumAlreadyExists, err := q.CheckQuestionNum(c.Request().Context(), questionnaireID, req.QuestionNum)
+	if err != nil {
+		c.Logger().Errorf("failed to check questionNum: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	} else if questionNumAlreadyExists {
+		c.Logger().Info("questionNum already exists")
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
 	switch req.QuestionType {
 	case "Text":
-		//正規表現のチェック
+		// 正規表現のチェック
 		if _, err := regexp.Compile(req.RegexPattern); err != nil {
 			c.Logger().Info("invalid regex pattern: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	case "Number":
-		//数字か，min<=maxになってるか
+		// 数字か，min<=maxになってるか
 		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
 			c.Logger().Info("invalid number: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, err)
