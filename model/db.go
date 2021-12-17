@@ -41,6 +41,10 @@ func EstablishConnection(isProduction bool) error {
 	if !ok {
 		host = "localhost"
 	}
+	port, ok := os.LookupEnv("MARIADB_PORT")
+	if !ok {
+		port = "3306"
+	}
 
 	dbname, ok := os.LookupEnv("MARIADB_DATABASE")
 	if !ok {
@@ -54,7 +58,7 @@ func EstablishConnection(isProduction bool) error {
 		logLevel = logger.Info
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, pass, host, dbname) + "?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4"
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, pass, host, port, dbname) + "?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4"
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logLevel),
