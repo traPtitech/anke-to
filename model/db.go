@@ -63,17 +63,24 @@ func EstablishConnection(isProduction bool) error {
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logLevel),
 	})
+	if err != nil {
+		return fmt.Errorf("failed to connect to DB: %w", err)
+	}
+
 	db = db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
 
-	db.Use(prometheus.New(prometheus.Config{
+	err = db.Use(prometheus.New(prometheus.Config{
 		DBName:          "anke-to",
 		RefreshInterval: 15,
 		MetricsCollector: []prometheus.MetricsCollector{
 			&MetricsCollector{},
 		},
 	}))
+	if err != nil {
+		return fmt.Errorf("failed to use prometheus plugin: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // Migrate DBのMigrationを行う
