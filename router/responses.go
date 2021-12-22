@@ -363,10 +363,12 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
-	if err != nil {
-		c.Logger().Errorf("failed to insert responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+	if len(responseMetas) > 0 {
+		err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
