@@ -189,10 +189,12 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
-	if err != nil {
-		c.Logger().Errorf("failed to insert responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+	if len(responseMetas) > 0 {
+		err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
@@ -338,7 +340,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := r.IResponse.DeleteResponse(c.Request().Context(), responseID); err != nil {
+	if err := r.IResponse.DeleteResponse(c.Request().Context(), responseID); err != nil && !errors.Is(err, model.ErrNoRecordDeleted) {
 		c.Logger().Errorf("failed to delete response: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -361,10 +363,12 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
-	if err != nil {
-		c.Logger().Errorf("failed to insert responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+	if len(responseMetas) > 0 {
+		err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -401,7 +405,7 @@ func (r *Response) DeleteResponse(c echo.Context) error {
 	}
 
 	err = r.IResponse.DeleteResponse(c.Request().Context(), responseID)
-	if err != nil {
+	if err != nil && !errors.Is(err, model.ErrNoRecordDeleted) {
 		c.Logger().Errorf("failed to delete response: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
