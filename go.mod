@@ -61,13 +61,15 @@ require (
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/gorilla/sessions v1.2.1
 	github.com/prometheus/client_golang v1.11.0
+	github.com/thanhpk/randstr v1.0.4
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
 )
 
 require (
-	github.com/antihax/optional v0.0.0-20180407024304-ca021399b1a6 // indirect
-	github.com/sapphi-red/go-traq v0.0.0-20210619185243-f487eb63bd8c // indirect
-	github.com/thanhpk/randstr v1.0.4 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/srinathgs/mysqlstore v0.0.0-20200417050510-9cbb9420fc4c // indirect
 )
