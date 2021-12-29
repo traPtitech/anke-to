@@ -14,6 +14,9 @@ services:
       MARIADB_DATABASE: anke-to
       TZ: Asia/Tokyo
       GO111MODULE: "on"
+      CLIENT_ID:
+      CLIENT_SECRET:
+      SESSION_SECRET: secret
     ports:
       - "1323:1323"
     volumes:
