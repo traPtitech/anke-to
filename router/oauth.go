@@ -21,10 +21,10 @@ var (
 
 type Oauth struct {
 	config    *oauth2.Config
-	sessStore session.Store
+	sessStore session.IStore
 }
 
-func NewOauth(sessStore session.Store) *Oauth {
+func NewOauth(sessStore session.IStore) *Oauth {
 	return &Oauth{
 		config: &oauth2.Config{
 			ClientID:     clientID,

@@ -32,7 +32,7 @@ func (s *Store) GetSession(c echo.Context) (*Session, error) {
 	}, nil
 }
 
-func NewStore(sess model.Session) (*Store, error) {
+func NewStore(sess *model.Session) (*Store, error) {
 	store, err := sess.Get()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)

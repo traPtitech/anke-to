@@ -16,7 +16,7 @@ func SetRouting(port string) {
 	p := prometheus.NewPrometheus("echo", nil)
 	p.Use(e)
 
-	api := InjectAPIServer()
+	/*api,_ := InjectAPIServer()
 
 	// Static Files
 	e.Static("/", "client/dist")
@@ -58,10 +58,7 @@ func SetRouting(port string) {
 
 		apiUsers := echoAPI.Group("/users")
 		{
-			/*
-				TODO
-				apiUsers.GET("")
-			*/
+
 			apiUsersMe := apiUsers.Group("/me")
 			{
 				apiUsersMe.GET("", api.GetUsersMe)
@@ -77,7 +74,7 @@ func SetRouting(port string) {
 		{
 			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
 		}
-	}
+	}*/
 
 	e.Logger.Fatal(e.Start(port))
 }
