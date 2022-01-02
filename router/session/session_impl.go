@@ -106,3 +106,16 @@ func (s *Session) GetToken() (*oauth2.Token, error) {
 		Expiry:       expiry,
 	}, nil
 }
+
+func (s *Session) SetState(state string) {
+	s.sess.Values["state"] = state
+}
+
+func (s *Session) GetState() (string, error) {
+	state, ok := s.sess.Values["state"].(string)
+	if !ok || state == "" {
+		return "", ErrNoValue
+	}
+
+	return state, nil
+}
