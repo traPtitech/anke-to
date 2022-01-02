@@ -39,7 +39,6 @@ func NewStore(sess model.Session) (*Store, error) {
 
 type Session struct {
 	c     echo.Context
-	store mysqlstore.MySQLStore
 	sess  *sessions.Session
 }
 
@@ -47,12 +46,24 @@ func (s *Session) SetUserID(userID string) {
 	s.sess.Values["userID"] = userID
 }
 
-func (s *Session) GetUserID() (string, error) {
+func (s *Session) GetUserID() string {
 	userID, ok := s.sess.Values["userID"].(string)
 	if !ok || userID == "" {
-		return "", nil
+		return ""
 	}
 
-	return userID, nil
+	return userID
 }
 
+func (s *Session) SetVerifier(verifier string) {
+	s.sess.Values["verifier"] = verifier
+}
+
+func (s *Session) GetVerifier() string  {
+	verifier,ok := s.sess.Values["verifier"].(string)
+	if !ok || verifier == "" {
+		return ""
+	}
+
+	return verifier
+}
