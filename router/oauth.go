@@ -3,6 +3,7 @@ package router
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -63,4 +64,49 @@ func (o *Oauth) GetCode(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, authURL)
+}
+
+func (o *Oauth) Callback(c echo.Context) error {
+	sess, err := o.sessStore.GetSession(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session :%w", err))
+	}
+
+	state := c.QueryParam("state")
+	sessState, err := sess.GetState()
+	if err != nil {
+		if errors.Is(err, session.ErrNoValue) {
+			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Errorf("failed to get state for no value  : %w", err))
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get state :%w", err))
+	}
+
+	if state != sessState {
+		return echo.NewHTTPError(http.StatusUnauthorized, "failed to match state")
+	}
+
+	code := c.QueryParam("code")
+	verifier, err := sess.GetVerifier()
+	if err != nil {
+		if errors.Is(err, session.ErrNoValue) {
+			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Errorf("failed to get verifier for no value:%w", err))
+		}
+
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get verifier :%w", err))
+	}
+
+	codeChallengeOption := oauth2.SetAuthURLParam("code_verifier", verifier)
+
+	token, err := o.config.Exchange(c.Request().Context(), code, codeChallengeOption)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to exchange token: %w", err))
+	}
+
+	sess.SetToken(token)
+
+	if err = sess.Save(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save :%w ", err))
+	}
+
+	return c.NoContent(http.StatusOK)
 }
