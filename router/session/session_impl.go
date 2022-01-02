@@ -119,3 +119,11 @@ func (s *Session) GetState() (string, error) {
 
 	return state, nil
 }
+
+func (s *Session) Save() error {
+	if err := s.sess.Save(s.c.Request(),s.c.Response());err!=nil {
+		return err
+	}
+
+	return nil
+}
