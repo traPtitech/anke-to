@@ -49,26 +49,26 @@ func (s *Session) SetUserID(userID string) {
 	s.sess.Values["userID"] = userID
 }
 
-func (s *Session) GetUserID() string {
+func (s *Session) GetUserID() (string, error) {
 	userID, ok := s.sess.Values["userID"].(string)
 	if !ok || userID == "" {
-		return ""
+		return "", ErrNoValue
 	}
 
-	return userID
+	return userID, nil
 }
 
 func (s *Session) SetVerifier(verifier string) {
 	s.sess.Values["verifier"] = verifier
 }
 
-func (s *Session) GetVerifier() string {
+func (s *Session) GetVerifier() (string, error) {
 	verifier, ok := s.sess.Values["verifier"].(string)
 	if !ok || verifier == "" {
-		return ""
+		return "", ErrNoValue
 	}
 
-	return verifier
+	return verifier, nil
 }
 
 func (s *Session) SetToken(token *oauth2.Token) {
