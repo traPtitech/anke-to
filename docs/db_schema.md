@@ -7,7 +7,7 @@
 | Field            | Type     | Null | Key | Default | Extra | 説明など |
 | ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
-| user_traqid      | char(30) | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |
 
 ### options
 
@@ -59,7 +59,7 @@
 | ---------------- | --------- | ---- | --- | ----------------- | -------------- | --------------------------------------------------- |
 | response_id      | int(11)   | NO   | PRI | _NULL_            | auto_increment | 一つのアンケートに対する一つの回答ごとに振られる ID |
 | questionnaire_id | int(11)   | NO   | MUL | _NULL_            |                | どのアンケートへの回答か                            |
-| user_traqid      | char(30)  | YES  | MUL | _NULL_            |                | 回答者の traQID                                     |
+| user_traqid      | char(32)  | YES  | MUL | _NULL_            |                | 回答者の traQID                                     |
 | modified_at      | timestamp | NO   |     | CURRENT_TIMESTAMP |                | 回答が変更された日時                                |
 | submitted_at     | timestamp | YES  |     | _NULL_            |                | 回答が送信された日時 (未送信の場合は NULL)          |
 | deleted_at       | timestamp | YES  |     | _NULL_            |                | 回答が破棄された日時 (破棄されていない場合は NULL)  |
@@ -106,4 +106,4 @@
 | Field            | Type     | Null | Key | Default | Extra | 説明など |
 | ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
-| user_traqid      | char(30) | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |

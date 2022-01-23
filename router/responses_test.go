@@ -279,6 +279,21 @@ func TestPostResponseValidate(t *testing.T) {
 			},
 		},
 		{
+			description: "Checkboxタイプで選択しなくてもエラーなし",
+			request: &Responses{
+				ID:          1,
+				Temporarily: false,
+				Body: []model.ResponseBody{
+					{
+						QuestionID:     1,
+						QuestionType:   "Checkbox",
+						Body:           null.String{},
+						OptionResponse: []string{},
+					},
+				},
+			},
+		},
+		{
 			description: "CheckboxタイプでOptionResponseがnilな回答なのでエラー",
 			request: &Responses{
 				ID:          1,

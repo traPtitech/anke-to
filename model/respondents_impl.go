@@ -218,7 +218,7 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 		Select("ID", "Type").
 		Find(&questions).Error
 	if err != nil {
-		return RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", err)
+		return RespondentDetail{}, fmt.Errorf("failed to get questions: %w", err)
 	}
 
 	respondentDetail := RespondentDetail{
@@ -315,7 +315,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		Select("ID", "Type").
 		Find(&questions).Error
 	if err != nil {
-		return []RespondentDetail{}, fmt.Errorf("failed to get respondents: %w", err)
+		return nil, fmt.Errorf("failed to get questions: %w", err)
 	}
 
 	for _, question := range questions {
@@ -374,7 +374,7 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 		Select("questionnaire_id, user_traqid").
 		Find(&respondents).Error
 	if err != nil {
-		return []Respondents{}, nil
+		return nil, fmt.Errorf("failed to get respondents:%w", err)
 	}
 
 	return respondents, nil

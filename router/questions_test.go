@@ -12,12 +12,12 @@ func TestPostQuestionValidate(t *testing.T) {
 
 	tests := []struct {
 		description string
-		request     *PostQuestionRequest
+		request     *PostAndEditQuestionRequest
 		isErr       bool
 	}{
 		{
 			description: "旧クライアントの一般的なTextタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -33,7 +33,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "questionnaireIDが0でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 0,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -49,7 +49,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "questionNumが0でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     0,
@@ -65,7 +65,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "questionNumが負なのでエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     -1,
@@ -82,7 +82,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "pageNumが0でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -98,7 +98,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "pageNumが負なのでエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -115,7 +115,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "質問文が空なのでエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -132,7 +132,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "isRequiredがfalseでもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -148,7 +148,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Textタイプでoptionがnullでもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -164,7 +164,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Textタイプでoptionが50文字以上でもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -181,7 +181,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleLabelRightがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -197,7 +197,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleLabelLeftがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -213,7 +213,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleLabelRightが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -230,7 +230,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleLabelLeftが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -247,7 +247,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -263,7 +263,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -279,7 +279,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -295,7 +295,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -311,7 +311,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -328,7 +328,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "regexPatternが指定されていてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -345,7 +345,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MinBoundが設定されていてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -362,7 +362,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MinBoundが数字でない時エラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -380,7 +380,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MaxBoundが設定されていてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -397,7 +397,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MaxBoundが数字でない時エラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -415,7 +415,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "旧クライアントの一般的なTextAreaタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -431,7 +431,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでoptionがnullでもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -447,7 +447,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでoptionが50文字以上でもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -464,7 +464,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleLabelRightがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -480,7 +480,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleLabelLeftがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -496,7 +496,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleLabelRightが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -513,7 +513,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleLabelLeftが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -530,7 +530,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -546,7 +546,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -562,7 +562,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -578,7 +578,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -594,7 +594,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "TextAreaタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
 				QuestionNum:     1,
@@ -611,7 +611,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "旧クライアントの一般的なNumberタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -627,7 +627,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Numberタイプでoptionがnullでもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -643,7 +643,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Numberタイプでoptionが50文字以上でもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -660,7 +660,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleLabelRightがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -676,7 +676,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleLabelLeftがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -692,7 +692,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleLabelRightが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -709,7 +709,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleLabelLeftが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -726,7 +726,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -742,7 +742,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -758,7 +758,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -774,7 +774,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -790,7 +790,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "NumberタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
 				QuestionNum:     1,
@@ -807,7 +807,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "旧クライアントの一般的なCheckboxタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -823,7 +823,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Checkboxタイプでoptionがnullでエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -840,7 +840,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "Checkboxタイプでoptionが50文字以上でエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -857,7 +857,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleLabelRightがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -873,7 +873,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleLabelLeftがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -889,7 +889,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleLabelRightが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -906,7 +906,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleLabelLeftが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -923,7 +923,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -939,7 +939,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -955,7 +955,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -971,7 +971,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -987,7 +987,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "CheckboxタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
 				QuestionNum:     1,
@@ -1004,7 +1004,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "旧クライアントの一般的なMultipleChoiceタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1020,7 +1020,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでoptionがnullでエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1037,7 +1037,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでoptionが50文字以上でエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1054,7 +1054,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleLabelRightがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1070,7 +1070,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleLabelLeftがあってもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1086,7 +1086,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleLabelRightが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1103,7 +1103,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleLabelLeftが50字を超えてもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1120,7 +1120,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1136,7 +1136,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1152,7 +1152,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1168,7 +1168,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1184,7 +1184,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "MultipleChoiceタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
 				QuestionNum:     1,
@@ -1201,7 +1201,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "旧クライアントの一般的なLinearScaleタイプの質問なのでエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1217,7 +1217,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでoptionがnullでもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1233,7 +1233,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでoptionが50文字以上でもエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1250,7 +1250,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelRightがなくてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1267,7 +1267,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelLeftがなくてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1284,7 +1284,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelLeft＆Rightがなくてもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1301,7 +1301,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelRightが50字を超えていたらエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1318,7 +1318,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleLabelLeftが50字を超えていたらエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
 				QuestionNum:     1,
@@ -1335,7 +1335,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleMinが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -1351,7 +1351,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleMaxが負でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -1367,7 +1367,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleMaxが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -1383,7 +1383,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleMinが正でもエラーなし",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
@@ -1399,7 +1399,7 @@ func TestPostQuestionValidate(t *testing.T) {
 		},
 		{
 			description: "LinearScaleタイプでscaleMinがscaleMaxより大きいときエラー",
-			request: &PostQuestionRequest{
+			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,

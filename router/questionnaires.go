@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,7 @@ type GetQuestionnairesQueryParam struct {
 func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
@@ -84,13 +86,13 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator:%w", err))
+		c.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), p)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate:%w", err))
+		c.Logger().Infof("failed to validate: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -99,9 +101,11 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	}
 	pageNum, err := strconv.Atoi(page)
 	if err != nil {
+		c.Logger().Infof("failed to convert page to int: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'page'(%s) to integer: %w", page, err))
 	}
 	if pageNum <= 0 {
+		c.Logger().Info("page must be greater than 0")
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("page cannot be less than 0"))
 	}
 
@@ -109,6 +113,7 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	if len(nontargeted) != 0 {
 		nontargetedBool, err = strconv.ParseBool(nontargeted)
 		if err != nil {
+			c.Logger().Infof("failed to convert nontargeted to bool: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to convert the string query parameter 'nontargeted'(%s) to bool: %w", nontargeted, err))
 		}
 	} else {
@@ -118,11 +123,14 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 	questionnaires, pageMax, err := q.IQuestionnaire.GetQuestionnaires(c.Request().Context(), userID, sort, search, pageNum, nontargetedBool)
 	if err != nil {
 		if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidRegex) {
+			c.Logger().Infof("failed to get questionnaires: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 		if errors.Is(err, model.ErrDeadlineExceeded) {
+			c.Logger().Errorf("failed to get questionnaires (deadline exceeded): %+v", err)
 			return echo.NewHTTPError(http.StatusServiceUnavailable, "deadline exceeded")
 		}
+		c.Logger().Errorf("failed to get questionnaires: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -148,19 +156,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 	// JSONを構造体につける
 	err := c.Bind(&req)
 	if err != nil {
-		c.Logger().Infof("invalid request body: %w", err)
+		c.Logger().Infof("failed to bind PostAndEditQuestionnaireRequest: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Errorf("failed to get validator: %w", err)
+		c.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Infof("failed to validate: %w", err)
+		c.Logger().Infof("failed to validate: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -176,19 +184,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
 		if err != nil {
-			c.Logger().Errorf("failed to insert a questionnaire: %w", err)
+			c.Logger().Errorf("failed to insert a questionnaire: %+v", err)
 			return err
 		}
 
 		err := q.InsertTargets(ctx, questionnaireID, req.Targets)
 		if err != nil {
-			c.Logger().Errorf("failed to insert targets: %w", err)
+			c.Logger().Errorf("failed to insert targets: %+v", err)
 			return err
 		}
 
 		err = q.InsertAdministrators(ctx, questionnaireID, req.Administrators)
 		if err != nil {
-			c.Logger().Errorf("failed to insert administrators: %w", err)
+			c.Logger().Errorf("failed to insert administrators: %+v", err)
 			return err
 		}
 
@@ -202,7 +210,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		)
 		err = q.PostMessage(message)
 		if err != nil {
-			c.Logger().Errorf("failed to post message: %w", err)
+			c.Logger().Errorf("failed to post message: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
 		}
 
@@ -214,6 +222,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 			return httpError
 		}
 
+		c.Logger().Errorf("failed to create questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
 
@@ -237,14 +246,17 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
+		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
 	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Infof("questionnaire not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
+		c.Logger().Errorf("failed to get questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -262,11 +274,117 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	})
 }
 
+// PostQuestionByQuestionnaireID POST /questionnaires/:questionnaireID/questions
+func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
+	strQuestionnaireID := c.Param("questionnaireID")
+	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+	if err != nil {
+		c.Logger().Info("failed to convert questionnaireID to int: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+	}
+	req := PostAndEditQuestionRequest{}
+	if err := c.Bind(&req); err != nil {
+		c.Logger().Info("failed to bind PostAndEditQuestionRequest: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	validate, err := getValidator(c)
+	if err != nil {
+		c.Logger().Errorf("failed to get validator: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	err = validate.StructCtx(c.Request().Context(), req)
+	if err != nil {
+		c.Logger().Infof("failed to validate: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	// 重複したquestionNumを持つ質問をPOSTできないように
+	questionNumAlreadyExists, err := q.CheckQuestionNum(c.Request().Context(), questionnaireID, req.QuestionNum)
+	if err != nil {
+		c.Logger().Errorf("failed to check questionNum: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	} else if questionNumAlreadyExists {
+		c.Logger().Info("questionNum already exists")
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	switch req.QuestionType {
+	case "Text":
+		// 正規表現のチェック
+		if _, err := regexp.Compile(req.RegexPattern); err != nil {
+			c.Logger().Info("invalid regex pattern: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+	case "Number":
+		// 数字か，min<=maxになってるか
+		if err := q.CheckNumberValid(req.MinBound, req.MaxBound); err != nil {
+			c.Logger().Info("invalid number: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+	}
+
+	lastID, err := q.InsertQuestion(c.Request().Context(), questionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
+	if err != nil {
+		c.Logger().Errorf("failed to insert question: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	switch req.QuestionType {
+	case "MultipleChoice", "Checkbox", "Dropdown":
+		for i, v := range req.Options {
+			if err := q.InsertOption(c.Request().Context(), lastID, i+1, v); err != nil {
+				c.Logger().Errorf("failed to insert option: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+		}
+	case "LinearScale":
+		if err := q.InsertScaleLabel(c.Request().Context(), lastID,
+			model.ScaleLabels{
+				ScaleLabelLeft:  req.ScaleLabelLeft,
+				ScaleLabelRight: req.ScaleLabelRight,
+				ScaleMax:        req.ScaleMax,
+				ScaleMin:        req.ScaleMin,
+			}); err != nil {
+			c.Logger().Errorf("failed to insert scale label: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	case "Text", "Number":
+		if err := q.InsertValidation(c.Request().Context(), lastID,
+			model.Validations{
+				RegexPattern: req.RegexPattern,
+				MinBound:     req.MinBound,
+				MaxBound:     req.MaxBound,
+			}); err != nil {
+			c.Logger().Errorf("failed to insert validation: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"questionID":        int(lastID),
+		"question_type":     req.QuestionType,
+		"question_num":      req.QuestionNum,
+		"page_num":          req.PageNum,
+		"body":              req.Body,
+		"is_required":       req.IsRequired,
+		"options":           req.Options,
+		"scale_label_right": req.ScaleLabelRight,
+		"scale_label_left":  req.ScaleLabelLeft,
+		"scale_max":         req.ScaleMax,
+		"scale_min":         req.ScaleMin,
+		"regex_pattern":     req.RegexPattern,
+		"min_bound":         req.MinBound,
+		"max_bound":         req.MaxBound,
+	})
+}
+
 // EditQuestionnaire PATCH /questionnaires/:questionnaireID
 func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		c.Logger().Errorf("failed to get questionnaireID: %w", err)
+		c.Logger().Errorf("failed to get questionnaireID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -274,50 +392,50 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 
 	err = c.Bind(&req)
 	if err != nil {
-		c.Logger().Infof("failed to bind request: %w", err)
+		c.Logger().Infof("failed to bind PostAndEditQuestionnaireRequest: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Errorf("failed to get validator: %w", err)
+		c.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Infof("failed to validate: %w", err)
+		c.Logger().Infof("failed to validate: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
-			c.Logger().Errorf("failed to update questionnaire: %w", err)
+			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
 		}
 
 		err = q.DeleteTargets(ctx, questionnaireID)
 		if err != nil {
-			c.Logger().Errorf("failed to delete targets: %w", err)
+			c.Logger().Errorf("failed to delete targets: %+v", err)
 			return err
 		}
 
 		err = q.InsertTargets(ctx, questionnaireID, req.Targets)
 		if err != nil {
-			c.Logger().Errorf("failed to insert targets: %w", err)
+			c.Logger().Errorf("failed to insert targets: %+v", err)
 			return err
 		}
 
 		err = q.DeleteAdministrators(ctx, questionnaireID)
 		if err != nil {
-			c.Logger().Errorf("failed to delete administrators: %w", err)
+			c.Logger().Errorf("failed to delete administrators: %+v", err)
 			return err
 		}
 
 		err = q.InsertAdministrators(ctx, questionnaireID, req.Administrators)
 		if err != nil {
-			c.Logger().Errorf("failed to insert administrators: %w", err)
+			c.Logger().Errorf("failed to insert administrators: %+v", err)
 			return err
 		}
 
@@ -329,6 +447,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 			return httpError
 		}
 
+		c.Logger().Errorf("failed to update questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
 	}
 
@@ -339,26 +458,26 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		c.Logger().Errorf("failed to get questionnaireID: %w", err)
+		c.Logger().Errorf("failed to get questionnaireID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		err = q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID)
 		if err != nil {
-			c.Logger().Errorf("failed to delete questionnaire: %w", err)
+			c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 			return err
 		}
 
 		err = q.DeleteTargets(c.Request().Context(), questionnaireID)
 		if err != nil {
-			c.Logger().Errorf("failed to delete targets: %w", err)
+			c.Logger().Errorf("failed to delete targets: %+v", err)
 			return err
 		}
 
 		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
 		if err != nil {
-			c.Logger().Errorf("failed to delete administrators: %w", err)
+			c.Logger().Errorf("failed to delete administrators: %+v", err)
 			return err
 		}
 
@@ -370,6 +489,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 			return httpError
 		}
 
+		c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete a questionnaire")
 	}
 
@@ -381,15 +501,18 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 	strQuestionnaireID := c.Param("questionnaireID")
 	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
 	if err != nil {
+		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
 	}
 
 	allquestions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
 	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if len(allquestions) == 0 {
+		c.Logger().Info("no questions")
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
@@ -428,6 +551,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 	options, err := q.GetOptions(c.Request().Context(), optionIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get options: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	optionMap := make(map[int][]string, len(options))
@@ -437,6 +561,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 	scaleLabels, err := q.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get scale labels: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
@@ -446,6 +571,7 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 	validations, err := q.GetValidations(c.Request().Context(), validationIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get validations: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	validationMap := make(map[int]model.Validations, len(validations))

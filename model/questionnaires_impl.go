@@ -35,7 +35,7 @@ type Questionnaires struct {
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 }
 
-//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+// BeforeCreate Update時に自動でmodified_atを現在時刻に
 func (questionnaire *Questionnaires) BeforeCreate(tx *gorm.DB) error {
 	now := time.Now()
 	questionnaire.ModifiedAt = now

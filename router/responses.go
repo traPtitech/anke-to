@@ -45,38 +45,42 @@ type Responses struct {
 func (r *Response) PostResponse(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
+		c.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
 	req := Responses{}
 
 	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Infof("failed to bind Responses: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	validate, err := getValidator(c)
 	if err != nil {
-		c.Logger().Error(fmt.Errorf("failed to get validator: %w", err))
+		c.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	err = validate.StructCtx(c.Request().Context(), req)
 	if err != nil {
-		c.Logger().Info(fmt.Errorf("failed to validate: %w", err))
+		c.Logger().Infof("failed to validate: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info("questionnaire not found")
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
+		c.Logger().Errorf("failed to get questionnaire limit: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない
 	if limit.Valid && limit.Time.Before(time.Now()) {
+		c.Logger().Info("expired questionnaire")
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
@@ -91,6 +95,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	validations, err := r.GetValidations(c.Request().Context(), questionIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get validations: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -99,23 +104,21 @@ func (r *Response) PostResponse(c echo.Context) error {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
 		case "Number":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
+					c.Logger().Errorf("invalid number: %+v", err)
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
+				c.Logger().Infof("invalid number: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
+					c.Logger().Infof("invalid text: %+v", err)
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
+				c.Logger().Errorf("invalid text: %+v", err)
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
@@ -131,11 +134,12 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	scaleLabels, err := r.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get scale labels: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
 	for _, label := range scaleLabels {
-		scaleLabelMap[label.QuestionID] = &label
+		scaleLabelMap[label.QuestionID] = label
 	}
 
 	// LinearScaleのパターンマッチ
@@ -144,9 +148,10 @@ func (r *Response) PostResponse(c echo.Context) error {
 		case "LinearScale":
 			label, ok := scaleLabelMap[body.QuestionID]
 			if !ok {
-				label = &model.ScaleLabels{}
+				label = model.ScaleLabels{}
 			}
-			if err := r.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
+				c.Logger().Infof("failed to check scale label: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
@@ -162,6 +167,7 @@ func (r *Response) PostResponse(c echo.Context) error {
 
 	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(submittedAt, !req.Temporarily))
 	if err != nil {
+		c.Logger().Errorf("failed to insert respondent: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -183,9 +189,12 @@ func (r *Response) PostResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+	if len(responseMetas) > 0 {
+		err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
@@ -202,15 +211,17 @@ func (r *Response) GetResponse(c echo.Context) error {
 	strResponseID := c.Param("responseID")
 	responseID, err := strconv.Atoi(strResponseID)
 	if err != nil {
+		c.Logger().Infof("failed to convert responseID to int: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to parse responseID(%s) to integer: %w", strResponseID, err))
 	}
 
 	respondentDetail, err := r.GetRespondentDetail(c.Request().Context(), responseID)
 	if errors.Is(err, model.ErrRecordNotFound) {
-		c.Logger().Info(err)
+		c.Logger().Infof("response not found: %+v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "response not found")
 	}
 	if err != nil {
+		c.Logger().Errorf("failed to get respondent detail: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -221,25 +232,29 @@ func (r *Response) GetResponse(c echo.Context) error {
 func (r *Response) EditResponse(c echo.Context) error {
 	responseID, err := getResponseID(c)
 	if err != nil {
+		c.Logger().Errorf("failed to get responseID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
 	req := Responses{}
 	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
+		c.Logger().Infof("failed to bind Responses: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Infof("questionnaire not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
+		c.Logger().Errorf("failed to get questionnaire limit: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎた回答は許可しない
 	if limit.Valid && limit.Time.Before(time.Now()) {
+		c.Logger().Info("expired questionnaire")
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
@@ -254,6 +269,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 	validations, err := r.GetValidations(c.Request().Context(), questionIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get validations: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -262,23 +278,21 @@ func (r *Response) EditResponse(c echo.Context) error {
 		body := QuestionTypes[validation.QuestionID]
 		switch body.QuestionType {
 		case "Number":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckNumberValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
+					c.Logger().Errorf("invalid number: %+v", err)
 					return echo.NewHTTPError(http.StatusInternalServerError, err)
 				}
+				c.Logger().Infof("invalid number: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Text":
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err)
-			}
 			if err := r.CheckTextValidation(validation, body.Body.ValueOrZero()); err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
+					c.Logger().Infof("invalid text: %+v", err)
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
+				c.Logger().Errorf("invalid text: %+v", err)
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 		}
@@ -294,6 +308,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 
 	scaleLabels, err := r.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
 	if err != nil {
+		c.Logger().Errorf("failed to get scale labels: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
@@ -310,6 +325,7 @@ func (r *Response) EditResponse(c echo.Context) error {
 				label = &model.ScaleLabels{}
 			}
 			if err := r.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
+				c.Logger().Infof("invalid scale label: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
@@ -318,12 +334,14 @@ func (r *Response) EditResponse(c echo.Context) error {
 	if !req.Temporarily {
 		err := r.UpdateSubmittedAt(c.Request().Context(), responseID)
 		if err != nil {
+			c.Logger().Errorf("failed to update submitted at: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update sbmitted_at: %w", err))
 		}
 	}
 
 	//全消し&追加(レコード数爆発しそう)
-	if err := r.IResponse.DeleteResponse(c.Request().Context(), responseID); err != nil {
+	if err := r.IResponse.DeleteResponse(c.Request().Context(), responseID); err != nil && !errors.Is(err, model.ErrNoRecordDeleted) {
+		c.Logger().Errorf("failed to delete response: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
@@ -345,9 +363,12 @@ func (r *Response) EditResponse(c echo.Context) error {
 		}
 	}
 
-	err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+	if len(responseMetas) > 0 {
+		err = r.InsertResponses(c.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -357,35 +378,35 @@ func (r *Response) EditResponse(c echo.Context) error {
 func (r *Response) DeleteResponse(c echo.Context) error {
 	responseID, err := getResponseID(c)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get response id: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get responseID: %w", err))
 	}
 
 	limit, err := r.GetQuestionnaireLimitByResponseID(c.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Info(err)
+			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find limit of responseID:%d(error: %w)", responseID, err))
 		}
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to get questionnaire limit: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get limit of responseID:%d(error: %w)", responseID, err))
 	}
 
 	// 回答期限を過ぎた回答の削除は許可しない
 	if limit.Valid && limit.Time.Before(time.Now()) {
-		c.Logger().Info(err)
+		c.Logger().Info("expired response")
 		return echo.NewHTTPError(http.StatusMethodNotAllowed)
 	}
 
 	err = r.DeleteRespondent(c.Request().Context(), responseID)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Errorf("failed to delete respondent: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	err = r.IResponse.DeleteResponse(c.Request().Context(), responseID)
-	if err != nil {
-		c.Logger().Error(err)
+	if err != nil && !errors.Is(err, model.ErrNoRecordDeleted) {
+		c.Logger().Errorf("failed to delete response: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 

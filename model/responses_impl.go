@@ -18,8 +18,8 @@ func NewResponse() *Response {
 
 //Responses responseテーブルの構造体
 type Responses struct {
-	ResponseID int            `json:"-" gorm:"type:int(11);not null;primaryKey"`
-	QuestionID int            `json:"-" gorm:"type:int(11);not null;primaryKey"`
+	ResponseID int            `json:"-" gorm:"type:int(11);not null"`
+	QuestionID int            `json:"-" gorm:"type:int(11);not null"`
 	Body       null.String    `json:"response" gorm:"type:text;default:NULL"`
 	ModifiedAt time.Time      `json:"-" gorm:"type:timestamp;not null;dafault:CURRENT_TIMESTAMP"`
 	DeletedAt  gorm.DeletedAt `json:"-" gorm:"type:TIMESTAMP NULL;default:NULL"`

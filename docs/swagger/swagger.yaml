@@ -146,11 +146,12 @@ paths:
           description: アンケートのIDが無効です
         '500':
           description: 質問のリストを取得できませんでした
-  /questions:
     post:
-      operationId: postQuestion
+      operationId: PostQuestionByQuestionnaireID
       tags:
-        - question
+        - questionnaire
+      parameters:
+        - $ref: '#/components/parameters/questionnaireIDInPath'
       description: 新しい質問を作成します．
       requestBody:
         required: true
@@ -943,6 +944,8 @@ components:
             example: lolico
         required:
           - traqID
+      required:
+        - submitted_at
     Users:
       type: array
       items:

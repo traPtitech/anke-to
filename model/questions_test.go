@@ -39,6 +39,7 @@ func TestQuestions(t *testing.T) {
 	t.Run("DeleteQuestion", deleteQuestionTest)
 	t.Run("GetQuestions", getQuestionsTest)
 	t.Run("CheckQuestionAdmin", checkQuestionAdminTest)
+	t.Run("CheckQuestionNum", checkQuestionNumTest)
 }
 
 func setupQuestionsTest(t *testing.T) {
@@ -994,5 +995,65 @@ func checkQuestionAdminTest(t *testing.T) {
 		}
 
 		assertion.Equal(testCase.expect.isAdmin, actualIsAdmin, testCase.description, "isAdmin")
+	}
+}
+
+func checkQuestionNumTest(t *testing.T) {
+	t.Helper()
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	type args struct {
+		questionnaireID int
+		questionNum     int
+	}
+	type expect struct {
+		exists bool
+		isErr  bool
+		err    error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+	testCases := []test{
+		{
+			description: "exists",
+			args: args{
+				questionnaireID: questionDatas[0].Questions.QuestionnaireID,
+				questionNum:     0,
+			},
+			expect: expect{
+				exists: true,
+			},
+		},
+		{
+			description: "not exists",
+			args: args{
+				questionnaireID: questionDatas[0].Questions.QuestionnaireID,
+				questionNum:     100,
+			},
+			expect: expect{
+				exists: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		exists, err := questionImpl.CheckQuestionNum(ctx, testCase.args.questionnaireID, testCase.args.questionNum)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(testCase.expect.err, err, testCase.description, "error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.exists, exists, testCase.description, "questionNumAlreadyExists")
 	}
 }
