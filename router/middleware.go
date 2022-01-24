@@ -3,6 +3,8 @@ package router
 import (
 	"errors"
 	"fmt"
+	"github.com/traPtitech/anke-to/router/session"
+	"github.com/traPtitech/anke-to/traq"
 	"net/http"
 	"strconv"
 
@@ -18,6 +20,8 @@ type Middleware struct {
 	model.IRespondent
 	model.IQuestion
 	model.IQuestionnaire
+	session.IStore
+	traq.IUser
 }
 
 // NewMiddleware Middlewareのコンストラクタ
@@ -51,14 +55,39 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 暫定的にハードコーディングで対応*/
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "xxarupakaxx", "asari"}
 
+func (m *Middleware) SessionMiddleware() echo.MiddlewareFunc {
+	return m.IStore.GetMiddleware()
+}
+
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
-func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Request().Header.Get("X-Showcase-User")
-		if userID == "" {
-			userID = "mds_boy"
+		sess, err := m.IStore.GetSession(c)
+		if errors.Is(err, session.ErrNoSession) {
+			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+		}
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
+		userID, err := sess.GetUserID()
+		if err != nil && !errors.Is(err, session.ErrNoValue) {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID :%w", err))
+		}
+		if errors.Is(err, session.ErrNoValue) {
+			token, err := sess.GetToken()
+			if errors.Is(err, session.ErrNoValue) {
+				return echo.NewHTTPError(http.StatusUnauthorized, "no token")
+			}
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get token :%w", err))
+			}
+
+			userID, err = m.IUser.GetMyID(token)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get UserID:%w", err))
+			}
+		}
 		c.Set(userIDKey, userID)
 
 		return next(c)
