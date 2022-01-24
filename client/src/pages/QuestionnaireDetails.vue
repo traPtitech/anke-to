@@ -391,7 +391,7 @@ export default {
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
-              return this.sendQuestions(index + 1)
+              return this.sendQuestions(questionnaireId, index + 1)
             }
           })
           .catch(err => {
