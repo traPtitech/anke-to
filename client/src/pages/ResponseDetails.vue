@@ -357,6 +357,13 @@ export default {
         }
         switch (question.type) {
           case 'MultipleChoice':
+            if (question.selected) {
+              body.option_response = [question.selected];
+            } else {
+              body.option_response = [];
+            }
+
+            break;
           case 'Checkbox':
             Object.keys(question.isSelected).forEach(key => {
               if (question.isSelected[key]) {
