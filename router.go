@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"log"
 )
 
 // SetRouting ルーティングの設定
@@ -16,7 +17,10 @@ func SetRouting(port string) {
 	p := prometheus.NewPrometheus("echo", nil)
 	p.Use(e)
 
-	/*api,_ := InjectAPIServer()
+	api, err := InjectAPIServer()
+	if err != nil {
+		log.Panicln(err)
+	}
 
 	// Static Files
 	e.Static("/", "client/dist")
@@ -74,7 +78,13 @@ func SetRouting(port string) {
 		{
 			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
 		}
-	}*/
+
+		apiOauth := echoAPI.Group("/oauth")
+		{
+			apiOauth.GET("/callback", api.Callback)
+			apiOauth.GET("/generate/code", api.GetCode)
+		}
+	}
 
 	e.Logger.Fatal(e.Start(port))
 }

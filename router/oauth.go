@@ -39,6 +39,7 @@ func NewOauth(sessStore session.IStore) *Oauth {
 	}
 }
 
+// GetCode GET /oauth/generate/code
 func (o *Oauth) GetCode(c echo.Context) error {
 	sess, err := o.sessStore.GetSession(c)
 	if err != nil {
@@ -66,6 +67,7 @@ func (o *Oauth) GetCode(c echo.Context) error {
 	return c.String(http.StatusOK, authURL)
 }
 
+// Callback GET /oauth/callback
 func (o *Oauth) Callback(c echo.Context) error {
 	sess, err := o.sessStore.GetSession(c)
 	if err != nil {
