@@ -309,7 +309,7 @@ export default {
           })
           .then(() => {
             // 質問をサーバーに送信
-            return this.sendQuestions(0)
+            return this.sendQuestions(this.newQuestionnaireId, 0)
           })
           .then(() => {
             // 作成したアンケートの個別ページに遷移
@@ -335,7 +335,7 @@ export default {
               throw new Error('Bad Request')
             }
             // 質問を送信
-            return this.sendQuestions(0)
+            return this.sendQuestions(this.questionnaireId, 0)
           })
           .then(() => {
             // 削除された質問それぞれについてDELETEリクエストを送信
@@ -367,21 +367,18 @@ export default {
           })
       }
     },
-    sendQuestions(index) {
+    sendQuestions(questionnaireId, index) {
       // questions配列の、index番目以降の質問をサーバーに送信する
       const question = this.questions[index]
       const data = this.createQuestionData(index)
 
       if (this.isNewQuestion(question)) {
         return axios
-          .post(
-            '/questionnaires/' + this.newQuestionnaireId + '/questions',
-            data
-          )
+          .post('/questionnaires/' + questionnaireId + '/questions', data)
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
-              return this.sendQuestions(index + 1)
+              return this.sendQuestions(questionnaireId, index + 1)
             }
           })
           .catch(err => {
@@ -394,7 +391,7 @@ export default {
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
-              return this.sendQuestions(index + 1)
+              return this.sendQuestions(questionnaireId, index + 1)
             }
           })
           .catch(err => {
