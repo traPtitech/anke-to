@@ -25,7 +25,13 @@ func InjectAPIServer() (*router.API, error) {
 	respondent := model.NewRespondent()
 	question := model.NewQuestion()
 	questionnaire := model.NewQuestionnaire()
-	middleware := router.NewMiddleware(administrator, respondent, question, questionnaire)
+	modelSession := model.NewSession()
+	store, err := session.NewStore(modelSession)
+	if err != nil {
+		return nil, err
+	}
+	user := traq.NewUser()
+	middleware := router.NewMiddleware(administrator, respondent, question, questionnaire, store, user)
 	target := model.NewTarget()
 	option := model.NewOption()
 	scaleLabel := model.NewScaleLabel()
@@ -37,14 +43,9 @@ func InjectAPIServer() (*router.API, error) {
 	response := model.NewResponse()
 	routerResponse := router.NewResponse(questionnaire, validation, scaleLabel, respondent, response)
 	result := router.NewResult(respondent, questionnaire, administrator)
-	user := router.NewUser(respondent, questionnaire, target, administrator)
-	modelSession := model.NewSession()
-	store, err := session.NewStore(modelSession)
-	if err != nil {
-		return nil, err
-	}
+	routerUser := router.NewUser(respondent, questionnaire, target, administrator)
 	oauth := router.NewOauth(store)
-	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, user, oauth)
+	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, routerUser, oauth)
 	return api, nil
 }
 
@@ -61,8 +62,8 @@ var (
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 	transactionBind   = wire.Bind(new(model.ITransaction), new(*model.Transaction))
-	//sessionBind = wire.Bind(new(model.ISession),new(*model.Session))
-	storeBind = wire.Bind(new(session.IStore), new(*session.Store))
+	storeBind         = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
+	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
 )

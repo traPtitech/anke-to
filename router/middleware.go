@@ -25,14 +25,18 @@ type Middleware struct {
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, questionnaire model.IQuestionnaire) *Middleware {
+func NewMiddleware(IAdministrator model.IAdministrator, IRespondent model.IRespondent, IQuestion model.IQuestion, IQuestionnaire model.IQuestionnaire, IStore session.IStore, IUser traq.IUser) *Middleware {
 	return &Middleware{
-		IAdministrator: administrator,
-		IRespondent:    respondent,
-		IQuestion:      question,
-		IQuestionnaire: questionnaire,
+		IAdministrator: IAdministrator,
+		IRespondent: IRespondent,
+		IQuestion: IQuestion,
+		IQuestionnaire: IQuestionnaire,
+		IStore: IStore,
+		IUser: IUser,
 	}
 }
+
+
 
 const (
 	validatorKey       = "validator"

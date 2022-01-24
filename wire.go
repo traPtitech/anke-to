@@ -25,6 +25,7 @@ var (
 	storeBind = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
+	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
 )
 
 func InjectAPIServer() (*router.API,error) {
@@ -50,6 +51,7 @@ func InjectAPIServer() (*router.API,error) {
 		model.NewSession,
 		session.NewStore,
 		traq.NewWebhook,
+		traq.NewUser,
 		administratorBind,
 		optionBind,
 		questionnaireBind,
@@ -62,6 +64,7 @@ func InjectAPIServer() (*router.API,error) {
 		transactionBind,
 		webhookBind,
 		storeBind,
+		userBind,
 	)
 	return nil,nil
 }
