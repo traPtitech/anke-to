@@ -46,7 +46,7 @@ const (
 	questionIDKey      = "questionID"
 )
 
-func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		validate := validator.New()
 		c.Set(validatorKey, validate)
@@ -63,7 +63,7 @@ func (m *Middleware) SessionMiddleware() echo.MiddlewareFunc {
 	return m.IStore.GetMiddleware()
 }
 
-// SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
+// SetUserIDMiddleware SessionからUserIDを取得
 func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := m.IStore.GetSession(c)
@@ -99,7 +99,7 @@ func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 }
 
 // TraPMemberAuthenticate traP部員かの認証
-func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -118,7 +118,7 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 }
 
 // TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
-func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
+func (m *Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStore(5),
 		IdentifierExtractor: func(c echo.Context) (string, error) {
