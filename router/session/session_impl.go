@@ -79,31 +79,31 @@ func (s *Session) SetToken(token *oauth2.Token) {
 }
 
 func (s *Session) GetToken() (*oauth2.Token, error) {
-	accessToken, ok := s.sess.Values["access_token"].(string)
-	if !ok || accessToken == "" {
+	iAccessToken, ok := s.sess.Values["access_token"]
+	if !ok || iAccessToken == nil {
 		return nil, ErrNoValue
 	}
 
-	tokenType, ok := s.sess.Values["token_type"].(string)
-	if !ok || tokenType == "" {
+	iTokenType, ok := s.sess.Values["token_type"]
+	if !ok || iTokenType == nil {
 		return nil, ErrNoValue
 	}
 
-	refreshToken, ok := s.sess.Values["refresh_token"].(string)
-	if !ok || refreshToken == "" {
+	iRefreshToken, ok := s.sess.Values["refresh_token"]
+	if !ok || iRefreshToken == nil {
 		return nil, ErrNoValue
 	}
 
-	expiry, ok := s.sess.Values["expiry"].(time.Time)
-	if !ok || expiry.IsZero() {
+	iExpiry, ok := s.sess.Values["expiry"]
+	if !ok || iExpiry == nil {
 		return nil, ErrNoValue
 	}
 
 	return &oauth2.Token{
-		AccessToken:  accessToken,
-		TokenType:    tokenType,
-		RefreshToken: refreshToken,
-		Expiry:       expiry,
+		AccessToken:  iAccessToken.(string),
+		TokenType:    iTokenType.(string),
+		RefreshToken: iRefreshToken.(string),
+		Expiry:       iExpiry.(time.Time),
 	}, nil
 }
 
