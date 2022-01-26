@@ -42,7 +42,7 @@ func NewOauth(sessStore session.IStore) *Oauth {
 // GetCode GET /oauth/generate/code
 func (o *Oauth) GetCode(c echo.Context) error {
 	sess, err := o.sessStore.GetSession(c)
-	if err != nil {
+	if err != nil && !errors.Is(err, session.ErrNoSession) {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get session:%w", err))
 	}
 
@@ -56,7 +56,7 @@ func (o *Oauth) GetCode(c echo.Context) error {
 	challenge := base64.RawURLEncoding.EncodeToString(hash[:])
 
 	challengeOption := oauth2.SetAuthURLParam("code_challenge", challenge)
-	methodOption := oauth2.SetAuthURLParam("code_challenge_method", "s256")
+	methodOption := oauth2.SetAuthURLParam("code_challenge_method", "S256")
 
 	authURL := o.config.AuthCodeURL(state, challengeOption, methodOption)
 
@@ -98,7 +98,6 @@ func (o *Oauth) Callback(c echo.Context) error {
 	}
 
 	codeChallengeOption := oauth2.SetAuthURLParam("code_verifier", verifier)
-
 	token, err := o.config.Exchange(c.Request().Context(), code, codeChallengeOption)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to exchange token: %w", err))
