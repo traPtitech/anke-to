@@ -35,6 +35,16 @@ func SetRouting(port string) {
 
 
 	e.Use(api.SessionMiddleware())
+
+	oauthAPI := e.Group("/api")
+	{
+		apiOauth := oauthAPI.Group("/oauth")
+		{
+			apiOauth.GET("/callback", api.Callback)
+			apiOauth.GET("/generate/code", api.GetCode)
+		}
+	}
+
 	echoAPI := e.Group("/api", api.SetValidatorMiddleware, api.SetUserIDMiddleware, api.TraPMemberAuthenticate)
 	{
 		apiQuestionnnaires := echoAPI.Group("/questionnaires")
@@ -79,12 +89,6 @@ func SetRouting(port string) {
 		apiResults := echoAPI.Group("/results")
 		{
 			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
-		}
-
-		apiOauth := echoAPI.Group("/oauth")
-		{
-			apiOauth.GET("/callback", api.Callback)
-			apiOauth.GET("/generate/code", api.GetCode)
 		}
 	}
 
