@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/traPtitech/anke-to/router/session/mock_session"
+	"github.com/traPtitech/anke-to/traq/mock_traq"
 	"net/http"
 	"testing"
 	"time"
@@ -162,7 +164,8 @@ func TestGetUsersMe(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 	u := NewUser(
 		mockRespondent,
 		mockQuestionnaire,
@@ -174,6 +177,8 @@ func TestGetUsersMe(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
 	)
 
 	type request struct {
@@ -305,19 +310,16 @@ func TestGetMyResponses(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 	u := NewUser(
 		mockRespondent,
 		mockQuestionnaire,
 		mockTarget,
 		mockAdministrator,
 	)
-	m := NewMiddleware(
-		mockAdministrator,
-		mockRespondent,
-		mockQuestion,
-		mockQuestionnaire,
-	)
+
+	m := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 
 	// Respondent
 	// GetRespondentInfos
@@ -462,18 +464,14 @@ func TestGetMyResponsesByID(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
+	m := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 	u := NewUser(
 		mockRespondent,
 		mockQuestionnaire,
 		mockTarget,
 		mockAdministrator,
-	)
-	m := NewMiddleware(
-		mockAdministrator,
-		mockRespondent,
-		mockQuestion,
-		mockQuestionnaire,
 	)
 
 	// Respondent
@@ -634,7 +632,8 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 	u := NewUser(
 		mockRespondent,
 		mockQuestionnaire,
@@ -646,6 +645,8 @@ func TestGetTargetedQuestionnaire(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
 	)
 
 	// Questionnaire
@@ -785,7 +786,8 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 	u := NewUser(
 		mockRespondent,
 		mockQuestionnaire,
@@ -797,6 +799,8 @@ func TestGetTargettedQuestionnairesBytraQID(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
 	)
 
 	// Questionnaire

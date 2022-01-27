@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/traPtitech/anke-to/router/session/mock_session"
+	"github.com/traPtitech/anke-to/traq/mock_traq"
 
 	"github.com/go-playground/validator/v10"
 
@@ -524,6 +526,8 @@ func TestPostResponse(t *testing.T) {
 
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 
 	r := NewResponse(
 		mockQuestionnaire,
@@ -537,6 +541,9 @@ func TestPostResponse(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
+
 	)
 	// Questionnaire
 	// GetQuestionnaireLimit
@@ -1063,7 +1070,8 @@ func TestGetResponse(t *testing.T) {
 
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 	r := NewResponse(
 		mockQuestionnaire,
 		mockValidation,
@@ -1076,6 +1084,8 @@ func TestGetResponse(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
 	)
 
 	// Respondent
@@ -1231,6 +1241,8 @@ func TestEditResponse(t *testing.T) {
 
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
 
 	r := NewResponse(
 		mockQuestionnaire,
@@ -1244,7 +1256,10 @@ func TestEditResponse(t *testing.T) {
 		mockRespondent,
 		mockQuestion,
 		mockQuestionnaire,
+		mockStore,
+		mockUser,
 	)
+
 	// Questionnaire
 	// GetQuestionnaireLimit
 	// success
