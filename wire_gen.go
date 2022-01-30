@@ -10,6 +10,7 @@ import (
 	"github.com/google/wire"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/router"
+	"github.com/traPtitech/anke-to/router/session"
 	"github.com/traPtitech/anke-to/traq"
 )
 
@@ -19,12 +20,18 @@ import (
 
 // Injectors from wire.go:
 
-func InjectAPIServer() *router.API {
+func InjectAPIServer() (*router.API, error) {
 	administrator := model.NewAdministrator()
 	respondent := model.NewRespondent()
 	question := model.NewQuestion()
 	questionnaire := model.NewQuestionnaire()
-	middleware := router.NewMiddleware(administrator, respondent, question, questionnaire)
+	modelSession := model.NewSession()
+	store, err := session.NewStore(modelSession)
+	if err != nil {
+		return nil, err
+	}
+	user := traq.NewUser()
+	middleware := router.NewMiddleware(administrator, respondent, question, questionnaire, store, user)
 	target := model.NewTarget()
 	option := model.NewOption()
 	scaleLabel := model.NewScaleLabel()
@@ -36,9 +43,10 @@ func InjectAPIServer() *router.API {
 	response := model.NewResponse()
 	routerResponse := router.NewResponse(questionnaire, validation, scaleLabel, respondent, response)
 	result := router.NewResult(respondent, questionnaire, administrator)
-	user := router.NewUser(respondent, questionnaire, target, administrator)
-	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, user)
-	return api
+	routerUser := router.NewUser(respondent, questionnaire, target, administrator)
+	oauth := router.NewOauth(store)
+	api := router.NewAPI(middleware, routerQuestionnaire, routerQuestion, routerResponse, result, routerUser, oauth)
+	return api, nil
 }
 
 // wire.go:
@@ -54,6 +62,8 @@ var (
 	targetBind        = wire.Bind(new(model.ITarget), new(*model.Target))
 	validationBind    = wire.Bind(new(model.IValidation), new(*model.Validation))
 	transactionBind   = wire.Bind(new(model.ITransaction), new(*model.Transaction))
+	storeBind         = wire.Bind(new(session.IStore), new(*session.Store))
 
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
+	userBind    = wire.Bind(new(traq.IUser), new(*traq.User))
 )

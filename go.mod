@@ -13,7 +13,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
-	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
 	golang.org/x/text v0.3.7 // indirect
@@ -61,7 +61,15 @@ require (
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/gorilla/sessions v1.2.1
 	github.com/prometheus/client_golang v1.11.0
+	github.com/thanhpk/randstr v1.0.4
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
+)
+
+require (
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/srinathgs/mysqlstore v0.0.0-20200417050510-9cbb9420fc4c // indirect
 )

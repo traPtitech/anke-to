@@ -3,6 +3,8 @@ package router
 import (
 	"errors"
 	"fmt"
+	"github.com/traPtitech/anke-to/router/session"
+	"github.com/traPtitech/anke-to/traq"
 	"net/http"
 	"strconv"
 
@@ -18,17 +20,23 @@ type Middleware struct {
 	model.IRespondent
 	model.IQuestion
 	model.IQuestionnaire
+	session.IStore
+	traq.IUser
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, questionnaire model.IQuestionnaire) *Middleware {
+func NewMiddleware(IAdministrator model.IAdministrator, IRespondent model.IRespondent, IQuestion model.IQuestion, IQuestionnaire model.IQuestionnaire, IStore session.IStore, IUser traq.IUser) *Middleware {
 	return &Middleware{
-		IAdministrator: administrator,
-		IRespondent:    respondent,
-		IQuestion:      question,
-		IQuestionnaire: questionnaire,
+		IAdministrator: IAdministrator,
+		IRespondent: IRespondent,
+		IQuestion: IQuestion,
+		IQuestionnaire: IQuestionnaire,
+		IStore: IStore,
+		IUser: IUser,
 	}
 }
+
+
 
 const (
 	validatorKey       = "validator"
@@ -38,7 +46,7 @@ const (
 	questionIDKey      = "questionID"
 )
 
-func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		validate := validator.New()
 		c.Set(validatorKey, validate)
@@ -51,14 +59,39 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 暫定的にハードコーディングで対応*/
 var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "xxarupakaxx", "asari"}
 
-// SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
-func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) SessionMiddleware() echo.MiddlewareFunc {
+	return m.IStore.GetMiddleware()
+}
+
+// SetUserIDMiddleware SessionからUserIDを取得
+func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Request().Header.Get("X-Showcase-User")
-		if userID == "" {
-			userID = "mds_boy"
+		sess, err := m.IStore.GetSession(c)
+		if errors.Is(err, session.ErrNoSession) {
+			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+		}
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 
+		userID, err := sess.GetUserID()
+		if err != nil && !errors.Is(err, session.ErrNoValue) {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID :%w", err))
+		}
+		if errors.Is(err, session.ErrNoValue) {
+			token, err := sess.GetToken()
+			if errors.Is(err, session.ErrNoValue) {
+				return echo.NewHTTPError(http.StatusUnauthorized, "no token")
+			}
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get token :%w", err))
+			}
+
+			userID, err = m.IUser.GetMyID(token)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get UserID:%w", err))
+			}
+		}
 		c.Set(userIDKey, userID)
 
 		return next(c)
@@ -66,7 +99,7 @@ func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 // TraPMemberAuthenticate traP部員かの認証
-func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -85,7 +118,7 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 }
 
 // TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
-func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
+func (m *Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStore(5),
 		IdentifierExtractor: func(c echo.Context) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"log"
 )
 
 // SetRouting ルーティングの設定
@@ -16,7 +17,10 @@ func SetRouting(port string) {
 	p := prometheus.NewPrometheus("echo", nil)
 	p.Use(e)
 
-	api := InjectAPIServer()
+	api, err := InjectAPIServer()
+	if err != nil {
+		log.Panicln(err)
+	}
 
 	// Static Files
 	e.Static("/", "client/dist")
@@ -28,6 +32,18 @@ func SetRouting(port string) {
 	e.File("/app.js", "client/dist/app.js")
 	e.File("/favicon.ico", "client/dist/favicon.ico")
 	e.File("*", "client/dist/index.html")
+
+
+	e.Use(api.SessionMiddleware())
+
+	oauthAPI := e.Group("/api")
+	{
+		apiOauth := oauthAPI.Group("/oauth")
+		{
+			apiOauth.GET("/callback", api.Callback)
+			apiOauth.GET("/generate/code", api.GetCode)
+		}
+	}
 
 	echoAPI := e.Group("/api", api.SetValidatorMiddleware, api.SetUserIDMiddleware, api.TraPMemberAuthenticate)
 	{
@@ -58,10 +74,7 @@ func SetRouting(port string) {
 
 		apiUsers := echoAPI.Group("/users")
 		{
-			/*
-				TODO
-				apiUsers.GET("")
-			*/
+
 			apiUsersMe := apiUsers.Group("/me")
 			{
 				apiUsersMe.GET("", api.GetUsersMe)

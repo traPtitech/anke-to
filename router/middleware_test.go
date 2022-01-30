@@ -3,6 +3,8 @@ package router
 import (
 	"errors"
 	"fmt"
+	"github.com/traPtitech/anke-to/router/session/mock_session"
+	"github.com/traPtitech/anke-to/traq/mock_traq"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -39,8 +41,9 @@ func TestSetUserIDMiddleware(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
-	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 
 	type args struct {
 		userID string
@@ -113,8 +116,9 @@ func TestTraPMemberAuthenticate(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
-	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 
 	type args struct {
 		userID string
@@ -181,8 +185,9 @@ func TestResponseReadAuthenticate(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
-	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 
 	type args struct {
 		userID                                        string
@@ -407,8 +412,9 @@ func TestResultAuthenticate(t *testing.T) {
 	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
 	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
 	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-
-	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+	mockStore := mock_session.NewMockIStore(ctrl)
+	mockUser := mock_traq.NewMockIUser(ctrl)
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire, mockStore, mockUser)
 
 	type args struct {
 		haveReadPrivilege                             bool

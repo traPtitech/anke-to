@@ -22,6 +22,7 @@ tags:
   - name: user
   - name: group
   - name: result
+  - name: oauth
 paths:
   /questionnaires:
     get:
@@ -461,8 +462,45 @@ paths:
           description: 結果を閲覧する権限がありません。
         '500':
           description: アンケートの回答の詳細情報一覧が取得できませんでした
+  '/oauth/generate/code':
+    get:
+      operationId: getCode
+      tags:
+        - oauth
+      summary: Oauthの詳細を取得
+      description: Oauthの詳細を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/OAuthCode'
+        '500':
+          description: 失敗
+  '/oauth/callback':
+    parameters:
+      - $ref: '#/components/parameters/codeInQuery'
+    get:
+      tags:
+        - oauth
+      summary: OAuthのコールバック
+      description: OAuthのコールバック
+      operationId: callback
+      responses:
+        '200':
+          description: 成功
+        '302':
+          description: 失敗時。認証ページへリダイレクト
 components:
   parameters:
+    codeInQuery:
+      name: code
+      in: query
+      required: true
+      description: OAuth2.0のcode
+      schema:
+        type: string
     answeredInQuery:
       name: answered
       in: query
@@ -539,6 +577,17 @@ components:
       schema:
         type: string
   schemas:
+    OAuthCode:
+      type: object
+      properties:
+        code_challenge:
+          type: string
+        code_challenge_method:
+          type: string
+        client_id:
+          type: string
+        response_type:
+          type: string
     AnsweredType:
       type: string
       description: アンケート検索時に回答済みかの状態での絞り込み
@@ -618,7 +667,7 @@ components:
         - administrators
     NewQuestionnaireResponse:
       allOf:
-      - $ref: '#/components/schemas/QuestionnaireUser'
+        - $ref: '#/components/schemas/QuestionnaireUser'
     Questionnaire:
       type: object
       properties:
@@ -687,20 +736,20 @@ components:
             - respondents
     QuestionnaireMyTargeted:
       allOf:
-      - $ref: '#/components/schemas/Questionnaire'
-      - type: object
-        properties:
-          responded_at:
-            type: string
-            format: date-time
-          has_response:
-            type: boolean
-            description: 回答済みあるいは下書きが存在する
-        required:
-          - responded_at
-          - has_response
+        - $ref: '#/components/schemas/Questionnaire'
+        - type: object
+          properties:
+            responded_at:
+              type: string
+              format: date-time
+            has_response:
+              type: boolean
+              description: 回答済みあるいは下書きが存在する
+          required:
+            - responded_at
+            - has_response
     QuestionnaireMyAdministrates:
-        allOf:
+      allOf:
         - $ref: '#/components/schemas/QuestionnaireUser'
         - type: object
           properties:
@@ -716,16 +765,16 @@ components:
             - respondents
     QuestionnaireUser:
       allOf:
-      - $ref: '#/components/schemas/Questionnaire'
-      - type: object
-        properties:
-          targets:
-            $ref: '#/components/schemas/Users'
-          administrators:
-            $ref: '#/components/schemas/Users'
-        required:
-          - targets
-          - administrators
+        - $ref: '#/components/schemas/Questionnaire'
+        - type: object
+          properties:
+            targets:
+              $ref: '#/components/schemas/Users'
+            administrators:
+              $ref: '#/components/schemas/Users'
+          required:
+            - targets
+            - administrators
     QuestionType:
       type: string
       example: Text
@@ -800,38 +849,38 @@ components:
         - scale_max
     NewQuestion:
       allOf:
-      - $ref: '#/components/schemas/QuestionBase'
-      - type: object
-        properties:
-          questionnaireID:
-            type: integer
-            example: 1
-        required:
-          - questionnaireID
+        - $ref: '#/components/schemas/QuestionBase'
+        - type: object
+          properties:
+            questionnaireID:
+              type: integer
+              example: 1
+          required:
+            - questionnaireID
     Question:
       allOf:
-      - $ref: '#/components/schemas/NewQuestion'
-      - type: object
-        properties:
-          questionID:
-            type: integer
-            example: 1
-        required:
-          - questionID
+        - $ref: '#/components/schemas/NewQuestion'
+        - type: object
+          properties:
+            questionID:
+              type: integer
+              example: 1
+          required:
+            - questionID
     QuestionDetails:
       allOf:
-      - $ref: '#/components/schemas/QuestionBase'
-      - type: object
-        properties:
-          questionID:
-            type: integer
-            example: 1
-          created_at:
-            type: string
-            format: date-time
-        required:
-          - questionID
-          - created_at
+        - $ref: '#/components/schemas/QuestionBase'
+        - type: object
+          properties:
+            questionID:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+          required:
+            - questionID
+            - created_at
     NewResponse:
       type: object
       properties:
@@ -936,14 +985,14 @@ components:
         - question_type
     ResponseResult:
       allOf:
-      - $ref: '#/components/schemas/Response'
-      - type: object
-        properties:
-          traqID:
-            type: string
-            example: lolico
-        required:
-          - traqID
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            traqID:
+              type: string
+              example: lolico
+          required:
+            - traqID
       required:
         - submitted_at
     Users:
