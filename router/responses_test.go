@@ -649,6 +649,10 @@ func TestPostResponse(t *testing.T) {
 		InsertResponses(gomock.Any(), responseIDFailure, gomock.Any()).
 		Return(errMock).AnyTimes()
 
+
+	mockStore.EXPECT().
+		GetSession(gomock.Any()).
+		Return(nil,nil).AnyTimes()
 	// responseID, err := mockRespondent.
 	// 	InsertRespondent(string(userOne), 1, null.NewTime(nowTime, true))
 	// assertion.Equal(1, responseID)
@@ -1103,6 +1107,10 @@ func TestGetResponse(t *testing.T) {
 		GetRespondentDetail(gomock.Any(), responseIDNotFound).
 		Return(model.RespondentDetail{}, model.ErrRecordNotFound).AnyTimes()
 
+	mockStore.EXPECT().
+		GetSession(gomock.Any()).
+		Return(nil,nil).AnyTimes()
+
 	type request struct {
 		user       users
 		responseID int
@@ -1377,6 +1385,11 @@ func TestEditResponse(t *testing.T) {
 	mockResponse.EXPECT().
 		DeleteResponse(gomock.Any(), responseIDFailure).
 		Return(model.ErrNoRecordDeleted).AnyTimes()
+
+
+	mockStore.EXPECT().
+		GetSession(gomock.Any()).
+		Return(nil,nil).AnyTimes()
 
 	// responseID, err := mockRespondent.
 	// 	InsertRespondent(string(userOne), 1, null.NewTime(nowTime, true))
