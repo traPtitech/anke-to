@@ -104,7 +104,9 @@ export default {
         })
         break
       case 'MultipleChoice':
-        question.selected = responseData.option_response[ 0 ]
+        if (responseData.option_response) {
+          question.selected = responseData.option_response[ 0 ]
+        }
         break
       case 'LinearScale':
         question.selected = toNumber(responseData.response)
