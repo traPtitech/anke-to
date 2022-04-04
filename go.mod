@@ -51,12 +51,12 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	gorm.io/gorm v1.22.5
+	gorm.io/gorm v1.23.1
 )
 
 require (
 	github.com/jinzhu/now v1.1.4 // indirect
-	gorm.io/driver/mysql v1.2.3
+	gorm.io/driver/mysql v1.3.3
 )
 
 require (
