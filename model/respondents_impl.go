@@ -452,10 +452,26 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 			return numi < numj
 		}
 		if bodyI.QuestionType == "MultipleChoice" {
-			if sortNum < 0 {
-				return bodyI.OptionResponse[0] > bodyJ.OptionResponse[0]
+			choiceI := ""
+			if len(bodyI.OptionResponse) > 0 {
+				choiceI = bodyI.OptionResponse[0]
 			}
-			return bodyI.OptionResponse[0] < bodyJ.OptionResponse[0]
+			choiceJ := ""
+			if len(bodyJ.OptionResponse) > 0 {
+				choiceJ = bodyJ.OptionResponse[0]
+			}
+			if sortNum < 0 {
+				return choiceI > choiceJ
+			}
+			return choiceI < choiceJ
+		}
+		if bodyI.QuestionType == "Checkbox" {
+			selectionsI := joinStringArray(bodyI.OptionResponse, ", ")
+			selectionsJ := joinStringArray(bodyJ.OptionResponse, ", ")
+			if sortNum < 0 {
+				return selectionsI > selectionsJ
+			}
+			return selectionsI < selectionsJ
 		}
 		if sortNum < 0 {
 			return bodyI.Body.String > bodyJ.Body.String
@@ -464,4 +480,15 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 	})
 
 	return respondentDetails, nil
+}
+
+func joinStringArray(strArray []string, separator string) string {
+	var result string
+	for i, str := range strArray {
+		result += str
+		if i != len(strArray)-1 {
+			result += separator
+		}
+	}
+	return result
 }
