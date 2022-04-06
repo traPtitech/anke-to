@@ -451,6 +451,12 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 			}
 			return numi < numj
 		}
+		if bodyI.QuestionType == "MultipleChoice" {
+			if sortNum < 0 {
+				return bodyI.OptionResponse[0] > bodyJ.OptionResponse[0]
+			}
+			return bodyI.OptionResponse[0] < bodyJ.OptionResponse[0]
+		}
 		if sortNum < 0 {
 			return bodyI.Body.String > bodyJ.Body.String
 		}
