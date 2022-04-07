@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/guregu/null.v4"
@@ -450,6 +451,28 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 				return numi > numj
 			}
 			return numi < numj
+		}
+		if bodyI.QuestionType == "MultipleChoice" {
+			choiceI := ""
+			if len(bodyI.OptionResponse) > 0 {
+				choiceI = bodyI.OptionResponse[0]
+			}
+			choiceJ := ""
+			if len(bodyJ.OptionResponse) > 0 {
+				choiceJ = bodyJ.OptionResponse[0]
+			}
+			if sortNum < 0 {
+				return choiceI > choiceJ
+			}
+			return choiceI < choiceJ
+		}
+		if bodyI.QuestionType == "Checkbox" {
+			selectionsI := strings.Join(bodyI.OptionResponse, ", ")
+			selectionsJ := strings.Join(bodyJ.OptionResponse, ", ")
+			if sortNum < 0 {
+				return selectionsI > selectionsJ
+			}
+			return selectionsI < selectionsJ
 		}
 		if sortNum < 0 {
 			return bodyI.Body.String > bodyJ.Body.String
