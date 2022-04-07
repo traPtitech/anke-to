@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/guregu/null.v4"
@@ -466,8 +467,8 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 			return choiceI < choiceJ
 		}
 		if bodyI.QuestionType == "Checkbox" {
-			selectionsI := joinStringArray(bodyI.OptionResponse, ", ")
-			selectionsJ := joinStringArray(bodyJ.OptionResponse, ", ")
+			selectionsI := strings.Join(bodyI.OptionResponse, ", ")
+			selectionsJ := strings.Join(bodyJ.OptionResponse, ", ")
 			if sortNum < 0 {
 				return selectionsI > selectionsJ
 			}
@@ -480,15 +481,4 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 	})
 
 	return respondentDetails, nil
-}
-
-func joinStringArray(strArray []string, separator string) string {
-	var result string
-	for i, str := range strArray {
-		result += str
-		if i != len(strArray)-1 {
-			result += separator
-		}
-	}
-	return result
 }
