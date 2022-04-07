@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.7
         with:
           path: ~/go/pkg/mod
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.7
         with:
           path: ~/go/pkg/mod
@@ -49,7 +49,7 @@ jobs:
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
       - run: go build -o anke-to
-      - uses: actions/upload-artifact@v2.3.1
+      - uses: actions/upload-artifact@v3
         with:
           name: anke-to
           path: anke-to
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.7
         with:
           path: ~/go/pkg/mod
@@ -89,7 +89,7 @@ jobs:
         with:
           file: ./coverage.txt
           yml: ./codecov.yml
-      - uses: actions/upload-artifact@v2.3.1
+      - uses: actions/upload-artifact@v3
         with:
           name: coverage.txt
           path: coverage.txt
@@ -100,9 +100,9 @@ jobs:
       - uses: actions/setup-go@v1
         with:
           go-version: 1.17
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.0.3
+        uses: reviewdog/action-golangci-lint@v2.1
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +111,7 @@ jobs:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Spectral checks
         uses: stoplightio/spectral-action@v0.8.1
         with:
