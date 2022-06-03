@@ -1309,7 +1309,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
-				err:   gorm.ErrRecordNotFound,
+				err:   ErrRecordNotFound,
 			},
 		},
 	}
