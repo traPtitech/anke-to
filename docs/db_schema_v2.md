@@ -33,6 +33,30 @@
 | order       | int(11) | NO   |     | _NULL_  |                | 何番目の選択肢か  |
 | text        | text    | YES  |     | _NULL_  |                | 選択肢の内容    |
 
+### scales
+
+目盛り (LinearScale) 形式の質問の目盛りの情報と左右のラベル
+
+| Field       | Type        | Null | Key | Default | Extra | 説明など               |
+|-------------|-------------|------|-----|---------|-------|--------------------|
+| question_id | int(11)     | NO   | PRI | _NULL_  |       | どの質問のラベルか          |
+| left_label  | varchar(50) | YES  |     | _NULL_  |       | 左側のラベル (ない場合はNULL) |
+| right_label | varchar(50) | YES  |     | _NULL_  |       | 右側のラベル (ない場合はNULL) |
+| min         | int(11)     | YES  |     | _NULL_  |       | スケールの最小値           |
+| max         | int(11)     | YES  |     | _NULL_  |       | スケールの最大値           |
+| step_width  | int(11)     | YES  |     | _NULL_  |       | スケールの最大値           |
+
+### validations
+
+`Number`の値制限、`Text`の正規表現によるパターンマッチング
+
+| Field         | Type    | Null | Key | Default | Extra | 説明など      |
+|---------------|---------|------|-----|---------|-------|-----------|
+| question_id   | int(11) | YES  | PRI | _NULL_  |       | どの質問についてか |
+| regex_pattern | text    | YES  |     | _NULL_  |       | 正規表現      |
+| min_bound     | text    | YES  |     | _NULL_  |       | 数値の下界     |
+| max_bound     | text    | YES  |     | _NULL_  |       | 数値の上界     |
+
 ### questions
 
 質問内容
@@ -63,22 +87,22 @@
 
 アンケートの情報
 
-| Field          | Type     | Null | Key | Default           | Extra          | 説明など                            |
-|----------------|----------|------|-----|-------------------|----------------|---------------------------------|
-| id             | int(11)  | NO   | PRI | _NULL_            | AUTO_INCREMENT |
-| title          | char(50) | NO   | MUL | _NULL_            |                | アンケートのタイトル                      |
-| description    | text     | NO   |     | _NULL_            |                | アンケートの説明                        |
-| deadline       | datetime | YES  |     | _NULL_            |                | 回答の締切日時 (締切がない場合はNULL)          |
-| res_visibility | int(11)  | NO   | MUL | _NULL_            |                |                                 |
-| created_at     | datetime | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                   |
-| is_multiple    | boolean  | NO   |     | 0                 |                | 複数回答を許すか                        |
-| is_anonymous   | boolean  | NO   |     | 0                 |                | 匿名のアンケートか                       |
-| is_editable    | boolean  | NO   |     | 1                 |                | 回答の編集を許すか                       |
-| is_draft       | boolean  | NO   |     | 0                 |                | アンケートが下書き状態か                    |
-| is_public      | boolean  | NO   |     | 0                 |                | 外部公開アンケートか                      |
-| created_at     | datetime | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                   |
-| updated_at     | datetime | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                   |
-| deleted_at     | datetime | YES  |     | _NULL_            |                | アンケートが削除された日時 (削除されていない場合はNULL) |
+| Field                     | Type     | Null | Key | Default           | Extra          | 説明など                            |
+|---------------------------|----------|------|-----|-------------------|----------------|---------------------------------|
+| id                        | int(11)  | NO   | PRI | _NULL_            | AUTO_INCREMENT |
+| title                     | char(50) | NO   | MUL | _NULL_            |                | アンケートのタイトル                      |
+| description               | text     | NO   |     | _NULL_            |                | アンケートの説明                        |
+| res_visibility            | int(11)  | NO   | MUL | _NULL_            |                | アンケート結果の公開範囲の種類                 |
+| allows_multiple_responses | boolean  | NO   |     | 0                 |                | 複数回答を許すか                        |
+| is_response_editable      | boolean  | NO   |     | 1                 |                | 回答の編集を許すか                       |
+| is_anonymous              | boolean  | NO   |     | 0                 |                | 匿名のアンケートか                       |
+| is_public                 | boolean  | NO   |     | 0                 |                | 外部公開アンケートか                      |
+| is_draft                  | boolean  | NO   |     | 0                 |                | アンケートが下書き状態か                    |
+| opened_at                 | datetime | YES  |     | CURRENT_TIMESTAMP |                | アンケートが回答開始した (する) 日時            |
+| closed_at                 | datetime | YES  |     | _NULL_            |                | 回答の締切日時 (締切がない場合はNULL)          |
+| created_at                | datetime | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                   |
+| updated_at                | datetime | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                   |
+| deleted_at                | datetime | YES  |     | _NULL_            |                | アンケートが削除された日時 (削除されていない場合はNULL) |
 
 ### res_visibility_types
 
@@ -100,19 +124,29 @@
 | id               | int(11)     | NO   | PRI | _NULL_            | AUTO_INCREMENT |                              |
 | questionnaire_id | int(11)     | NO   | MUL | _NULL_            |                | どのアンケートへの回答か                 |
 | user_id          | varchar(32) | YES  | MUL | _NULL_            |                | 回答者のtraQID                   |
-| submitted_at     | datetime    | YES  |     | _NULL_            |                | 回答が送信された日時 (未送信の場合はNULL)     |
+| submitted_at     | datetime    | YES  |     | _NULL_            |                | 回答が送信された日時 (下書き状態ではNULL)     |
 | updated_at       | datetime    | NO   |     | CURRENT_TIMESTAMP |                | 回答が変更された日時                   |
 | deleted_at       | datetime    | YES  |     | _NULL_            |                | 回答が破棄された日時 (破棄されていない場合はNULL) |
 
 ### normal_answers
 
-質問 (選択肢形式以外) に対する回答
+質問 (選択肢、`Number`、`LinearScale`形式以外) に対する回答
 
 | Field       | Type    | Null | Key | Default | Extra | 説明など                           |
 |-------------|---------|------|-----|---------|-------|--------------------------------|
 | response_id | int(11) | NO   | MUL | _NULL_  |       | どの回答(`response`)の回答(`answer`)か |
 | question_id | int(11) | NO   | MUL | _NULL_  |       | どの質問への回答か                      |
 | text        | text    | YES  |     | _NULL_  |       | 回答の内容                          |
+
+### numeric_answers
+
+形式が`Number`、`LinearScale`の質問に対する回答
+
+| Field       | Type          | Null | Key | Default | Extra | 説明など                           |
+|-------------|---------------|------|-----|---------|-------|--------------------------------|
+| response_id | int(11)       | NO   | MUL | _NULL_  |       | どの回答(`response`)の回答(`answer`)か |
+| question_id | int(11)       | NO   | MUL | _NULL_  |       | どの質問への回答か                      |
+| number      | double(20,10) | YES  |     | _NULL_  |       | 回答の内容                          |
 
 ### options_answers
 
@@ -123,30 +157,6 @@
 | response_id | int(11) | NO   | MUL | _NULL_  |       | どの回答(`response`)の回答(`answer`)か |
 | question_id | int(11) | NO   | MUL | _NULL_  |       | どの質問への回答か                      |
 | option_id   | int(11) | YES  | MUL | _NULL_  |       | 回答選択肢のID                       |
-
-### scales
-
-目盛り (LinearScale) 形式の質問の目盛りの情報と左右のラベル
-
-| Field       | Type        | Null | Key | Default | Extra | 説明など               |
-|-------------|-------------|------|-----|---------|-------|--------------------|
-| question_id | int(11)     | NO   | PRI | _NULL_  |       | どの質問のラベルか          |
-| left_label  | varchar(50) | YES  |     | _NULL_  |       | 左側のラベル (ない場合はNULL) |
-| right_label | varchar(50) | YES  |     | _NULL_  |       | 右側のラベル (ない場合はNULL) |
-| min         | int(11)     | YES  |     | _NULL_  |       | スケールの最小値           |
-| max         | int(11)     | YES  |     | _NULL_  |       | スケールの最大値           |
-| step_width  | int(11)     | YES  |     | _NULL_  |       | スケールの最大値           |
-
-### validations
-
-`Number`の値制限、`Text`の正規表現によるパターンマッチング
-
-| Field         | Type    | Null | Key | Default | Extra | 説明など      |
-|---------------|---------|------|-----|---------|-------|-----------|
-| question_id   | int(11) | YES  | PRI | _NULL_  |       | どの質問についてか |
-| regex_pattern | text    | YES  |     | _NULL_  |       | 正規表現      |
-| min_bound     | text    | YES  |     | _NULL_  |       | 数値の下界     |
-| max_bound     | text    | YES  |     | _NULL_  |       | 数値の上界     |
 
 ### tags
 
