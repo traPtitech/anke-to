@@ -152,21 +152,25 @@
 
 アンケートに付けるタグ
 
-| Field           | Type        | Null | Key | Default | Extra          | 説明など |
-|-----------------|-------------|------|-----|---------|----------------|------|
-| id              | int(11)     | NO   | PRI | _NULL_  | AUTO_INCREMENT |      |
-| name            | varchar(30) | NO   |     | _NULL_  |                |      |
-| name_lower_case | varchar(30) | NO   |     | _NULL_  |                |      |
+| Field           | Type        | Null | Key | Default           | Extra          | 説明など |
+|-----------------|-------------|------|-----|-------------------|----------------|------|
+| id              | int(11)     | NO   | PRI | _NULL_            | AUTO_INCREMENT |      |
+| name            | varchar(30) | NO   |     | _NULL_            |                |      |
+| name_lower_case | varchar(30) | NO   |     | _NULL_            |                |      |
+| created_at      | datetime    | NO   |     | CURRENT_TIMESTAMP |                |      |
+| updated_at      | datetime    | NO   |     | CURRENT_TIMESTAMP |                |      |
+| deleted_at      | datetime    | NO   |     | _NULL_            |                |      |
 
 
 ### questionnaires_tags
 
 アンケートとタグの関連
 
-| Field            | Type        | Null | Key | Default | Extra | 説明など |
-|------------------|-------------|------|-----|---------|-------|------|
-| questionnaire_id | int(11)     | NO   | PRI | _NULL_  |       |      |
-| tag_id           | int(11)     | NO   | PRI | _NULL_  |       |      |
+| Field            | Type    | Null | Key | Default | Extra | 説明など         |
+|------------------|---------|------|-----|---------|-------|--------------|
+| questionnaire_id | int(11) | NO   | PRI | _NULL_  |       |              |
+| tag_id           | int(11) | NO   | PRI | _NULL_  |       |              |
+| is_locked        | boolean | NO   |     | false   |       | タグがロックされているか |
 
 ### change_logs
 
