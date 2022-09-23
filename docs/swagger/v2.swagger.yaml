@@ -21,6 +21,7 @@ tags:
   - name: response
   - name: user
   - name: group
+  - name: tag
   - name: result
 paths:
   /questionnaires:
@@ -170,6 +171,45 @@ paths:
           description: 正常に作成できませんでした。リクエストが不正です。
         '500':
           description: 正常に作成できません。主に正規表現が原因。
+  '/questionnaires/{questionnaireID}/tags':
+    post:
+      operationId: postTagByQuestionnaireID
+      tags:
+        - questionnaire
+      parameters:
+        - $ref: '#/components/parameters/questionnaireIDInPath'
+      description: アンケートにタグを追加します．
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTag'
+      responses:
+        '201':
+          description: 正常にタグを追加できました．
+        '400':
+          description: 正常に追加できませんでした。リクエストが不正です。
+        '500':
+          description: 正常に追加できません。主に正規表現が原因。
+  '/questionnaires/{questionnaireID}/tags/{tagName}':
+    delete:
+      operationId: deleteTagByQuestionnaireID
+      tags:
+        - questionnaire
+      parameters:
+        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: '#/components/parameters/tagNameInPath'
+      description: アンケートからタグを削除します．
+      responses:
+        '200':
+          description: 正常にタグを削除できました．
+        '400':
+          description: 正常に削除できませんでした。リクエストが不正です。
+        '403':
+          description: タグを削除する権限がありません。
+        '500':
+          description: 正常に削除できません。主に正規表現が原因。
   '/questions/{questionID}':
     patch:
       operationId: editQuestion
@@ -461,6 +501,82 @@ paths:
           description: 結果を閲覧する権限がありません。
         '500':
           description: アンケートの回答の詳細情報一覧が取得できませんでした
+  '/tags':
+    get:
+      operationId: getTags
+      tags:
+        - tag
+      description: タグのリストを取得します。
+      responses:
+        '200':
+          description: 正常に取得できました。タグの配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '500':
+          description: タグのリストを取得できませんでした
+    post:
+      operationId: postTag
+      tags:
+        - tag
+      description: タグを作成します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTag'
+        required: true
+      responses:
+        '200':
+          description: 正常に作成できました。作成したタグを返します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: 正常に作成できませんでした。リクエストが不正です。
+        '500':
+          description: タグの作成に失敗しました
+  '/tags/{tagID}':
+    patch:
+      operationId: patchTag
+      tags:
+        - tag
+      description: タグを編集します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTag'
+        required: true
+      responses:
+        '200':
+          description: 正常に編集できました。編集したタグを返します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: 正常に編集できませんでした。リクエストが不正です。
+        '403':
+          description: タグを編集する権限がありません。
+        '500':
+          description: タグの編集に失敗しました。
+    delete:
+      operationId: deleteTag
+      tags:
+        - tag
+      description: タグを削除します。
+      responses:
+        '200':
+          description: 正常に削除できました。
+        '403':
+          description: タグを削除する権限がありません。
+        '500':
+          description: タグの削除に失敗しました。
 components:
   parameters:
     answeredInQuery:
@@ -538,6 +654,14 @@ components:
         traQ ID(ex:mazrean)
       schema:
         type: string
+    tagNameInPath:
+      name: tagName
+      in: path
+      required: true
+      description: |
+        タグ名
+      schema:
+        type: string
   schemas:
     AnsweredType:
       type: string
@@ -563,8 +687,8 @@ components:
         - CreatedAtDESC
         - TitleASC
         - TitleDESC
-        - ModifiedAtASC
-        - ModifiedAtDESC
+        - UpdatedAtASC
+        - UpdatedAtDESC
     ResponseSortType:
       type: string
       description: response用のsortの種類
@@ -580,8 +704,8 @@ components:
         - SubmittedAtDESC
         - TitleASC
         - TitleDESC
-        - ModifiedAtASC
-        - ModifiedAtDESC
+        - UpdatedAtASC
+        - UpdatedAtDESC
     ResVisibilityType:
       type: string
       example: public
@@ -624,6 +748,10 @@ components:
           $ref: '#/components/schemas/Users'
         administrators:
           $ref: '#/components/schemas/Users'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostQuestionnaireTag'
       required:
         - title
         - description
@@ -675,6 +803,10 @@ components:
         is_public:
           type: boolean
           example: false
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionnaireTag'
       required:
         - questionnaireID
         - title
@@ -1045,6 +1177,50 @@ components:
         - members
         - createdAt
         - updatedAt
+    PostQuestionnaireTag:
+      allOf:
+        - $ref: '#/components/schemas/NewTag'
+        - type: object
+          properties:
+            locked:
+              type: boolean
+              example: true
+          required:
+            - locked
+    QuestionnaireTag:
+      allOf:
+        - $ref: '#/components/schemas/Tag'
+        - type: object
+          properties:
+            locked:
+              type: boolean
+              example: true
+          required:
+            - locked
+    NewTag:
+      type: object
+      properties:
+        name:
+          type: string
+          example: SysAd
+      required:
+        - name
+    Tag:
+      type: object
+      properties:
+        tagId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: SysAd
+        nameLowerCase:
+          type: string
+          example: sysad
+      required:
+        - tagId
+        - name
+        - nameLowerCase
   securitySchemes:
     application:
       type: oauth2
