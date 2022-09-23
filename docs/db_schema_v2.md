@@ -68,7 +68,7 @@
 | order            | int(11)  | NO   |     | _NULL_            |                | アンケートの質問のうち、何問目か             |
 | type             | int(11)  | NO   | MUL | _NULL_            |                | どのタイプの質問か                    |
 | text             | text     | YES  |     | _NULL_            |                | 質問の内容                        |
-| is_required      | boolean  | NO   |     | 0                 |                | 回答が必須でか                      |
+| is_required      | boolean  | NO   |     | 0                 |                | 回答が必須か                       |
 | created_at       | datetime | NO   |     | CURRENT_TIMESTAMP |                | 質問が作成された日時                   |
 | updated_at       | datetime | NO   |     | CURRENT_TIMESTAMP |                | 質問が更新された日時                   |
 | deleted_at       | datetime | YES  |     | _NULL_            |                | 質問が削除された日時 (削除されていない場合はNULL) |
@@ -130,23 +130,13 @@
 
 ### normal_answers
 
-質問 (選択肢、`Number`、`LinearScale`形式以外) に対する回答
+質問 (選択肢形式以外) に対する回答
 
 | Field       | Type    | Null | Key | Default | Extra | 説明など                           |
 |-------------|---------|------|-----|---------|-------|--------------------------------|
 | response_id | int(11) | NO   | MUL | _NULL_  |       | どの回答(`response`)の回答(`answer`)か |
 | question_id | int(11) | NO   | MUL | _NULL_  |       | どの質問への回答か                      |
 | text        | text    | YES  |     | _NULL_  |       | 回答の内容                          |
-
-### numeric_answers
-
-形式が`Number`、`LinearScale`の質問に対する回答
-
-| Field       | Type          | Null | Key | Default | Extra | 説明など                           |
-|-------------|---------------|------|-----|---------|-------|--------------------------------|
-| response_id | int(11)       | NO   | MUL | _NULL_  |       | どの回答(`response`)の回答(`answer`)か |
-| question_id | int(11)       | NO   | MUL | _NULL_  |       | どの質問への回答か                      |
-| number      | double(20,10) | YES  |     | _NULL_  |       | 回答の内容                          |
 
 ### options_answers
 
