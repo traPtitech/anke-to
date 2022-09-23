@@ -474,8 +474,8 @@ components:
       in: query
       description:
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
-        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
-        "-modified_at" )
+        タイトルの降順 "-title", 更新日時が新しい "updated_at", 更新日時が古い
+        "-updated_at" )
       schema:
         $ref: '#/components/schemas/SortType'
     responseSortInQuery:
@@ -483,8 +483,8 @@ components:
       in: query
       description:
         並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title",
-        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
-        "-modified_at" )
+        タイトルの降順 "-title", 更新日時が新しい "updated_at", 更新日時が古い
+        "-updated_at" )
       schema:
         $ref: '#/components/schemas/ResponseSortType'
     searchInQuery:
@@ -556,8 +556,8 @@ components:
         - -created_at
         - title
         - -title
-        - modified_at
-        - -modified_at
+        - updated_at
+        - -updated_at
       x-enum-varnames:
         - CreatedAtASC
         - CreatedAtDESC
@@ -573,8 +573,8 @@ components:
         - -submitted_at
         - title
         - -title
-        - modified_at
-        - -modified_at
+        - updated_at
+        - -updated_at
       x-enum-varnames:
         - SubmittedAtASC
         - SubmittedAtDESC
@@ -582,7 +582,7 @@ components:
         - TitleDESC
         - ModifiedAtASC
         - ModifiedAtDESC
-    ResShareType:
+    ResVisibilityType:
       type: string
       example: public
       enum:
@@ -600,11 +600,26 @@ components:
         description:
           type: string
           example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
-        res_time_limit:
+        closed_at:
           type: string
           format: date-time
-        res_shared_to:
-          $ref: '#/components/schemas/ResShareType'
+        opened_at:
+          type: string
+          format: date-time
+        res_visibility:
+          $ref: '#/components/schemas/ResVisibilityType'
+        allows_multiple_responses:
+          type: boolean
+          example: false
+        is_response_editable:
+          type: boolean
+          example: true
+        is_anonymous:
+          type: boolean
+          example: false
+        is_public:
+          type: boolean
+          example: false
         targets:
           $ref: '#/components/schemas/Users'
         administrators:
@@ -612,8 +627,11 @@ components:
       required:
         - title
         - description
-        - res_time_limit
-        - res_shared_to
+        - res_visibility
+        - allows_multiple_responses
+        - is_response_editable
+        - is_anonymous
+        - is_public
         - targets
         - administrators
     NewQuestionnaireResponse:
@@ -631,26 +649,45 @@ components:
         description:
           type: string
           example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
-        res_time_limit:
+        closed_at:
+          type: string
+          format: date-time
+        opened_at:
           type: string
           format: date-time
         created_at:
           type: string
           format: date-time
-        modified_at:
+        updated_at:
           type: string
           format: date-time
-        res_shared_to:
-          $ref: '#/components/schemas/ResShareType'
+        res_visibility:
+          $ref: '#/components/schemas/ResVisibilityType'
+        allows_multiple_responses:
+          type: boolean
+          example: false
+        is_response_editable:
+          type: boolean
+          example: true
+        is_anonymous:
+          type: boolean
+          example: false
+        is_public:
+          type: boolean
+          example: false
       required:
         - questionnaireID
         - title
         - description
-        - res_time_limit
+        - closed_at
+        - opened_at
         - created_at
-        - modified_at
-        - res_shared_to
-        - targets
+        - updated_at
+        - res_visibility
+        - allows_multiple_responses
+        - is_response_editable
+        - is_anonymous
+        - is_public
     QuestionnaireForList:
       allOf:
         - $ref: '#/components/schemas/Questionnaire'
@@ -741,19 +778,14 @@ components:
     QuestionBase:
       type: object
       properties:
-        page_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの何ページ目の質問か
-        question_num:
+        order:
           type: integer
           example: 1
           description: |
             アンケートの質問のうち、何問目か
         question_type:
           $ref: '#/components/schemas/QuestionType'
-        body:
+        text:
           type: string
           example: 質問文
         is_required:
@@ -766,10 +798,10 @@ components:
           items:
             type: string
             example: 選択肢1
-        scale_label_right:
+        scale_left_label:
           type: string
           example: そう思わない
-        scale_label_left:
+        scale_right_label:
           type: string
           example: そう思う
         scale_min:
@@ -778,6 +810,9 @@ components:
         scale_max:
           type: integer
           example: 5
+        scale_step_width:
+          type: integer
+          example: 1
         regex_pattern:
           type: string
           example: ''
@@ -788,16 +823,10 @@ components:
           type: string
           example: ''
       required:
-        - page_num
-        - question_num
+        - order
         - question_type
-        - body
+        - text
         - is_required
-        - options
-        - scale_label_right
-        - scale_label_left
-        - scale_min
-        - scale_max
     NewQuestion:
       allOf:
       - $ref: '#/components/schemas/QuestionBase'
@@ -874,11 +903,11 @@ components:
         - $ref: '#/components/schemas/NewResponse'
         - type: object
           properties:
-            modified_at:
+            updated_at:
               type: string
               format: date-time
           required:
-            - modified_at
+            - updated_at
     ResponseDetails:
       allOf:
         - $ref: '#/components/schemas/NewResponse'
@@ -901,20 +930,20 @@ components:
         questionnaire_title:
           type: string
           example: 第1回集会らん☆ぷろ募集アンケート
-        res_time_limit:
+        closed_at:
           type: string
           format: date-time
         submitted_at:
           type: string
           format: date-time
-        modified_at:
+        updated_at:
           type: string
           format: date-time
       required:
         - responseID
         - questionnaireID
         - questionnaire_title
-        - modified_at
+        - updated_at
     ResponseBody:
       type: object
       properties:
