@@ -942,8 +942,12 @@ components:
           traqID:
             type: string
             example: lolico
+          responseID:
+            type: integer
+            example: 1
         required:
           - traqID
+          - responseID
       required:
         - submitted_at
     Users:
