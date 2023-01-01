@@ -469,6 +469,26 @@ func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
 		query = query.Order("questionnaires.modified_at")
 	case "-modified_at":
 		query = query.Order("questionnaires.modified_at desc")
+	case "res_time_limit":
+		query = query.Order("questionnaires.res_time_limit IS NULL, questionnaires.res_time_limit")
+	case "-res_time_limit":
+		query = query.Order("questionnaires.res_time_limit IS NULL desc, questionnaires.res_time_limit desc")
+	case "response_count":
+		query = query.
+			Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
+			Order("COUNT(respondents.response_id)")
+	case "-response_count":
+		query = query.
+			Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
+			Order("COUNT(respondents.response_id) desc")
+	case "last_response_at":
+		query = query.
+			Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
+			Order("updated_at")
+	case "-last_response_at":
+		query = query.
+			Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id").
+			Order("updated_at desc")
 	case "":
 	default:
 		return nil, ErrInvalidSortParam

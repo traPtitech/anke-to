@@ -58,7 +58,7 @@ func NewQuestionnaire(
 }
 
 type GetQuestionnairesQueryParam struct {
-	Sort        string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at"`
+	Sort        string `validate:"omitempty,oneof=created_at -created_at title -title modified_at -modified_at res_time_limit -res_time_limit response_count -response_count last_response_at -last_response_at"`
 	Search      string `validate:"omitempty"`
 	Page        string `validate:"omitempty,number,min=0"`
 	Nontargeted string `validate:"omitempty,boolean"`
