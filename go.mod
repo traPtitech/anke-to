@@ -51,16 +51,16 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	gorm.io/gorm v1.22.5
+	gorm.io/gorm v1.23.8
 )
 
 require (
-	github.com/jinzhu/now v1.1.4 // indirect
-	gorm.io/driver/mysql v1.2.3
+	github.com/jinzhu/now v1.1.5 // indirect
+	gorm.io/driver/mysql v1.4.5
 )
 
 require (
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/prometheus/client_golang v1.12.1
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
