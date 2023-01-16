@@ -22,7 +22,7 @@ func NewRespondent() *Respondent {
 	return new(Respondent)
 }
 
-//Respondents respondentsテーブルの構造体
+// Respondents respondentsテーブルの構造体
 type Respondents struct {
 	ResponseID      int            `json:"responseID" gorm:"column:response_id;type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	QuestionnaireID int            `json:"questionnaireID" gorm:"type:int(11);not null"`
@@ -33,14 +33,14 @@ type Respondents struct {
 	Responses       []Responses    `json:"-"  gorm:"foreignKey:ResponseID;references:ResponseID"`
 }
 
-//BeforeCreate insert時に自動でmodifiedAt更新
+// BeforeCreate insert時に自動でmodifiedAt更新
 func (r *Respondents) BeforeCreate(tx *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
-//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+// BeforeUpdate Update時に自動でmodified_atを現在時刻に
 func (r *Respondents) BeforeUpdate(tx *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
@@ -50,6 +50,7 @@ func (r *Respondents) BeforeUpdate(tx *gorm.DB) error {
 // RespondentInfo 回答とその周辺情報の構造体
 type RespondentInfo struct {
 	Title        string    `json:"questionnaire_title"`
+	Description  string    `json:"description"`
 	ResTimeLimit null.Time `json:"res_time_limit"`
 	Respondents
 }
@@ -64,7 +65,7 @@ type RespondentDetail struct {
 	Responses       []ResponseBody `json:"body"`
 }
 
-//InsertRespondent 回答の追加
+// InsertRespondent 回答の追加
 func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -178,7 +179,7 @@ func (*Respondent) GetRespondentInfos(ctx context.Context, userID string, questi
 	}
 
 	err = query.
-		Select("respondents.questionnaire_id, respondents.response_id, respondents.modified_at, respondents.submitted_at, questionnaires.title, questionnaires.res_time_limit").
+		Select("respondents.questionnaire_id, respondents.response_id, respondents.modified_at, respondents.submitted_at, questionnaires.title, questionnaires.description, questionnaires.res_time_limit").
 		Find(&respondentInfos).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get my responses: %w", err)
