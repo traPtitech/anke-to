@@ -475,7 +475,8 @@ components:
       description:
         並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
-        "-modified_at" )
+        "-modified_at", 回答数が多い "response_count", 回答数が少ない "-response_count",
+        最後の回答が新しい "last_response_at", 最後の回答が古い "-last_response_at" )
       schema:
         $ref: '#/components/schemas/SortType'
     responseSortInQuery:
