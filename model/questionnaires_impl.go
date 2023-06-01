@@ -456,6 +456,7 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.
 }
 
 func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
+	// WARNING: sortが"response_count"または"-response_count"の場合、queryは`GROUP BY questionnaires.id`を前提とする
 	switch sort {
 	case "created_at":
 		query = query.Order("questionnaires.created_at")
