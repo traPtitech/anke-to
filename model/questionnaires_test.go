@@ -282,7 +282,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(data.questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", data, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", data, err)
 		}
 
 		for _, target := range data.targets {
@@ -299,7 +299,7 @@ func setupQuestionnairesTest(t *testing.T) {
 					UserTraqid:      target,
 				}).Error
 			if err != nil {
-				t.Errorf("failed to create target: %w", err)
+				t.Errorf("failed to create target: %v", err)
 			}
 		}
 
@@ -317,7 +317,7 @@ func setupQuestionnairesTest(t *testing.T) {
 					UserTraqid:      administrator,
 				}).Error
 			if err != nil {
-				t.Errorf("failed to create target: %w", err)
+				t.Errorf("failed to create target: %v", err)
 			}
 		}
 
@@ -468,7 +468,7 @@ func insertQuestionnaireTest(t *testing.T) {
 			Where("id = ?", questionnaireID).
 			First(&questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to get questionnaire(%s): %v", testCase.description, err)
 		}
 
 		assertion.Equal(testCase.args.title, questionnaire.Title, testCase.description, "title")
@@ -657,7 +657,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(&questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to create questionnaire(%s): %v", testCase.description, err)
 		}
 
 		createdAt := questionnaire.CreatedAt
@@ -680,7 +680,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			Where("id = ?", questionnaireID).
 			First(&questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to get questionnaire(%s): %v", testCase.description, err)
 		}
 
 		assertion.Equal(after.title, questionnaire.Title, testCase.description, "title")
@@ -702,7 +702,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -732,7 +732,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
 			} else {
-				t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+				t.Errorf("failed to update questionnaire(invalid questionnireID): %v", err)
 			}
 		}
 	}
@@ -783,7 +783,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(&questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to create questionnaire(%s): %v", testCase.description, err)
 		}
 
 		questionnaireID := questionnaire.ID
@@ -805,7 +805,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 			Where("id = ?", questionnaireID).
 			Find(&questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to get questionnaire(%s): %v", testCase.description, err)
 		}
 
 		assertion.True(questionnaire.DeletedAt.Valid, testCase.description, "id")
@@ -822,7 +822,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -836,7 +836,7 @@ func deleteQuestionnaireTest(t *testing.T) {
 		if err == nil {
 			t.Errorf("Succeeded with invalid questionnaireID")
 		} else {
-			t.Errorf("failed to update questionnaire(invalid questionnireID): %w", err)
+			t.Errorf("failed to update questionnaire(invalid questionnireID): %v", err)
 		}
 	}
 }
@@ -1075,7 +1075,7 @@ func getQuestionnairesTest(t *testing.T) {
 			Where("deleted_at IS NULL").
 			Count(&questionnaireNum).Error
 		if err != nil {
-			t.Errorf("failed to count questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to count questionnaire(%s): %v", testCase.description, err)
 		}
 
 		actualQuestionnaireIDs := []int{}
@@ -1190,7 +1190,7 @@ func getAdminQuestionnairesTest(t *testing.T) {
 			Where("id IN (?)", actualQuestionnaireIDs).
 			Find(&expectQuestionnaires).Error
 		if err != nil {
-			t.Errorf("failed to get questionnaires(%s): %w", testCase.description, err)
+			t.Errorf("failed to get questionnaires(%s): %v", testCase.description, err)
 		}
 
 		for _, expectQuestionnaire := range expectQuestionnaires {
@@ -1234,7 +1234,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -1568,7 +1568,7 @@ func getQuestionnaireLimitTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -1655,7 +1655,7 @@ func getQuestionnaireLimitByResponseIDTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get response(make invalid responseID): %w", err)
+			t.Errorf("failed to get response(make invalid responseID): %v", err)
 			break
 		}
 
@@ -1746,7 +1746,7 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -1763,7 +1763,7 @@ func getResponseReadPrivilegeInfoByResponseIDTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get response(make invalid responseID): %w", err)
+			t.Errorf("failed to get response(make invalid responseID): %v", err)
 			break
 		}
 
@@ -1917,7 +1917,7 @@ func getResponseReadPrivilegeInfoByQuestionnaireIDTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
