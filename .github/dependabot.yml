@@ -3,12 +3,12 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
 - package-ecosystem: docker
   directory: "/"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
   ignore:
   - dependency-name: alpine
@@ -27,7 +27,7 @@ updates:
 - package-ecosystem: docker
   directory: "/docker/dev"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
   ignore:
   - dependency-name: golang
@@ -40,7 +40,7 @@ updates:
 - package-ecosystem: docker
   directory: "/docker/staging"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
   ignore:
   - dependency-name: golang
@@ -53,7 +53,7 @@ updates:
 - package-ecosystem: docker
   directory: "/docker/tuning"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
   ignore:
   - dependency-name: golang
@@ -66,5 +66,5 @@ updates:
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: daily
+    interval: weekly
   open-pull-requests-limit: 10
