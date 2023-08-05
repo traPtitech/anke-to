@@ -65,7 +65,7 @@ func setupQuestionsTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(questionnaireData.Questionnaires).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", questionnaireData, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", questionnaireData, err)
 		}
 
 		for _, administrator := range questionnaireData.administrators {
@@ -76,7 +76,7 @@ func setupQuestionsTest(t *testing.T) {
 					UserTraqid:      administrator,
 				}).Error
 			if err != nil {
-				t.Errorf("failed to create administrator(%s): %w", administrator, err)
+				t.Errorf("failed to create administrator(%s): %v", administrator, err)
 			}
 		}
 	}
@@ -192,7 +192,7 @@ func setupQuestionsTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(questionData.Questions).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", questionData, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", questionData, err)
 		}
 
 		if !questionData.Questions.DeletedAt.Valid {
@@ -235,7 +235,7 @@ func insertQuestionTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -423,7 +423,7 @@ func insertQuestionTest(t *testing.T) {
 			Where("id = ?", questionID).
 			First(&question).Error
 		if err != nil {
-			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+			t.Errorf("failed to get question(%s): %v", testCase.description, err)
 		}
 
 		assertion.Equal(testCase.args.QuestionnaireID, question.QuestionnaireID, testCase.description, "questionnaire_id")
@@ -472,7 +472,7 @@ func updateQuestionTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -675,7 +675,7 @@ func updateQuestionTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(question).Error
 		if err != nil {
-			t.Errorf("failed to insert question(%s): %w", testCase.description, err)
+			t.Errorf("failed to insert question(%s): %v", testCase.description, err)
 		}
 
 		err = questionImpl.UpdateQuestion(ctx, testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
@@ -695,7 +695,7 @@ func updateQuestionTest(t *testing.T) {
 			Where("id = ?", question.ID).
 			First(&actualQuestion).Error
 		if err != nil {
-			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+			t.Errorf("failed to get question(%s): %v", testCase.description, err)
 		}
 
 		assertion.Equal(testCase.after.QuestionnaireID, actualQuestion.QuestionnaireID, testCase.description, "questionnaire_id")
@@ -740,7 +740,7 @@ func deleteQuestionTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -763,7 +763,7 @@ func deleteQuestionTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(question).Error
 		if err != nil {
-			t.Errorf("failed to insert question: %w", err)
+			t.Errorf("failed to insert question: %v", err)
 		}
 	}
 
@@ -805,7 +805,7 @@ func deleteQuestionTest(t *testing.T) {
 			Where("id = ?", testCase.args.questionID).
 			First(&actualQuestion).Error
 		if err != nil {
-			t.Errorf("failed to get question(%s): %w", testCase.description, err)
+			t.Errorf("failed to get question(%s): %v", testCase.description, err)
 		}
 
 		assertion.True(actualQuestion.DeletedAt.Valid, testCase.description, "deleted_at")
@@ -842,7 +842,7 @@ func getQuestionsTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
