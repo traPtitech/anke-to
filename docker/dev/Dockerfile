@@ -1,5 +1,5 @@
 FROM golang:1.20.7-alpine as build-step
-RUN apk add --update-cache --no-cache ca-certificates git
+RUN apk add --update --no-cache ca-certificates git
 
 WORKDIR /go/src/github.com/traPtitech/anke-to
 
