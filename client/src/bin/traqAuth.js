@@ -1,6 +1,5 @@
 import axios from 'axios'
 import sha256 from 'js-sha256'
-import base64url from 'base64url'
 
 const baseUrl = 'https://q.trap.jp/api/v3/oauth2'
 
@@ -24,7 +23,17 @@ const randomString = len => {
 }
 
 const getCodeChallenge = codeVerifier => {
-  return base64url(sha256.arrayBuffer(codeVerifier))
+  const sha256Result = sha256(codeVerifier)
+  const bytes = new Uint8Array(sha256Result.length / 2)
+  for (let i = 0; i < sha256Result.length; i += 2) {
+    bytes[i / 2] = parseInt(sha256Result.substring(i, i + 2), 16)
+  }
+  const base64 = btoa(String.fromCharCode(...bytes))
+  const base64url = base64
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+  return base64url
 }
 
 export function sendCodeRequest() {
