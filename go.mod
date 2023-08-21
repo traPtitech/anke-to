@@ -9,7 +9,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
@@ -25,7 +25,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-playground/validator/v10 v10.10.1
+	github.com/go-playground/validator/v10 v10.15.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
@@ -37,10 +37,10 @@ require (
 )
 
 require (
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/labstack/echo-contrib v0.12.0
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/leodido/go-urn v1.2.4 // indirect
 )
 
 require (
@@ -64,3 +64,5 @@ require (
 	gopkg.in/guregu/null.v4 v4.0.0
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
 )
+
+require github.com/gabriel-vasile/mimetype v1.4.2 // indirect
