@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/github.com/traPtitech/anke-to/client/node_modules
 
 
 # run
-FROM alpine:3.18.2
+FROM alpine:3.18.4
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
