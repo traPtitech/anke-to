@@ -3,9 +3,10 @@ package router
 import (
 	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"regexp"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/anke-to/model"
 )
@@ -35,7 +36,7 @@ type PostAndEditQuestionRequest struct {
 	PageNum         int      `json:"page_num" validate:"min=0"`
 	Body            string   `json:"body" validate:"required"`
 	IsRequired      bool     `json:"is_required"`
-	Options         []string `json:"options" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+	Options         []string `json:"options" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=1000"`
 	ScaleLabelRight string   `json:"scale_label_right" validate:"max=50"`
 	ScaleLabelLeft  string   `json:"scale_label_left" validate:"max=50"`
 	ScaleMin        int      `json:"scale_min"`

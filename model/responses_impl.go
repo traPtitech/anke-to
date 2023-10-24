@@ -3,9 +3,10 @@ package model
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
-	"time"
 )
 
 // Response ResponseRepositoryの実装
@@ -16,7 +17,7 @@ func NewResponse() *Response {
 	return new(Response)
 }
 
-//Responses responseテーブルの構造体
+// Responses responseテーブルの構造体
 type Responses struct {
 	ResponseID int            `json:"-" gorm:"type:int(11);not null"`
 	QuestionID int            `json:"-" gorm:"type:int(11);not null"`
@@ -25,21 +26,21 @@ type Responses struct {
 	DeletedAt  gorm.DeletedAt `json:"-" gorm:"type:TIMESTAMP NULL;default:NULL"`
 }
 
-//BeforeCreate insert時に自動でmodifiedAt更新
+// BeforeCreate insert時に自動でmodifiedAt更新
 func (r *Responses) BeforeCreate(tx *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
-//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+// BeforeUpdate Update時に自動でmodified_atを現在時刻に
 func (r *Responses) BeforeUpdate(tx *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
-//TableName テーブル名が単数形なのでその対応
+// TableName テーブル名が単数形なのでその対応
 func (*Responses) TableName() string {
 	return "response"
 }
@@ -49,7 +50,7 @@ type ResponseBody struct {
 	QuestionID     int         `json:"questionID" gorm:"column:id" validate:"min=0"`
 	QuestionType   string      `json:"question_type" gorm:"column:type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
 	Body           null.String `json:"response" validate:"required"`
-	OptionResponse []string    `json:"option_response" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+	OptionResponse []string    `json:"option_response" validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=1000"`
 }
 
 // ResponseMeta 質問に対する回答の構造体
