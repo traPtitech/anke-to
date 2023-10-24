@@ -242,18 +242,6 @@ func (r *Response) EditResponse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	validate, err := getValidator(c)
-	if err != nil {
-		c.Logger().Errorf("failed to get validator: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	err = validate.Struct(req)
-	if err != nil {
-		c.Logger().Infof("validation failed: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	limit, err := r.GetQuestionnaireLimit(c.Request().Context(), req.ID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
