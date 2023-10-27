@@ -49,7 +49,7 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 
 /* 消せないアンケートの発生を防ぐための管理者
 暫定的にハードコーディングで対応*/
-var adminUserIDs = []string{"temma", "sappi_red", "ryoha", "mazrean", "xxarupakaxx", "asari"}
+var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
 func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
