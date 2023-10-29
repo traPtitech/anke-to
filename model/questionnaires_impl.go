@@ -278,6 +278,9 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil, nil, nil, ErrRecordNotFound
+	}
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}

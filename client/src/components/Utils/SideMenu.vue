@@ -48,7 +48,7 @@ export default {
   methods: {
     createQuestionnaire() {
       this.$emit('close-side-menu')
-      router.push('/questionnaires/new')
+      router.push('/questionnaires/new').catch(err => console.error(err))
     }
   }
 }
@@ -59,6 +59,7 @@ export default {
   min-width: fit-content;
   background-color: $base-lightbrown;
 }
+
 .menu-list {
   hr {
     // border-style: outset;
@@ -66,17 +67,21 @@ export default {
     border: $base-darkbrown solid 2px;
     margin: 0.3rem 0;
   }
+
   .button {
     margin: 0.5rem;
   }
 }
+
 .menu-list a {
   position: relative;
   display: inline-block;
   text-decoration: none;
+
   &:hover {
     background-color: inherit;
   }
+
   &::after {
     position: absolute;
     bottom: 3.5px;
@@ -90,6 +95,7 @@ export default {
     transition: transform 0.3s;
   }
 }
+
 .menu-list :hover::after {
   transform-origin: left top;
   transform: scale(1, 1);

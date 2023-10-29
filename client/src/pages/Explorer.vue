@@ -46,7 +46,8 @@
               aria-controls="dropdown-menu"
               @click="
                 DropdownIsActive.sortOrder = false
-                DropdownIsActive.targetedOption = !DropdownIsActive.targetedOption
+                DropdownIsActive.targetedOption =
+                  !DropdownIsActive.targetedOption
               "
             >
               <p>フィルター</p>

@@ -15,11 +15,11 @@ jobs:
     name: Mod
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.17
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v2.1.7
+          go-version: '1.20'
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -31,17 +31,17 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.17
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v2.1.7
+          go-version: '1.20'
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v2.1.7
+      - uses: actions/cache@v3.3.2
         with:
           path: /tmp/go/cache
           key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
@@ -66,11 +66,11 @@ jobs:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: anke-to
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.17
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v2.1.7
+          go-version: '1.20'
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -85,7 +85,7 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3.1.4
         with:
           file: ./coverage.txt
           yml: ./codecov.yml
@@ -97,12 +97,12 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.17
-      - uses: actions/checkout@v3
+          go-version: '1.20'
+      - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.1
+        uses: reviewdog/action-golangci-lint@v2.3
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -111,9 +111,9 @@ jobs:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.1
+        uses: stoplightio/spectral-action@v0.8.7
         with:
           file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}

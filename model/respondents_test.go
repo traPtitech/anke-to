@@ -507,6 +507,7 @@ func TestGetRespondentInfos(t *testing.T) {
 			}
 			assertion.Equal(expectRespondent.ResponseID, respondentInfo.ResponseID, testCase.description, "responseID")
 			assertion.Equal(questionnaire.Title, respondentInfo.Title, testCase.description, "title")
+			assertion.Equal(questionnaire.Description, respondentInfo.Description, testCase.description, "description")
 			assertion.WithinDuration(questionnaire.ResTimeLimit.ValueOrZero(), respondentInfo.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "ResTimeLimit")
 			assertion.WithinDuration(expectRespondent.SubmittedAt.ValueOrZero(), respondentInfo.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
 			assertion.WithinDuration(time.Now(), respondentInfo.ModifiedAt, 2*time.Second, testCase.description, "modified_at")

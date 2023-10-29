@@ -901,6 +901,9 @@ components:
         questionnaire_title:
           type: string
           example: 第1回集会らん☆ぷろ募集アンケート
+        description:
+          type: string
+          example: 2017年度入学学部生
         res_time_limit:
           type: string
           format: date-time
@@ -942,8 +945,12 @@ components:
           traqID:
             type: string
             example: lolico
+          responseID:
+            type: integer
+            example: 1
         required:
           - traqID
+          - responseID
       required:
         - submitted_at
     Users:

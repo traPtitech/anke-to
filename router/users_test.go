@@ -20,6 +20,7 @@ import (
 
 type myResponse struct {
 	Title           string    `json:"questionnaire_title"`
+	Description     string    `json:"description"`
 	ResTimeLimit    null.Time `json:"res_time_limit"`
 	ResponseID      int       `json:"responseID"`
 	QuestionnaireID int       `json:"questionnaireID"`
@@ -245,6 +246,7 @@ func TestGetMyResponses(t *testing.T) {
 			ResponseID:      responseID1,
 			QuestionnaireID: questionnaireID1,
 			Title:           "質問1",
+			Description:     "質問1 description",
 			ResTimeLimit:    null.NewTime(nowTime, false),
 			SubmittedAt:     null.TimeFrom(nowTime),
 			ModifiedAt:      nowTime,
@@ -253,6 +255,7 @@ func TestGetMyResponses(t *testing.T) {
 			ResponseID:      responseID2,
 			QuestionnaireID: questionnaireID2,
 			Title:           "質問2",
+			Description:     "質問2 description",
 			ResTimeLimit:    null.NewTime(nowTime, false),
 			SubmittedAt:     null.TimeFrom(nowTime),
 			ModifiedAt:      nowTime,
@@ -261,6 +264,7 @@ func TestGetMyResponses(t *testing.T) {
 			ResponseID:      responseID3,
 			QuestionnaireID: questionnaireID3,
 			Title:           "質問3",
+			Description:     "質問3 description",
 			ResTimeLimit:    null.NewTime(nowTime, false),
 			SubmittedAt:     null.TimeFrom(nowTime),
 			ModifiedAt:      nowTime,
@@ -269,6 +273,7 @@ func TestGetMyResponses(t *testing.T) {
 	respondentInfos := []model.RespondentInfo{
 		{
 			Title:        "質問1",
+			Description:  "質問1 description",
 			ResTimeLimit: null.NewTime(nowTime, false),
 			Respondents: model.Respondents{
 				ResponseID:      responseID1,
@@ -279,6 +284,7 @@ func TestGetMyResponses(t *testing.T) {
 		},
 		{
 			Title:        "質問2",
+			Description:  "質問2 description",
 			ResTimeLimit: null.NewTime(nowTime, false),
 			Respondents: model.Respondents{
 				ResponseID:      responseID2,
@@ -289,6 +295,7 @@ func TestGetMyResponses(t *testing.T) {
 		},
 		{
 			Title:        "質問3",
+			Description:  "質問3 description",
 			ResTimeLimit: null.NewTime(nowTime, false),
 			Respondents: model.Respondents{
 				ResponseID:      responseID3,
@@ -420,6 +427,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 			ResponseID:      responseID1,
 			QuestionnaireID: questionnaireIDSuccess,
 			Title:           "質問1",
+			Description:     "質問1 description",
 			ResTimeLimit:    null.NewTime(nowTime, false),
 			SubmittedAt:     null.TimeFrom(nowTime),
 			ModifiedAt:      nowTime,
@@ -428,6 +436,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 			ResponseID:      responseID2,
 			QuestionnaireID: questionnaireIDSuccess,
 			Title:           "質問2",
+			Description:     "質問2 description",
 			ResTimeLimit:    null.NewTime(nowTime, false),
 			SubmittedAt:     null.TimeFrom(nowTime),
 			ModifiedAt:      nowTime,
@@ -436,6 +445,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 	respondentInfos := []model.RespondentInfo{
 		{
 			Title:        "質問1",
+			Description:  "質問1 description",
 			ResTimeLimit: null.NewTime(nowTime, false),
 			Respondents: model.Respondents{
 				ResponseID:      responseID1,
@@ -446,6 +456,7 @@ func TestGetMyResponsesByID(t *testing.T) {
 		},
 		{
 			Title:        "質問2",
+			Description:  "質問2 description",
 			ResTimeLimit: null.NewTime(nowTime, false),
 			Respondents: model.Respondents{
 				ResponseID:      responseID2,

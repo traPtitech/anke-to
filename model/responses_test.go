@@ -125,7 +125,7 @@ func TestInsertResponses(t *testing.T) {
 			Where("response_id = ?", responseID).
 			First(&response).Error
 		if err != nil {
-			t.Errorf("failed to get questionnaire(%s): %w", testCase.description, err)
+			t.Errorf("failed to get questionnaire(%s): %v", testCase.description, err)
 		}
 
 		assertion.Equal(responseID, response.ResponseID, testCase.description, "responseID")
@@ -220,7 +220,7 @@ func TestDeleteResponse(t *testing.T) {
 			Where("response_id = ?", responseID).
 			First(&response).Error
 		if err != nil {
-			t.Errorf("failed to get responses(%s): %w", testCase.description, err)
+			t.Errorf("failed to get responses(%s): %v", testCase.description, err)
 		}
 
 		assertion.WithinDuration(time.Now(), response.DeletedAt.Time, 2*time.Second)

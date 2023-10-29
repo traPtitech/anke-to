@@ -57,7 +57,7 @@ func setupAdministratorTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(&administratorTestQuestionnaireDatas[i].questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", questionnaireData, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", questionnaireData, err)
 		}
 
 		for _, administrator := range questionnaireData.administrators {
@@ -68,7 +68,7 @@ func setupAdministratorTest(t *testing.T) {
 					UserTraqid:      administrator,
 				}).Error
 			if err != nil {
-				t.Errorf("failed to create administrator(%s): %w", administrator, err)
+				t.Errorf("failed to create administrator(%s): %v", administrator, err)
 			}
 		}
 	}
@@ -105,7 +105,7 @@ func insertAdministratorsTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
@@ -176,7 +176,7 @@ func insertAdministratorsTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(&testCase.args.questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", testCase.args.questionnaire, err)
 		}
 
 		err = administratorImpl.InsertAdministrators(ctx, testCase.args.questionnaire.ID, testCase.args.administrators)
@@ -198,7 +198,7 @@ func insertAdministratorsTest(t *testing.T) {
 				First(&actualAdministrators).Error
 
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				t.Errorf("no administrator(%s): %w", administrator, err)
+				t.Errorf("no administrator(%s): %v", administrator, err)
 			}
 		}
 	}
@@ -289,7 +289,7 @@ func deleteAdministratorsTest(t *testing.T) {
 			Session(&gorm.Session{NewDB: true}).
 			Create(&testCase.args.questionnaire).Error
 		if err != nil {
-			t.Errorf("failed to create questionnaire(%+v): %w", testCase.args.questionnaire, err)
+			t.Errorf("failed to create questionnaire(%+v): %v", testCase.args.questionnaire, err)
 		}
 
 		err = administratorImpl.DeleteAdministrators(ctx, testCase.args.questionnaire.ID)
@@ -309,7 +309,7 @@ func deleteAdministratorsTest(t *testing.T) {
 			Where("questionnaire_id = ?", testCase.args.questionnaire.ID).
 			Find(&administrators).Error
 		if err != nil {
-			t.Errorf("failed to get administrators(%s): %w", testCase.description, err)
+			t.Errorf("failed to get administrators(%s): %v", testCase.description, err)
 		}
 
 		assertion.Len(administrators, 0, testCase.description, "administrator length")
@@ -434,7 +434,7 @@ func checkQuestionnaireAdminTest(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %w", err)
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
 			break
 		}
 
