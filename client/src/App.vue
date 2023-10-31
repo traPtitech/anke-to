@@ -53,4 +53,8 @@ export default {
 @import '@/style/global.scss';
 @import '@/style/colors.scss';
 @import 'static/css/themify-icons.css';
+
+.app-main {
+  min-width: 0;
+}
 </style>
