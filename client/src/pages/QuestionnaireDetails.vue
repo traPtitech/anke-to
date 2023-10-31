@@ -1,5 +1,5 @@
 <template>
-  <div class="details is-fullheight">
+  <div class="details is-fullheight container">
     <top-bar-message :message="message"></top-bar-message>
     <div class="tabs is-centered">
       <ul>
@@ -523,4 +523,8 @@ export default {
 </script>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.container {
+  word-break: break-all;
+}
+</style>
