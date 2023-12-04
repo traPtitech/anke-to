@@ -1,6 +1,7 @@
 package router
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/go-playground/validator/v10"
@@ -163,7 +164,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "Textタイプでoptionが50文字以上でもエラー",
+			description: "Textタイプでoptionが1000文字以上でもエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Text",
@@ -171,7 +172,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "",
 				ScaleLabelLeft:  "",
 				ScaleMin:        0,
@@ -446,7 +447,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "TextAreaタイプでoptionが50文字以上でもエラー",
+			description: "TextAreaタイプでoptionが1000文字以上でもエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "TextArea",
@@ -454,7 +455,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "",
 				ScaleLabelLeft:  "",
 				ScaleMin:        0,
@@ -642,7 +643,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "Numberタイプでoptionが50文字以上でもエラー",
+			description: "Numberタイプでoptionが1000文字以上でもエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Number",
@@ -650,7 +651,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "",
 				ScaleLabelLeft:  "",
 				ScaleMin:        0,
@@ -839,7 +840,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "Checkboxタイプでoptionが50文字以上でエラー",
+			description: "Checkboxタイプでoptionが1000文字以上でエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "Checkbox",
@@ -847,7 +848,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "",
 				ScaleLabelLeft:  "",
 				ScaleMin:        0,
@@ -1036,7 +1037,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "MultipleChoiceタイプでoptionが50文字以上でエラー",
+			description: "MultipleChoiceタイプでoptionが1000文字以上でエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "MultipleChoice",
@@ -1044,7 +1045,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "",
 				ScaleLabelLeft:  "",
 				ScaleMin:        0,
@@ -1232,7 +1233,7 @@ func TestPostQuestionValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "LinearScaleタイプでoptionが50文字以上でもエラー",
+			description: "LinearScaleタイプでoptionが1000文字以上でもエラー",
 			request: &PostAndEditQuestionRequest{
 				QuestionnaireID: 1,
 				QuestionType:    "LinearScale",
@@ -1240,7 +1241,7 @@ func TestPostQuestionValidate(t *testing.T) {
 				PageNum:         1,
 				Body:            "発表タイトル",
 				IsRequired:      true,
-				Options:         []string{"012345678901234567890123456789012345678901234567890"},
+				Options:         []string{"0" + strings.Repeat("1234567890", 100)},
 				ScaleLabelRight: "右",
 				ScaleLabelLeft:  "左",
 				ScaleMin:        0,
