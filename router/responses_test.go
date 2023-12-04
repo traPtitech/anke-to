@@ -1684,7 +1684,7 @@ func TestEditResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			responseID, err := strconv.Atoi(c.Param("responseID"))
 			if err != nil {
