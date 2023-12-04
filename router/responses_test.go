@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 
@@ -27,7 +28,7 @@ type responseBody struct {
 	QuestionID     int         `json:"questionID" validate:"min=0"`
 	QuestionType   string      `json:"question_type" validate:"required,oneof=Text TextArea Number MultipleChoice Checkbox LinearScale"`
 	Body           null.String `json:"response"  validate:"required"`
-	OptionResponse []string    `json:"option_response"  validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=50"`
+	OptionResponse []string    `json:"option_response"  validate:"required_if=QuestionType Checkbox,required_if=QuestionType MultipleChoice,dive,max=1000"`
 }
 
 func TestPostResponseValidate(t *testing.T) {
@@ -141,7 +142,7 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "TextタイプでoptionResponseが50文字以上でエラー",
+			description: "TextタイプでoptionResponseが1000文字以上でエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -150,14 +151,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "TextタイプでoptionResponseが50文字ピッタリはエラーなし",
+			description: "TextタイプでoptionResponseが1000文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -166,7 +167,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Text",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -187,7 +188,7 @@ func TestPostResponseValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "TextAreaタイプでoptionResponseが50文字以上でもエラー",
+			description: "TextAreaタイプでoptionResponseが1000文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -196,14 +197,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "TextArea",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "TextAreaタイプでoptionResponseが50文字ピッタリはエラーなし",
+			description: "TextAreaタイプでoptionResponseが1000文字ピッタリはエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -212,7 +213,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "TextArea",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -233,7 +234,7 @@ func TestPostResponseValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "NumberタイプでoptionResponseが50文字以上でもエラー",
+			description: "NumberタイプでoptionResponseが1000文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -242,14 +243,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Number",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "NumberタイプでoptionResponseが50文字ピッタリでエラーなし",
+			description: "NumberタイプでoptionResponseが1000文字ピッタリでエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -258,7 +259,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Number",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -310,7 +311,7 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "CheckboxタイプでOptionResponseが50文字以上な回答なのでエラー",
+			description: "CheckboxタイプでOptionResponseが1000文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -319,14 +320,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "CheckboxタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			description: "CheckboxタイプでOptionResponseが1000文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -335,7 +336,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "Checkbox",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -372,7 +373,7 @@ func TestPostResponseValidate(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "MultipleChoiceタイプでOptionResponseが50文字以上な回答なのでエラー",
+			description: "MultipleChoiceタイプでOptionResponseが1000文字以上な回答なのでエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -381,14 +382,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "MultipleChoiceタイプでOptionResponseが50文字ピッタリな回答なのでエラーなし",
+			description: "MultipleChoiceタイプでOptionResponseが1000文字ピッタリな回答なのでエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -397,7 +398,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "MultipleChoice",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -418,7 +419,7 @@ func TestPostResponseValidate(t *testing.T) {
 			},
 		},
 		{
-			description: "LinearScaleタイプでoptionResponseが50文字以上でもエラー",
+			description: "LinearScaleタイプでoptionResponseが1000文字以上でもエラー",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -427,14 +428,14 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "LinearScale",
 						Body:           null.String{},
-						OptionResponse: []string{"012345678901234567890123456789012345678901234567890"},
+						OptionResponse: []string{"0" + strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
 			isErr: true,
 		},
 		{
-			description: "LinearScaleタイプでoptionResponseが50文字ピッタリなのでエラーなし",
+			description: "LinearScaleタイプでoptionResponseが1000文字ピッタリなのでエラーなし",
 			request: &Responses{
 				ID:          1,
 				Temporarily: false,
@@ -443,7 +444,7 @@ func TestPostResponseValidate(t *testing.T) {
 						QuestionID:     1,
 						QuestionType:   "LinearScale",
 						Body:           null.String{},
-						OptionResponse: []string{"01234567890123456789012345678901234567890123456789"},
+						OptionResponse: []string{strings.Repeat("1234567890", 100)},
 					},
 				},
 			},
@@ -1683,7 +1684,7 @@ func TestEditResponse(t *testing.T) {
 	}
 
 	e := echo.New()
-	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
+	e.PATCH("/api/responses/:responseID", r.EditResponse, m.SetUserIDMiddleware, m.SetValidatorMiddleware, m.TraPMemberAuthenticate, func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			responseID, err := strconv.Atoi(c.Param("responseID"))
 			if err != nil {
