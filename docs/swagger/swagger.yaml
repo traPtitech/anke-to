@@ -1,8 +1,8 @@
 openapi: 3.0.0
 servers:
-  - url: 'https://anke-to.trap.jp/api'
+  - url: "https://anke-to.trap.jp/api"
     description: production
-  - url: 'http://localhost:8080/api'
+  - url: "http://localhost:8080/api"
     description: local
 info:
   title: anke-to API
@@ -10,7 +10,7 @@ info:
   description: anke-to API
   contact:
     name: traP
-    url: 'https://github.com/traPtitech/anke-to'
+    url: "https://github.com/traPtitech/anke-to"
 security:
   - application:
       - read
@@ -30,22 +30,22 @@ paths:
         - questionnaire
       description: 与えられた条件を満たす20件以下のアンケートのリストを取得します．
       parameters:
-        - $ref: '#/components/parameters/sortInQuery'
-        - $ref: '#/components/parameters/searchInQuery'
-        - $ref: '#/components/parameters/pageInQuery'
-        - $ref: '#/components/parameters/nontargetedInQuery'
+        - $ref: "#/components/parameters/sortInQuery"
+        - $ref: "#/components/parameters/searchInQuery"
+        - $ref: "#/components/parameters/pageInQuery"
+        - $ref: "#/components/parameters/nontargetedInQuery"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。アンケートの配列を返します。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QuestionnairesWithPageMax'
-        '400':
+                $ref: "#/components/schemas/QuestionnairesWithPageMax"
+        "400":
           description: 与えられた情報の形式が異なります
-        '500':
+        "500":
           description: アンケートを正常に取得できませんでした
-        '503':
+        "503":
           description: SQLの実行時間が3sを超えた場合。主に正規表現が原因。
     post:
       operationId: postQuestionnaire
@@ -57,39 +57,39 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewQuestionnaire'
+              $ref: "#/components/schemas/NewQuestionnaire"
       responses:
-        '201':
+        "201":
           description: 正常にアンケートを作成できました．作成されたアンケートを返します．
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NewQuestionnaireResponse'
-        '400':
+                $ref: "#/components/schemas/NewQuestionnaireResponse"
+        "400":
           description: 与えられた情報の形式が異なります
-        '500':
+        "500":
           description: アンケートを正常に作成できませんでした
 
-  '/questionnaires/{questionnaireID}':
+  "/questionnaires/{questionnaireID}":
     get:
       operationId: getQuestionnaire
       tags:
         - questionnaire
       description: アンケートの情報を取得します。
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QuestionnaireByID'
-        '400':
+                $ref: "#/components/schemas/QuestionnaireByID"
+        "400":
           description: アンケートのIDが無効です
-        '404':
+        "404":
           description: アンケートが存在しません
-        '500':
+        "500":
           description: アンケートを正常に取得できませんでした
     patch:
       operationId: editQuestionnaire
@@ -97,99 +97,99 @@ paths:
         - questionnaire
       description: アンケートの情報を変更します．
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewQuestionnaire'
+              $ref: "#/components/schemas/NewQuestionnaire"
       responses:
-        '200':
+        "200":
           description: 正常にアンケートを変更できました．
-        '400':
+        "400":
           description: アンケートのIDが無効です
-        '500':
+        "500":
           description: 正常にアンケートを変更できませんでした
     delete:
-      operationId: delteQuestionnaire
+      operationId: deleteQuestionnaire
       tags:
         - questionnaire
       description: アンケートを削除します．
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常にアンケートを削除できました．
-        '400':
+        "400":
           description: アンケートのIDが無効です
-        '500':
+        "500":
           description: アンケートの削除ができませんでした
-  '/questionnaires/{questionnaireID}/questions':
+  "/questionnaires/{questionnaireID}/questions":
     get:
       operationId: getQuestions
       tags:
         - questionnaire
       description: アンケートに含まれる質問のリストを取得します。
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/QuestionDetails'
-        '400':
+                  $ref: "#/components/schemas/QuestionDetails"
+        "400":
           description: アンケートのIDが無効です
-        '500':
+        "500":
           description: 質問のリストを取得できませんでした
     post:
       operationId: PostQuestionByQuestionnaireID
       tags:
         - questionnaire
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       description: 新しい質問を作成します．
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewQuestion'
+              $ref: "#/components/schemas/NewQuestion"
       responses:
-        '201':
+        "201":
           description: 正常に質問を作成できました．作成された質問を返します．
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Question'
-        '400':
+                $ref: "#/components/schemas/Question"
+        "400":
           description: 正常に作成できませんでした。リクエストが不正です。
-        '500':
+        "500":
           description: 正常に作成できません。主に正規表現が原因。
-  '/questions/{questionID}':
+  "/questions/{questionID}":
     patch:
       operationId: editQuestion
       tags:
         - question
       description: 質問を変更します．
       parameters:
-        - $ref: '#/components/parameters/questionIDInPath'
+        - $ref: "#/components/parameters/questionIDInPath"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewQuestion'
+              $ref: "#/components/schemas/NewQuestion"
       responses:
-        '200':
+        "200":
           description: 正常に質問を変更できました．
-        '400':
+        "400":
           description: 正常に変更できませんでした。リクエストが不正です。
-        '500':
+        "500":
           description: 正常に変更できませんでした。主に正規表現が原因。
     delete:
       operationId: deleteQuestion
@@ -197,11 +197,11 @@ paths:
         - question
       description: 質問を削除します．
       parameters:
-        - $ref: '#/components/parameters/questionIDInPath'
+        - $ref: "#/components/parameters/questionIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に質問を削除できました。
-        '500':
+        "500":
           description: 正常に削除できませんでした。存在しない質問です。
   /responses:
     post:
@@ -214,42 +214,42 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostResponse'
+              $ref: "#/components/schemas/PostResponse"
       responses:
-        '201':
+        "201":
           description: 正常に回答を作成できました．作成された回答を返します．
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseDetails'
-        '400':
+                $ref: "#/components/schemas/ResponseDetails"
+        "400":
           description: 与えられた情報の形式が異なります
-        '404':
+        "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
-        '405':
+        "405":
           description: 回答期限が過ぎたため回答できません
-        '500':
+        "500":
           description: 正常に回答が作成できませんでした
-  '/responses/{responseID}':
+  "/responses/{responseID}":
     get:
       operationId: getResponses
       tags:
         - response
       description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します
       parameters:
-        - $ref: '#/components/parameters/responseIDInPath'
+        - $ref: "#/components/parameters/responseIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
-        '400':
+                $ref: "#/components/schemas/Response"
+        "400":
           description: responseIDが数値に変換できませんでした
-        '404':
+        "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
-        '500':
+        "500":
           description: responseIDを取得できませんでした
     patch:
       operationId: editResponse
@@ -257,23 +257,23 @@ paths:
         - response
       description: 回答を変更します．
       parameters:
-        - $ref: '#/components/parameters/responseIDInPath'
+        - $ref: "#/components/parameters/responseIDInPath"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewResponse'
+              $ref: "#/components/schemas/NewResponse"
       responses:
-        '200':
+        "200":
           description: 正常に回答を変更できました．
-        '400':
+        "400":
           description: 与えられた回答の情報が異なります
-        '404':
+        "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
-        '405':
+        "405":
           description: 回答期限が過ぎたため回答できません
-        '500':
+        "500":
           description: responseIDを取得できませんでした
     delete:
       operationId: deleteResponse
@@ -281,17 +281,17 @@ paths:
         - response
       description: 回答を削除します．
       parameters:
-        - $ref: '#/components/parameters/responseIDInPath'
+        - $ref: "#/components/parameters/responseIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に回答を削除できました．
-        '400':
+        "400":
           description: 与えられた回答の情報が異なります
-        '404':
+        "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
-        '405':
+        "405":
           description: 回答期限が過ぎたため回答できません
-        '500':
+        "500":
           description: responseIDを取得できませんでした
   /users:
     get:
@@ -301,14 +301,14 @@ paths:
       summary: 未実装
       description: (botおよび除名されたユーザーを除く、全ての) ユーザーのtraQIDのリストを取得します。
       responses:
-        '200':
+        "200":
           description: 正常に取得できました．ユーザーの配列を返します．
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: "#/components/schemas/User"
   /users/me:
     get:
       operationId: getUsersMe
@@ -316,13 +316,13 @@ paths:
         - user
       description: 自分のユーザー情報を取得します
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Me'
-        '500':
+                $ref: "#/components/schemas/Me"
+        "500":
           description: Userが取得できませんでした
   /users/me/responses:
     get:
@@ -331,36 +331,36 @@ paths:
         - user
       description: 自分のすべての回答のリストを取得します。
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。回答の配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResponseSummary'
-        '500':
+                  $ref: "#/components/schemas/ResponseSummary"
+        "500":
           description: Userが取得できませんでした
-  '/users/me/responses/{questionnaireID}':
+  "/users/me/responses/{questionnaireID}":
     get:
       operationId: getMyResponsesByID
       tags:
         - user
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       description: 特定のquestionnaireIdを持つアンケートに対する自分のすべての回答のリストを取得します。
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。回答の配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResponseSummary'
-        '400':
+                  $ref: "#/components/schemas/ResponseSummary"
+        "400":
           description: questionnaireIDの型が数値ではありません
-        '500':
+        "500":
           description: 回答のリストを取得できませんでした
   /users/me/targeted:
     get:
@@ -369,40 +369,40 @@ paths:
         - user
       description: 自分が対象になっている アンケートのリストを取得します。
       parameters:
-        - $ref: '#/components/parameters/sortInQuery'
+        - $ref: "#/components/parameters/sortInQuery"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。アンケートの配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/QuestionnaireMyTargeted'
-        '500':
+                  $ref: "#/components/schemas/QuestionnaireMyTargeted"
+        "500":
           description: 自分のUserIDが取得できませんでした
   /users/{traQID}/targeted:
     get:
-      operationId: getTargettedQuestionnairesBytraQID
+      operationId: getTargetedQuestionnairesBytraQID
       tags:
         - user
       description: ユーザが対象になっているアンケートのリストを取得します。
       parameters:
-        - $ref: '#/components/parameters/sortInQuery'
-        - $ref: '#/components/parameters/answeredInQuery'
-        - $ref: '#/components/parameters/traQIDInPath'
+        - $ref: "#/components/parameters/sortInQuery"
+        - $ref: "#/components/parameters/answeredInQuery"
+        - $ref: "#/components/parameters/traQIDInPath"
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。アンケートの配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/QuestionnaireMyTargeted'
-        '400':
+                  $ref: "#/components/schemas/QuestionnaireMyTargeted"
+        "400":
           description: 与えらえた情報の形式が異なります
-        '500':
+        "500":
           description: 対象となっているアンケートのリストを取得できませんでした
   /users/me/administrates:
     get:
@@ -411,15 +411,15 @@ paths:
         - user
       description: 自分が管理者になっているアンケートのリストを取得します。
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。アンケートの配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/QuestionnaireMyAdministrates'
-        '500':
+                  $ref: "#/components/schemas/QuestionnaireMyAdministrates"
+        "500":
           description: 自分が管理者となっているアンケートのリストを取得できませんでした
   /groups:
     get:
@@ -429,37 +429,37 @@ paths:
       summary: 未実装
       description: (全ての) グループのリストを取得します
       responses:
-        '200':
+        "200":
           description: 正常に取得できました．グループの配列を返します．
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Group'
-  '/results/{questionnaireID}':
+                  $ref: "#/components/schemas/Group"
+  "/results/{questionnaireID}":
     get:
       operationId: getResults
       tags:
         - result
       parameters:
-        - $ref: '#/components/parameters/questionnaireIDInPath'
-        - $ref: '#/components/parameters/responseSortInQuery'
+        - $ref: "#/components/parameters/questionnaireIDInPath"
+        - $ref: "#/components/parameters/responseSortInQuery"
       description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
       responses:
-        '200':
+        "200":
           description: 正常に取得できました。アンケートの各質問に対する結果の配列を返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResponseResult'
-        '400':
+                  $ref: "#/components/schemas/ResponseResult"
+        "400":
           description: questionnaireIDの型を数値に変換できませんでした
-        '403':
+        "403":
           description: 結果を閲覧する権限がありません。
-        '500':
+        "500":
           description: アンケートの回答の詳細情報一覧が取得できませんでした
 components:
   parameters:
@@ -468,7 +468,7 @@ components:
       in: query
       description: 回答したもの(answered)か未回答のもの(unanswered)かを選別
       schema:
-        $ref: '#/components/schemas/AnsweredType'
+        $ref: "#/components/schemas/AnsweredType"
     sortInQuery:
       name: sort
       in: query
@@ -477,7 +477,7 @@ components:
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
-        $ref: '#/components/schemas/SortType'
+        $ref: "#/components/schemas/SortType"
     responseSortInQuery:
       name: sort
       in: query
@@ -486,7 +486,7 @@ components:
         タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
-        $ref: '#/components/schemas/ResponseSortType'
+        $ref: "#/components/schemas/ResponseSortType"
     searchInQuery:
       name: search
       in: query
@@ -604,11 +604,11 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          $ref: '#/components/schemas/ResShareType'
+          $ref: "#/components/schemas/ResShareType"
         targets:
-          $ref: '#/components/schemas/Users'
+          $ref: "#/components/schemas/Users"
         administrators:
-          $ref: '#/components/schemas/Users'
+          $ref: "#/components/schemas/Users"
       required:
         - title
         - description
@@ -618,7 +618,7 @@ components:
         - administrators
     NewQuestionnaireResponse:
       allOf:
-      - $ref: '#/components/schemas/QuestionnaireUser'
+        - $ref: "#/components/schemas/QuestionnaireUser"
     Questionnaire:
       type: object
       properties:
@@ -641,7 +641,7 @@ components:
           type: string
           format: date-time
         res_shared_to:
-          $ref: '#/components/schemas/ResShareType'
+          $ref: "#/components/schemas/ResShareType"
       required:
         - questionnaireID
         - title
@@ -653,7 +653,7 @@ components:
         - targets
     QuestionnaireForList:
       allOf:
-        - $ref: '#/components/schemas/Questionnaire'
+        - $ref: "#/components/schemas/Questionnaire"
         - type: object
           properties:
             is_targeted:
@@ -672,36 +672,36 @@ components:
         questionnaires:
           type: array
           items:
-            $ref: '#/components/schemas/QuestionnaireForList'
+            $ref: "#/components/schemas/QuestionnaireForList"
       required:
         - page_max
         - questionnaires
     QuestionnaireByID:
       allOf:
-        - $ref: '#/components/schemas/QuestionnaireUser'
+        - $ref: "#/components/schemas/QuestionnaireUser"
         - type: object
           properties:
             respondents:
-              $ref: '#/components/schemas/Users'
+              $ref: "#/components/schemas/Users"
           required:
             - respondents
     QuestionnaireMyTargeted:
       allOf:
-      - $ref: '#/components/schemas/Questionnaire'
-      - type: object
-        properties:
-          responded_at:
-            type: string
-            format: date-time
-          has_response:
-            type: boolean
-            description: 回答済みあるいは下書きが存在する
-        required:
-          - responded_at
-          - has_response
+        - $ref: "#/components/schemas/Questionnaire"
+        - type: object
+          properties:
+            responded_at:
+              type: string
+              format: date-time
+            has_response:
+              type: boolean
+              description: 回答済みあるいは下書きが存在する
+          required:
+            - responded_at
+            - has_response
     QuestionnaireMyAdministrates:
-        allOf:
-        - $ref: '#/components/schemas/QuestionnaireUser'
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireUser"
         - type: object
           properties:
             all_responded:
@@ -710,22 +710,22 @@ components:
               description: |
                 回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
             respondents:
-              $ref: '#/components/schemas/Users'
+              $ref: "#/components/schemas/Users"
           required:
             - all_responded
             - respondents
     QuestionnaireUser:
       allOf:
-      - $ref: '#/components/schemas/Questionnaire'
-      - type: object
-        properties:
-          targets:
-            $ref: '#/components/schemas/Users'
-          administrators:
-            $ref: '#/components/schemas/Users'
-        required:
-          - targets
-          - administrators
+        - $ref: "#/components/schemas/Questionnaire"
+        - type: object
+          properties:
+            targets:
+              $ref: "#/components/schemas/Users"
+            administrators:
+              $ref: "#/components/schemas/Users"
+          required:
+            - targets
+            - administrators
     QuestionType:
       type: string
       example: Text
@@ -752,7 +752,7 @@ components:
           description: |
             アンケートの質問のうち、何問目か
         question_type:
-          $ref: '#/components/schemas/QuestionType'
+          $ref: "#/components/schemas/QuestionType"
         body:
           type: string
           example: 質問文
@@ -780,13 +780,13 @@ components:
           example: 5
         regex_pattern:
           type: string
-          example: ''
+          example: ""
         min_bound:
           type: string
-          example: ''
+          example: ""
         max_bound:
           type: string
-          example: ''
+          example: ""
       required:
         - page_num
         - question_num
@@ -800,38 +800,38 @@ components:
         - scale_max
     NewQuestion:
       allOf:
-      - $ref: '#/components/schemas/QuestionBase'
-      - type: object
-        properties:
-          questionnaireID:
-            type: integer
-            example: 1
-        required:
-          - questionnaireID
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          properties:
+            questionnaireID:
+              type: integer
+              example: 1
+          required:
+            - questionnaireID
     Question:
       allOf:
-      - $ref: '#/components/schemas/NewQuestion'
-      - type: object
-        properties:
-          questionID:
-            type: integer
-            example: 1
-        required:
-          - questionID
+        - $ref: "#/components/schemas/NewQuestion"
+        - type: object
+          properties:
+            questionID:
+              type: integer
+              example: 1
+          required:
+            - questionID
     QuestionDetails:
       allOf:
-      - $ref: '#/components/schemas/QuestionBase'
-      - type: object
-        properties:
-          questionID:
-            type: integer
-            example: 1
-          created_at:
-            type: string
-            format: date-time
-        required:
-          - questionID
-          - created_at
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          properties:
+            questionID:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+          required:
+            - questionID
+            - created_at
     NewResponse:
       type: object
       properties:
@@ -841,7 +841,7 @@ components:
         body:
           type: array
           items:
-            $ref: '#/components/schemas/ResponseBody'
+            $ref: "#/components/schemas/ResponseBody"
         submitted_at:
           type: string
           format: date-time
@@ -858,7 +858,7 @@ components:
         body:
           type: array
           items:
-            $ref: '#/components/schemas/ResponseBody'
+            $ref: "#/components/schemas/ResponseBody"
         temporarily:
           type: boolean
           example: true
@@ -871,7 +871,7 @@ components:
         - body
     Response:
       allOf:
-        - $ref: '#/components/schemas/NewResponse'
+        - $ref: "#/components/schemas/NewResponse"
         - type: object
           properties:
             modified_at:
@@ -881,7 +881,7 @@ components:
             - modified_at
     ResponseDetails:
       allOf:
-        - $ref: '#/components/schemas/NewResponse'
+        - $ref: "#/components/schemas/NewResponse"
         - type: object
           properties:
             responseID:
@@ -925,7 +925,7 @@ components:
           type: integer
           example: 1
         question_type:
-          $ref: '#/components/schemas/QuestionType'
+          $ref: "#/components/schemas/QuestionType"
         response:
           type: string
           example: リマインダーBOTを作った話
@@ -939,18 +939,18 @@ components:
         - question_type
     ResponseResult:
       allOf:
-      - $ref: '#/components/schemas/Response'
-      - type: object
-        properties:
-          traqID:
-            type: string
-            example: lolico
-          responseID:
-            type: integer
-            example: 1
-        required:
-          - traqID
-          - responseID
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            traqID:
+              type: string
+              example: lolico
+            responseID:
+              type: integer
+              example: 1
+          required:
+            - traqID
+            - responseID
       required:
         - submitted_at
     Users:
@@ -1008,7 +1008,7 @@ components:
         members:
           type: array
           items:
-            $ref: '#/components/schemas/Users'
+            $ref: "#/components/schemas/Users"
         createdAt:
           type: string
           format: date-time
@@ -1028,7 +1028,7 @@ components:
       type: oauth2
       flows:
         clientCredentials:
-          tokenUrl: 'http://example.com/oauth/token'
+          tokenUrl: "http://example.com/oauth/token"
           scopes:
             write: allows modifying resources
             read: allows reading resources
