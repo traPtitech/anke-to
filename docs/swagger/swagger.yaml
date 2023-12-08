@@ -33,7 +33,7 @@ paths:
         - $ref: "#/components/parameters/sortInQuery"
         - $ref: "#/components/parameters/searchInQuery"
         - $ref: "#/components/parameters/pageInQuery"
-        - $ref: "#/components/parameters/nontargetedInQuery"
+        - $ref: "#/components/parameters/isTargetingMeInQuery"
       responses:
         "200":
           description: 正常に取得できました。アンケートの配列を返します。
@@ -64,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewQuestionnaireResponse"
+                $ref: "#/components/schemas/QuestionnaireDetail"
         "400":
           description: 与えられた情報の形式が異なります
         "500":
@@ -499,8 +499,8 @@ components:
       description: 何ページ目か (未定義の場合は1ページ目)
       schema:
         type: integer
-    nontargetedInQuery:
-      name: nontargeted
+    isTargetingMeInQuery:
+      name: isTargetingMe
       in: query
       description: |
         自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
@@ -591,24 +591,6 @@ components:
         - public
       description: |
         アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
-    QuestionnaireSummary:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireID"
-        - $ref: "#/components/schemas/QuestionnaireTitle"
-        - $ref: "#/components/schemas/QuestionnaireDescription"
-        - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
-        - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
-        - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
-        - $ref: "#/components/schemas/QuestionnaireIsPublished"
-        - $ref: "#/components/schemas/QuestionnaireTargets"
-        - $ref: "#/components/schemas/QuestionnaireAdministrators"
-    QuestionnaireDetail:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireID"
-        - $ref: "#/components/schemas/Questionnaire"
-        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
-        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -621,13 +603,13 @@ components:
         - $ref: "#/components/schemas/QuestionnaireTargets"
         - $ref: "#/components/schemas/QuestionnaireAdministrators"
         - $ref: "#/components/schemas/QuestionnaireQuestions"
-    NewQuestionnaireResponse:
+    QuestionnaireDetail:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
-        - $ref: "#/components/schemas/Questionnaire"
+        - $ref: "#/components/schemas/NewQuestionnaire"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-    Questionnaire:
+    QuestionnaireSummary:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -637,7 +619,6 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
-        - $ref: "#/components/schemas/QuestionnaireQuestions"
     QuestionnaireForList:
       allOf:
         - $ref: "#/components/schemas/Questionnaire"
@@ -659,13 +640,13 @@ components:
         questionnaires:
           type: array
           items:
-            $ref: "#/components/schemas/QuestionnaireForList"
+            $ref: "#/components/schemas/QuestionnaireSummary"
       required:
         - page_max
         - questionnaires
     QuestionnaireByID:
       allOf:
-        - $ref: "#/components/schemas/NewQuestionnaireResponse"
+        - $ref: "#/components/schemas/QuestionnaireDetail"
         - type: object
           properties:
             respondents:
@@ -688,7 +669,7 @@ components:
             - has_response
     QuestionnaireMyAdministrates:
       allOf:
-        - $ref: "#/components/schemas/NewQuestionnaireResponse"
+        - $ref: "#/components/schemas/QuestionnaireDetail"
         - type: object
           properties:
             all_responded:
@@ -703,7 +684,7 @@ components:
             - respondents
     QuestionnaireUser:
       allOf:
-        - $ref: "#/components/schemas/NewQuestionnaireResponse"
+        - $ref: "#/components/schemas/QuestionnaireDetail"
     QuestionType:
       type: string
       example: Text
