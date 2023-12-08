@@ -592,33 +592,22 @@ components:
       description: |
         アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
     NewQuestionnaire:
-      type: object
-      properties:
-        title:
-          type: string
-          example: 第1回集会らん☆ぷろ募集アンケート
-        description:
-          type: string
-          example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
-        res_time_limit:
-          type: string
-          format: date-time
-        res_shared_to:
-          $ref: "#/components/schemas/ResShareType"
-        targets:
-          $ref: "#/components/schemas/Users"
-        administrators:
-          $ref: "#/components/schemas/Users"
-      required:
-        - title
-        - description
-        - res_time_limit
-        - res_shared_to
-        - targets
-        - administrators
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireTitle"
+        - $ref: "#/components/schemas/QuestionnaireDescription"
+        - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+        - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
+        - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
+        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsPublished"
+        - $ref: "#/components/schemas/QuestionnaireTargets"
+        - $ref: "#/components/schemas/QuestionnaireAdministrators"
+        - $ref: "#/components/schemas/QuestionnaireQuestions"
     NewQuestionnaireResponse:
       allOf:
-        - $ref: "#/components/schemas/QuestionnaireUser"
+        - $ref: "#/components/schemas/Questionnaire"
+        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
     Questionnaire:
       type: object
       properties:
@@ -1135,6 +1124,13 @@ components:
           description: 回答済みあるいは下書きが存在する
       required:
         - has_response
+    QuestionnaireQuestions:
+      type: object
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
     UsersAndGroups:
       type: object
       properties:
