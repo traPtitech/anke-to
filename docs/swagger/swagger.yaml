@@ -591,6 +591,24 @@ components:
         - public
       description: |
         アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+    QuestionnaireSummary:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - $ref: "#/components/schemas/QuestionnaireTitle"
+        - $ref: "#/components/schemas/QuestionnaireDescription"
+        - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+        - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
+        - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
+        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsPublished"
+        - $ref: "#/components/schemas/QuestionnaireTargets"
+        - $ref: "#/components/schemas/QuestionnaireAdministrators"
+    QuestionnaireDetail:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - $ref: "#/components/schemas/Questionnaire"
+        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -605,41 +623,21 @@ components:
         - $ref: "#/components/schemas/QuestionnaireQuestions"
     NewQuestionnaireResponse:
       allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/Questionnaire"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
     Questionnaire:
-      type: object
-      properties:
-        questionnaireID:
-          type: integer
-          example: 1
-        title:
-          type: string
-          example: 第1回集会らん☆ぷろ募集アンケート
-        description:
-          type: string
-          example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
-        res_time_limit:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        modified_at:
-          type: string
-          format: date-time
-        res_shared_to:
-          $ref: "#/components/schemas/ResShareType"
-      required:
-        - questionnaireID
-        - title
-        - description
-        - res_time_limit
-        - created_at
-        - modified_at
-        - res_shared_to
-        - targets
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - $ref: "#/components/schemas/QuestionnaireTitle"
+        - $ref: "#/components/schemas/QuestionnaireDescription"
+        - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+        - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
+        - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
+        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsPublished"
+        - $ref: "#/components/schemas/QuestionnaireQuestions"
     QuestionnaireForList:
       allOf:
         - $ref: "#/components/schemas/Questionnaire"
@@ -667,7 +665,7 @@ components:
         - questionnaires
     QuestionnaireByID:
       allOf:
-        - $ref: "#/components/schemas/QuestionnaireUser"
+        - $ref: "#/components/schemas/NewQuestionnaireResponse"
         - type: object
           properties:
             respondents:
@@ -690,7 +688,7 @@ components:
             - has_response
     QuestionnaireMyAdministrates:
       allOf:
-        - $ref: "#/components/schemas/QuestionnaireUser"
+        - $ref: "#/components/schemas/NewQuestionnaireResponse"
         - type: object
           properties:
             all_responded:
@@ -705,16 +703,7 @@ components:
             - respondents
     QuestionnaireUser:
       allOf:
-        - $ref: "#/components/schemas/Questionnaire"
-        - type: object
-          properties:
-            targets:
-              $ref: "#/components/schemas/Users"
-            administrators:
-              $ref: "#/components/schemas/Users"
-          required:
-            - targets
-            - administrators
+        - $ref: "#/components/schemas/NewQuestionnaireResponse"
     QuestionType:
       type: string
       example: Text
