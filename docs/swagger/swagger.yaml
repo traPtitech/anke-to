@@ -953,11 +953,6 @@ components:
             - responseID
       required:
         - submitted_at
-    Users:
-      type: array
-      items:
-        type: string
-        example: lolico
     User:
       type: object
       properties:
@@ -1023,6 +1018,143 @@ components:
         - members
         - createdAt
         - updatedAt
+    QuestionnaireID:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+      required:
+        - questionnaireID
+    QuestionnaireTitle:
+      type: object
+      properties:
+        title:
+          type: string
+          example: 第1回集会らん☆ぷろ募集アンケート
+      required:
+        - title
+    QuestionnaireDescription:
+      type: object
+      properties:
+        description:
+          type: string
+          example: 第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！
+      required:
+        - description
+    QuestionnaireResponseDueDateTime:
+      type: object
+      properties:
+        response_due_date_time:
+          type: string
+          format: date-time
+      required:
+        - response_due_date_time
+    QuestionnaireResponseViewableBy:
+      type: object
+      properties:
+        response_viewable_by:
+          $ref: "#/components/schemas/ResShareType"
+      required:
+        - response_viewable_by
+    QuestionnaireIsAnonymous:
+      type: object
+      properties:
+        is_anonymous:
+          type: boolean
+          example: true
+          description: |
+            匿名回答かどうか
+      required:
+        - is_anonymous
+    QuestionnaireAllowsMultipleResponses:
+      type: object
+      properties:
+        allows_multiple_responses:
+          type: boolean
+          example: true
+          description: |
+            一人が複数回回答できるかどうか
+      required:
+        - allows_multiple_responses
+    QuestionnaireIsPublished:
+      type: object
+      properties:
+        is_published:
+          type: boolean
+          example: true
+          description: |
+            アンケートが公開されているかどうか
+      required:
+        - is_published
+    QuestionnaireCreatedAt:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - created_at
+    QuestionnaireModifiedAt:
+      type: object
+      properties:
+        modified_at:
+          type: string
+          format: date-time
+      required:
+        - modified_at
+    QuestionnaireTargets:
+      $ref: "#/components/schemas/UsersAndGroups"
+    QuestionnaireAdministrators:
+      $ref: "#/components/schemas/UsersAndGroups"
+    QuestionnaireAllResponded:
+      type: object
+      properties:
+        all_responded:
+          type: boolean
+          example: true
+          description: |
+            回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
+      required:
+        - all_responded
+    QuestionnaireRespondents:
+      $ref: "#/components/schemas/Users"
+    QuestionnaireRespondedAt:
+      type: object
+      properties:
+        responded_at:
+          type: string
+          format: date-time
+      required:
+        - responded_at
+    QuestionnaireHasMyResponse:
+      type: object
+      properties:
+        has_response:
+          type: boolean
+          description: 回答済みあるいは下書きが存在する
+      required:
+        - has_response
+    UsersAndGroups:
+      type: object
+      properties:
+        users:
+          $ref: "#/components/schemas/Users"
+        groups:
+          $ref: "#/components/schemas/Groups"
+      required:
+        - users
+        - groups
+    Users:
+      type: array
+      items:
+        type: string
+        example: cp20
+    Groups:
+      type: array
+      items:
+        type: string
+        example: executive24
   securitySchemes:
     application:
       type: oauth2
