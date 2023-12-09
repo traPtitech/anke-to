@@ -141,7 +141,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/QuestionDetails"
+                  $ref: "#/components/schemas/Question"
         "400":
           description: アンケートのIDが無効です
         "500":
@@ -621,7 +621,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
     QuestionnaireForList:
       allOf:
-        - $ref: "#/components/schemas/Questionnaire"
+        - $ref: "#/components/schemas/QuestionnaireSummary"
         - type: object
           properties:
             is_targeted:
@@ -655,7 +655,7 @@ components:
             - respondents
     QuestionnaireMyTargeted:
       allOf:
-        - $ref: "#/components/schemas/Questionnaire"
+        - $ref: "#/components/schemas/QuestionnaireSummary"
         - type: object
           properties:
             responded_at:
@@ -685,6 +685,96 @@ components:
     QuestionnaireUser:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireDetail"
+
+    # TODO: exampleを追加する
+    NewQuestion:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - $ref: "#/components/schemas/QuestionSettingsByType"
+    Question:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - $ref: "#/components/schemas/QuestionSettingsByType"
+        - properties:
+            questionID:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+          required:
+            - questionID
+            - created_at
+    Questions:
+      type: array
+      items:
+        $ref: "#/components/schemas/Question"
+    QuestionBase:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        questionType:
+          $ref: "#/components/schemas/QuestionType"
+        title:
+          type: string
+        description:
+          type: string
+        is_required:
+          type: boolean
+      required:
+        - questionType
+        - title
+        - description
+        - is_required
+        - questionnaireID
+    QuestionSettingsByType:
+      oneOf:
+        - $ref: "#/components/schemas/QuestionSettingsText"
+        - $ref: "#/components/schemas/QuestionSettingsTextLong"
+        - $ref: "#/components/schemas/QuestionSettingsNumber"
+        - $ref: "#/components/schemas/QuestionSettingsSingleChoice"
+        - $ref: "#/components/schemas/QuestionSettingsMultipleChoice"
+        - $ref: "#/components/schemas/QuestionSettingsScale"
+    QuestionSettingsText:
+      type: object
+      properties:
+        maxLength:
+          type: integer
+    QuestionSettingsTextLong:
+      type: object
+      properties:
+        maxLength:
+          type: number
+    QuestionSettingsNumber:
+      type: object
+      properties:
+        minValue:
+          type: integer
+        maxValue:
+          type: integer
+    QuestionSettingsSingleChoice:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            type: string
+    QuestionSettingsMultipleChoice:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            type: string
+    QuestionSettingsScale:
+      type: object
+      properties:
+        minValue:
+          type: integer
+        maxValue:
+          type: integer
     QuestionType:
       type: string
       example: Text
@@ -696,101 +786,8 @@ components:
         - Checkbox
         - LinearScale
       description: |
-        どのタイプの質問か ("Text", "TextArea", "Number", "MultipleChoice", "Checkbox", "LinearScale")
-    QuestionBase:
-      type: object
-      properties:
-        page_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの何ページ目の質問か
-        question_num:
-          type: integer
-          example: 1
-          description: |
-            アンケートの質問のうち、何問目か
-        question_type:
-          $ref: "#/components/schemas/QuestionType"
-        body:
-          type: string
-          example: 質問文
-        is_required:
-          type: boolean
-          example: true
-          description: |
-            回答必須かどうか
-        options:
-          type: array
-          items:
-            type: string
-            example: 選択肢1
-        scale_label_right:
-          type: string
-          example: そう思わない
-        scale_label_left:
-          type: string
-          example: そう思う
-        scale_min:
-          type: integer
-          example: 1
-        scale_max:
-          type: integer
-          example: 5
-        regex_pattern:
-          type: string
-          example: ""
-        min_bound:
-          type: string
-          example: ""
-        max_bound:
-          type: string
-          example: ""
-      required:
-        - page_num
-        - question_num
-        - question_type
-        - body
-        - is_required
-        - options
-        - scale_label_right
-        - scale_label_left
-        - scale_min
-        - scale_max
-    NewQuestion:
-      allOf:
-        - $ref: "#/components/schemas/QuestionBase"
-        - type: object
-          properties:
-            questionnaireID:
-              type: integer
-              example: 1
-          required:
-            - questionnaireID
-    Question:
-      allOf:
-        - $ref: "#/components/schemas/NewQuestion"
-        - type: object
-          properties:
-            questionID:
-              type: integer
-              example: 1
-          required:
-            - questionID
-    QuestionDetails:
-      allOf:
-        - $ref: "#/components/schemas/QuestionBase"
-        - type: object
-          properties:
-            questionID:
-              type: integer
-              example: 1
-            created_at:
-              type: string
-              format: date-time
-          required:
-            - questionID
-            - created_at
+        どのタイプの質問か ("Text", "TextLong", "Number", "SingleChoice", "MultipleChoice", "Scale")
+
     NewResponse:
       type: object
       properties:
@@ -1121,6 +1118,7 @@ components:
       items:
         type: string
         example: executive24
+
   securitySchemes:
     application:
       type: oauth2
