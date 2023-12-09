@@ -40,7 +40,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestionnairesWithPageMax"
+                $ref: "#/components/schemas/QuestionnaireList"
         "400":
           description: 与えられた情報の形式が異なります
         "500":
@@ -84,7 +84,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestionnaireByID"
+                $ref: "#/components/schemas/QuestionnaireList"
         "400":
           description: アンケートのIDが無効です
         "404":
@@ -378,7 +378,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/QuestionnaireMyTargeted"
+                  $ref: "#/components/schemas/QuestionnaireList"
         "500":
           description: 自分のUserIDが取得できませんでした
   /users/{traQID}/targeted:
@@ -399,7 +399,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/QuestionnaireMyTargeted"
+                  $ref: "#/components/schemas/QuestionnaireList"
         "400":
           description: 与えらえた情報の形式が異なります
         "500":
@@ -418,7 +418,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/QuestionnaireMyAdministrates"
+                  $ref: "#/components/schemas/QuestionnaireList"
         "500":
           description: 自分が管理者となっているアンケートのリストを取得できませんでした
   /groups:
@@ -586,11 +586,11 @@ components:
       type: string
       example: public
       enum:
-        - administrators
+        - admins
         - respondents
         - public
       description: |
-        アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+        アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -600,13 +600,13 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
-        - $ref: "#/components/schemas/QuestionnaireTargets"
-        - $ref: "#/components/schemas/QuestionnaireAdministrators"
-        - $ref: "#/components/schemas/QuestionnaireQuestions"
+        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
+        - $ref: "#/components/schemas/Questions"
     QuestionnaireDetail:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/NewQuestionnaire"
+        - $ref: "#/components/schemas/QuestionnaireRespondents"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
     QuestionnaireSummary:
@@ -619,72 +619,36 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
-    QuestionnaireForList:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireSummary"
-        - type: object
-          properties:
-            is_targeted:
+        - properties:
+            is_targeting_me:
               type: boolean
               example: true
               description: |
                 自分がターゲットになっているかどうか
-          required:
-            - is_targeted
-    QuestionnairesWithPageMax:
-      type: object
-      properties:
-        page_max:
-          type: integer
-          description: 最大ページ数
-        questionnaires:
-          type: array
-          items:
-            $ref: "#/components/schemas/QuestionnaireSummary"
-      required:
-        - page_max
-        - questionnaires
-    QuestionnaireByID:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireDetail"
-        - type: object
-          properties:
-            respondents:
-              $ref: "#/components/schemas/Users"
-          required:
-            - respondents
-    QuestionnaireMyTargeted:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireSummary"
-        - type: object
-          properties:
             responded_at:
               type: string
               format: date-time
-            has_response:
+            has_my_draft:
               type: boolean
-              description: 回答済みあるいは下書きが存在する
-          required:
-            - responded_at
-            - has_response
-    QuestionnaireMyAdministrates:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireDetail"
-        - type: object
-          properties:
+              description: 下書きが存在する
+            has_my_response:
+              type: boolean
+              description: 回答が存在する
             all_responded:
               type: boolean
               example: true
               description: |
                 回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
-            respondents:
-              $ref: "#/components/schemas/Users"
           required:
+            - is_targeting_me
+            - responded_at
+            - has_my_draft
+            - has_my_response
             - all_responded
-            - respondents
-    QuestionnaireUser:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireDetail"
+    QuestionnaireList:
+      type: array
+      items:
+        $ref: "#/components/schemas/QuestionnaireSummary"
 
     # TODO: exampleを追加する
     NewQuestion:
@@ -1059,10 +1023,13 @@ components:
           format: date-time
       required:
         - modified_at
-    QuestionnaireTargets:
-      $ref: "#/components/schemas/UsersAndGroups"
-    QuestionnaireAdministrators:
-      $ref: "#/components/schemas/UsersAndGroups"
+    QuestionnaireTargetsAndAdmins:
+      type: object
+      properties:
+        targets:
+          $ref: "#/components/schemas/UsersAndGroups"
+        admins:
+          $ref: "#/components/schemas/UsersAndGroups"
     QuestionnaireAllResponded:
       type: object
       properties:
@@ -1091,13 +1058,6 @@ components:
           description: 回答済みあるいは下書きが存在する
       required:
         - has_response
-    QuestionnaireQuestions:
-      type: object
-      properties:
-        questions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Question"
     UsersAndGroups:
       type: object
       properties:
