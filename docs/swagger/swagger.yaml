@@ -84,7 +84,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QuestionnaireList"
+                $ref: "#/components/schemas/QuestionnaireDetail"
         "400":
           description: アンケートのIDが無効です
         "404":
@@ -103,7 +103,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewQuestionnaire"
+              $ref: "#/components/schemas/QuestionnaireDetail"
       responses:
         "200":
           description: 正常にアンケートを変更できました．
@@ -125,84 +125,6 @@ paths:
           description: アンケートのIDが無効です
         "500":
           description: アンケートの削除ができませんでした
-  "/questionnaires/{questionnaireID}/questions":
-    get:
-      operationId: getQuestions
-      tags:
-        - questionnaire
-      description: アンケートに含まれる質問のリストを取得します。
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Question"
-        "400":
-          description: アンケートのIDが無効です
-        "500":
-          description: 質問のリストを取得できませんでした
-    post:
-      operationId: PostQuestionByQuestionnaireID
-      tags:
-        - questionnaire
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-      description: 新しい質問を作成します．
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewQuestion"
-      responses:
-        "201":
-          description: 正常に質問を作成できました．作成された質問を返します．
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Question"
-        "400":
-          description: 正常に作成できませんでした。リクエストが不正です。
-        "500":
-          description: 正常に作成できません。主に正規表現が原因。
-  "/questions/{questionID}":
-    patch:
-      operationId: editQuestion
-      tags:
-        - question
-      description: 質問を変更します．
-      parameters:
-        - $ref: "#/components/parameters/questionIDInPath"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewQuestion"
-      responses:
-        "200":
-          description: 正常に質問を変更できました．
-        "400":
-          description: 正常に変更できませんでした。リクエストが不正です。
-        "500":
-          description: 正常に変更できませんでした。主に正規表現が原因。
-    delete:
-      operationId: deleteQuestion
-      tags:
-        - question
-      description: 質問を削除します．
-      parameters:
-        - $ref: "#/components/parameters/questionIDInPath"
-      responses:
-        "200":
-          description: 正常に質問を削除できました。
-        "500":
-          description: 正常に削除できませんでした。存在しない質問です。
   /responses:
     post:
       operationId: postResponse
@@ -214,14 +136,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostResponse"
+              $ref: "#/components/schemas/Response"
       responses:
         "201":
           description: 正常に回答を作成できました．作成された回答を返します．
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResponseDetails"
+                $ref: "#/components/schemas/Response"
         "400":
           description: 与えられた情報の形式が異なります
         "404":
@@ -263,7 +185,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewResponse"
+              $ref: "#/components/schemas/Response"
       responses:
         "200":
           description: 正常に回答を変更できました．
@@ -338,7 +260,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ResponseSummary"
+                  $ref: "#/components/schemas/Response"
         "500":
           description: Userが取得できませんでした
   "/users/me/responses/{questionnaireID}":
@@ -357,7 +279,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ResponseSummary"
+                  $ref: "#/components/schemas/Response"
         "400":
           description: questionnaireIDの型が数値ではありません
         "500":
@@ -454,7 +376,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ResponseResult"
+                  $ref: "#/components/schemas/Response"
         "400":
           description: questionnaireIDの型を数値に変換できませんでした
         "403":
@@ -538,7 +460,7 @@ components:
         traQ ID(ex:mazrean)
       schema:
         type: string
-  schemas:
+  schemas: # TODO: description, example, requiredを確認する
     AnsweredType:
       type: string
       description: アンケート検索時に回答済みかの状態での絞り込み
@@ -584,13 +506,13 @@ components:
         - ModifiedAtDESC
     ResShareType:
       type: string
-      example: public
+      example: anyone
       enum:
         - admins
         - respondents
-        - public
+        - anyone
       description: |
-        アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+        アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -649,295 +571,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/QuestionnaireSummary"
-
-    # TODO: exampleを追加する
-    NewQuestion:
-      allOf:
-        - $ref: "#/components/schemas/QuestionBase"
-        - $ref: "#/components/schemas/QuestionSettingsByType"
-    Question:
-      allOf:
-        - $ref: "#/components/schemas/QuestionBase"
-        - $ref: "#/components/schemas/QuestionSettingsByType"
-        - properties:
-            questionID:
-              type: integer
-              example: 1
-            created_at:
-              type: string
-              format: date-time
-          required:
-            - questionID
-            - created_at
-    Questions:
-      type: array
-      items:
-        $ref: "#/components/schemas/Question"
-    QuestionBase:
-      type: object
-      properties:
-        questionnaireID:
-          type: integer
-          example: 1
-        questionType:
-          $ref: "#/components/schemas/QuestionType"
-        title:
-          type: string
-        description:
-          type: string
-        is_required:
-          type: boolean
-      required:
-        - questionType
-        - title
-        - description
-        - is_required
-        - questionnaireID
-    QuestionSettingsByType:
-      oneOf:
-        - $ref: "#/components/schemas/QuestionSettingsText"
-        - $ref: "#/components/schemas/QuestionSettingsTextLong"
-        - $ref: "#/components/schemas/QuestionSettingsNumber"
-        - $ref: "#/components/schemas/QuestionSettingsSingleChoice"
-        - $ref: "#/components/schemas/QuestionSettingsMultipleChoice"
-        - $ref: "#/components/schemas/QuestionSettingsScale"
-    QuestionSettingsText:
-      type: object
-      properties:
-        maxLength:
-          type: integer
-    QuestionSettingsTextLong:
-      type: object
-      properties:
-        maxLength:
-          type: number
-    QuestionSettingsNumber:
-      type: object
-      properties:
-        minValue:
-          type: integer
-        maxValue:
-          type: integer
-    QuestionSettingsSingleChoice:
-      type: object
-      properties:
-        options:
-          type: array
-          items:
-            type: string
-    QuestionSettingsMultipleChoice:
-      type: object
-      properties:
-        options:
-          type: array
-          items:
-            type: string
-    QuestionSettingsScale:
-      type: object
-      properties:
-        minValue:
-          type: integer
-        maxValue:
-          type: integer
-    QuestionType:
-      type: string
-      example: Text
-      enum:
-        - Text
-        - TextArea
-        - Number
-        - MultipleChoice
-        - Checkbox
-        - LinearScale
-      description: |
-        どのタイプの質問か ("Text", "TextLong", "Number", "SingleChoice", "MultipleChoice", "Scale")
-
-    NewResponse:
-      type: object
-      properties:
-        questionnaireID:
-          type: integer
-          example: 1
-        body:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResponseBody"
-        submitted_at:
-          type: string
-          format: date-time
-      required:
-        - temporarily
-        - questionnaireID
-        - body
-    PostResponse:
-      type: object
-      properties:
-        questionnaireID:
-          type: integer
-          example: 1
-        body:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResponseBody"
-        temporarily:
-          type: boolean
-          example: true
-        submitted_at:
-          type: string
-          format: date-time
-      required:
-        - temporarily
-        - questionnaireID
-        - body
-    Response:
-      allOf:
-        - $ref: "#/components/schemas/NewResponse"
-        - type: object
-          properties:
-            modified_at:
-              type: string
-              format: date-time
-          required:
-            - modified_at
-    ResponseDetails:
-      allOf:
-        - $ref: "#/components/schemas/NewResponse"
-        - type: object
-          properties:
-            responseID:
-              type: integer
-              example: 1
-          required:
-            - responseID
-    ResponseSummary:
-      type: object
-      properties:
-        responseID:
-          type: integer
-          example: 1
-        questionnaireID:
-          type: integer
-          example: 1
-        questionnaire_title:
-          type: string
-          example: 第1回集会らん☆ぷろ募集アンケート
-        description:
-          type: string
-          example: 2017年度入学学部生
-        res_time_limit:
-          type: string
-          format: date-time
-        submitted_at:
-          type: string
-          format: date-time
-        modified_at:
-          type: string
-          format: date-time
-      required:
-        - responseID
-        - questionnaireID
-        - questionnaire_title
-        - modified_at
-    ResponseBody:
-      type: object
-      properties:
-        questionID:
-          type: integer
-          example: 1
-        question_type:
-          $ref: "#/components/schemas/QuestionType"
-        response:
-          type: string
-          example: リマインダーBOTを作った話
-        option_response:
-          type: array
-          items:
-            type: string
-            example: 選択肢1
-      required:
-        - questionID
-        - question_type
-    ResponseResult:
-      allOf:
-        - $ref: "#/components/schemas/Response"
-        - type: object
-          properties:
-            traqID:
-              type: string
-              example: lolico
-            responseID:
-              type: integer
-              example: 1
-          required:
-            - traqID
-            - responseID
-      required:
-        - submitted_at
-    User:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-        traqID:
-          type: string
-          example: lolico
-        displayName:
-          type: string
-          example: ロリ子
-        iconFileId:
-          type: string
-          format: uuid
-        twitterId:
-          type: string
-          example: trapyojo
-      required:
-        - userId
-        - traqID
-        - displayName
-        - iconFileId
-        - twitterId
-    Me:
-      type: object
-      properties:
-        traqID:
-          type: string
-          example: lolico
-      required:
-        - traqID
-    Group:
-      type: object
-      properties:
-        groupId:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: 17B
-        description:
-          type: string
-          example: 2017年度入学学部生
-        adminUser:
-          type: string
-          example: lolico
-        members:
-          type: array
-          items:
-            $ref: "#/components/schemas/Users"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required:
-        - groupId
-        - name
-        - description
-        - adminUser
-        - members
-        - createdAt
-        - updatedAt
     QuestionnaireID:
       type: object
       properties:
@@ -1058,6 +691,242 @@ components:
           description: 回答済みあるいは下書きが存在する
       required:
         - has_response
+
+    NewQuestion:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - $ref: "#/components/schemas/QuestionSettingsByType"
+    Question:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - $ref: "#/components/schemas/QuestionSettingsByType"
+        - properties:
+            questionID:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+          required:
+            - questionID
+            - created_at
+    Questions:
+      type: array
+      items:
+        $ref: "#/components/schemas/Question"
+    QuestionBase:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        questionType:
+          $ref: "#/components/schemas/QuestionType"
+        title:
+          type: string
+        description:
+          type: string
+        is_required:
+          type: boolean
+      required:
+        - questionType
+        - title
+        - description
+        - is_required
+        - questionnaireID
+    QuestionSettingsByType:
+      oneOf:
+        - $ref: "#/components/schemas/QuestionSettingsText"
+        - $ref: "#/components/schemas/QuestionSettingsTextLong"
+        - $ref: "#/components/schemas/QuestionSettingsNumber"
+        - $ref: "#/components/schemas/QuestionSettingsSingleChoice"
+        - $ref: "#/components/schemas/QuestionSettingsMultipleChoice"
+        - $ref: "#/components/schemas/QuestionSettingsScale"
+    QuestionSettingsText:
+      type: object
+      properties:
+        maxLength:
+          type: integer
+    QuestionSettingsTextLong:
+      type: object
+      properties:
+        maxLength:
+          type: number
+    QuestionSettingsNumber:
+      type: object
+      properties:
+        minValue:
+          type: integer
+        maxValue:
+          type: integer
+    QuestionSettingsSingleChoice:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            type: string
+    QuestionSettingsMultipleChoice:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            type: string
+    QuestionSettingsScale:
+      type: object
+      properties:
+        minValue:
+          type: integer
+        maxValue:
+          type: integer
+    QuestionType:
+      type: string
+      example: Text
+      enum:
+        - Text
+        - TextLong
+        - Number
+        - SingleChoice
+        - MultipleChoice
+        - Scale
+      description: |
+        どのタイプの質問か
+
+    Response:
+      type: object
+      properties:
+        respondent:
+          type: string
+          example: lolico
+        is_draft:
+          type: boolean
+          example: true
+        submitted_at:
+          type: string
+          format: date-time
+        modified_at:
+          type: string
+          format: date-time
+        body:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseBody"
+      required:
+        - respondent
+        - is_draft
+        - submitted_at
+        - modified_at
+        - body
+    ResponseBody:
+      oneOf:
+        - $ref: "#/components/schemas/ResponseSettingsText"
+        - $ref: "#/components/schemas/ResponseSettingsTextLong"
+        - $ref: "#/components/schemas/ResponseSettingsNumber"
+        - $ref: "#/components/schemas/ResponseSettingsSingleChoice"
+        - $ref: "#/components/schemas/ResponseSettingsMultipleChoice"
+        - $ref: "#/components/schemas/ResponseSettingsScale"
+    ResponseSettingsText:
+      type: object
+      properties:
+        text:
+          type: string
+    ResponseSettingsTextLong:
+      type: object
+      properties:
+        text:
+          type: string
+    ResponseSettingsNumber:
+      type: object
+      properties:
+        number:
+          type: number
+    ResponseSettingsSingleChoice:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: |
+            選択肢のインデックス
+    ResponseSettingsMultipleChoice:
+      type: object
+      properties:
+        answerIndexes:
+          type: array
+          items:
+            type: integer
+          description: |
+            選択肢のインデックスの配列
+    ResponseSettingsScale:
+      type: object
+      properties:
+        number:
+          type: integer
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        traqID:
+          type: string
+          example: lolico
+        displayName:
+          type: string
+          example: ロリ子
+        iconFileId:
+          type: string
+          format: uuid
+        twitterId:
+          type: string
+          example: trapyojo
+      required:
+        - userId
+        - traqID
+        - displayName
+        - iconFileId
+        - twitterId
+    Me:
+      type: object
+      properties:
+        traqID:
+          type: string
+          example: lolico
+      required:
+        - traqID
+    Group:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: 17B
+        description:
+          type: string
+          example: 2017年度入学学部生
+        adminUser:
+          type: string
+          example: lolico
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Users"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - groupId
+        - name
+        - description
+        - adminUser
+        - members
+        - createdAt
+        - updatedAt
     UsersAndGroups:
       type: object
       properties:
@@ -1073,11 +942,15 @@ components:
       items:
         type: string
         example: cp20
+        description: |
+          traQ ID
     Groups:
       type: array
       items:
         type: string
-        example: executive24
+        example: 1
+        description: |
+          Group UUID
 
   securitySchemes:
     application:
