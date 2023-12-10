@@ -165,7 +165,7 @@ paths: #TODO: tagの整理
         "400":
           description: 与えられた情報の形式が異なります
         "404":
-          description: アンケートの回答の期限がきれたため回答が存在しません
+          description: アンケートが存在しません
         "422":
           description: 回答期限が過ぎたため回答できません
         "500":
