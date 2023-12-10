@@ -157,7 +157,7 @@ paths: #TODO: tagの整理
               $ref: "#/components/schemas/NewResponse"
       responses:
         "201":
-          description: 正常に回答を作成できました．作成された回答を返します．
+          description: 正常に回答を作成できました。作成された回答を返します。
           content:
             application/json:
               schema:
@@ -166,7 +166,7 @@ paths: #TODO: tagの整理
           description: 与えられた情報の形式が異なります
         "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
-        "405":
+        "422":
           description: 回答期限が過ぎたため回答できません
         "500":
           description: 正常に回答が作成できませんでした
@@ -195,10 +195,10 @@ paths: #TODO: tagの整理
           description: アンケートの結果を正常に取得できませんでした
   /responses/{responseID}:
     get:
-      operationId: getResponses
+      operationId: getResponse
       tags:
         - response
-      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します。
+      description: 回答を取得します。
       parameters:
         - $ref: "#/components/parameters/responseIDInPath"
       responses:
@@ -209,18 +209,18 @@ paths: #TODO: tagの整理
               schema:
                 $ref: "#/components/schemas/Response"
         "400":
-          description: responseIDが数値に変換できませんでした
+          description: responseIDが無効です
         "403":
           description: 回答を閲覧する権限がありません。
         "404":
-          description: アンケートの回答の期限がきれたため回答が存在しません
+          description: 回答が存在しません
         "500":
-          description: responseIDを取得できませんでした
+          description: 回答を正常に取得できませんでした
     patch:
       operationId: editResponse
       tags:
         - response
-      description: 回答を変更します．
+      description: 回答を変更します。
       parameters:
         - $ref: "#/components/parameters/responseIDInPath"
       requestBody:
@@ -231,11 +231,11 @@ paths: #TODO: tagの整理
               $ref: "#/components/schemas/Response"
       responses:
         "200":
-          description: 正常に回答を変更できました．
+          description: 正常に回答を変更できました
         "400":
           description: 与えられた回答の情報が異なります
         "403":
-          description: 回答を変更する権限がありません。
+          description: 回答を変更する権限がありません
         "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
         "405":
@@ -246,12 +246,12 @@ paths: #TODO: tagの整理
       operationId: deleteResponse
       tags:
         - response
-      description: 回答を削除します．
+      description: 回答を削除します
       parameters:
         - $ref: "#/components/parameters/responseIDInPath"
       responses:
         "200":
-          description: 正常に回答を削除できました．
+          description: 正常に回答を削除できました
         "400":
           description: 与えられた回答の情報が異なります
         "403":
@@ -323,7 +323,7 @@ components:
       name: isTargetingMe
       in: query
       description: |
-        自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
+        自分がターゲットになっているもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     isAdministratedByMeInQuery:
