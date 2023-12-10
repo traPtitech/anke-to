@@ -18,10 +18,7 @@ security:
 tags:
   - name: questionnaire
   - name: response
-  - name: user
-  - name: group
-  - name: result
-paths:
+paths: #TODO: tagの整理
   /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
       operationId: getQuestionnaires
@@ -265,7 +262,7 @@ paths:
           description: 回答期限が過ぎたため回答を削除できません
         "500":
           description: responseIDを取得できませんでした
-  /responses/MyResponse:
+  /responses/MyResponses:
     get:
       operationId: getMyResponses
       tags:
@@ -284,152 +281,6 @@ paths:
                   $ref: "#/components/schemas/Response"
         "500":
           description: 自分の回答のリストを取得できませんでした
-  /users:
-    get:
-      operationId: getUsers
-      tags:
-        - user
-      summary: 未実装
-      description: (botおよび除名されたユーザーを除く、全ての) ユーザーのtraQIDのリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました．ユーザーの配列を返します．
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-        "500":
-          description: ユーザーのリストを取得できませんでした
-  /users/me:
-    get:
-      operationId: getUsersMe
-      tags:
-        - user
-      description: 自分のユーザー情報を取得します
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Me"
-        "500":
-          description: Userが取得できませんでした
-  /users/me/responses:
-    get:
-      operationId: getMyResponses
-      tags:
-        - user
-      description: 自分のすべての回答のリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。回答の配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Responses"
-        "500":
-          description: Userが取得できませんでした
-  /users/me/responses/{questionnaireID}:
-    get:
-      operationId: getMyResponsesByID
-      tags:
-        - user
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-      description: 特定のquestionnaireIdを持つアンケートに対する自分のすべての回答のリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。回答の配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Response"
-        "400":
-          description: questionnaireIDの型が数値ではありません
-        "500":
-          description: 回答のリストを取得できませんでした
-  /users/me/targeted:
-    get:
-      operationId: getTargetedQuestionnaire
-      tags:
-        - user
-      description: 自分が対象になっている アンケートのリストを取得します。
-      parameters:
-        - $ref: "#/components/parameters/sortInQuery"
-      responses:
-        "200":
-          description: 正常に取得できました。アンケートの配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/QuestionnaireList"
-        "500":
-          description: 自分のUserIDが取得できませんでした
-  /users/{traQID}/targeted:
-    get:
-      operationId: getTargetedQuestionnairesBytraQID
-      tags:
-        - user
-      description: ユーザが対象になっているアンケートのリストを取得します。
-      parameters:
-        - $ref: "#/components/parameters/sortInQuery"
-        - $ref: "#/components/parameters/answeredInQuery"
-        - $ref: "#/components/parameters/traQIDInPath"
-      responses:
-        "200":
-          description: 正常に取得できました。アンケートの配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/QuestionnaireList"
-        "400":
-          description: 与えらえた情報の形式が異なります
-        "500":
-          description: 対象となっているアンケートのリストを取得できませんでした
-  /users/me/administrates:
-    get:
-      operationId: getMyQuestionnaire
-      tags:
-        - user
-      description: 自分が管理者になっているアンケートのリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。アンケートの配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/QuestionnaireList"
-        "500":
-          description: 自分が管理者となっているアンケートのリストを取得できませんでした
-  /groups:
-    get:
-      operationId: getGroups
-      tags:
-        - group
-      summary: 未実装
-      description: (全ての) グループのリストを取得します
-      responses:
-        "200":
-          description: 正常に取得できました．グループの配列を返します．
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Group"
 components:
   parameters:
     answeredInQuery:
@@ -1013,71 +864,6 @@ components:
       properties:
         number:
           type: integer
-    User:
-      type: object
-      properties:
-        userUUID:
-          type: string
-          format: uuid
-        traqID:
-          type: string
-          example: lolico
-        displayName:
-          type: string
-          example: ロリ子
-        iconFileId:
-          type: string
-          format: uuid
-        twitterId:
-          type: string
-          example: trapyojo
-      required:
-        - userUUID
-        - traqID
-        - displayName
-        - iconFileId
-        - twitterId
-    Me:
-      type: object
-      properties:
-        traqID:
-          type: string
-          example: lolico
-      required:
-        - traqID
-    Group:
-      type: object
-      properties:
-        groupUUID:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: 17B
-        description:
-          type: string
-          example: 2017年度入学学部生
-        adminUser:
-          type: string
-          example: lolico
-        members:
-          type: array
-          items:
-            $ref: "#/components/schemas/Users"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required:
-        - groupId
-        - name
-        - description
-        - adminUser
-        - members
-        - createdAt
-        - updatedAt
     UsersAndGroups:
       type: object
       properties:
