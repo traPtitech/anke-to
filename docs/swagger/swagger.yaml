@@ -477,9 +477,17 @@ components:
             - has_my_response
             - all_responded
     QuestionnaireList:
-      type: array
-      items:
-        $ref: "#/components/schemas/QuestionnaireSummary"
+      type: object
+      properties:
+        page_max:
+          type: integer
+          example: 1
+          description: |
+            ページ数
+        questionnaires:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionnaireSummary"
     QuestionnaireID:
       type: object
       properties:
