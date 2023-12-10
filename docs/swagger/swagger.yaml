@@ -24,7 +24,7 @@ paths: #TODO: tagの整理
       operationId: getQuestionnaires
       tags:
         - questionnaire
-      description: 与えられた条件を満たす20件以下のアンケートのリストを取得します．
+      description: 与えられた条件を満たす20件以下のアンケートのリストを取得します。
       parameters:
         - $ref: "#/components/parameters/sortInQuery"
         - $ref: "#/components/parameters/searchInQuery"
@@ -48,7 +48,7 @@ paths: #TODO: tagの整理
       operationId: postQuestionnaire
       tags:
         - questionnaire
-      description: 新しいアンケートを作成します．
+      description: 新しいアンケートを作成します。
       requestBody:
         required: true
         content:
@@ -57,7 +57,7 @@ paths: #TODO: tagの整理
               $ref: "#/components/schemas/NewQuestionnaire"
       responses:
         "201":
-          description: 正常にアンケートを作成できました．作成されたアンケートを返します．
+          description: 正常にアンケートを作成できました。作成されたアンケートを返します。
           content:
             application/json:
               schema:
@@ -91,7 +91,7 @@ paths: #TODO: tagの整理
       operationId: editQuestionnaire
       tags:
         - questionnaire
-      description: アンケートの情報を変更します．
+      description: アンケートの情報を変更します。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
@@ -102,7 +102,7 @@ paths: #TODO: tagの整理
               $ref: "#/components/schemas/QuestionnaireDetail"
       responses:
         "200":
-          description: 正常にアンケートを変更できました．
+          description: 正常にアンケートを変更できました。
         "400":
           description: アンケートのIDが無効です
         "500":
@@ -111,12 +111,12 @@ paths: #TODO: tagの整理
       operationId: deleteQuestionnaire
       tags:
         - questionnaire
-      description: アンケートを削除します．
+      description: アンケートを削除します。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       responses:
         "200":
-          description: 正常にアンケートを削除できました．
+          description: 正常にアンケートを削除できました。
         "400":
           description: アンケートのIDが無効です
         "500":
@@ -278,7 +278,7 @@ paths: #TODO: tagの整理
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Response"
+                  $ref: "#/components/schemas/Responses"
         "500":
           description: 自分の回答のリストを取得できませんでした
 components:
@@ -711,9 +711,6 @@ components:
     NewResponse:
       type: object
       properties:
-        questionnaireID:
-          type: integer
-          example: 1
         respondent:
           type: string
           example: lolico
@@ -739,6 +736,7 @@ components:
         - body
     Response:
       allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
         - type: object
           properties:
             responseID:
