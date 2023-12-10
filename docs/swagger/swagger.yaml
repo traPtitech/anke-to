@@ -814,7 +814,7 @@ components:
         body:
           type: array
           items:
-            $ref: "#/components/schemas/ResponseBody"
+            $ref: "#/components/schemas/ResultBody"
     ResultBody:
       oneOf:
         - $ref: "#/components/schemas/ResponseSettingsText"
