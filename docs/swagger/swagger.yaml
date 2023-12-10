@@ -23,7 +23,7 @@ tags:
   - name: group
   - name: result
 paths:
-  /questionnaires:
+  /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
       operationId: getQuestionnaires
       tags:
@@ -69,8 +69,7 @@ paths:
           description: 与えられた情報の形式が異なります
         "500":
           description: アンケートを正常に作成できませんでした
-
-  "/questionnaires/{questionnaireID}":
+  /questionnaires/{questionnaireID}:
     get:
       operationId: getQuestionnaire
       tags:
@@ -125,18 +124,40 @@ paths:
           description: アンケートのIDが無効です
         "500":
           description: アンケートの削除ができませんでした
-  /responses:
-    post:
-      operationId: postResponse
+  /questionnaires/{questionnaireID}/responses:
+    get:
+      operationId: getQuestionnaireResponses
       tags:
-        - response
-      description: 新しい回答を作成します．
+        - questionnaire
+      description: アンケートの全ての回答を取得します。アンケートが匿名回答の場合、取得できません。
+      parameters:
+        - $ref: "#/components/parameters/questionnaireIDInPath"
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Responses"
+        "400":
+          description: アンケートのIDが無効です
+        "403":
+          description: アンケートが匿名回答のため回答を取得できません
+        "404":
+          description: アンケートが存在しません
+        "500":
+          description: 回答を正常に取得できませんでした
+    post:
+      operationId: postQuestionnaireResponse
+      tags:
+        - questionnaire
+      description: 新しい回答を作成します。アンケートが複数回答可能でない場合、過去の回答が削除されます。
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Response"
+              $ref: "#/components/schemas/NewResponse"
       responses:
         "201":
           description: 正常に回答を作成できました．作成された回答を返します．
@@ -152,12 +173,35 @@ paths:
           description: 回答期限が過ぎたため回答できません
         "500":
           description: 正常に回答が作成できませんでした
-  "/responses/{responseID}":
+  /questionnaires/{questionnaireID}/result:
+    get:
+      operationId: getQuestionnaireResult
+      tags:
+        - questionnaire
+      description: アンケートの回答を集計した結果を取得します。回答者の情報は含まれず、アンケートが匿名回答であっても取得できます。
+      parameters:
+        - $ref: "#/components/parameters/questionnaireIDInPath"
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Result"
+        "400":
+          description: アンケートのIDが無効です
+        "403":
+          description: 結果を閲覧する権限がありません。
+        "404":
+          description: アンケートが存在しません
+        "500":
+          description: アンケートの結果を正常に取得できませんでした
+  /responses/{responseID}:
     get:
       operationId: getResponses
       tags:
         - response
-      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します
+      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します。
       parameters:
         - $ref: "#/components/parameters/responseIDInPath"
       responses:
@@ -169,6 +213,8 @@ paths:
                 $ref: "#/components/schemas/Response"
         "400":
           description: responseIDが数値に変換できませんでした
+        "403":
+          description: 回答を閲覧する権限がありません。
         "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
         "500":
@@ -191,6 +237,8 @@ paths:
           description: 正常に回答を変更できました．
         "400":
           description: 与えられた回答の情報が異なります
+        "403":
+          description: 回答を変更する権限がありません。
         "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
         "405":
@@ -209,10 +257,12 @@ paths:
           description: 正常に回答を削除できました．
         "400":
           description: 与えられた回答の情報が異なります
+        "403":
+          description: 回答を削除する権限がありません。
         "404":
           description: アンケートの回答の期限がきれたため回答が存在しません
         "405":
-          description: 回答期限が過ぎたため回答できません
+          description: 回答期限が過ぎたため回答を削除できません
         "500":
           description: responseIDを取得できませんでした
   /users:
@@ -231,6 +281,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
+        "500":
+          description: ユーザーのリストを取得できませんでした
   /users/me:
     get:
       operationId: getUsersMe
@@ -260,10 +312,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Response"
+                  $ref: "#/components/schemas/Responses"
         "500":
           description: Userが取得できませんでした
-  "/users/me/responses/{questionnaireID}":
+  /users/me/responses/{questionnaireID}:
     get:
       operationId: getMyResponsesByID
       tags:
@@ -359,30 +411,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Group"
-  "/results/{questionnaireID}":
-    get:
-      operationId: getResults
-      tags:
-        - result
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-        - $ref: "#/components/parameters/responseSortInQuery"
-      description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。アンケートの各質問に対する結果の配列を返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Response"
-        "400":
-          description: questionnaireIDの型を数値に変換できませんでした
-        "403":
-          description: 結果を閲覧する権限がありません。
-        "500":
-          description: アンケートの回答の詳細情報一覧が取得できませんでした
 components:
   parameters:
     answeredInQuery:
@@ -691,7 +719,6 @@ components:
           description: 回答済みあるいは下書きが存在する
       required:
         - has_response
-
     NewQuestion:
       allOf:
         - $ref: "#/components/schemas/QuestionBase"
@@ -792,10 +819,12 @@ components:
         - Scale
       description: |
         どのタイプの質問か
-
-    Response:
+    NewResponse:
       type: object
       properties:
+        questionnaireID:
+          type: integer
+          example: 1
         respondent:
           type: string
           example: lolico
@@ -813,11 +842,26 @@ components:
           items:
             $ref: "#/components/schemas/ResponseBody"
       required:
+        - questionnaireID
         - respondent
         - is_draft
         - submitted_at
         - modified_at
         - body
+    Response:
+      allOf:
+        - type: object
+          properties:
+            responseID:
+              type: integer
+              example: 1
+          required:
+            - responseID
+        - $ref: "#/components/schemas/NewResponse"
+    Responses:
+      type: array
+      items:
+        $ref: "#/components/schemas/Response"
     ResponseBody:
       oneOf:
         - $ref: "#/components/schemas/ResponseSettingsText"
@@ -834,7 +878,7 @@ components:
     ResponseSettingsTextLong:
       type: object
       properties:
-        text:
+        textLong:
           type: string
     ResponseSettingsNumber:
       type: object
@@ -862,10 +906,87 @@ components:
       properties:
         number:
           type: integer
+    Result:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        responseNum:
+          type: integer
+          example: 1
+        body:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseBody"
+    ResultBody:
+      oneOf:
+        - $ref: "#/components/schemas/ResponseSettingsText"
+        - $ref: "#/components/schemas/ResponseSettingsTextLong"
+        - $ref: "#/components/schemas/ResponseSettingsNumber"
+        - $ref: "#/components/schemas/ResponseSettingsSingleChoice"
+        - $ref: "#/components/schemas/ResponseSettingsMultipleChoice"
+        - $ref: "#/components/schemas/ResponseSettingsScale"
+    ResultSettingsText:
+      type: object
+      properties:
+        texts:
+          type: array
+          items:
+            type: string
+      description: |
+        回答文の配列
+    ResultSettingsTextLong:
+      type: object
+      properties:
+        textLongs:
+          type: array
+          items:
+            type: string
+      description: |
+        回答文の配列
+    ResultSettingsNumber:
+      type: object
+      properties:
+        number:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+      description: |
+        値ごとの回答数の配列
+    ResultSettingsSingleChoice:
+      type: object
+      properties:
+        index:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+      description: |
+        選択肢ごとの回答数の配列
+    ResultSettingsMultipleChoice:
+      type: object
+      properties:
+        answerIndexes:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+      description: |
+        選択肢ごとの回答数の配列
+    ResultSettingsScale:
+      type: object
+      properties:
+        number:
+          type: integer
     User:
       type: object
       properties:
-        userId:
+        userUUID:
           type: string
           format: uuid
         traqID:
@@ -881,7 +1002,7 @@ components:
           type: string
           example: trapyojo
       required:
-        - userId
+        - userUUID
         - traqID
         - displayName
         - iconFileId
@@ -897,7 +1018,7 @@ components:
     Group:
       type: object
       properties:
-        groupId:
+        groupUUID:
           type: string
           format: uuid
         name:
@@ -951,7 +1072,6 @@ components:
         example: 1
         description: |
           Group UUID
-
   securitySchemes:
     application:
       type: oauth2
