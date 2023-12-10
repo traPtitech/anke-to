@@ -550,7 +550,11 @@ components:
         - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
-        - $ref: "#/components/schemas/Questions"
+        - properties:
+            questions:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewQuestion"
     QuestionnaireDetail:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
