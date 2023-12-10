@@ -265,6 +265,25 @@ paths:
           description: 回答期限が過ぎたため回答を削除できません
         "500":
           description: responseIDを取得できませんでした
+  /responses/MyResponse:
+    get:
+      operationId: getMyResponses
+      tags:
+        - response
+      description: 自分のすべての回答のリストを取得します。
+      parameters:
+        - $ref: "#/components/parameters/sortInQuery"
+      responses:
+        "200":
+          description: 正常に取得できました。回答の配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Response"
+        "500":
+          description: 自分の回答のリストを取得できませんでした
   /users:
     get:
       operationId: getUsers
