@@ -902,7 +902,8 @@ components:
       items:
         type: string
         example: 1
-        description: |
+          authorizationUrl: "https://q.trap.jp/api/v3/oauth2/authorize"
+          tokenUrl: "https://q.trap.jp/api/v3/oauth2/token"
           Group UUID
   securitySchemes:
     application:
