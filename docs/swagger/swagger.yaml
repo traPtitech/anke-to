@@ -151,6 +151,8 @@ paths:
       tags:
         - questionnaire
       description: 新しい回答を作成します。アンケートが複数回答可能でない場合、過去の回答が削除されます。
+      parameters:
+        - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
         required: true
         content:
@@ -434,7 +436,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
         - properties:
@@ -457,7 +459,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireAllowsMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - properties:
             is_targeting_me:
@@ -546,16 +548,16 @@ components:
             匿名回答かどうか
       required:
         - is_anonymous
-    QuestionnaireAllowsMultipleResponses:
+    QuestionnaireIsAllowingMultipleResponses:
       type: object
       properties:
-        allows_multiple_responses:
+        is_allowing_multiple_responses:
           type: boolean
           example: true
           description: |
             一人が複数回回答できるかどうか
       required:
-        - allows_multiple_responses
+        - is_allowing_multiple_responses
     QuestionnaireIsPublished:
       type: object
       properties:
