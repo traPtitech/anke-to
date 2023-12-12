@@ -551,11 +551,11 @@ components:
     QuestionnaireID:
       type: object
       properties:
-        questionnaireID:
+        questionnaire_id:
           type: integer
           example: 1
       required:
-        - questionnaireID
+        - questionnaire_id
     QuestionnaireTitle:
       type: object
       properties:
@@ -676,14 +676,14 @@ components:
         - $ref: "#/components/schemas/QuestionBase"
         - $ref: "#/components/schemas/QuestionSettingsByType"
         - properties:
-            questionID:
+            question_id:
               type: integer
               example: 1
             created_at:
               type: string
               format: date-time
           required:
-            - questionID
+            - question_id
             - created_at
     Questions:
       type: array
@@ -692,7 +692,7 @@ components:
     QuestionBase:
       type: object
       properties:
-        questionnaireID:
+        questionnaire_id:
           type: integer
           example: 1
         title:
@@ -702,11 +702,10 @@ components:
         is_required:
           type: boolean
       required:
-        - questionType
+        - questionnaire_id
         - title
         - description
         - is_required
-        - questionnaireID
     QuestionSettingsByType:
       oneOf:
         - $ref: "#/components/schemas/QuestionSettingsText"
@@ -798,7 +797,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireID"
         - type: object
           properties:
-            responseID:
+            response_id:
               type: integer
               example: 1
             submitted_at:
@@ -808,7 +807,7 @@ components:
               type: string
               format: date-time
           required:
-            - responseID
+            - response_id
             - submitted_at
             - modified_at
         - $ref: "#/components/schemas/NewResponse"
@@ -887,58 +886,58 @@ components:
     QuestionTypeText:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [Text]
       required:
-        - questionType
+        - question_type
     QuestionTypeTextLong:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [TextLong]
       required:
-        - questionType
+        - question_type
     QuestionTypeNumber:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [Number]
       required:
-        - questionType
+        - question_type
     QuestionTypeSingleChoice:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [SingleChoice]
       required:
-        - questionType
+        - question_type
     QuestionTypeMultipleChoice:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [MultipleChoice]
       required:
-        - questionType
+        - question_type
     QuestionTypeScale:
       type: object
       properties:
-        questionType:
+        question_type:
           type: string
           enum: [Scale]
       required:
-        - questionType
+        - question_type
     Result:
       type: object
       properties:
-        questionnaireID:
+        questionnaire_id:
           type: integer
           example: 1
-        responseCount:
+        response_count:
           type: integer
           example: 1
         body:
@@ -946,8 +945,8 @@ components:
           items:
             $ref: "#/components/schemas/ResultBody"
       required:
-        - questionnaireID
-        - responseCount
+        - questionnaire_id
+        - response_count
         - body
     ResultBody:
       oneOf:
@@ -969,7 +968,7 @@ components:
           description: |
             回答文の配列
           required:
-            - texts
+            - answers
     ResultSettingsTextLong:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeTextLong"
@@ -982,7 +981,7 @@ components:
           description: |
             回答文の配列
           required:
-            - textLongs
+            - answers
     ResultSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
@@ -1010,37 +1009,37 @@ components:
     ResultSettingsAnswerCountPerNumber:
       type: object
       properties:
-        answerCountPerNumber: #TODO: 配列なのに複数形じゃないの気になる
+        answer_count_per_number: #TODO: 配列なのに複数形じゃないの気になる
           type: array
           items:
             type: object
             properties:
               number:
                 type: number
-              answerCount:
+              answer_count:
                 type: number
             required:
               - number
-              - answerCount
+              - answer_count
       required:
-        - indexes
+        - answer_count_per_number
     ResultSettingsAnswerCountPerIndex:
       type: object
       properties:
-        AnswerCountPerIndex: #TODO: 配列なのに複数形じゃないの気になるv2
+        answer_count_per_index: #TODO: 配列なのに複数形じゃないの気になるv2
           type: array
           items:
             type: object
             properties:
               index:
                 type: number
-              answerCount:
+              answer_count:
                 type: number
             required:
               - index
-              - answerCount
+              - answer_count
       required:
-        - indexes
+        - answer_count_per_index
     UsersAndGroups:
       type: object
       properties:
