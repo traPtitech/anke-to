@@ -18,7 +18,7 @@ security:
 tags:
   - name: questionnaire
   - name: response
-paths:
+paths: #TODO 変数の命名を確認する
   /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
       operationId: getQuestionnaires
@@ -324,21 +324,21 @@ components:
       schema:
         type: integer
     onlyTargetingMeInQuery:
-      name: isTargetingMe
+      name: onlyTargetingMe
       in: query
       description: |
         自分がターゲットになっているもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     onlyAdministratedByMeInQuery:
-      name: isAdministratedByMe
+      name: onlyAdministratedByMe
       in: query
       description: |
         自分が管理者になっていないもののみ取得 (true), 管理者になっているものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     onlyMyResponseInQuery:
-      name: isMyResponse
+      name: onlyMyResponse
       in: query
       description: |
         自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
