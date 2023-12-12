@@ -15,10 +15,10 @@ security:
   - application:
       - read
       - write
-tags:
+tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
-paths: #TODO 変数の命名を確認する
+paths: # TODO 変数の命名を確認する
   /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
       operationId: getQuestionnaires
@@ -419,7 +419,7 @@ components:
         traQ ID(ex:mazrean)
       schema:
         type: string
-  schemas: # TODO: description, example, requiredを確認する
+  schemas: # TODO: description, exampleを確認する
     AnsweredType:
       type: string
       description: アンケート検索時に回答済みかの状態での絞り込み
@@ -965,8 +965,8 @@ components:
               type: array
               items:
                 type: string
-          description: |
-            回答文の配列
+              description: |
+                回答文の配列
           required:
             - answers
     ResultSettingsTextLong:
@@ -978,35 +978,35 @@ components:
               type: array
               items:
                 type: string
-          description: |
-            回答文の配列
+              description: |
+                回答文の配列
           required:
             - answers
     ResultSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerNumber"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
           description: |
             数値ごとの回答数の配列
     ResultSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerIndex"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
           description: |
             選択肢ごとの回答数の配列
     ResultSettingsMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerIndex"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
           description: |
             選択肢ごとの回答数の配列
     ResultSettingsScale:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeScale"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerNumber"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
           description: |
             数値ごとの回答数の配列
-    ResultSettingsAnswerCountPerNumber:
+    ResultSettingsAnswerCountsPerNumber:
       type: object
       properties:
         answer_counts_per_number:
@@ -1023,7 +1023,7 @@ components:
               - answer_count
       required:
         - answer_counts_per_number
-    ResultSettingsAnswerCountPerIndex:
+    ResultSettingsAnswerCountsPerIndex:
       type: object
       properties:
         answer_counts_per_index:
