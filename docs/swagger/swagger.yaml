@@ -1022,7 +1022,7 @@ components:
               - number
               - answer_count
       required:
-        - answer_count_per_number
+        - answer_counts_per_number
     ResultSettingsAnswerCountPerIndex:
       type: object
       properties:
@@ -1039,7 +1039,7 @@ components:
               - index
               - answer_count
       required:
-        - answer_count_per_index
+        - answer_counts_per_index
     UsersAndGroups:
       type: object
       properties:
