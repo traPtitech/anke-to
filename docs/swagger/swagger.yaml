@@ -1009,7 +1009,7 @@ components:
     ResultSettingsAnswerCountPerNumber:
       type: object
       properties:
-        answer_count_per_number: #TODO: 配列なのに複数形じゃないの気になる
+        answer_counts_per_number:
           type: array
           items:
             type: object
@@ -1026,7 +1026,7 @@ components:
     ResultSettingsAnswerCountPerIndex:
       type: object
       properties:
-        answer_count_per_index: #TODO: 配列なのに複数形じゃないの気になるv2
+        answer_counts_per_index:
           type: array
           items:
             type: object
