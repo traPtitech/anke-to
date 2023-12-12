@@ -121,6 +121,49 @@ paths: #TODO 変数の命名を確認する
           description: アンケートのIDが無効です
         "500":
           description: アンケートの削除ができませんでした
+  /questionnaires/{questionnaireID}/myRemindStatus:
+    get:
+      operationId: getQuestionnaireMyRemindStatus
+      tags:
+        - questionnaire
+      description: 自分に対するリマインドが有効かどうかを取得します。
+      parameters:
+        - $ref: "#/components/parameters/questionnaireIDInPath"
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionnaireMyRemindStatus"
+        "400":
+          description: アンケートのIDが無効です
+        "404":
+          description: アンケートが存在しません
+        "500":
+          description: リマインド設定を正常に取得できませんでした
+    patch:
+      operationId: editQuestionnaireMyRemindStatus
+      tags:
+        - questionnaire
+      description: 自分に対するリマインドが有効かどうかを変更します。
+      parameters:
+        - $ref: "#/components/parameters/questionnaireIDInPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionnaireMyRemindStatus"
+      responses:
+        "200":
+          description: 正常に変更できました。
+        "400":
+          description: アンケートのIDが無効です
+        "404":
+          description: アンケートが存在しません
+        "500":
+          description: リマインド設定を正常に変更できませんでした
   /questionnaires/{questionnaireID}/responses:
     get:
       operationId: getQuestionnaireResponses
@@ -266,7 +309,7 @@ paths: #TODO 変数の命名を確認する
           description: 回答期限が過ぎたため回答を削除できません
         "500":
           description: responseIDを取得できませんでした
-  /responses/MyResponses:
+  /responses/myResponses:
     get:
       operationId: getMyResponses
       tags:
@@ -615,6 +658,10 @@ components:
           description: 回答済みあるいは下書きが存在する
       required:
         - has_response
+    QuestionnaireMyRemindStatus:
+      type: boolean
+      description: |
+        自分に対するリマインドが有効かどうか
     NewQuestion:
       allOf:
         - $ref: "#/components/schemas/QuestionBase"
