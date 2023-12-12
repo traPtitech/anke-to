@@ -719,31 +719,24 @@ components:
         - $ref: "#/components/schemas/QuestionTypeText"
         - type: object
           properties:
-            maxLength:
+            max_length:
               type: integer
-          required:
-            - maxLength
     QuestionSettingsTextLong:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeTextLong"
         - type: object
           properties:
-            maxLength:
+            max_length:
               type: number
-          required:
-            - maxLength
     QuestionSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
         - type: object
           properties:
-            minValue:
+            min_value:
               type: integer
-            maxValue:
+            max_value:
               type: integer
-          required:
-            - minValue
-            - maxValue
     QuestionSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
@@ -771,13 +764,13 @@ components:
         - $ref: "#/components/schemas/QuestionTypeScale"
         - type: object
           properties:
-            minValue:
+            min_value:
               type: integer
-            maxValue:
+            max_value:
               type: integer
           required:
-            - minValue
-            - maxValue
+            - min_value
+            - max_value
     NewResponse:
       type: object
       properties:
