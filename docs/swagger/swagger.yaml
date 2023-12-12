@@ -601,7 +601,12 @@ components:
         - targets
         - admins
     QuestionnaireRespondents:
-      $ref: "#/components/schemas/Users"
+      type: object
+      properties:
+        respondents:
+          $ref: "#/components/schemas/Users"
+      required:
+        - respondents
     QuestionnaireHasMyResponse:
       type: object
       properties:
