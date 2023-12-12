@@ -1017,7 +1017,8 @@ components:
       type: oauth2
       flows:
         clientCredentials:
-          tokenUrl: "http://example.com/oauth/token"
+          authorizationUrl: "https://q.trap.jp/api/v3/oauth2/authorize"
+          tokenUrl: "https://q.trap.jp/api/v3/oauth2/token"
           scopes:
             write: allows modifying resources
             read: allows reading resources
