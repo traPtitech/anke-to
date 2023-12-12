@@ -778,7 +778,6 @@ components:
           required:
             - minValue
             - maxValue
-
     NewResponse:
       type: object
       properties:
