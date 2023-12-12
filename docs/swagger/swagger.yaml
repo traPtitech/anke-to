@@ -429,6 +429,7 @@ components:
         - anyone
       description: |
         アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
+
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -444,6 +445,8 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/NewQuestion"
+          required:
+            - questions
     QuestionnaireDetail:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -480,7 +483,7 @@ components:
               type: boolean
               example: true
               description: |
-                回答必須でない場合、またはすべてのターゲットが回答済みの場合、true を返す。それ以外はfalseを返す。
+                すべての対象者が回答済みの場合 true を返す。それ以外は false を返す。 (対象者が存在しない場合は true を返す)
           required:
             - is_targeting_me
             - responded_at
@@ -499,6 +502,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuestionnaireSummary"
+      required:
+        - page_max
+        - questionnaires
     QuestionnaireID:
       type: object
       properties:
@@ -594,16 +600,6 @@ components:
       required:
         - targets
         - admins
-    QuestionnaireAllResponded:
-      type: object
-      properties:
-        all_responded:
-          type: boolean
-          example: true
-          description: |
-            すべての対象者が回答済みの場合 true を返す。それ以外は false を返す。 (対象者が存在しない場合は true を返す)
-      required:
-        - all_responded
     QuestionnaireRespondents:
       $ref: "#/components/schemas/Users"
     QuestionnaireHasMyResponse:
@@ -642,8 +638,6 @@ components:
         questionnaireID:
           type: integer
           example: 1
-        questionType:
-          $ref: "#/components/schemas/QuestionType"
         title:
           type: string
         description:
@@ -665,59 +659,70 @@ components:
         - $ref: "#/components/schemas/QuestionSettingsMultipleChoice"
         - $ref: "#/components/schemas/QuestionSettingsScale"
     QuestionSettingsText:
-      type: object
-      properties:
-        maxLength:
-          type: integer
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeText"
+        - type: object
+          properties:
+            maxLength:
+              type: integer
+          required:
+            - maxLength
     QuestionSettingsTextLong:
-      type: object
-      properties:
-        maxLength:
-          type: number
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeTextLong"
+        - type: object
+          properties:
+            maxLength:
+              type: number
+          required:
+            - maxLength
     QuestionSettingsNumber:
-      type: object
-      properties:
-        minValue:
-          type: integer
-        maxValue:
-          type: integer
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeNumber"
+        - type: object
+          properties:
+            minValue:
+              type: integer
+            maxValue:
+              type: integer
+          required:
+            - minValue
+            - maxValue
     QuestionSettingsSingleChoice:
-      type: object
-      properties:
-        options:
-          type: array
-          items:
-            type: string
-      required:
-        - options
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
+        - type: object
+          properties:
+            options:
+              type: array
+              items:
+                type: string
+          required:
+            - options
     QuestionSettingsMultipleChoice:
-      type: object
-      properties:
-        options:
-          type: array
-          items:
-            type: string
-      required:
-        - options
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
+        - type: object
+          properties:
+            options:
+              type: array
+              items:
+                type: string
+          required:
+            - options
     QuestionSettingsScale:
-      type: object
-      properties:
-        minValue:
-          type: integer
-        maxValue:
-          type: integer
-    QuestionType:
-      type: string
-      example: Text
-      enum:
-        - Text
-        - TextLong
-        - Number
-        - SingleChoice
-        - MultipleChoice
-        - Scale
-      description: |
-        どのタイプの質問か
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeScale"
+        - type: object
+          properties:
+            minValue:
+              type: integer
+            maxValue:
+              type: integer
+          required:
+            - minValue
+            - maxValue
+
     NewResponse:
       type: object
       properties:
@@ -738,7 +743,6 @@ components:
           items:
             $ref: "#/components/schemas/ResponseBody"
       required:
-        - questionnaireID
         - respondent
         - is_draft
         - submitted_at
@@ -768,41 +772,113 @@ components:
         - $ref: "#/components/schemas/ResponseSettingsMultipleChoice"
         - $ref: "#/components/schemas/ResponseSettingsScale"
     ResponseSettingsText:
-      type: object
-      properties:
-        text:
-          type: string
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeText"
+        - type: object
+          properties:
+            text:
+              type: string
+          required:
+            - text
     ResponseSettingsTextLong:
-      type: object
-      properties:
-        textLong:
-          type: string
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeTextLong"
+        - type: object
+          properties:
+            textLong:
+              type: string
+          required:
+            - textLong
     ResponseSettingsNumber:
-      type: object
-      properties:
-        number:
-          type: number
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeNumber"
+        - type: object
+          properties:
+            number:
+              type: number
+          required:
+            - number
     ResponseSettingsSingleChoice:
-      type: object
-      properties:
-        index:
-          type: integer
-          description: |
-            選択肢のインデックス
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
+        - type: object
+          properties:
+            index:
+              type: integer
+              description: |
+                選択肢のインデックス
+          required:
+            - index
     ResponseSettingsMultipleChoice:
-      type: object
-      properties:
-        answerIndexes:
-          type: array
-          items:
-            type: integer
-          description: |
-            選択肢のインデックスの配列
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
+        - type: object
+          properties:
+            indexes:
+              type: array
+              items:
+                type: integer
+              description: |
+                選択肢のインデックスの配列
+          required:
+            - indexes
     ResponseSettingsScale:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeScale"
+        - type: object
+          properties:
+            number:
+              type: integer
+          required:
+            - number
+    QuestionTypeText:
       type: object
       properties:
-        number:
-          type: integer
+        questionType:
+          type: string
+          enum: [Text]
+      required:
+        - questionType
+    QuestionTypeTextLong:
+      type: object
+      properties:
+        questionType:
+          type: string
+          enum: [TextLong]
+      required:
+        - questionType
+    QuestionTypeNumber:
+      type: object
+      properties:
+        questionType:
+          type: string
+          enum: [Number]
+      required:
+        - questionType
+    QuestionTypeSingleChoice:
+      type: object
+      properties:
+        questionType:
+          type: string
+          enum: [SingleChoice]
+      required:
+        - questionType
+    QuestionTypeMultipleChoice:
+      type: object
+      properties:
+        questionType:
+          type: string
+          enum: [MultipleChoice]
+      required:
+        - questionType
+    QuestionTypeScale:
+      type: object
+      properties:
+        questionType:
+          type: string
+          enum: [Scale]
+      required:
+        - questionType
     Result:
       type: object
       properties:
@@ -816,6 +892,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultBody"
+      required:
+        - questionnaireID
+        - responseCount
+        - body
     ResultBody:
       oneOf:
         - $ref: "#/components/schemas/ResultSettingsText"
@@ -825,61 +905,89 @@ components:
         - $ref: "#/components/schemas/ResultSettingsMultipleChoice"
         - $ref: "#/components/schemas/ResultSettingsScale"
     ResultSettingsText:
-      type: object
-      properties:
-        texts:
-          type: array
-          items:
-            type: string
-      description: |
-        回答文の配列
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeText"
+        - type: object
+          properties:
+            answers:
+              type: array
+              items:
+                type: string
+          description: |
+            回答文の配列
+          required:
+            - texts
     ResultSettingsTextLong:
-      type: object
-      properties:
-        textLongs:
-          type: array
-          items:
-            type: string
-      description: |
-        回答文の配列
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeTextLong"
+        - type: object
+          properties:
+            answers:
+              type: array
+              items:
+                type: string
+          description: |
+            回答文の配列
+          required:
+            - textLongs
     ResultSettingsNumber:
-      type: object
-      properties:
-        number:
-          type: array
-          items:
-            type: array
-            items:
-              type: number
-      description: |
-        値ごとの回答数の配列
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeNumber"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerNumber"
+          description: |
+            数値ごとの回答数の配列
     ResultSettingsSingleChoice:
-      type: object
-      properties:
-        index:
-          type: array
-          items:
-            type: array
-            items:
-              type: number
-      description: |
-        選択肢ごとの回答数の配列
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerIndex"
+          description: |
+            選択肢ごとの回答数の配列
     ResultSettingsMultipleChoice:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerIndex"
+          description: |
+            選択肢ごとの回答数の配列
+    ResultSettingsScale:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeScale"
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountPerNumber"
+          description: |
+            数値ごとの回答数の配列
+    ResultSettingsAnswerCountPerNumber:
       type: object
       properties:
-        answerIndexes:
+        answerCountPerNumber: #TODO: 配列なのに複数形じゃないの気になる
           type: array
           items:
-            type: array
-            items:
-              type: number
-      description: |
-        選択肢ごとの回答数の配列
-    ResultSettingsScale:
+            type: object
+            properties:
+              number:
+                type: number
+              answerCount:
+                type: number
+            required:
+              - number
+              - answerCount
+      required:
+        - indexes
+    ResultSettingsAnswerCountPerIndex:
       type: object
       properties:
-        number:
-          type: integer
+        AnswerCountPerIndex: #TODO: 配列なのに複数形じゃないの気になるv2
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: number
+              answerCount:
+                type: number
+            required:
+              - index
+              - answerCount
+      required:
+        - indexes
     UsersAndGroups:
       type: object
       properties:
