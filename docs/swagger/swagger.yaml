@@ -661,7 +661,7 @@ components:
     QuestionnaireMyRemindStatus:
       type: boolean
       description: |
-        自分に対するリマインドが有効かどうか
+        自分に対するリマインドが有効かどうか。ユーザーが対象者でありかつ回答していない場合、この値がtrueであればリマインドが送信される。
     NewQuestion:
       allOf:
         - $ref: "#/components/schemas/QuestionBase"
