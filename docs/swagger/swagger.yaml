@@ -325,7 +325,7 @@ paths: # TODO 変数の命名を確認する
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Responses"
+                  $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
         "500":
           description: 自分の回答のリストを取得できませんでした
 components:
@@ -507,31 +507,28 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
+        - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
+        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
         - properties:
-            is_targeting_me:
-              type: boolean
-              example: true
-              description: |
-                自分がターゲットになっているかどうか
-            responded_at:
-              type: string
-              format: date-time
             has_my_draft:
               type: boolean
               description: 下書きが存在する
             has_my_response:
               type: boolean
               description: 回答が存在する
+            responded_date_time_by_me:
+              type: string
+              format: date-time
             all_responded:
               type: boolean
               example: true
               description: |
                 すべての対象者が回答済みの場合 true を返す。それ以外は false を返す。 (対象者が存在しない場合は true を返す)
           required:
-            - is_targeting_me
-            - responded_at
             - has_my_draft
             - has_my_response
+            - responded_date_time_by_me
             - all_responded
     QuestionnaireList:
       type: object
@@ -617,6 +614,16 @@ components:
             アンケートが公開されているかどうか
       required:
         - is_published
+    QuestionnaireIsTargetingMe:
+      type: object
+      properties:
+        is_targeting_me:
+          type: boolean
+          example: true
+          description: |
+            自分がターゲットになっているかどうか
+      required:
+        - is_targeting_me
     QuestionnaireCreatedAt:
       type: object
       properties:
@@ -807,6 +814,20 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Response"
+    ResponsesWithQuestionnaireInfo:
+      type: array
+      items:
+        allOf:
+          - $ref: "#/components/schemas/Response"
+          - type: object
+            properties:
+              questionnaire_info:
+                allOf:
+                  - $ref: "#/components/schemas/QuestionnaireTitle"
+                  - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+                  - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+                  - $ref: "#/components/schemas/QuestionnaireModifiedAt"
+                  - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
     ResponseBody:
       oneOf:
         - $ref: "#/components/schemas/ResponseSettingsText"
