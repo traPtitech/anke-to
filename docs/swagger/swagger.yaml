@@ -775,6 +775,10 @@ components:
               type: integer
             max_value:
               type: integer
+            min_label:
+              type: string
+            max_label:
+              type: string
           required:
             - min_value
             - max_value
