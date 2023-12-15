@@ -11,20 +11,7 @@ import (
 	"gorm.io/plugin/prometheus"
 )
 
-var (
-	db        *gorm.DB
-	allTables = []interface{}{
-		Questionnaires{},
-		Questions{},
-		Respondents{},
-		Responses{},
-		Administrators{},
-		Options{},
-		ScaleLabels{},
-		Targets{},
-		Validations{},
-	}
-)
+var db *gorm.DB
 
 // EstablishConnection DBと接続
 func EstablishConnection(isProduction bool) error {
@@ -90,7 +77,7 @@ func Migrate() (init bool, err error) {
 	m.InitSchema(func(db *gorm.DB) error {
 		init = true
 
-		return db.AutoMigrate(allTables...)
+		return db.AutoMigrate(AllTables()...)
 	})
 	err = m.Migrate()
 	return
