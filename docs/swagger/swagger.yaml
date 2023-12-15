@@ -575,8 +575,9 @@ components:
         response_due_date_time:
           type: string
           format: date-time
-      required:
-        - response_due_date_time
+          example: 2020-01-01T00:00:00+09:00
+          description: |
+            回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
     QuestionnaireResponseViewableBy:
       type: object
       properties:
