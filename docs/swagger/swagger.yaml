@@ -977,53 +977,56 @@ components:
     ResultSettingsText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
-        - type: object
-          properties:
-            answers:
-              type: array
-              items:
-                type: string
-              description: |
-                回答文の配列
-          required:
-            - answers
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerString"
+      description: |
+        回答文ごとの回答数の配列
     ResultSettingsTextLong:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeTextLong"
-        - type: object
-          properties:
-            answers:
-              type: array
-              items:
-                type: string
-              description: |
-                回答文の配列
-          required:
-            - answers
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerString"
+      description: |
+        回答文ごとの回答数の配列
     ResultSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
         - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
-          description: |
-            数値ごとの回答数の配列
+      description: |
+        数値ごとの回答数の配列
     ResultSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
-          description: |
-            選択肢ごとの回答数の配列
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
+      description: |
+        選択肢ごとの回答数の配列
     ResultSettingsMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
-          description: |
-            選択肢ごとの回答数の配列
+        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
+      description: |
+        選択肢ごとの回答数の配列
     ResultSettingsScale:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeScale"
         - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
-          description: |
-            数値ごとの回答数の配列
+      description: |
+        数値ごとの回答数の配列
+    ResultSettingsAnswerCountsPerString:
+      type: object
+      properties:
+        answer_counts_per_string:
+          type: array
+          items:
+            type: object
+            properties:
+              answer:
+                type: string
+              answer_count:
+                type: number
+            required:
+              - answer
+              - answer_count
+      required:
+        - answer_counts_per_string
     ResultSettingsAnswerCountsPerNumber:
       type: object
       properties:
@@ -1032,32 +1035,15 @@ components:
           items:
             type: object
             properties:
-              number:
+              answer:
                 type: number
               answer_count:
                 type: number
             required:
-              - number
+              - answer
               - answer_count
       required:
         - answer_counts_per_number
-    ResultSettingsAnswerCountsPerIndex:
-      type: object
-      properties:
-        answer_counts_per_index:
-          type: array
-          items:
-            type: object
-            properties:
-              index:
-                type: number
-              answer_count:
-                type: number
-            required:
-              - index
-              - answer_count
-      required:
-        - answer_counts_per_index
     UsersAndGroups:
       type: object
       properties:
