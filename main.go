@@ -34,7 +34,7 @@ func main() {
 		panic(err)
 	}
 
-	err = model.Migrate()
+	_, err = model.Migrate()
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -83,12 +84,24 @@ func EstablishConnection(isProduction bool) error {
 	return nil
 }
 
-// Migrate DBのMigrationを行う
-func Migrate() error {
-	err := db.AutoMigrate(allTables...)
-	if err != nil {
-		return fmt.Errorf("failed in table's migration: %w", err)
-	}
+func Migrate() (init bool, err error) {
+	m := gormigrate.New(db, gormigrate.DefaultOptions, Migrations())
 
-	return nil
+	m.InitSchema(func(db *gorm.DB) error {
+		init = true
+
+		return db.AutoMigrate(allTables...)
+	})
+	err = m.Migrate()
+	return
 }
+
+// Migrate DBのMigrationを行う
+// func Migrate() error {
+// 	err := db.AutoMigrate(allTables...)
+// 	if err != nil {
+// 		return fmt.Errorf("failed in table's migration: %w", err)
+// 	}
+
+// 	return nil
+// }

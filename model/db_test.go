@@ -23,14 +23,14 @@ var (
 	targetImpl        = new(Target)
 )
 
-//TestMain テストのmain
+// TestMain テストのmain
 func TestMain(m *testing.M) {
 	err := EstablishConnection(true)
 	if err != nil {
 		panic(err)
 	}
 
-	err = Migrate()
+	_, err = Migrate()
 	if err != nil {
 		panic(err)
 	}
