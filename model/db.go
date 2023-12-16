@@ -72,7 +72,7 @@ func EstablishConnection(isProduction bool) error {
 }
 
 func Migrate() (init bool, err error) {
-	m := gormigrate.New(db, gormigrate.DefaultOptions, Migrations())
+	m := gormigrate.New(db.Session(&gorm.Session{}), gormigrate.DefaultOptions, Migrations())
 
 	m.InitSchema(func(db *gorm.DB) error {
 		init = true
