@@ -6,9 +6,7 @@ import (
 
 // Migrations is all db migrations
 func Migrations() []*gormigrate.Migration {
-	return []*gormigrate.Migration{
-		{},
-	}
+	return []*gormigrate.Migration{}
 }
 
 func AllTables() []interface{} {
