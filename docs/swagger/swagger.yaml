@@ -710,7 +710,7 @@ components:
           type: string
         description:
           type: string
-        is_answer_required:
+        is_required:
           type: boolean
           description: |
             回答必須かどうか
@@ -718,7 +718,7 @@ components:
         - questionnaire_id
         - title
         - description
-        - is_answer_required
+        - is_required
     QuestionSettingsByType:
       oneOf:
         - $ref: "#/components/schemas/QuestionSettingsText"
@@ -839,8 +839,6 @@ components:
     NewResponse:
       type: object
       properties:
-        respondent:
-          $ref: "#/components/schemas/TraqId"
         is_draft:
           type: boolean
           example: true
@@ -849,7 +847,6 @@ components:
           items:
             $ref: "#/components/schemas/ResponseBody"
       required:
-        - respondent
         - is_draft
         - body
     Response:
@@ -860,6 +857,8 @@ components:
             response_id:
               type: integer
               example: 1
+            respondent:
+              $ref: "#/components/schemas/TraqId"
             submitted_at:
               type: string
               format: date-time
@@ -870,6 +869,7 @@ components:
               example: 2020-01-01T00:00:00+09:00
           required:
             - response_id
+            - respondent
             - submitted_at
             - modified_at
         - $ref: "#/components/schemas/NewResponse"
@@ -922,14 +922,14 @@ components:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
         - type: object
           properties:
-            answers:
+            answer:
               type: array
               items:
                 type: integer
           description: |
             選択肢のインデックスの配列
           required:
-            - answers
+            - answer
     ResponseBodyScale:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeScale"
@@ -983,43 +983,43 @@ components:
     ResultBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerString"
+        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
       description: |
         回答文ごとの回答数の配列
     ResultBodyTextLong:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeTextLong"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerString"
+        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
       description: |
         回答文ごとの回答数の配列
     ResultBodyNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerNumber"
+        - $ref: "#/components/schemas/ResultBodyBaseNumberAnswer"
       description: |
         数値ごとの回答数の配列
     ResultBodySingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerInteger"
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
       description: |
         選択肢ごとの回答数の配列
     ResultBodyMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerInteger"
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
       description: |
         選択肢ごとの回答数の配列
     ResultBodyScale:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeScale"
-        - $ref: "#/components/schemas/ResultBodyBaseAnswerCountsPerInteger"
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
       description: |
         数値ごとの回答数の配列
-    ResultBodyBaseAnswerCountsPerString:
+    ResultBodyBaseStringAnswer:
       type: object
       properties:
-        answer_counts_per_answer:
+        aggregated_answers:
           type: array
           items:
             type: object
@@ -1032,11 +1032,11 @@ components:
               - answer
               - answer_count
       required:
-        - answer_counts_per_answer
-    ResultBodyBaseAnswerCountsPerNumber:
+        - aggregated_answers
+    ResultBodyBaseNumberAnswer:
       type: object
       properties:
-        answer_counts_per_answer:
+        aggregated_answers:
           type: array
           items:
             type: object
@@ -1049,11 +1049,11 @@ components:
               - answer
               - answer_count
       required:
-        - answer_counts_per_answer
-    ResultBodyBaseAnswerCountsPerInteger:
+        - aggregated_answers
+    ResultBodyBaseIntegerAnswer:
       type: object
       properties:
-        answer_counts_per_answer:
+        aggregated_answers:
           type: array
           items:
             type: object
@@ -1066,7 +1066,7 @@ components:
               - answer
               - answer_count
       required:
-        - answer_counts_per_answer
+        - aggregated_answers
     UsersAndGroups:
       type: object
       properties:
