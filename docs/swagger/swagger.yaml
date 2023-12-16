@@ -325,7 +325,7 @@ paths: # TODO 変数の命名を確認する
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Responses"
+                  $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
         "500":
           description: 自分の回答のリストを取得できませんでした
 components:
@@ -507,31 +507,28 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
+        - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
+        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
         - properties:
-            is_targeting_me:
-              type: boolean
-              example: true
-              description: |
-                自分がターゲットになっているかどうか
-            responded_at:
-              type: string
-              format: date-time
             has_my_draft:
               type: boolean
               description: 下書きが存在する
             has_my_response:
               type: boolean
               description: 回答が存在する
+            responded_date_time_by_me:
+              type: string
+              format: date-time
             all_responded:
               type: boolean
               example: true
               description: |
                 すべての対象者が回答済みの場合 true を返す。それ以外は false を返す。 (対象者が存在しない場合は true を返す)
           required:
-            - is_targeting_me
-            - responded_at
             - has_my_draft
             - has_my_response
+            - responded_date_time_by_me
             - all_responded
     QuestionnaireList:
       type: object
@@ -578,8 +575,9 @@ components:
         response_due_date_time:
           type: string
           format: date-time
-      required:
-        - response_due_date_time
+          example: 2020-01-01T00:00:00+09:00
+          description: |
+            回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
     QuestionnaireResponseViewableBy:
       type: object
       properties:
@@ -617,12 +615,23 @@ components:
             アンケートが公開されているかどうか
       required:
         - is_published
+    QuestionnaireIsTargetingMe:
+      type: object
+      properties:
+        is_targeting_me:
+          type: boolean
+          example: true
+          description: |
+            自分がターゲットになっているかどうか
+      required:
+        - is_targeting_me
     QuestionnaireCreatedAt:
       type: object
       properties:
         created_at:
           type: string
           format: date-time
+          example: 2020-01-01T00:00:00+09:00
       required:
         - created_at
     QuestionnaireModifiedAt:
@@ -631,6 +640,7 @@ components:
         modified_at:
           type: string
           format: date-time
+          example: 2020-01-01T00:00:00+09:00
       required:
         - modified_at
     QuestionnaireTargetsAndAdmins:
@@ -682,6 +692,7 @@ components:
             created_at:
               type: string
               format: date-time
+              example: 2020-01-01T00:00:00+09:00
           required:
             - question_id
             - created_at
@@ -701,6 +712,8 @@ components:
           type: string
         is_required:
           type: boolean
+          description: |
+            回答必須かどうか
       required:
         - questionnaire_id
         - title
@@ -768,113 +781,13 @@ components:
               type: integer
             max_value:
               type: integer
+            min_label:
+              type: string
+            max_label:
+              type: string
           required:
             - min_value
             - max_value
-    NewResponse:
-      type: object
-      properties:
-        is_draft:
-          type: boolean
-          example: true
-        body:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResponseBody"
-      required:
-        - is_draft
-        - body
-    Response:
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireID"
-        - type: object
-          properties:
-            response_id:
-              type: integer
-              example: 1
-            submitted_at:
-              type: string
-              format: date-time
-            modified_at:
-              type: string
-              format: date-time
-          required:
-            - response_id
-            - submitted_at
-            - modified_at
-        - $ref: "#/components/schemas/NewResponse"
-    Responses:
-      type: array
-      items:
-        $ref: "#/components/schemas/Response"
-    ResponseBody:
-      oneOf:
-        - $ref: "#/components/schemas/ResponseSettingsText"
-        - $ref: "#/components/schemas/ResponseSettingsTextLong"
-        - $ref: "#/components/schemas/ResponseSettingsNumber"
-        - $ref: "#/components/schemas/ResponseSettingsSingleChoice"
-        - $ref: "#/components/schemas/ResponseSettingsMultipleChoice"
-        - $ref: "#/components/schemas/ResponseSettingsScale"
-    ResponseSettingsText:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeText"
-        - type: object
-          properties:
-            text:
-              type: string
-          required:
-            - text
-    ResponseSettingsTextLong:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeTextLong"
-        - type: object
-          properties:
-            textLong:
-              type: string
-          required:
-            - textLong
-    ResponseSettingsNumber:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeNumber"
-        - type: object
-          properties:
-            number:
-              type: number
-          required:
-            - number
-    ResponseSettingsSingleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - type: object
-          properties:
-            index:
-              type: integer
-              description: |
-                選択肢のインデックス
-          required:
-            - index
-    ResponseSettingsMultipleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - type: object
-          properties:
-            indexes:
-              type: array
-              items:
-                type: integer
-              description: |
-                選択肢のインデックスの配列
-          required:
-            - indexes
-    ResponseSettingsScale:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeScale"
-        - type: object
-          properties:
-            number:
-              type: integer
-          required:
-            - number
     QuestionTypeText:
       type: object
       properties:
@@ -923,6 +836,125 @@ components:
           enum: [Scale]
       required:
         - question_type
+    NewResponse:
+      type: object
+      properties:
+        is_draft:
+          type: boolean
+          example: true
+        body:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseBody"
+      required:
+        - is_draft
+        - body
+    Response:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - type: object
+          properties:
+            response_id:
+              type: integer
+              example: 1
+            respondent:
+              $ref: "#/components/schemas/TraqId"
+            submitted_at:
+              type: string
+              format: date-time
+              example: 2020-01-01T00:00:00+09:00
+            modified_at:
+              type: string
+              format: date-time
+              example: 2020-01-01T00:00:00+09:00
+          required:
+            - response_id
+            - respondent
+            - submitted_at
+            - modified_at
+        - $ref: "#/components/schemas/NewResponse"
+    Responses:
+      type: array
+      items:
+        $ref: "#/components/schemas/Response"
+    ResponsesWithQuestionnaireInfo:
+      type: array
+      items:
+        allOf:
+          - $ref: "#/components/schemas/Response"
+          - type: object
+            properties:
+              questionnaire_info:
+                allOf:
+                  - $ref: "#/components/schemas/QuestionnaireTitle"
+                  - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+                  - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+                  - $ref: "#/components/schemas/QuestionnaireModifiedAt"
+                  - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
+    ResponseBody:
+      oneOf:
+        - $ref: "#/components/schemas/ResponseBodyText"
+        - $ref: "#/components/schemas/ResponseBodyTextLong"
+        - $ref: "#/components/schemas/ResponseBodyNumber"
+        - $ref: "#/components/schemas/ResponseBodySingleChoice"
+        - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+        - $ref: "#/components/schemas/ResponseBodyScale"
+    ResponseBodyText:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeText"
+        - $ref: "#/components/schemas/ResponseBodyBaseString"
+    ResponseBodyTextLong:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeTextLong"
+        - $ref: "#/components/schemas/ResponseBodyBaseString"
+    ResponseBodyNumber:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeNumber"
+        - $ref: "#/components/schemas/ResponseBodyBaseNumber"
+    ResponseBodySingleChoice:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
+        - $ref: "#/components/schemas/ResponseBodyBaseInteger"
+        - description: |
+            選択肢のインデックス
+    ResponseBodyMultipleChoice:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
+        - type: object
+          properties:
+            answer:
+              type: array
+              items:
+                type: integer
+          description: |
+            選択肢のインデックスの配列
+          required:
+            - answer
+    ResponseBodyScale:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeScale"
+        - $ref: "#/components/schemas/ResponseBodyBaseInteger"
+    ResponseBodyBaseString:
+      type: object
+      properties:
+        answer:
+          type: string
+      required:
+        - answer
+    ResponseBodyBaseNumber:
+      type: object
+      properties:
+        answer:
+          type: number
+      required:
+        - answer
+    ResponseBodyBaseInteger:
+      type: object
+      properties:
+        answer:
+          type: integer
+      required:
+        - answer
     Result:
       type: object
       properties:
@@ -942,96 +974,99 @@ components:
         - body
     ResultBody:
       oneOf:
-        - $ref: "#/components/schemas/ResultSettingsText"
-        - $ref: "#/components/schemas/ResultSettingsTextLong"
-        - $ref: "#/components/schemas/ResultSettingsNumber"
-        - $ref: "#/components/schemas/ResultSettingsSingleChoice"
-        - $ref: "#/components/schemas/ResultSettingsMultipleChoice"
-        - $ref: "#/components/schemas/ResultSettingsScale"
-    ResultSettingsText:
+        - $ref: "#/components/schemas/ResultBodyText"
+        - $ref: "#/components/schemas/ResultBodyTextLong"
+        - $ref: "#/components/schemas/ResultBodyNumber"
+        - $ref: "#/components/schemas/ResultBodySingleChoice"
+        - $ref: "#/components/schemas/ResultBodyMultipleChoice"
+        - $ref: "#/components/schemas/ResultBodyScale"
+    ResultBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
-        - type: object
-          properties:
-            answers:
-              type: array
-              items:
-                type: string
-              description: |
-                回答文の配列
-          required:
-            - answers
-    ResultSettingsTextLong:
+        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
+      description: |
+        回答文ごとの回答数の配列
+    ResultBodyTextLong:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeTextLong"
-        - type: object
-          properties:
-            answers:
-              type: array
-              items:
-                type: string
-              description: |
-                回答文の配列
-          required:
-            - answers
-    ResultSettingsNumber:
+        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
+      description: |
+        回答文ごとの回答数の配列
+    ResultBodyNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
-          description: |
-            数値ごとの回答数の配列
-    ResultSettingsSingleChoice:
+        - $ref: "#/components/schemas/ResultBodyBaseNumberAnswer"
+      description: |
+        数値ごとの回答数の配列
+    ResultBodySingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
-          description: |
-            選択肢ごとの回答数の配列
-    ResultSettingsMultipleChoice:
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
+      description: |
+        選択肢ごとの回答数の配列
+    ResultBodyMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerIndex"
-          description: |
-            選択肢ごとの回答数の配列
-    ResultSettingsScale:
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
+      description: |
+        選択肢ごとの回答数の配列
+    ResultBodyScale:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeScale"
-        - $ref: "#/components/schemas/ResultSettingsAnswerCountsPerNumber"
-          description: |
-            数値ごとの回答数の配列
-    ResultSettingsAnswerCountsPerNumber:
+        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
+      description: |
+        数値ごとの回答数の配列
+    ResultBodyBaseStringAnswer:
       type: object
       properties:
-        answer_counts_per_number:
+        aggregated_answers:
           type: array
           items:
             type: object
             properties:
-              number:
-                type: number
+              answer:
+                type: string
               answer_count:
-                type: number
+                type: integer
             required:
-              - number
+              - answer
               - answer_count
       required:
-        - answer_counts_per_number
-    ResultSettingsAnswerCountsPerIndex:
+        - aggregated_answers
+    ResultBodyBaseNumberAnswer:
       type: object
       properties:
-        answer_counts_per_index:
+        aggregated_answers:
           type: array
           items:
             type: object
             properties:
-              index:
+              answer:
                 type: number
               answer_count:
-                type: number
+                type: integer
             required:
-              - index
+              - answer
               - answer_count
       required:
-        - answer_counts_per_index
+        - aggregated_answers
+    ResultBodyBaseIntegerAnswer:
+      type: object
+      properties:
+        aggregated_answers:
+          type: array
+          items:
+            type: object
+            properties:
+              answer:
+                type: integer
+              answer_count:
+                type: integer
+            required:
+              - answer
+              - answer_count
+      required:
+        - aggregated_answers
     UsersAndGroups:
       type: object
       properties:
@@ -1045,10 +1080,12 @@ components:
     Users:
       type: array
       items:
-        type: string
-        example: cp20
-        description: |
-          traQ ID
+        $ref: "#/components/schemas/TraqId"
+    TraqId:
+      type: string
+      example: cp20
+      description: |
+        traQ ID
     Groups:
       type: array
       items:
