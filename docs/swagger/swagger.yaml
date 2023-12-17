@@ -956,117 +956,29 @@ components:
       required:
         - answer
     Result:
-      type: object
-      properties:
-        questionnaire_id:
-          type: integer
-          example: 1
-        response_count:
-          type: integer
-          example: 1
-        body:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResultBody"
-      required:
-        - questionnaire_id
-        - response_count
-        - body
-    ResultBody:
-      oneOf:
-        - $ref: "#/components/schemas/ResultBodyText"
-        - $ref: "#/components/schemas/ResultBodyTextLong"
-        - $ref: "#/components/schemas/ResultBodyNumber"
-        - $ref: "#/components/schemas/ResultBodySingleChoice"
-        - $ref: "#/components/schemas/ResultBodyMultipleChoice"
-        - $ref: "#/components/schemas/ResultBodyScale"
-    ResultBodyText:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeText"
-        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
-      description: |
-        回答文ごとの回答数の配列
-    ResultBodyTextLong:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeTextLong"
-        - $ref: "#/components/schemas/ResultBodyBaseStringAnswer"
-      description: |
-        回答文ごとの回答数の配列
-    ResultBodyNumber:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeNumber"
-        - $ref: "#/components/schemas/ResultBodyBaseNumberAnswer"
-      description: |
-        数値ごとの回答数の配列
-    ResultBodySingleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
-      description: |
-        選択肢ごとの回答数の配列
-    ResultBodyMultipleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
-      description: |
-        選択肢ごとの回答数の配列
-    ResultBodyScale:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeScale"
-        - $ref: "#/components/schemas/ResultBodyBaseIntegerAnswer"
-      description: |
-        数値ごとの回答数の配列
-    ResultBodyBaseStringAnswer:
-      type: object
-      properties:
-        aggregated_answers:
-          type: array
-          items:
-            type: object
+      type: array
+      items:
+        allOf:
+          - $ref: "#/components/schemas/QuestionnaireID"
+          - type: object
             properties:
-              answer:
+              response_id:
+                type: integer
+                example: 1
+              submitted_at:
                 type: string
-              answer_count:
-                type: integer
+                format: date-time
+                example: 2020-01-01T00:00:00+09:00
+              modified_at:
+                type: string
+                format: date-time
+                example: 2020-01-01T00:00:00+09:00
             required:
-              - answer
-              - answer_count
-      required:
-        - aggregated_answers
-    ResultBodyBaseNumberAnswer:
-      type: object
-      properties:
-        aggregated_answers:
-          type: array
-          items:
-            type: object
-            properties:
-              answer:
-                type: number
-              answer_count:
-                type: integer
-            required:
-              - answer
-              - answer_count
-      required:
-        - aggregated_answers
-    ResultBodyBaseIntegerAnswer:
-      type: object
-      properties:
-        aggregated_answers:
-          type: array
-          items:
-            type: object
-            properties:
-              answer:
-                type: integer
-              answer_count:
-                type: integer
-            required:
-              - answer
-              - answer_count
-      required:
-        - aggregated_answers
+              - response_id
+              - respondent
+              - submitted_at
+              - modified_at
+          - $ref: "#/components/schemas/NewResponse"
     UsersAndGroups:
       type: object
       properties:
