@@ -528,7 +528,6 @@ components:
           required:
             - has_my_draft
             - has_my_response
-            - responded_date_time_by_me
             - all_responded
     QuestionnaireList:
       type: object
