@@ -633,7 +633,6 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 
 // GetResponses GET /questionnaires/:questionnaireID/responses
 func (r *Result) GetResponses(c echo.Context) error {
-	print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	sort := c.QueryParam("sort")
 	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
 	if err != nil {
