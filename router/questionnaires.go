@@ -201,19 +201,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 			return err
 		}
 
-		// message := createQuestionnaireMessage(
-		// 	questionnaireID,
-		// 	req.Title,
-		// 	req.Description,
-		// 	req.Administrators,
-		// 	req.ResTimeLimit,
-		// 	req.Targets,
-		// )
-		// err = q.PostMessage(message)
-		// if err != nil {
-		// 	c.Logger().Errorf("failed to post message: %+v", err)
-		// 	return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
-		// }
+		message := createQuestionnaireMessage(
+			questionnaireID,
+			req.Title,
+			req.Description,
+			req.Administrators,
+			req.ResTimeLimit,
+			req.Targets,
+		)
+		err = q.PostMessage(message)
+		if err != nil {
+			c.Logger().Errorf("failed to post message: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
+		}
 
 		return nil
 	})
