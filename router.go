@@ -40,6 +40,8 @@ func SetRouting(port string) {
 			apiQuestionnnaires.DELETE("/:questionnaireID", api.DeleteQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
 			apiQuestionnnaires.GET("/:questionnaireID/questions", api.GetQuestions)
 			apiQuestionnnaires.POST("/:questionnaireID/questions", api.PostQuestionByQuestionnaireID)
+			apiQuestionnnaires.GET("/:questionnaireID/responses", api.GetResponses, api.AnonymousAuthenticate)
+			apiQuestionnnaires.GET("/:questionnaireID/results", api.GetResults)
 		}
 
 		apiQuestions := echoAPI.Group("/questions")
@@ -73,10 +75,10 @@ func SetRouting(port string) {
 			apiUsers.GET("/:traQID/targeted", api.GetTargettedQuestionnairesBytraQID)
 		}
 
-		apiResults := echoAPI.Group("/results")
-		{
-			apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
-		}
+		// apiResults := echoAPI.Group("/results")
+		// {
+		// 	apiResults.GET("/:questionnaireID", api.GetResults, api.ResultAuthenticate)
+		// }
 	}
 
 	e.Logger.Fatal(e.Start(port))

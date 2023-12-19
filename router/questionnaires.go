@@ -145,6 +145,7 @@ type PostAndEditQuestionnaireRequest struct {
 	Description    string    `json:"description"`
 	ResTimeLimit   null.Time `json:"res_time_limit"`
 	ResSharedTo    string    `json:"res_shared_to" validate:"required,oneof=administrators respondents public"`
+	IsAnonymous    bool      `json:"is_anonymous" validate:"required"`
 	Targets        []string  `json:"targets" validate:"dive,max=32"`
 	Administrators []string  `json:"administrators" validate:"required,min=1,dive,max=32"`
 }
@@ -182,7 +183,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 	var questionnaireID int
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, req.IsAnonymous)
 		if err != nil {
 			c.Logger().Errorf("failed to insert a questionnaire: %+v", err)
 			return err
@@ -200,19 +201,19 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 			return err
 		}
 
-		message := createQuestionnaireMessage(
-			questionnaireID,
-			req.Title,
-			req.Description,
-			req.Administrators,
-			req.ResTimeLimit,
-			req.Targets,
-		)
-		err = q.PostMessage(message)
-		if err != nil {
-			c.Logger().Errorf("failed to post message: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
-		}
+		// message := createQuestionnaireMessage(
+		// 	questionnaireID,
+		// 	req.Title,
+		// 	req.Description,
+		// 	req.Administrators,
+		// 	req.ResTimeLimit,
+		// 	req.Targets,
+		// )
+		// err = q.PostMessage(message)
+		// if err != nil {
+		// 	c.Logger().Errorf("failed to post message: %+v", err)
+		// 	return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
+		// }
 
 		return nil
 	})
@@ -236,6 +237,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 		"created_at":      now.Format(time.RFC3339),
 		"modified_at":     now.Format(time.RFC3339),
 		"res_shared_to":   req.ResSharedTo,
+		"is_anonymous":    req.IsAnonymous,
 		"targets":         req.Targets,
 		"administrators":  req.Administrators,
 	})
@@ -268,6 +270,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
 		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
 		"res_shared_to":   questionnaire.ResSharedTo,
+		"is_anonymous":    questionnaire.IsAnonymous,
 		"targets":         targets,
 		"administrators":  administrators,
 		"respondents":     respondents,
@@ -409,7 +412,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
+		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, req.IsAnonymous, questionnaireID)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -626,6 +629,43 @@ func (q *Questionnaire) GetQuestions(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, ret)
+}
+
+// GetResponses GET /questionnaires/:questionnaireID/responses
+func (r *Result) GetResponses(c echo.Context) error {
+	print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	sort := c.QueryParam("sort")
+	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
+	if err != nil {
+		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	respondentDetails, err := r.GetRespondentDetails(c.Request().Context(), questionnaireID, sort)
+	if err != nil {
+		c.Logger().Errorf("failed to get respondent details: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, respondentDetails)
+}
+
+// GetResults /questionnaires/:questionnaireID/result
+func (r *Result) GetResults(c echo.Context) error {
+	sort := c.QueryParam("sort")
+	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
+	if err != nil {
+		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	respondentDetails, err := r.GetAnonymousRespondentDetails(c.Request().Context(), questionnaireID, sort)
+	if err != nil {
+		c.Logger().Errorf("failed to get respondent details: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, respondentDetails)
 }
 
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
