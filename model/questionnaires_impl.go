@@ -19,20 +19,21 @@ func NewQuestionnaire() *Questionnaire {
 	return new(Questionnaire)
 }
 
-//Questionnaires questionnairesテーブルの構造体
+// Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
-	ID             int              `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
-	Title          string           `json:"title"           gorm:"type:char(50);size:50;not null"`
-	Description    string           `json:"description"     gorm:"type:text;not null"`
-	ResTimeLimit   null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
-	DeletedAt      gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
-	ResSharedTo    string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
-	CreatedAt      time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
-	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
-	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	ID                       int              `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	Title                    string           `json:"title"           gorm:"type:char(50);size:50;not null"`
+	Description              string           `json:"description"     gorm:"type:text;not null"`
+	ResTimeLimit             null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	DeletedAt                gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	ResSharedTo              string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
+	CreatedAt                time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	ModifiedAt               time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	Administrators           []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Targets                  []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Questions                []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Respondents              []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
@@ -44,20 +45,20 @@ func (questionnaire *Questionnaires) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-//BeforeUpdate Update時に自動でmodified_atを現在時刻に
+// BeforeUpdate Update時に自動でmodified_atを現在時刻に
 func (questionnaire *Questionnaires) BeforeUpdate(tx *gorm.DB) error {
 	questionnaire.ModifiedAt = time.Now()
 
 	return nil
 }
 
-//QuestionnaireInfo Questionnaireにtargetかの情報追加
+// QuestionnaireInfo Questionnaireにtargetかの情報追加
 type QuestionnaireInfo struct {
 	Questionnaires
 	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
 }
 
-//QuestionnaireDetail Questionnaireの詳細
+// QuestionnaireDetail Questionnaireの詳細
 type QuestionnaireDetail struct {
 	Targets        []string
 	Respondents    []string
@@ -65,7 +66,7 @@ type QuestionnaireDetail struct {
 	Questionnaires
 }
 
-//TargettedQuestionnaire targetになっているアンケートの情報
+// TargettedQuestionnaire targetになっているアンケートの情報
 type TargettedQuestionnaire struct {
 	Questionnaires
 	RespondedAt null.Time `json:"responded_at"`
@@ -78,8 +79,8 @@ type ResponseReadPrivilegeInfo struct {
 	IsRespondent    bool
 }
 
-//InsertQuestionnaire アンケートの追加
-func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+// InsertQuestionnaire アンケートの追加
+func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isDuplicateAnswerAllowed bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tx: %w", err)
@@ -88,16 +89,18 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 	var questionnaire Questionnaires
 	if !resTimeLimit.Valid {
 		questionnaire = Questionnaires{
-			Title:       title,
-			Description: description,
-			ResSharedTo: resSharedTo,
+			Title:                    title,
+			Description:              description,
+			ResSharedTo:              resSharedTo,
+			IsDuplicateAnswerAllowed: isDuplicateAnswerAllowed,
 		}
 	} else {
 		questionnaire = Questionnaires{
-			Title:        title,
-			Description:  description,
-			ResTimeLimit: resTimeLimit,
-			ResSharedTo:  resSharedTo,
+			Title:                    title,
+			Description:              description,
+			ResTimeLimit:             resTimeLimit,
+			ResSharedTo:              resSharedTo,
+			IsDuplicateAnswerAllowed: isDuplicateAnswerAllowed,
 		}
 	}
 
@@ -109,8 +112,8 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 	return questionnaire.ID, nil
 }
 
-//UpdateQuestionnaire アンケートの更新
-func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+// UpdateQuestionnaire アンケートの更新
+func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isDuplicateAnswerAllowed bool, questionnaireID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx: %w", err)
@@ -119,17 +122,19 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 	var questionnaire interface{}
 	if resTimeLimit.Valid {
 		questionnaire = Questionnaires{
-			Title:        title,
-			Description:  description,
-			ResTimeLimit: resTimeLimit,
-			ResSharedTo:  resSharedTo,
+			Title:                    title,
+			Description:              description,
+			ResTimeLimit:             resTimeLimit,
+			ResSharedTo:              resSharedTo,
+			IsDuplicateAnswerAllowed: isDuplicateAnswerAllowed,
 		}
 	} else {
 		questionnaire = map[string]interface{}{
-			"title":          title,
-			"description":    description,
-			"res_time_limit": gorm.Expr("NULL"),
-			"res_shared_to":  resSharedTo,
+			"title":                       title,
+			"description":                 description,
+			"res_time_limit":              gorm.Expr("NULL"),
+			"res_shared_to":               resSharedTo,
+			"is_duplicate_answer_allowed": isDuplicateAnswerAllowed,
 		}
 	}
 
@@ -148,7 +153,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 	return nil
 }
 
-//DeleteQuestionnaire アンケートの削除
+// DeleteQuestionnaire アンケートの削除
 func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -167,8 +172,10 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 	return nil
 }
 
-/*GetQuestionnaires アンケートの一覧
-2つ目の戻り値はページ数の最大値*/
+/*
+GetQuestionnaires アンケートの一覧
+2つ目の戻り値はページ数の最大値
+*/
 func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -263,7 +270,7 @@ func (*Questionnaire) GetAdminQuestionnaires(ctx context.Context, userID string)
 	return questionnaires, nil
 }
 
-//GetQuestionnaireInfo アンケートの詳細な情報取得
+// GetQuestionnaireInfo アンケートの詳細な情報取得
 func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -315,7 +322,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 	return &questionnaire, targets, administrators, respondents, nil
 }
 
-//GetTargettedQuestionnaires targetになっているアンケートの取得
+// GetTargettedQuestionnaires targetになっているアンケートの取得
 func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID string, answered string, sort string) ([]TargettedQuestionnaire, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -359,7 +366,7 @@ func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID str
 	return questionnaires, nil
 }
 
-//GetQuestionnaireLimit アンケートの回答期限の取得
+// GetQuestionnaireLimit アンケートの回答期限の取得
 func (*Questionnaire) GetQuestionnaireLimit(ctx context.Context, questionnaireID int) (null.Time, error) {
 	db, err := getTx(ctx)
 	if err != nil {
