@@ -601,6 +601,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						testCase.request.Description,
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
+						testCase.request.IsDuplicateAnswerAllowed,
 					).
 					Return(testCase.questionnaireID, testCase.InsertQuestionnaireError)
 
@@ -659,6 +660,7 @@ func TestPostQuestionnaire(t *testing.T) {
 					assert.Nil(t, questionnaire["res_time_limit"], "resTimeLimit nil")
 				}
 				assert.Equal(t, testCase.request.ResSharedTo, questionnaire["res_shared_to"], "resSharedTo")
+				assert.Equal(t, testCase.request.IsDuplicateAnswerAllowed, questionnaire["is_duplicate_answer_allowed"], "isDuplicateAnswerAllowed")
 
 				strCreatedAt, ok := questionnaire["created_at"].(string)
 				assert.True(t, ok, "created_at convert")
@@ -1489,6 +1491,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						testCase.request.Description,
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
+						testCase.request.IsDuplicateAnswerAllowed,
 						testCase.questionnaireID,
 					).
 					Return(testCase.InsertQuestionnaireError)
