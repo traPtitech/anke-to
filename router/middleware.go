@@ -177,6 +177,17 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return next(c)
 		}
 
+		isAnonymous, err := m.GetResponseAnonymousByQuestionnaireID(c.Request().Context(), respondent.QuestionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to get response anonymous info: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response anonymous info: %w", err))
+		}
+
+		// 匿名なら回答者以外は閲覧できない
+		if isAnonymous {
+			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
+		}
+
 		// 回答者以外は一時保存の回答は閲覧できない
 		if !respondent.SubmittedAt.Valid {
 			c.Logger().Info("not submitted")
