@@ -65,6 +65,15 @@ type RespondentDetail struct {
 	Responses       []ResponseBody `json:"body"`
 }
 
+// AnonymousRespondentDetail 匿名の回答の詳細情報の構造体
+type AnonymousRespondentDetail struct {
+	ResponseID      int            `json:"responseID,omitempty"`
+	QuestionnaireID int            `json:"questionnaireID,omitempty"`
+	SubmittedAt     null.Time      `json:"submitted_at,omitempty"`
+	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
+	Responses       []ResponseBody `json:"body"`
+}
+
 // InsertRespondent 回答の追加
 func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error) {
 	db, err := getTx(ctx)
@@ -362,6 +371,111 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	return respondentDetails, nil
 }
 
+// GetAnonymousRespondentDetails アンケートの回答の匿名詳細情報一覧の取得
+func (*Respondent) GetAnonymousRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]AnonymousRespondentDetail, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	respondents := []Respondents{}
+
+	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
+	query := db.
+		Session(&gorm.Session{}).
+		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Select("ResponseID", "ModifiedAt", "SubmittedAt")
+
+	query, sortNum, err := setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set order: %w", err)
+	}
+
+	err = query.
+		Find(&respondents).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get respondents: %w", err)
+	}
+
+	if len(respondents) == 0 {
+		return []AnonymousRespondentDetail{}, nil
+	}
+
+	responseIDs := make([]int, 0, len(respondents))
+	for _, respondent := range respondents {
+		responseIDs = append(responseIDs, respondent.ResponseID)
+	}
+
+	respondentDetails := make([]AnonymousRespondentDetail, 0, len(respondents))
+	respondentDetailMap := make(map[int]*AnonymousRespondentDetail, len(respondents))
+	for i, respondent := range respondents {
+		respondentDetails = append(respondentDetails, AnonymousRespondentDetail{
+			ResponseID:      respondent.ResponseID,
+			QuestionnaireID: questionnaireID,
+			SubmittedAt:     respondent.SubmittedAt,
+			ModifiedAt:      respondent.ModifiedAt,
+		})
+
+		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
+	}
+
+	questions := []Questions{}
+	err = db.
+		Preload("Responses", func(db *gorm.DB) *gorm.DB {
+			return db.
+				Select("ResponseID", "QuestionID", "Body").
+				Where("response_id IN (?)", responseIDs)
+		}).
+		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
+		Select("ID", "Type").
+		Find(&questions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get questions: %w", err)
+	}
+
+	for _, question := range questions {
+		responseBodyMap := make(map[int][]string, len(respondents))
+		for _, response := range question.Responses {
+			if response.Body.Valid {
+				responseBodyMap[response.ResponseID] = append(responseBodyMap[response.ResponseID], response.Body.String)
+			}
+		}
+
+		for i := range respondentDetails {
+			responseBodies := responseBodyMap[respondentDetails[i].ResponseID]
+			responseBody := ResponseBody{
+				QuestionID:   question.ID,
+				QuestionType: question.Type,
+			}
+
+			switch responseBody.QuestionType {
+			case "MultipleChoice", "Checkbox", "Dropdown":
+				if responseBodies == nil {
+					responseBody.OptionResponse = []string{}
+				} else {
+					responseBody.OptionResponse = responseBodies
+				}
+			default:
+				if len(responseBodies) == 0 {
+					responseBody.Body = null.NewString("", false)
+				} else {
+					responseBody.Body = null.NewString(responseBodies[0], true)
+				}
+			}
+
+			respondentDetails[i].Responses = append(respondentDetails[i].Responses, responseBody)
+		}
+	}
+
+	respondentDetails, err = sortAnonymousRespondentDetail(sortNum, len(questions), respondentDetails)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sort RespondentDetails: %w", err)
+	}
+
+	return respondentDetails, nil
+}
+
 // GetRespondentsUserIDs 回答者のユーザーID取得
 func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error) {
 	db, err := getTx(ctx)
@@ -428,6 +542,63 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 }
 
 func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []RespondentDetail) ([]RespondentDetail, error) {
+	if sortNum == 0 {
+		return respondentDetails, nil
+	}
+	sortNumAbs := int(math.Abs(float64(sortNum)))
+	if sortNumAbs > questionNum {
+		return nil, fmt.Errorf("sort param is too large: %d", sortNum)
+	}
+
+	sort.Slice(respondentDetails, func(i, j int) bool {
+		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
+		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
+		if bodyI.QuestionType == "Number" {
+			numi, err := strconv.ParseFloat(bodyI.Body.String, 64)
+			if err != nil {
+				return true
+			}
+			numj, err := strconv.ParseFloat(bodyJ.Body.String, 64)
+			if err != nil {
+				return true
+			}
+			if sortNum < 0 {
+				return numi > numj
+			}
+			return numi < numj
+		}
+		if bodyI.QuestionType == "MultipleChoice" {
+			choiceI := ""
+			if len(bodyI.OptionResponse) > 0 {
+				choiceI = bodyI.OptionResponse[0]
+			}
+			choiceJ := ""
+			if len(bodyJ.OptionResponse) > 0 {
+				choiceJ = bodyJ.OptionResponse[0]
+			}
+			if sortNum < 0 {
+				return choiceI > choiceJ
+			}
+			return choiceI < choiceJ
+		}
+		if bodyI.QuestionType == "Checkbox" {
+			selectionsI := strings.Join(bodyI.OptionResponse, ", ")
+			selectionsJ := strings.Join(bodyJ.OptionResponse, ", ")
+			if sortNum < 0 {
+				return selectionsI > selectionsJ
+			}
+			return selectionsI < selectionsJ
+		}
+		if sortNum < 0 {
+			return bodyI.Body.String > bodyJ.Body.String
+		}
+		return bodyI.Body.String < bodyJ.Body.String
+	})
+
+	return respondentDetails, nil
+}
+
+func sortAnonymousRespondentDetail(sortNum int, questionNum int, respondentDetails []AnonymousRespondentDetail) ([]AnonymousRespondentDetail, error) {
 	if sortNum == 0 {
 		return respondentDetails, nil
 	}

@@ -47,8 +47,11 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 	}
 }
 
-/* 消せないアンケートの発生を防ぐための管理者
-暫定的にハードコーディングで対応*/
+/*
+	消せないアンケートの発生を防ぐための管理者
+
+暫定的にハードコーディングで対応
+*/
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
@@ -174,6 +177,17 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 			return next(c)
 		}
 
+		isAnonymous, err := m.GetResponseAnonymousByQuestionnaireID(c.Request().Context(), respondent.QuestionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to get response anonymous info: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response anonymous info: %w", err))
+		}
+
+		// 匿名なら回答者以外は閲覧できない
+		if isAnonymous {
+			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
+		}
+
 		// 回答者以外は一時保存の回答は閲覧できない
 		if !respondent.SubmittedAt.Valid {
 			c.Logger().Info("not submitted")
@@ -280,6 +294,38 @@ func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) ec
 
 		return next(c)
 	}
+}
+
+// AnonymousAuthenticate アンケートが匿名かどうかの認証
+func (m *Middleware) AnonymousAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		_, err := getUserID(c)
+		if err != nil {
+			c.Logger().Errorf("failed to get userID: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		isAnonymous, err := m.GetResponseAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Infof("response not found: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
+		} else if err != nil {
+			c.Logger().Errorf("failed to get responseReadPrivilegeInfo: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
+		}
+
+		if isAnonymous {
+			return echo.NewHTTPError(http.StatusForbidden, "You do not have permission to view this response.")
+		}
+		return next(c)
+	}
+
 }
 
 // ResultAuthenticate アンケートの回答を確認できるかの認証
