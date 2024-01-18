@@ -516,19 +516,24 @@ components:
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
         - properties:
-            my_responses:
-              type: array
-              items:
-                $ref: "#/components/schemas/QuestionnaireMyResponse"
-              description: |
-                自分の回答の一覧。下書きを含む。
+            has_my_draft:
+              type: boolean
+              description: 下書きが存在する
+            has_my_response:
+              type: boolean
+              description: 回答が存在する
+            responded_date_time_by_me:
+              type: string
+              format: date-time
             all_responded:
               type: boolean
               example: true
               description: |
                 すべての対象者が回答済みの場合 true を返す。それ以外は false を返す。 (対象者が存在しない場合は true を返す)
           required:
-            - my_responses
+            - has_my_draft
+            - has_my_response
+            - responded_date_time_by_me
             - all_responded
     QuestionnaireList:
       type: object
@@ -677,28 +682,6 @@ components:
             自分に対するリマインドが有効かどうか。ユーザーが対象者でありかつ回答していない場合、この値がtrueであればリマインドが送信される。
       required:
         - is_remind_enabled
-    QuestionnaireMyResponse:
-      type: object
-      properties:
-        response_id:
-          type: integer
-          example: 1
-        is_draft:
-          type: boolean
-          example: true
-        submitted_at:
-          type: string
-          format: date-time
-          example: 2020-01-01T00:00:00+09:00
-        modified_at:
-          type: string
-          format: date-time
-          example: 2020-01-01T00:00:00+09:00
-      required:
-        - response_id
-        - is_draft
-        - submitted_at
-        - modified_at
     NewQuestion:
       allOf:
         - $ref: "#/components/schemas/QuestionBase"
