@@ -496,13 +496,12 @@ components:
         - $ref: "#/components/schemas/NewQuestionnaire"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-        - $ref: "#/components/schemas/QuestionnaireRespondentCount"
         - properties:
             respondents:
               $ref: "#/components/schemas/Users"
               description: |
                 回答者の一覧。匿名回答の場合はnull。
-    QuestionnaireSummary:
+    QuestionnaireSummary: # ResponseCountとRespondentCountを入れてもいいかも
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -648,13 +647,6 @@ components:
           example: 2020-01-01T00:00:00+09:00
       required:
         - modified_at
-    QuestionnaireRespondentCount:
-      type: object
-      properties:
-        respondent_count:
-          type: integer
-      required:
-        - respondent_count
     QuestionnaireTargetsAndAdmins:
       type: object
       properties:
