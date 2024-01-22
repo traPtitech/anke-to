@@ -494,10 +494,14 @@ components:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/NewQuestionnaire"
-        - $ref: "#/components/schemas/QuestionnaireRespondents"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-    QuestionnaireSummary:
+        - properties:
+            respondents:
+              $ref: "#/components/schemas/Users"
+              description: |
+                回答者の一覧。匿名回答の場合はnull。
+    QuestionnaireSummary: # ResponseCountとRespondentCountを入れてもいいかも
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
         - $ref: "#/components/schemas/QuestionnaireTitle"
@@ -652,13 +656,6 @@ components:
       required:
         - targets
         - admins
-    QuestionnaireRespondents:
-      type: object
-      properties:
-        respondents:
-          $ref: "#/components/schemas/Users"
-      required:
-        - respondents
     QuestionnaireHasMyResponse:
       type: object
       properties:
