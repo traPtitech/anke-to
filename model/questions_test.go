@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"testing"
 	"time"
@@ -892,6 +893,7 @@ func getQuestionsTest(t *testing.T) {
 
 		assertion.Subset(actualQuestionIDs, expectQuestionIDs, testCase.description, "elements")
 
+		fmt.Printf("%+v\n", questions)
 		assertion.True(sort.SliceIsSorted(questions, func(i, j int) bool { return questions[i].QuestionNum <= questions[j].QuestionNum }), testCase.description, "sort")
 
 		expectQuestionMap := make(map[int]*Questions, len(expectQuestions))
