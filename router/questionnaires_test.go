@@ -1143,7 +1143,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				buf := bytes.NewBuffer(nil)
 				err := json.NewEncoder(buf).Encode(test.request)
 				if err != nil {
-					t.Errorf("failed to encode request: %w", err)
+					t.Errorf("failed to encode request: %v", err)
 				}
 
 				request = buf
