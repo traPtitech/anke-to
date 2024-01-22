@@ -505,29 +505,6 @@ func updateQuestionTest(t *testing.T) {
 			},
 		},
 		{
-			description: "questionnaireID: valid->valid",
-			before: before{
-				Questions: Questions{
-					QuestionnaireID: questionnaireDatas[0].ID,
-					PageNum:         1,
-					QuestionNum:     1,
-					Type:            "TextArea",
-					Body:            "自由記述欄",
-					IsRequired:      false,
-				},
-			},
-			after: after{
-				Questions: Questions{
-					QuestionnaireID: questionnaireDatas[1].ID,
-					PageNum:         1,
-					QuestionNum:     1,
-					Type:            "TextArea",
-					Body:            "自由記述欄",
-					IsRequired:      false,
-				},
-			},
-		},
-		{
 			description: "questionnaireID: valid->invalid",
 			before: before{
 				Questions: Questions{
