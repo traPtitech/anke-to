@@ -347,7 +347,6 @@ func setupQuestionnairesTest(t *testing.T) {
 
 func insertQuestionnaireTest(t *testing.T) {
 	t.Helper()
-	t.Parallel()
 
 	assertion := assert.New(t)
 
@@ -484,7 +483,6 @@ func insertQuestionnaireTest(t *testing.T) {
 
 func updateQuestionnaireTest(t *testing.T) {
 	t.Helper()
-	t.Parallel()
 
 	assertion := assert.New(t)
 
@@ -741,7 +739,6 @@ func updateQuestionnaireTest(t *testing.T) {
 
 func deleteQuestionnaireTest(t *testing.T) {
 	t.Helper()
-	t.Parallel()
 
 	assertion := assert.New(t)
 
