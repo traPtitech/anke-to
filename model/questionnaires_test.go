@@ -1100,7 +1100,12 @@ func getQuestionnairesTest(t *testing.T) {
 			fmt.Println(testCase.description)
 			fmt.Println(questionnaireNum)
 			fmt.Println(pageMax)
-			fmt.Printf("%+v\n", questionnaires)
+			var allNum int64
+			db.
+				Session(&gorm.Session{NewDB: true}).
+				Model(&Questionnaires{}).
+				Count(&allNum)
+			fmt.Println(allNum)
 			assertion.Equal((questionnaireNum+19)/20, int64(pageMax), testCase.description, "pageMax")
 			assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(int64(testCase.pageNum)-1)), 20.0)), testCase.description, "page")
 		}
