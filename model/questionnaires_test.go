@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -1096,6 +1097,10 @@ func getQuestionnairesTest(t *testing.T) {
 		}
 
 		if len(testCase.args.search) == 0 && !testCase.args.nontargeted {
+			fmt.Println(testCase.description)
+			fmt.Println(questionnaireNum)
+			fmt.Println(pageMax)
+			fmt.Printf("%+v\n", questionnaires)
 			assertion.Equal((questionnaireNum+19)/20, int64(pageMax), testCase.description, "pageMax")
 			assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(int64(testCase.pageNum)-1)), 20.0)), testCase.description, "page")
 		}
