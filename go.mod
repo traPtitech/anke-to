@@ -9,7 +9,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
@@ -65,4 +65,4 @@ require (
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
 )
 
-require github.com/go-gormigrate/gormigrate/v2 v2.1.1 // indirect
+require github.com/go-gormigrate/gormigrate/v2 v2.1.1
