@@ -473,7 +473,7 @@ components:
       description: |
         アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
 
-    NewQuestionnaire:
+    QuestionnaireBase:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireTitle"
         - $ref: "#/components/schemas/QuestionnaireDescription"
@@ -483,6 +483,9 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
+    NewQuestionnaire:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireBase"
         - properties:
             questions:
               type: array
@@ -493,14 +496,21 @@ components:
     QuestionnaireDetail:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
-        - $ref: "#/components/schemas/NewQuestionnaire"
+        - $ref: "#/components/schemas/QuestionnaireBase"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
         - properties:
+            questions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Question"
             respondents:
               $ref: "#/components/schemas/Users"
               description: |
                 回答者の一覧。匿名回答の場合はnull。
+          required:
+            - questions
+            - respondents
     QuestionnaireSummary: # ResponseCountとRespondentCountを入れてもいいかも
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -693,10 +703,6 @@ components:
           required:
             - question_id
             - created_at
-    Questions:
-      type: array
-      items:
-        $ref: "#/components/schemas/Question"
     QuestionBase:
       type: object
       properties:
