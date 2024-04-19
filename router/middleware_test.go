@@ -169,6 +169,79 @@ func TestTraPMemberAuthenticate(t *testing.T) {
 	}
 }
 
+func TestQuestionnaireReadAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		userID          string
+		questionnaireID int
+		isPublished     bool
+	}
+
+	type expect struct {
+		statusCode int
+		isCalled   bool
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "公開されているアンケートなので通す",
+			args: args{
+				userID:          "user1",
+				questionnaireID: 1,
+				isPublished:     true,
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d", testCase.args.questionnaireID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/questionnaires/:questionnaireID")
+		c.SetParamNames("questionnaireID")
+		c.SetParamValues(strconv.Itoa(testCase.args.questionnaireID))
+		c.Set(userIDKey, testCase.args.userID)
+
+		mockQuestionnaire.
+			EXPECT().
+			CheckQuestionnairePublished(c.Request().Context(), testCase.args.questionnaireID).
+			Return(testCase.args.isPublished, nil)
+
+		callChecker := CallChecker{}
+
+		e.HTTPErrorHandler(middleware.QuestionnaireReadAuthenticate(callChecker.Handler)(c), c)
+
+		assertion.Equal(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
+		assertion.Equal(testCase.expect.isCalled, callChecker.IsCalled, testCase.description, "isCalled")
+
+	}
+
+}
+
 func TestResponseReadAuthenticate(t *testing.T) {
 	t.Parallel()
 
