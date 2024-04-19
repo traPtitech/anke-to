@@ -601,6 +601,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						testCase.request.Description,
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
+						testCase.request.IsPublished,
 					).
 					Return(testCase.questionnaireID, testCase.InsertQuestionnaireError)
 
@@ -1490,6 +1491,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
 						testCase.questionnaireID,
+						testCase.request.IsPublished,
 					).
 					Return(testCase.InsertQuestionnaireError)
 
