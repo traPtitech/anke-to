@@ -733,7 +733,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description:    "一般的なリクエストなので201",
 			invalidRequest: false,
 			request: PostAndEditQuestionRequest{
-				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
 				PageNum:         1,
@@ -759,7 +758,6 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 		{
 			description: "questionIDが0でも201",
 			request: PostAndEditQuestionRequest{
-				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
 				PageNum:         1,
@@ -1168,7 +1166,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 			c.SetParamValues(test.questionnaireID)
 
-			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
+			c.Set(questionnaireIDKey, test.questionnaireID)
 			if test.validator != "" {
 				c.Set(test.validator, validator.New())
 			} else {
