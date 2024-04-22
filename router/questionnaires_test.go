@@ -733,6 +733,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			description:    "一般的なリクエストなので201",
 			invalidRequest: false,
 			request: PostAndEditQuestionRequest{
+				QuestionnaireID: 1,
 				QuestionType:    "Text",
 				QuestionNum:     1,
 				PageNum:         1,
