@@ -1075,6 +1075,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertQuestionError:      errors.New("正規表現が間違っています"),
+			questionnaireID:          "1",
 			ExecutesCreation:         false,
 			ExecutesCheckQuestionNum: false,
 			expect: expect{
