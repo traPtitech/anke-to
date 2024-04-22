@@ -1166,7 +1166,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 			c.SetParamValues(test.questionnaireID)
 
-			c.Set(questionnaireIDKey, test.questionnaireID)
+			c.Set(questionnaireIDKey, intQuestionnaireID)
 			if test.validator != "" {
 				c.Set(test.validator, validator.New())
 			} else {
