@@ -1077,7 +1077,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 			InsertQuestionError:      errors.New("正規表現が間違っています"),
 			questionnaireID:          "1",
 			ExecutesCreation:         false,
-			ExecutesCheckQuestionNum: false,
+			ExecutesCheckQuestionNum: true,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
