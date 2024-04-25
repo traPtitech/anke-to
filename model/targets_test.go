@@ -308,3 +308,121 @@ func TestGetTargets(t *testing.T) {
 		})
 	}
 }
+
+func TestCancelTargets(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description          string
+		beforeValidTargets   []string
+		beforeInvalidTargets []string
+		afterValidTargets    []string
+		afterInvalidTargets  []string
+		argCancelTargets     []string
+		isErr                bool
+		err                  error
+	}
+
+	testCases := []test{
+		{
+			description:          "キャンセルするtargetが1人でもエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{},
+			afterInvalidTargets:  []string{"a"},
+			argCancelTargets:     []string{"a"},
+		},
+		{
+			description:          "キャンセルするtargetが複数でもエラーなし",
+			beforeValidTargets:   []string{"a", "b"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{},
+			afterInvalidTargets:  []string{"a", "b"},
+			argCancelTargets:     []string{"a", "b"},
+		},
+		{
+			description:          "キャンセルするtargetがなくてもエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argCancelTargets:     []string{},
+		},
+		{
+			description:          "キャンセルするtargetが見つからない場合はエラー",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argCancelTargets:     []string{"b"},
+			isErr:                true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.beforeValidTargets)+len(testCase.beforeInvalidTargets))
+			for _, target := range testCase.beforeValidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: false,
+				})
+			}
+			for _, target := range testCase.beforeInvalidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: true,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			err = targetImpl.CancelTargets(ctx, questionnaire.ID, testCase.argCancelTargets)
+			if err != nil {
+				if !testCase.isErr {
+					t.Errorf("unexpected error: %v", err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error: expected: %v, actual: %v", testCase.err, err)
+				}
+				return
+			}
+
+			afterTargets := make([]Targets, 0, len(testCase.afterValidTargets)+len(testCase.afterInvalidTargets))
+			for _, afterTarget := range testCase.afterInvalidTargets {
+				afterTargets = append(afterTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      true,
+				})
+			}
+			for _, afterTarget := range testCase.afterValidTargets {
+				afterTargets = append(afterTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      false,
+				})
+			}
+
+			actualTargets := make([]Targets, 0, len(testCase.afterValidTargets)+len(testCase.afterInvalidTargets))
+			err = db.
+				Session(&gorm.Session{}).
+				Model(&Targets{}).
+				Where("questionnaire_id = ?", questionnaire.ID).
+				Find(&actualTargets).Error
+			if err != nil {
+				t.Errorf("failed to get targets: %v", err)
+			}
+
+			assert.ElementsMatchf(t, afterTargets, actualTargets, "targets")
+		})
+	}
+}
