@@ -214,6 +214,12 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
 		}
 
+		err = Q.PushReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -439,6 +445,18 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 			return err
 		}
 
+		err = Q.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
+			return err
+		}
+
+		err = Q.PushReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -478,6 +496,12 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		err = Q.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
 
@@ -657,6 +681,35 @@ func createQuestionnaireMessage(questionnaireID int, title string, description s
 https://anke-to.trap.jp/responses/new/%d`,
 		title,
 		questionnaireID,
+		strings.Join(administrators, ","),
+		description,
+		resTimeLimitText,
+		targetsMentionText,
+		questionnaireID,
+	)
+}
+
+func createReminderMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit time.Time, targets []string, lestTimeString string) string {
+	var resTimeLimitText = resTimeLimit.Local().Format("2006/01/02 15:04")
+
+	var targetsMentionText = "@" + strings.Join(targets, " @")
+
+	return fmt.Sprintf(
+		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』の回答締め切りが迫っています！
+==残り%sです!==
+#### 管理者
+%s
+#### 説明
+%s
+#### 回答期限
+%s
+#### 対象者
+%s
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/%d`,
+		title,
+		questionnaireID,
+		lestTimeString,
 		strings.Join(administrators, ","),
 		description,
 		resTimeLimitText,

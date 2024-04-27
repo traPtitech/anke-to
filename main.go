@@ -8,10 +8,12 @@ import (
 	"runtime"
 
 	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/router"
 	"github.com/traPtitech/anke-to/tuning"
 )
 
 func main() {
+
 	env, ok := os.LookupEnv("ANKE-TO_ENV")
 	if !ok {
 		env = "production"
@@ -51,5 +53,17 @@ func main() {
 		panic("no PORT")
 	}
 
-	SetRouting(port)
+	router.Wg.Add(1)
+	go func() {
+		SetRouting(port)
+		router.Wg.Done()
+	}()
+
+	router.Wg.Add(1)
+	go func() {
+		router.ReminderWorker()
+		router.Wg.Done()
+	}()
+
+	router.Wg.Wait()
 }

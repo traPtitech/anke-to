@@ -362,6 +362,24 @@ func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID str
 	return questionnaires, nil
 }
 
+// GetQuestionnaireInfoByLestTime アンケートの詳細な情報を回答期限が3日以内のものだけ取得
+func (*Questionnaire) GetQuestionnairesByLestTime(ctx context.Context) ([]Questionnaires, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	questionnaires := []Questionnaires{}
+	err = db.
+		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 3)).
+		Find(&questionnaires).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+	}
+
+	return questionnaires, nil
+}
+
 // GetQuestionnaireLimit アンケートの回答期限の取得
 func (*Questionnaire) GetQuestionnaireLimit(ctx context.Context, questionnaireID int) (null.Time, error) {
 	db, err := getTx(ctx)
