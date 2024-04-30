@@ -61,6 +61,14 @@ func main() {
 
 	router.Wg.Add(1)
 	go func() {
+		log.Println("ReminderInit")
+		router.ReminderInit()
+		log.Println("ReminderInitEnd")
+		router.Wg.Done()
+	}()
+
+	router.Wg.Add(1)
+	go func() {
 		router.ReminderWorker()
 		router.Wg.Done()
 	}()

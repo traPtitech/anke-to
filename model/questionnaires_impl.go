@@ -280,6 +280,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 
 	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
+		Preload("Targets").
 		First(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil, nil, nil, ErrRecordNotFound
@@ -372,6 +373,24 @@ func (*Questionnaire) GetQuestionnairesByLestTime(ctx context.Context) ([]Questi
 	questionnaires := []Questionnaires{}
 	err = db.
 		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 3)).
+		Find(&questionnaires).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+	}
+
+	return questionnaires, nil
+}
+
+// GetQuestionnaireInfoForReminder アンケートの詳細な情報を回答期限が7日以内のものだけ取得
+func (*Questionnaire) GetQuestionnairesForReminder(ctx context.Context) ([]Questionnaires, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	questionnaires := []Questionnaires{}
+	err = db.
+		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
 		Find(&questionnaires).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a questionnaire: %w", err)

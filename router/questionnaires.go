@@ -214,7 +214,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to post message to traQ")
 		}
 
-		err = Q.PushReminder(questionnaireID)
+		err = Q.PushReminder(questionnaireID, req.ResTimeLimit)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
@@ -451,7 +451,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 			return err
 		}
 
-		err = Q.PushReminder(questionnaireID)
+		err = Q.PushReminder(questionnaireID, req.ResTimeLimit)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return err
@@ -716,4 +716,18 @@ https://anke-to.trap.jp/responses/new/%d`,
 		targetsMentionText,
 		questionnaireID,
 	)
+}
+
+// DB中のquestionnaireをもとにリマインダーを設定する
+func ReminderInit() {
+	questionnaires, err := model.NewQuestionnaire().GetQuestionnairesForReminder(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	for _, questionnaire := range questionnaires {
+		err := Q.PushReminder(questionnaire.ID, questionnaire.ResTimeLimit)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

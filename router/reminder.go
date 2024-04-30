@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"log"
 	"slices"
 	"sort"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/traq"
 	"golang.org/x/sync/semaphore"
+	"gopkg.in/guregu/null.v4"
 )
 
 type Job struct {
@@ -24,12 +26,14 @@ type JobQueue struct {
 }
 
 var (
-	sem                    = semaphore.NewWeighted(1)
-	Q                      = &JobQueue{}
-	Wg                     = &sync.WaitGroup{}
-	reiminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
+	sem                   = semaphore.NewWeighted(1)
+	Q                     = &JobQueue{}
+	Wg                    = &sync.WaitGroup{}
+	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
+	reminderTimingStrings = []string{"5分", "30分", "1時間", "1日", "1週間"}
 )
 
+// jobQueueにjobを追加する
 func (q *JobQueue) Push(j *Job) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -39,6 +43,7 @@ func (q *JobQueue) Push(j *Job) {
 	})
 }
 
+// jobQueueからjobを取り出す
 func (q *JobQueue) Pop() *Job {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -50,24 +55,20 @@ func (q *JobQueue) Pop() *Job {
 	return job
 }
 
-func (q *JobQueue) PushReminder(questionnaireID int) error {
-	ctx := context.Background()
-	questionnaire := model.Questionnaire{}
-	limit, err := questionnaire.GetQuestionnaireLimit(ctx, questionnaireID)
-	if err != nil {
-		return err
-	}
+// jobQueueにquestionnaireIDに対応するアンケートのリマインダーを追加する
+func (q *JobQueue) PushReminder(questionnaireID int, limit null.Time) error {
 	if !limit.Valid {
 		return nil
 	}
-	for _, timing := range reiminderTimingMinutes {
+	log.Printf("[DEBUG] PushReminder: questionnaireID=%d, limit=%s\n", questionnaireID, limit.Time.String())
+	for i, timing := range reminderTimingMinutes {
 		remindTimeStamp := limit.Time.Add(-time.Duration(timing) * time.Minute)
 		if remindTimeStamp.After(time.Now()) {
 			Q.Push(&Job{
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: string(questionnaireID),
 				Action: func() {
-					reminderAction(questionnaireID, time.Until(limit.Time).String())
+					reminderAction(questionnaireID, reminderTimingStrings[i])
 				},
 			})
 
@@ -76,6 +77,7 @@ func (q *JobQueue) PushReminder(questionnaireID int) error {
 	return nil
 }
 
+// jobQueueからquestionnaireIDに対応するアンケートのリマインダーを削除する
 func (q *JobQueue) DeleteReminder(questionnaireID int) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -87,10 +89,11 @@ func (q *JobQueue) DeleteReminder(questionnaireID int) error {
 	return nil
 }
 
+// リマインダーのメッセージを送信する
 func reminderAction(questionnaireID int, lestTimeString string) error {
 	ctx := context.Background()
 	questionnaire := model.Questionnaire{}
-	questionnaires, administorators, _, respondents, err := questionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
+	questionnaires, _, administorators, respondents, err := questionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -103,6 +106,8 @@ func reminderAction(questionnaireID int, lestTimeString string) error {
 			}
 		}
 	}
+	log.Printf("[DEBUG] questionnaires.Targets=%v", questionnaires.Targets)
+	log.Printf("[DEBUG] reminderAction: questionnaireID=%d, title=%s, description=%s, administorators=%v, resTimeLimit=%s, remindeTargets=%v, lestTimeString=%s\n", questionnaireID, questionnaires.Title, questionnaires.Description, administorators, questionnaires.ResTimeLimit.Time.String(), remindeTargets, lestTimeString)
 
 	reminderMessage := createReminderMessage(questionnaireID, questionnaires.Title, questionnaires.Description, administorators, questionnaires.ResTimeLimit.Time, remindeTargets, lestTimeString)
 	wh := traq.NewWebhook()
@@ -114,6 +119,7 @@ func reminderAction(questionnaireID int, lestTimeString string) error {
 	return nil
 }
 
+// リマインダーのメッセージを作成する
 func ReminderWorker() {
 	for {
 		job := Q.Pop()
