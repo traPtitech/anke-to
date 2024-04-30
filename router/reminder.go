@@ -82,8 +82,12 @@ func (q *JobQueue) DeleteReminder(questionnaireID int) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	for i, job := range q.jobs {
-		if job.QuestionnaireID == string(questionnaireID) {
-			q.jobs = append(q.jobs[:i], q.jobs[i+1:]...)
+		if len(q.jobs) == 1 {
+			q.jobs = []*Job{}
+		} else {
+			if job.QuestionnaireID == string(questionnaireID) {
+				q.jobs = append(q.jobs[:i], q.jobs[i+1:]...)
+			}
 		}
 	}
 	return nil
