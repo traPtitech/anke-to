@@ -72,7 +72,19 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		return 0, fmt.Errorf("failed to get tx: %w", err)
 	}
 
+	var questionnaire Questionnaires
 	var respondent Respondents
+
+	err = db.
+		Where("id = ?", questionnaireID).
+		First(&questionnaire).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, ErrRecordNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get questionnaire: %w", err)
+	}
+
 	if submittedAt.Valid {
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
@@ -86,12 +98,28 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		}
 	}
 
+	if !questionnaire.IsDuplicateAnswerAllowed && submittedAt.Valid {
+		// delete old answers
+		err = db.
+			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
+			Delete(&Respondents{}).Error
+		// 既存の回答がなかった場合はそのまま進む
+		if errors.Is(err, ErrNoRecordDeleted) {
+			err = nil
+		}
+		if err != nil {
+			return 0, fmt.Errorf("failed to delete old answers: %w", err)
+		}
+
+	}
+
 	err = db.Create(&respondent).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
 
 	return respondent.ResponseID, nil
+
 }
 
 // UpdateSubmittedAt 投稿日時更新
