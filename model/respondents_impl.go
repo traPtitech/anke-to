@@ -98,17 +98,15 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		}
 	}
 
-	if !questionnaire.IsDuplicateAnswerAllowed && submittedAt.Valid {
-		// delete old answers
+	if !questionnaire.IsDuplicateAnswerAllowed {
 		err = db.
 			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
-			Delete(&Respondents{}).Error
-		// 既存の回答がなかった場合はそのまま進む
-		if errors.Is(err, ErrNoRecordDeleted) {
-			err = nil
+			First(&Respondents{}).Error
+		if err == nil {
+			return 0, ErrDuplicatedAnswered
 		}
-		if err != nil {
-			return 0, fmt.Errorf("failed to delete old answers: %w", err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, fmt.Errorf("failed to check duplicate answer: %w", err)
 		}
 
 	}
