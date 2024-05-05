@@ -31,6 +31,7 @@ type Questionnaires struct {
 	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	TargetGroups   []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 }
@@ -171,7 +172,7 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool) ([]QuestionnaireInfo, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -192,9 +193,16 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		return nil, 0, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
 
-	if nontargeted {
-		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
+	if onlyTargetingMe {
+		query = query.Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID)
 	}
+
+	if onlyAdministratedByMe {
+		query = query.
+			Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
+			Where("administrators.user_traqid = ?", userID)
+	}
+
 	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
 		_, err := regexp.Compile(search)
@@ -315,7 +323,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
-	return &questionnaire, targets, administrators, respondents, nil
+	return &questionnaire, targets, targetGroups, administrators, administoratorGroups, respondents, nil
 }
 
 // GetTargettedQuestionnaires targetになっているアンケートの取得

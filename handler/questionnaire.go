@@ -1,19 +1,41 @@
 package handler
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/openapi"
 )
 
 // (GET /questionnaires)
 func (h Handler) GetQuestionnaires(ctx echo.Context, params openapi.GetQuestionnairesParams) error {
 	res := openapi.QuestionnaireList{}
+	q := controller.NewQuestionnaire()
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
+	res, err = q.GetQuestionnaires(ctx, userID, params)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaires: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaires: %w", err))
+	}
 
 	return ctx.JSON(200, res)
 }
 
 // (POST /questionnaires)
 func (h Handler) PostQuestionnaire(ctx echo.Context) error {
+	params := openapi.PostQuestionnaireJSONRequestBody{}
+	if err := ctx.Bind(&params); err != nil {
+		ctx.Logger().Errorf("failed to bind request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
+	}
+
 	res := openapi.QuestionnaireDetail{}
 
 	return ctx.JSON(200, res)
