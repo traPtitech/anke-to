@@ -37,6 +37,18 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 	}
 
 	res := openapi.QuestionnaireDetail{}
+	q := controller.NewQuestionnaire()
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
+	res, err = q.PostQuestionnaire(ctx, userID, params)
+	if err != nil {
+		ctx.Logger().Errorf("failed to post questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to post questionnaire: %w", err))
+	}
 
 	return ctx.JSON(200, res)
 }
@@ -44,17 +56,42 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 // (GET /questionnaires/{questionnaireID})
 func (h Handler) GetQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.QuestionnaireDetail{}
-
+	q := controller.NewQuestionnaire()
+	res, err := q.GetQuestionnaire(ctx, questionnaireID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire: %w", err))
+	}
 	return ctx.JSON(200, res)
 }
 
 // (PATCH /questionnaires/{questionnaireID})
 func (h Handler) EditQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	params := openapi.EditQuestionnaireJSONRequestBody{}
+	if err := ctx.Bind(&params); err != nil {
+		ctx.Logger().Errorf("failed to bind request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
+	}
+
+	q := controller.NewQuestionnaire()
+	err := q.EditQuestionnaire(ctx, questionnaireID, params)
+	if err != nil {
+		ctx.Logger().Errorf("failed to edit questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to edit questionnaire: %w", err))
+	}
+
 	return ctx.NoContent(200)
 }
 
 // (DELETE /questionnaires/{questionnaireID})
 func (h Handler) DeleteQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	q := controller.NewQuestionnaire()
+	err := q.DeleteQuestionnaire(ctx, questionnaireID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to delete questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete questionnaire: %w", err))
+	}
+
 	return ctx.NoContent(200)
 }
 

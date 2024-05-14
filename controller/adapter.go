@@ -144,7 +144,7 @@ func convertRespondents(respondents []model.Respondents) []string {
 	return res
 }
 
-func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []string, targetUsers []string, targetGroups []string) openapi.QuestionnaireDetail {
+func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []string, targetUsers []string, targetGroups []string, respondents []string) openapi.QuestionnaireDetail {
 	res := openapi.QuestionnaireDetail{
 		Admins:      createUsersAndGroups(adminUsers, adminGroups),
 		CreatedAt:   questionnaires.CreatedAt,
@@ -155,7 +155,7 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		ModifiedAt:          questionnaires.ModifiedAt,
 		QuestionnaireId:     questionnaires.ID,
 		Questions:           convertQuestions(questionnaires.Questions),
-		Respondents:         convertRespondents(questionnaires.Respondents),
+		Respondents:         respondents,
 		ResponseDueDateTime: &questionnaires.ResTimeLimit.Time,
 		ResponseViewableBy:  convertResSharedTo(questionnaires.ResSharedTo),
 		Targets:             createUsersAndGroups(targetUsers, targetGroups),

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -184,14 +185,129 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 		c.Logger().Errorf("failed to create a questionnaire: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
-	questionnaireInfo, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+	questionnaireInfo, targets, targetGroups, admins, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to get questionnaire info: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info")
 	}
 
-	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, params.Admins.Users, params.Admins.Groups, params.Targets.Users, params.Targets.Groups)
+	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
 	return questionnaireDetail, nil
+}
+func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
+	questionnaireInfo, targets, targetGroups, admins, adminGroups, respondents, err := q.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
+	if err != nil {
+		return openapi.QuestionnaireDetail{}, err
+	}
+	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	return questionnaireDetail, nil
+}
+
+func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
+	responseDueDateTime := null.Time{}
+	if params.ResponseDueDateTime != nil {
+		responseDueDateTime.Valid = true
+		responseDueDateTime.Time = *params.ResponseDueDateTime
+	}
+	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID)
+		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+			c.Logger().Errorf("failed to update questionnaire: %+v", err)
+			return err
+		}
+		err = q.DeleteTargets(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete targets: %+v", err)
+			return err
+		}
+		err = q.DeleteTargetGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete target groups: %+v", err)
+			return err
+		}
+		allTargetUsers, err := rollOutUsersAndGroups(params.Targets.Users, params.Targets.Groups)
+		if err != nil {
+			c.Logger().Errorf("failed to roll out users and groups: %+v", err)
+			return err
+		}
+		err = q.InsertTargets(ctx, questionnaireID, allTargetUsers)
+		if err != nil {
+			c.Logger().Errorf("failed to insert targets: %+v", err)
+			return err
+		}
+		err = q.InsertTargetGroups(ctx, questionnaireID, params.Targets.Groups)
+		if err != nil {
+			c.Logger().Errorf("failed to insert target groups: %+v", err)
+			return err
+		}
+		err = q.DeleteAdministrators(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+		err = q.DeleteAdministratorGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrator groups: %+v", err)
+			return err
+		}
+		allAdminUsers, err := rollOutUsersAndGroups(params.Admins.Users, params.Admins.Groups)
+		if err != nil {
+			c.Logger().Errorf("failed to roll out administrators: %+v", err)
+			return err
+		}
+		err = q.InsertAdministrators(ctx, questionnaireID, allAdminUsers)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrators: %+v", err)
+			return err
+		}
+		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admins.Groups)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		c.Logger().Errorf("failed to update a questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
+	}
+
+	return nil
+}
+
+func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete questionnaire: %+v", err)
+			return err
+		}
+
+		err = q.DeleteTargets(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete targets: %+v", err)
+			return err
+		}
+
+		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		var httpError *echo.HTTPError
+		if errors.As(err, &httpError) {
+			return httpError
+		}
+
+		c.Logger().Errorf("failed to delete questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete a questionnaire")
+	}
+	return nil
 }
 
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
