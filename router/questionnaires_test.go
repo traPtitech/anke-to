@@ -292,6 +292,60 @@ func TestGetQuestionnaireValidate(t *testing.T) {
 			},
 		},
 		{
+			description: "Sortがres_time_limitでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "res_time_limit",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-res_time_limitでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-res_time_limit",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがresponse_countでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "response_count",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-response_countでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-response_count",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortがlast_response_atでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "last_response_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
+			description: "Sortが-last_response_atでもエラーなし",
+			request: &GetQuestionnairesQueryParam{
+				Sort:        "-last_response_at",
+				Search:      "a",
+				Page:        "2",
+				Nontargeted: "true",
+			},
+		},
+		{
 			description: "Nontargetedをfalseにしてもエラーなし",
 			request: &GetQuestionnairesQueryParam{
 				Sort:        "created_at",
