@@ -16,7 +16,7 @@ type IRespondent interface {
 	GetRespondent(ctx context.Context, responseID int) (*Respondents, error)
 	GetRespondentInfos(ctx context.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error)
 	GetRespondentDetail(ctx context.Context, responseID int) (RespondentDetail, error)
-	GetRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]RespondentDetail, error)
+	GetRespondentDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string) ([]RespondentDetail, error)
 	GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error)
 	CheckRespondent(ctx context.Context, userID string, questionnaireID int) (bool, error)
 }

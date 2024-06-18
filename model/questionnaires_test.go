@@ -1324,7 +1324,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
+		actualQuestionnaire, actualTargets, actualTargetGroups, actualAdministrators, actualAdministratorGroups, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"strconv"
+
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 	"gopkg.in/guregu/null.v4"
@@ -162,4 +165,114 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		Title:               questionnaires.Title,
 	}
 	return res
+}
+
+func respondentDetail2Response(ctx echo.Context, respondentDetail model.RespondentDetail) (openapi.Response, error) {
+	oResponseBodies := []openapi.ResponseBody{}
+	for j, r := range respondentDetail.Responses {
+		oResponseBody := openapi.ResponseBody{}
+		switch r.QuestionType {
+		case "Text":
+			if r.Body.Valid {
+				oResponseBody.FromResponseBodyText(
+					openapi.ResponseBodyText{
+						Answer:       r.Body.String,
+						QuestionType: "Text",
+					},
+				)
+			}
+		case "TextArea":
+			if r.Body.Valid {
+				oResponseBody.FromResponseBodyText(
+					openapi.ResponseBodyText{
+						Answer:       r.Body.String,
+						QuestionType: "TextLong",
+					},
+				)
+			}
+		case "Number":
+			if r.Body.Valid {
+				answer, err := strconv.ParseFloat(r.Body.String, 32)
+				if err != nil {
+					ctx.Logger().Errorf("failed to convert string to float: %+v", err)
+					return openapi.Response{}, err
+				}
+				oResponseBody.FromResponseBodyNumber(
+					openapi.ResponseBodyNumber{
+						Answer:       float32(answer),
+						QuestionType: "Number",
+					},
+				)
+			}
+		case "MultipleChoice":
+			if r.Body.Valid {
+				answer := []int{}
+				questionnaire, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
+				if err != nil {
+					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
+					return openapi.Response{}, err
+				}
+				for _, a := range r.OptionResponse {
+					for i, o := range questionnaire.Questions[j].Options {
+						if a == o.Body {
+							answer = append(answer, i)
+						}
+					}
+				}
+				oResponseBody.FromResponseBodyMultipleChoice(
+					openapi.ResponseBodyMultipleChoice{
+						Answer:       answer,
+						QuestionType: "MultipleChoice",
+					},
+				)
+			}
+		case "Checkbox":
+			if r.Body.Valid {
+				questionnaire, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
+				if err != nil {
+					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
+					return openapi.Response{}, err
+				}
+				for _, a := range r.OptionResponse {
+					for i, o := range questionnaire.Questions[j].Options {
+						if a == o.Body {
+							oResponseBody.FromResponseBodySingleChoice(
+								openapi.ResponseBodySingleChoice{
+									Answer:       i,
+									QuestionType: "SingleChoice",
+								},
+							)
+						}
+					}
+				}
+			}
+		case "LinearScale":
+			if r.Body.Valid {
+				answer, err := strconv.Atoi(r.Body.String)
+				if err != nil {
+					ctx.Logger().Errorf("failed to convert string to int: %+v", err)
+					return openapi.Response{}, err
+				}
+				oResponseBody.FromResponseBodyScale(
+					openapi.ResponseBodyScale{
+						Answer:       answer,
+						QuestionType: "LinearScale",
+					},
+				)
+			}
+		}
+		oResponseBodies = append(oResponseBodies, oResponseBody)
+	}
+
+	res := openapi.Response{
+		Body:            oResponseBodies,
+		IsDraft:         respondentDetail.SubmittedAt.Valid,
+		ModifiedAt:      respondentDetail.ModifiedAt,
+		QuestionnaireId: respondentDetail.QuestionnaireID,
+		Respondent:      respondentDetail.TraqID,
+		ResponseId:      respondentDetail.ResponseID,
+		SubmittedAt:     respondentDetail.SubmittedAt.Time,
+	}
+
+	return res, nil
 }

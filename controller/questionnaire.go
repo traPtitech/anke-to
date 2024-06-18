@@ -310,6 +310,36 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 	return nil
 }
 
+func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
+	// todo: check remind status
+	return false, nil
+}
+
+func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) error {
+	// todo: edit remind status
+	return nil
+}
+
+func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID int, params openapi.GetQuestionnaireResponsesParams, userID string) (openapi.Responses, error) {
+	res := []openapi.Response{}
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, string(*params.Sort), *params.OnlyMyResponse, userID)
+	if err != nil {
+		c.Logger().Errorf("failed to get respondent details: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to get respondent details")
+	}
+
+	for _, respondentDetail := range respondentDetails {
+		response, err := respondentDetail2Response(c, respondentDetail)
+		if err != nil {
+			c.Logger().Errorf("failed to convert respondent detail to response: %+v", err)
+			return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert respondent detail to response")
+		}
+		res = append(res, response)
+	}
+
+	return res, nil
+}
+
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
 	var resTimeLimitText string
 	if resTimeLimit.Valid {
