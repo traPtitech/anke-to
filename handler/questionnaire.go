@@ -35,6 +35,17 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
 	}
+	validate, err := getValidator(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get validator: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
+	}
+
+	err = validate.StructCtx(ctx.Request().Context(), params)
+	if err != nil {
+		ctx.Logger().Errorf("failed to validate request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
+	}
 
 	res := openapi.QuestionnaireDetail{}
 	q := controller.NewQuestionnaire()
@@ -136,6 +147,25 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 // (POST /questionnaires/{questionnaireID}/responses)
 func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.Response{}
+	params := openapi.PostQuestionnaireResponseJSONRequestBody{}
+	if err := ctx.Bind(&params); err != nil {
+		ctx.Logger().Errorf("failed to bind request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
+	}
+	validate, err := getValidator(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get validator: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
+	}
+
+	err = validate.StructCtx(ctx.Request().Context(), params)
+	if err != nil {
+		ctx.Logger().Errorf("failed to validate request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
+	}
+
+	q := controller.NewQuestionnaire()
+	res, err = q.PostQuestionnaireResponse(ctx, questionnaireID, params)
 
 	return ctx.JSON(201, res)
 }

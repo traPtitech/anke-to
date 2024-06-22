@@ -340,6 +340,10 @@ func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID
 	return res, nil
 }
 
+func (q Questionnaire) PostQuestionnaireResponse(c echo.Context) error {
+	// todo: PostQuestionnaireResponse
+}
+
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
 	var resTimeLimitText string
 	if resTimeLimit.Valid {

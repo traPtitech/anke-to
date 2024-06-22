@@ -2,7 +2,9 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
 
@@ -26,6 +28,17 @@ func SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
+}
+
+// getValidator Validatorを設定する
+func getValidator(c echo.Context) (*validator.Validate, error) {
+	rowValidate := c.Get(validatorKey)
+	validate, ok := rowValidate.(*validator.Validate)
+	if !ok {
+		return nil, fmt.Errorf("failed to get validator")
+	}
+
+	return validate, nil
 }
 
 // getUserID ユーザーIDを取得する
