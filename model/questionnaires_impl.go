@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
@@ -31,6 +32,7 @@ type Questionnaires struct {
 	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	TargetGroups   []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 }
@@ -171,7 +173,7 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool) ([]QuestionnaireInfo, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -192,9 +194,16 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		return nil, 0, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
 
-	if nontargeted {
-		query = query.Where("targets.questionnaire_id IS NULL OR (targets.user_traqid != ? AND targets.user_traqid != 'traP')", userID)
+	if onlyTargetingMe {
+		query = query.Where("targets.user_traqid = ? OR targets.user_traqid = 'traP'", userID)
 	}
+
+	if onlyAdministratedByMe {
+		query = query.
+			Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
+			Where("administrators.user_traqid = ?", userID)
+	}
+
 	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
 		_, err := regexp.Compile(search)
@@ -267,25 +276,27 @@ func (*Questionnaire) GetAdminQuestionnaires(ctx context.Context, userID string)
 }
 
 // GetQuestionnaireInfo アンケートの詳細な情報取得
-func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []string, []string, error) {
+func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []uuid.UUID, []string, []uuid.UUID, []string, error) {
 	db, err := getTx(ctx)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get tx: %w", err)
+		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get tx: %w", err)
 	}
 
 	questionnaire := Questionnaires{}
 	targets := []string{}
+	targetGroups := []uuid.UUID{}
 	administrators := []string{}
+	administoratorGroups := []uuid.UUID{}
 	respondents := []string{}
 
 	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
 		First(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil, nil, nil, ErrRecordNotFound
+		return nil, nil, nil, nil, nil, nil, ErrRecordNotFound
 	}
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
 
 	err = db.
@@ -294,7 +305,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
+		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
 	}
 
 	err = db.
@@ -303,7 +314,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
+		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
 	}
 
 	err = db.
@@ -312,10 +323,10 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
+		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
-	return &questionnaire, targets, administrators, respondents, nil
+	return &questionnaire, targets, targetGroups, administrators, administoratorGroups, respondents, nil
 }
 
 // GetTargettedQuestionnaires targetになっているアンケートの取得
@@ -409,6 +420,7 @@ func (*Questionnaire) GetQuestionnaireLimitByResponseID(ctx context.Context, res
 	return res.ResTimeLimit, nil
 }
 
+// GetResponseReadPrivilegeInfoByResponseID 回答のIDから回答の閲覧権限情報を取得
 func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(ctx context.Context, userID string, responseID int) (*ResponseReadPrivilegeInfo, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -434,6 +446,7 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByResponseID(ctx context.Conte
 	return &responseReadPrivilegeInfo, nil
 }
 
+// GetResponseReadPrivilegeInfoByQuestionnaireID アンケートのIDから回答の閲覧権限情報を取得
 func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.Context, userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error) {
 	db, err := getTx(ctx)
 	if err != nil {
