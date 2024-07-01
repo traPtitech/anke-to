@@ -377,7 +377,7 @@ components:
       name: onlyAdministratedByMe
       in: query
       description: |
-        自分が管理者になっていないもののみ取得 (true), 管理者になっているものも含めてすべて取得 (false)。デフォルトはfalse。
+        自分が管理者になっているもののみ取得 (true), 管理者になっていないものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     onlyMyResponseInQuery:
