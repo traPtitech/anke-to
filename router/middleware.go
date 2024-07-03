@@ -47,8 +47,11 @@ func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFun
 	}
 }
 
-/* 消せないアンケートの発生を防ぐための管理者
-暫定的にハードコーディングで対応*/
+/*
+	消せないアンケートの発生を防ぐための管理者
+
+暫定的にハードコーディングで対応
+*/
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
@@ -136,6 +139,54 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 
 		c.Set(questionnaireIDKey, questionnaireID)
 
+		return next(c)
+	}
+}
+
+// QuestionnaireReadAuthenticate アンケートの閲覧権限があるかの認証
+func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Errorf("failed to get userID: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("ffailed to get userID: %w", err))
+		}
+
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		isPublished, err := m.CheckQuestionnairePublished(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check if questionnaire is published: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if questionnaire is published: %w", err))
+		}
+
+		if !isPublished {
+			for _, adminID := range adminUserIDs {
+				if userID == adminID {
+					c.Set(questionnaireIDKey, questionnaireID)
+
+					return next(c)
+				}
+			}
+
+			isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+			if err != nil {
+				c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+			}
+			if !isAdmin {
+				return c.String(http.StatusForbidden, "You are not a administrator of this questionnaire.")
+			}
+			c.Set(questionnaireIDKey, questionnaireID)
+
+			return next(c)
+		}
+		c.Set(questionnaireIDKey, questionnaireID)
 		return next(c)
 	}
 }
