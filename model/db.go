@@ -4,26 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/prometheus"
 )
 
-var (
-	db        *gorm.DB
-	allTables = []interface{}{
-		Questionnaires{},
-		Questions{},
-		Respondents{},
-		Responses{},
-		Administrators{},
-		Options{},
-		ScaleLabels{},
-		Targets{},
-		Validations{},
-	}
-)
+var db *gorm.DB
 
 // EstablishConnection DBと接続
 func EstablishConnection(isProduction bool) error {
@@ -83,12 +71,24 @@ func EstablishConnection(isProduction bool) error {
 	return nil
 }
 
-// Migrate DBのMigrationを行う
-func Migrate() error {
-	err := db.AutoMigrate(allTables...)
-	if err != nil {
-		return fmt.Errorf("failed in table's migration: %w", err)
-	}
+func Migrate() (init bool, err error) {
+	m := gormigrate.New(db.Session(&gorm.Session{}), gormigrate.DefaultOptions, Migrations())
 
-	return nil
+	m.InitSchema(func(db *gorm.DB) error {
+		init = true
+
+		return db.AutoMigrate(AllTables()...)
+	})
+	err = m.Migrate()
+	return
 }
+
+// Migrate DBのMigrationを行う
+// func Migrate() error {
+// 	err := db.AutoMigrate(allTables...)
+// 	if err != nil {
+// 		return fmt.Errorf("failed in table's migration: %w", err)
+// 	}
+
+// 	return nil
+// }

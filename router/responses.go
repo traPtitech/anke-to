@@ -323,9 +323,9 @@ func (r *Response) EditResponse(c echo.Context) error {
 		c.Logger().Errorf("failed to get scale labels: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	scaleLabelMap := make(map[int]*model.ScaleLabels, len(scaleLabels))
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
 	for _, label := range scaleLabels {
-		scaleLabelMap[label.QuestionID] = &label
+		scaleLabelMap[label.QuestionID] = label
 	}
 
 	// LinearScaleのパターンマッチ
@@ -334,9 +334,9 @@ func (r *Response) EditResponse(c echo.Context) error {
 		case "LinearScale":
 			label, ok := scaleLabelMap[body.QuestionID]
 			if !ok {
-				label = &model.ScaleLabels{}
+				label = model.ScaleLabels{}
 			}
-			if err := r.CheckScaleLabel(*label, body.Body.ValueOrZero()); err != nil {
+			if err := r.CheckScaleLabel(label, body.Body.ValueOrZero()); err != nil {
 				c.Logger().Infof("invalid scale label: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
