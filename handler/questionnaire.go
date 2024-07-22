@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/controller"
@@ -173,6 +174,38 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 // (GET /questionnaires/{questionnaireID}/result)
 func (h Handler) GetQuestionnaireResult(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.Result{}
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
+	params := openapi.GetQuestionnaireResponsesParams{}
+	q := controller.NewQuestionnaire()
+	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %+w", err))
+	}
+
+	for _, response := range responses {
+		tmp := struct {
+			Body            []openapi.ResponseBody `json:"body"`
+			IsDraft         bool                   `json:"is_draft"`
+			ModifiedAt      time.Time              `json:"modified_at"`
+			QuestionnaireId int                    `json:"questionnaire_id"`
+			ResponseId      int                    `json:"response_id"`
+			SubmittedAt     time.Time              `json:"submitted_at"`
+		}{
+			Body:            response.Body,
+			IsDraft:         response.IsDraft,
+			ModifiedAt:      response.ModifiedAt,
+			QuestionnaireId: response.QuestionnaireId,
+			ResponseId:      response.ResponseId,
+			SubmittedAt:     response.SubmittedAt,
+		}
+		res = append(res, tmp)
+	}
 
 	return ctx.JSON(200, res)
 }
