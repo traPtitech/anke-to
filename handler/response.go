@@ -36,6 +36,12 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
 	res := openapi.Response{}
 
+	r := controller.NewResponse()
+	res, err := r.GetResponse(ctx, responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get my response: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %+w", err))
+	}
 	return ctx.JSON(200, res)
 }
 

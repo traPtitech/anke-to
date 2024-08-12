@@ -101,3 +101,19 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 
 	return res, nil
 }
+
+func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) (openapi.Response, error) {
+	responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
+		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %+w", err))
+	}
+
+	res, err := respondentDetail2Response(ctx, responseDetail)
+	if err != nil {
+		ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
+		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %+w", err))
+	}
+
+	return res, nil
+}
