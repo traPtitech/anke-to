@@ -80,3 +80,8 @@ func (*Target) GetTargets(ctx context.Context, questionnaireIDs []int) ([]Target
 
 	return targets, nil
 }
+
+func(*Target) IsTargetingME(ctx context.Context, questionnairID int, userID string) (bool, error) {
+	// todo: check if the questionnair is targeting me
+	return true, nil
+}

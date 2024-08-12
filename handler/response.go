@@ -1,14 +1,29 @@
 package handler
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/openapi"
 )
 
 // (GET /responses/myResponses)
 func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams) error {
-	res := []openapi.ResponsesWithQuestionnaireInfo{}
+	res := openapi.ResponsesWithQuestionnaireInfo{}
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
 
+	r := controller.NewResponse()
+	res, err = r.GetMyResponses(ctx, params, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get my responses: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %+w", err))
+	}
 	return ctx.JSON(200, res)
 }
 

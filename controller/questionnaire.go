@@ -15,15 +15,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-// Response Responseの構造体
-type Response struct {
-	model.IQuestionnaire
-	model.IValidation
-	model.IScaleLabel
-	model.IRespondent
-	model.IResponse
-}
-
 // Questionnaire Questionnaireの構造体
 type Questionnaire struct {
 	model.IQuestionnaire
