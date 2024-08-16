@@ -350,6 +350,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 			return res, echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		c.Logger().Errorf("failed to get questionnaire limit: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	// 回答期限を過ぎていたらエラー
@@ -359,6 +360,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 	}
 
 	var submittedAt, modifiedAt time.Time
+	//一時保存のときはnull
 	if params.IsDraft {
 		submittedAt = time.Time{}
 		modifiedAt = time.Time{}
