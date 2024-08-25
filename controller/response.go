@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -14,6 +15,7 @@ import (
 type Response struct {
 	model.IQuestionnaire
 	model.IRespondent
+	model.IResponse
 	model.ITarget
 }
 
@@ -116,4 +118,34 @@ func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 	}
 
 	return res, nil
+}
+
+func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, userID string) error {
+	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
+	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			ctx.Logger().Errorf("failed to find response by response ID: %+v", err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find response by response ID: %w", err))
+		}
+		ctx.Logger().Errorf("failed to get questionnaire limit by response ID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire limit by response ID: %w", err))
+	}
+	if limit.Valid && limit.Time.Before(time.Now()) {
+		ctx.Logger().Errorf("unable delete the expired response")
+		return echo.NewHTTPError(http.StatusMethodNotAllowed, fmt.Errorf("unable delete the expired response"))
+	}
+
+	err = r.IRespondent.DeleteRespondent(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to delete respondent: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete respondent: %w", err))
+	}
+
+	err = r.IResponse.DeleteResponse(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to delete response: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
+	}
+
+	return nil
 }
