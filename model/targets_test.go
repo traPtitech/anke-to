@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
@@ -306,5 +307,70 @@ func TestGetTargets(t *testing.T) {
 
 			assert.ElementsMatchf(t, expectTargets, targets, testCase.description, "targets")
 		})
+	}
+}
+
+func TestIsTargetingMe(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	require.NoError(t, err)
+
+	err = targetImpl.InsertTargets(ctx, questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		isErr       bool
+		err         error
+		isTargeted  bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "is targeted",
+			args: args{
+				userID: userOne,
+			},
+			expect: expect{
+				isTargeted: true,
+			},
+		},
+		{
+			description: "not targeted",
+			args: args{
+				userID: userTwo,
+			},
+			expect: expect{
+				isTargeted: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		isTargeted, err := targetImpl.IsTargetingMe(ctx, questionnaireID, testCase.args.userID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.isTargeted, isTargeted, testCase.description, "isTargeted")
 	}
 }

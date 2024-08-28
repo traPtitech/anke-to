@@ -990,6 +990,101 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 	}
 }
 
+func TestGetMyResponseIDs(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	require.NoError(t, err)
+
+	respondents := []Respondents{
+		{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      userOne,
+			SubmittedAt:     null.NewTime(time.Now(), true),
+		},
+		{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      userTwo,
+			SubmittedAt:     null.NewTime(time.Now(), true),
+		},
+		{
+			QuestionnaireID: questionnaireID,
+			UserTraqid:      userTwo,
+			SubmittedAt:     null.NewTime(time.Now(), true),
+		},
+	}
+	responseIDs := []int{}
+	for _, respondent := range respondents {
+		responseID, err := respondentImpl.InsertRespondent(ctx, respondent.UserTraqid, questionnaireID, respondent.SubmittedAt)
+		require.NoError(t, err)
+		responseIDs = append(responseIDs, responseID)
+	}
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		isErr       bool
+		err         error
+		responseIDs []int
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid user with one resonse",
+			args: args{
+				userID: userOne,
+			},
+			expect: expect{
+				responseIDs: []int{responseIDs[1]},
+			},
+		},
+		{
+			description: "valid user with multiple responses",
+			args: args{
+				userID: userTwo,
+			},
+			expect: expect{
+				responseIDs: []int{responseIDs[2], responseIDs[3]},
+			},
+		},
+		{
+			description: "valid user with no response",
+			args: args{
+				userID: userThree,
+			},
+			expect: expect{
+				responseIDs: []int{},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.userID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.responseIDs, MyResponseIDs, testCase.description, "responseIDs")
+	}
+}
+
 func TestTestCheckRespondent(t *testing.T) {
 	t.Parallel()
 

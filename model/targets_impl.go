@@ -81,7 +81,22 @@ func (*Target) GetTargets(ctx context.Context, questionnaireIDs []int) ([]Target
 	return targets, nil
 }
 
-func(*Target) IsTargetingME(ctx context.Context, questionnairID int, userID string) (bool, error) {
-	// todo: check if the questionnair is targeting me
-	return true, nil
+func(*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID string) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	var count int64
+	err = db.
+		Where("questionnaire_id = ? AND user_traqid = ?", questionnairID, userID).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("failed to get targets which are targeting me: %w", err)
+	}
+
+	if count > 0 {
+		return true, nil
+	}
+	return false, nil
 }
