@@ -28,29 +28,29 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 
 	sort := string(*params.Sort)
 	responsesID := []int{}
-	responsesID, err := r.IRespondent.GetMyResponsesID(ctx.Request().Context(), sort, userID)
+	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
-		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %+w", err))
+		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}
 
 	for _, responseID := range responsesID {
 		responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %+w", err))
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 		}
 
 		questionnaire, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), responseDetail.QuestionnaireID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire info: %+w", err))
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire info: %w", err))
 		}
 
 		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), responseDetail.QuestionnaireID, userID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get target info: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %+w", err))
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %w", err))
 		}
 
 		questionnaireInfo := struct {
@@ -70,7 +70,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 		response, err := respondentDetail2Response(ctx, responseDetail)
 		if err != nil {
 			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %+w", err))
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
 		}
 
 		tmp := struct {
@@ -107,14 +107,18 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) (openapi.Response, error) {
 	responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			ctx.Logger().Errorf("failed to find response by response ID: %+v", err)
+			return openapi.Response{}, echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find response by response ID: %w", err))
+		}
 		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
-		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %+w", err))
+		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 	}
 
 	res, err := respondentDetail2Response(ctx, responseDetail)
 	if err != nil {
 		ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
-		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %+w", err))
+		return openapi.Response{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
 	}
 
 	return res, nil

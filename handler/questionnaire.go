@@ -180,31 +180,11 @@ func (h Handler) GetQuestionnaireResult(ctx echo.Context, questionnaireID openap
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	params := openapi.GetQuestionnaireResponsesParams{}
 	q := controller.NewQuestionnaire()
-	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
+	res, err = q.GetQuestionnaireResult(ctx, questionnaireID, userID)
 	if err != nil {
-		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %+w", err))
-	}
-
-	for _, response := range responses {
-		tmp := struct {
-			Body            []openapi.ResponseBody `json:"body"`
-			IsDraft         bool                   `json:"is_draft"`
-			ModifiedAt      time.Time              `json:"modified_at"`
-			QuestionnaireId int                    `json:"questionnaire_id"`
-			ResponseId      int                    `json:"response_id"`
-			SubmittedAt     time.Time              `json:"submitted_at"`
-		}{
-			Body:            response.Body,
-			IsDraft:         response.IsDraft,
-			ModifiedAt:      response.ModifiedAt,
-			QuestionnaireId: response.QuestionnaireId,
-			ResponseId:      response.ResponseId,
-			SubmittedAt:     response.SubmittedAt,
-		}
-		res = append(res, tmp)
+		ctx.Logger().Errorf("failed to get questionnaire result: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire result: %w", err))
 	}
 
 	return ctx.JSON(200, res)

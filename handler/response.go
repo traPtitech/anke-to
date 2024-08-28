@@ -22,7 +22,7 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 	res, err = r.GetMyResponses(ctx, params, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %+w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %w", err))
 	}
 	return ctx.JSON(200, res)
 }
@@ -52,8 +52,8 @@ func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPa
 	r := controller.NewResponse()
 	res, err := r.GetResponse(ctx, responseID)
 	if err != nil {
-		ctx.Logger().Errorf("failed to get my response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %+w", err))
+		ctx.Logger().Errorf("failed to get response: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %w", err))
 	}
 	return ctx.JSON(200, res)
 }

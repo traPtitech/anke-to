@@ -387,7 +387,7 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 }
 
 // GetMyResponses 自分のすべての回答を取得
-func (*Response) GetMyResponsesID(ctx context.Context, userID int) ([]int, error) {
+func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
