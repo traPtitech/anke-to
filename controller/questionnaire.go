@@ -340,8 +340,52 @@ func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID
 	return res, nil
 }
 
-func (q Questionnaire) PostQuestionnaireResponse(c echo.Context) error {
-	// todo: PostQuestionnaireResponse
+func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID int, params openapi.PostQuestionnaireResponseJSONRequestBody, userID string) (openapi.Response, error) {
+	res := openapi.Response{}
+
+	limit, err := q.GetQuestionnaireLimit(c.Request().Context(), questionnaireID)
+	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Info("questionnaire not found")
+			return res, echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		c.Logger().Errorf("failed to get questionnaire limit: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	// 回答期限を過ぎていたらエラー
+	if limit.Valid && limit.Time.Before(time.Now()) {
+		c.Logger().Info("expired questionnaire")
+		return res, echo.NewHTTPError(http.StatusUnprocessableEntity, err)
+	}
+
+	var submittedAt, modifiedAt time.Time
+	//一時保存のときはnull
+	if params.IsDraft {
+		submittedAt = time.Time{}
+		modifiedAt = time.Time{}
+	} else {
+		submittedAt = time.Now()
+		modifiedAt = time.Now()
+	}
+
+	resopnseID, err := q.InsertRespondent(c.Request().Context(), userID, questionnaireID, null.NewTime(submittedAt, !params.IsDraft))
+	if err != nil {
+		c.Logger().Errorf("failed to insert respondant: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	res = openapi.Response{
+		QuestionnaireId: questionnaireID,
+		ResponseId:      resopnseID,
+		Respondent:      userID,
+		SubmittedAt:     submittedAt,
+		ModifiedAt:      modifiedAt,
+		IsDraft:         params.IsDraft,
+		Body:            params.Body,
+	}
+
+	return res, nil
 }
 
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {

@@ -147,6 +147,12 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 // (POST /questionnaires/{questionnaireID}/responses)
 func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.Response{}
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	params := openapi.PostQuestionnaireResponseJSONRequestBody{}
 	if err := ctx.Bind(&params); err != nil {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
@@ -165,7 +171,11 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 	}
 
 	q := controller.NewQuestionnaire()
-	res, err = q.PostQuestionnaireResponse(ctx, questionnaireID, params)
+	res, err = q.PostQuestionnaireResponse(ctx, questionnaireID, params, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to post questionnaire response: %+v", err)
+		return err
+	}
 
 	return ctx.JSON(201, res)
 }
