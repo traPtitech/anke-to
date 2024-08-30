@@ -372,7 +372,7 @@ https://anke-to.trap.jp/responses/new/%d`,
 	)
 }
 
-func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID int, userID string) (openapi.Result, error){
+func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID int, userID string) (openapi.Result, error) {
 	res := openapi.Result{}
 
 	params := openapi.GetQuestionnaireResponsesParams{}
