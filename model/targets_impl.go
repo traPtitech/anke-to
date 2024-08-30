@@ -13,7 +13,7 @@ func NewTarget() *Target {
 	return new(Target)
 }
 
-//Targets targetsテーブルの構造体
+// Targets targetsテーブルの構造体
 type Targets struct {
 	QuestionnaireID int    `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`
@@ -81,7 +81,7 @@ func (*Target) GetTargets(ctx context.Context, questionnaireIDs []int) ([]Target
 	return targets, nil
 }
 
-func(*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID string) (bool, error) {
+func (*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID string) (bool, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get transaction: %w", err)

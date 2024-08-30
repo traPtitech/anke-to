@@ -328,9 +328,9 @@ func TestIsTargetingMe(t *testing.T) {
 		userID string
 	}
 	type expect struct {
-		isErr       bool
-		err         error
-		isTargeted  bool
+		isErr      bool
+		err        error
+		isTargeted bool
 	}
 	type test struct {
 		description string
