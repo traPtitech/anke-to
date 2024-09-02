@@ -882,17 +882,20 @@ components:
     ResponsesWithQuestionnaireInfo:
       type: array
       items:
-        allOf:
-          - $ref: "#/components/schemas/Response"
-          - type: object
-            properties:
-              questionnaire_info:
-                allOf:
-                  - $ref: "#/components/schemas/QuestionnaireTitle"
-                  - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
-                  - $ref: "#/components/schemas/QuestionnaireCreatedAt"
-                  - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-                  - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
+        $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+    ResponseWithQuestionnaireInfoItem:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            questionnaire_info:
+              allOf:
+                - $ref: "#/components/schemas/QuestionnaireTitle"
+                - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+                - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+                - $ref: "#/components/schemas/QuestionnaireModifiedAt"
+                - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
     ResponseBody:
       oneOf:
         - $ref: "#/components/schemas/ResponseBodyText"
@@ -960,27 +963,30 @@ components:
     Result:
       type: array
       items:
-        allOf:
-          - $ref: "#/components/schemas/QuestionnaireID"
-          - type: object
-            properties:
-              response_id:
-                type: integer
-                example: 1
-              submitted_at:
-                type: string
-                format: date-time
-                example: 2020-01-01T00:00:00+09:00
-              modified_at:
-                type: string
-                format: date-time
-                example: 2020-01-01T00:00:00+09:00
-            required:
-              - response_id
-              - respondent
-              - submitted_at
-              - modified_at
-          - $ref: "#/components/schemas/NewResponse"
+        $ref: "#/components/schemas/ResultItem"
+    ResultItem:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - type: object
+          properties:
+            response_id:
+              type: integer
+              example: 1
+            submitted_at:
+              type: string
+              format: date-time
+              example: 2020-01-01T00:00:00+09:00
+            modified_at:
+              type: string
+              format: date-time
+              example: 2020-01-01T00:00:00+09:00
+          required:
+            - response_id
+            - respondent
+            - submitted_at
+            - modified_at
+        - $ref: "#/components/schemas/NewResponse"
     UsersAndGroups:
       type: object
       properties:
