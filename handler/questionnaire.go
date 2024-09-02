@@ -183,6 +183,18 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 // (GET /questionnaires/{questionnaireID}/result)
 func (h Handler) GetQuestionnaireResult(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.Result{}
+	userID, err := getUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
+	q := controller.NewQuestionnaire()
+	res, err = q.GetQuestionnaireResult(ctx, questionnaireID, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaire result: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire result: %w", err))
+	}
 
 	return ctx.JSON(200, res)
 }

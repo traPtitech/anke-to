@@ -386,6 +386,26 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 	return respondents, nil
 }
 
+// GetMyResponses 自分のすべての回答を取得
+func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	responsesID := []int{}
+	err = db.
+		Model(&Respondents{}).
+		Where("user_traqid = ?", userID).
+		Select("response_id").
+		Find(&responsesID).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get responsesID: %w", err)
+	}
+
+	return responsesID, nil
+}
+
 // CheckRespondent 回答者かどうかの確認
 func (*Respondent) CheckRespondent(ctx context.Context, userID string, questionnaireID int) (bool, error) {
 	db, err := getTx(ctx)
