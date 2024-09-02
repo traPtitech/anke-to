@@ -395,6 +395,7 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, 
 
 	responsesID := []int{}
 	err = db.
+		Model(&Respondents{}).
 		Where("user_traqid = ?", userID).
 		Select("response_id").
 		Find(&responsesID).Error

@@ -89,6 +89,7 @@ func (*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID str
 
 	var count int64
 	err = db.
+		Model(&Targets{}).
 		Where("questionnaire_id = ? AND user_traqid = ?", questionnairID, userID).
 		Count(&count).Error
 	if err != nil {
