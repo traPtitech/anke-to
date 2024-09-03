@@ -53,13 +53,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %w", err))
 		}
 
-		questionnaireInfo := struct {
-			CreatedAt           time.Time  `json:"created_at"`
-			IsTargetingMe       bool       `json:"is_targeting_me"`
-			ModifiedAt          time.Time  `json:"modified_at"`
-			ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
-			Title               string     `json:"title"`
-		}{
+		questionnaireInfo := openapi.QuestionnaireInfo{
 			CreatedAt:           questionnaire.CreatedAt,
 			IsTargetingMe:       isTargetingMe,
 			ModifiedAt:          questionnaire.ModifiedAt,
@@ -73,22 +67,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
 		}
 
-		tmp := struct {
-			Body              []openapi.ResponseBody `json:"body"`
-			IsDraft           bool                   `json:"is_draft"`
-			ModifiedAt        time.Time              `json:"modified_at"`
-			QuestionnaireId   int                    `json:"questionnaire_id"`
-			QuestionnaireInfo *struct {
-				CreatedAt           time.Time  `json:"created_at"`
-				IsTargetingMe       bool       `json:"is_targeting_me"`
-				ModifiedAt          time.Time  `json:"modified_at"`
-				ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
-				Title               string     `json:"title"`
-			} `json:"questionnaire_info,omitempty"`
-			Respondent  openapi.TraqId `json:"respondent"`
-			ResponseId  int            `json:"response_id"`
-			SubmittedAt time.Time      `json:"submitted_at"`
-		}{
+		tmp := openapi.ResponseWithQuestionnaireInfoItem{
 			Body:              response.Body,
 			IsDraft:           response.IsDraft,
 			ModifiedAt:        response.ModifiedAt,

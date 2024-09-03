@@ -427,14 +427,7 @@ func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID 
 	}
 
 	for _, response := range responses {
-		tmp := struct {
-			Body            []openapi.ResponseBody `json:"body"`
-			IsDraft         bool                   `json:"is_draft"`
-			ModifiedAt      time.Time              `json:"modified_at"`
-			QuestionnaireId int                    `json:"questionnaire_id"`
-			ResponseId      int                    `json:"response_id"`
-			SubmittedAt     time.Time              `json:"submitted_at"`
-		}{
+		tmp := openapi.ResultItem{
 			Body:            response.Body,
 			IsDraft:         response.IsDraft,
 			ModifiedAt:      response.ModifiedAt,
