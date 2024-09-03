@@ -166,6 +166,9 @@ func (r *Response) PostResponse(c echo.Context) error {
 	}
 
 	responseID, err := r.InsertRespondent(c.Request().Context(), userID, req.ID, null.NewTime(submittedAt, !req.Temporarily))
+	if errors.Is(err, model.ErrDuplicatedAnswered) {
+		return echo.NewHTTPError(http.StatusConflict, err)
+	}
 	if err != nil {
 		c.Logger().Errorf("failed to insert respondent: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
