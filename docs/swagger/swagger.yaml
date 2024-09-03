@@ -883,6 +883,14 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+    QuestionnaireInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireTitle"
+        - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
+        - $ref: "#/components/schemas/QuestionnaireCreatedAt"
+        - $ref: "#/components/schemas/QuestionnaireModifiedAt"
+        - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
     ResponseWithQuestionnaireInfoItem:
       type: object
       allOf:
@@ -890,12 +898,7 @@ components:
         - type: object
           properties:
             questionnaire_info:
-              allOf:
-                - $ref: "#/components/schemas/QuestionnaireTitle"
-                - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
-                - $ref: "#/components/schemas/QuestionnaireCreatedAt"
-                - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-                - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
+              $ref: "#/components/schemas/QuestionnaireInfo"
     ResponseBody:
       oneOf:
         - $ref: "#/components/schemas/ResponseBodyText"
