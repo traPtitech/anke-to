@@ -60,5 +60,22 @@ func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPa
 
 // (PATCH /responses/{responseID})
 func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
+	req := openapi.EditResponseJSONRequestBody{}
+	if err := ctx.Bind(&req); err != nil {
+		ctx.Logger().Errorf("failed to bind Responses: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind Responses: %w", err))
+	}
+
+	validate, err := getValidator(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get validator: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
+	}
+
+	err = validate.Struct(req)
+	if err != nil {
+		ctx.Logger().Errorf("failed to validate request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
+	}
 	return ctx.NoContent(200)
 }
