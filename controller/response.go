@@ -17,6 +17,7 @@ type Response struct {
 	model.IRespondent
 	model.IResponse
 	model.ITarget
+	model.IQuestion
 }
 
 func NewResponse() *Response {
@@ -130,5 +131,46 @@ func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseID
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
 	}
 
+	return nil
+}
+
+func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, req openapi.EditResponseJSONRequestBody) error {
+	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
+	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			ctx.Logger().Infof("failed to find response by response ID: %+v", err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("failed to find response by response ID: %w", err))
+		}
+		ctx.Logger().Errorf("failed to get questionnaire limit by response ID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire limit by response ID: %w", err))
+	}
+
+	if limit.Valid && limit.Time.Before(time.Now()) {
+		ctx.Logger().Info("unable to edit the expired response")
+		return echo.NewHTTPError(http.StatusMethodNotAllowed, fmt.Errorf("unable edit the expired response"))
+	}
+
+	err = r.IResponse.DeleteResponse(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to delete response: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
+	}
+
+	questions, err := r.IQuestion.GetQuestions(ctx.Request().Context(), req.QuestionnaireId)
+
+	responseMetas, err := responseBody2ResponseMetas(req.Body, questions)
+	if err != nil {
+		ctx.Logger().Errorf("failed to convert response body into response metas: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert response body into response metas: %w", err))
+	}
+
+	if len(responseMetas) > 0 {
+		err = r.IResponse.InsertResponses(ctx.Request().Context(), responseID, responseMetas)
+		if err != nil {
+			ctx.Logger().Errorf("failed to insert responses: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+		}
+	}
+	
 	return nil
 }
