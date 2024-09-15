@@ -35,11 +35,11 @@ func SetRouting(port string) {
 		{
 			apiQuestionnnaires.GET("", api.GetQuestionnaires, api.TrapRateLimitMiddlewareFunc())
 			apiQuestionnnaires.POST("", api.PostQuestionnaire)
-			apiQuestionnnaires.GET("/:questionnaireID", api.GetQuestionnaire)
+			apiQuestionnnaires.GET("/:questionnaireID", api.GetQuestionnaire, api.QuestionnaireReadAuthenticate)
 			apiQuestionnnaires.PATCH("/:questionnaireID", api.EditQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
 			apiQuestionnnaires.DELETE("/:questionnaireID", api.DeleteQuestionnaire, api.QuestionnaireAdministratorAuthenticate)
-			apiQuestionnnaires.GET("/:questionnaireID/questions", api.GetQuestions)
-			apiQuestionnnaires.POST("/:questionnaireID/questions", api.PostQuestionByQuestionnaireID)
+			apiQuestionnnaires.GET("/:questionnaireID/questions", api.GetQuestions, api.QuestionnaireReadAuthenticate)
+			apiQuestionnnaires.POST("/:questionnaireID/questions", api.PostQuestionByQuestionnaireID, api.QuestionnaireReadAuthenticate)
 		}
 
 		apiQuestions := echoAPI.Group("/questions")

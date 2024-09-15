@@ -145,6 +145,7 @@ type PostAndEditQuestionnaireRequest struct {
 	Description    string    `json:"description"`
 	ResTimeLimit   null.Time `json:"res_time_limit"`
 	ResSharedTo    string    `json:"res_shared_to" validate:"required,oneof=administrators respondents public"`
+	IsPublished    bool      `json:"is_published" validate:"required`
 	Targets        []string  `json:"targets" validate:"dive,max=32"`
 	Administrators []string  `json:"administrators" validate:"required,min=1,dive,max=32"`
 }
@@ -182,7 +183,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 	var questionnaireID int
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, req.IsPublished)
 		if err != nil {
 			c.Logger().Errorf("failed to insert a questionnaire: %+v", err)
 			return err
@@ -243,11 +244,10 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 // GetQuestionnaire GET /questionnaires/:questionnaireID
 func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
-	strQuestionnaireID := c.Param("questionnaireID")
-	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		c.Logger().Errorf("failed to get questionnaireID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	questionnaire, targets, administrators, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
@@ -268,6 +268,7 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
 		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
 		"res_shared_to":   questionnaire.ResSharedTo,
+		"is_published":    questionnaire.IsPublished,
 		"targets":         targets,
 		"administrators":  administrators,
 		"respondents":     respondents,
@@ -276,11 +277,10 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 
 // PostQuestionByQuestionnaireID POST /questionnaires/:questionnaireID/questions
 func (q *Questionnaire) PostQuestionByQuestionnaireID(c echo.Context) error {
-	strQuestionnaireID := c.Param("questionnaireID")
-	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		c.Logger().Info("failed to convert questionnaireID to int: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		c.Logger().Errorf("failed to get questionnaireID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	req := PostAndEditQuestionRequest{}
 	if err := c.Bind(&req); err != nil {
@@ -409,7 +409,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
+		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID, req.IsPublished)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -498,11 +498,10 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context) error {
 
 // GetQuestions GET /questionnaires/:questionnaireID/questions
 func (q *Questionnaire) GetQuestions(c echo.Context) error {
-	strQuestionnaireID := c.Param("questionnaireID")
-	questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+	questionnaireID, err := getQuestionnaireID(c)
 	if err != nil {
-		c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		c.Logger().Errorf("failed to get questionnaireID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	allquestions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)

@@ -601,6 +601,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						testCase.request.Description,
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
+						testCase.request.IsPublished,
 					).
 					Return(testCase.questionnaireID, testCase.InsertQuestionnaireError)
 
@@ -1074,8 +1075,9 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 				MaxBound:        "10",
 			},
 			InsertQuestionError:      errors.New("正規表現が間違っています"),
+			questionnaireID:          "1",
 			ExecutesCreation:         false,
-			ExecutesCheckQuestionNum: false,
+			ExecutesCheckQuestionNum: true,
 			expect: expect{
 				statusCode: http.StatusBadRequest,
 			},
@@ -1165,7 +1167,7 @@ func TestPostQuestionByQuestionnaireID(t *testing.T) {
 
 			c.SetParamValues(test.questionnaireID)
 
-			c.Set(questionnaireIDKey, test.request.QuestionnaireID)
+			c.Set(questionnaireIDKey, intQuestionnaireID)
 			if test.validator != "" {
 				c.Set(test.validator, validator.New())
 			} else {
@@ -1490,6 +1492,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						mockTimeLimit,
 						testCase.request.ResSharedTo,
 						testCase.questionnaireID,
+						testCase.request.IsPublished,
 					).
 					Return(testCase.InsertQuestionnaireError)
 
