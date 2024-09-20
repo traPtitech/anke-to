@@ -276,3 +276,69 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 
 	return res, nil
 }
+
+func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Questions) ([]*model.ResponseMeta, error) {
+	res := []*model.ResponseMeta{}
+
+	for i, b := range body {
+		switch questions[i].Type {
+		case "Text":
+			bText, err := b.AsResponseBodyText()
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       bText.Answer,
+			})
+		case "TextLong":
+			bTextLong, err := b.AsResponseBodyTextLong()
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       bTextLong.Answer,
+			})
+		case "Number":
+			bNumber, err := b.AsResponseBodyNumber()
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
+			})
+		case "SingleChoice":
+			bSingleChoice, err := b.AsResponseBodySingleChoice()
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       strconv.FormatInt(int64(bSingleChoice.Answer), 10),
+			})
+		case "MultipleChoice":
+			bMultipleChoice, err := b.AsResponseBodyMultipleChoice()
+			if err != nil {
+				return nil, err
+			}
+			for _, a := range bMultipleChoice.Answer {
+				res = append(res, &model.ResponseMeta{
+					QuestionID: questions[i].ID,
+					Data:       strconv.FormatInt(int64(a), 10),
+				})
+			}
+		case "LinearScale":
+			bScale, err := b.AsResponseBodyScale()
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       strconv.FormatInt(int64(bScale.Answer), 10),
+			})
+		}
+	}
+	return res, nil
+}
