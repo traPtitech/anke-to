@@ -29,14 +29,8 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 
 // (DELETE /responses/{responseID})
 func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
-	userID, err := getUserID(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get userID: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-	}
-
 	r := controller.NewResponse()
-	err = r.DeleteResponse(ctx, responseID, userID)
+	err := r.DeleteResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to delete response: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))

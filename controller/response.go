@@ -104,7 +104,7 @@ func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 	return res, nil
 }
 
-func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, userID string) error {
+func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
 	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
