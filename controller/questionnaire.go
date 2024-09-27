@@ -258,6 +258,12 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 				c.Logger().Errorf("failed to get question settings: %+v", err)
 				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
 			}
+			// 数字かどうか，min<=maxになっているかどうか
+			err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+			if err != nil {
+				c.Logger().Errorf("invalid number: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid number")
+			}
 			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
 				model.Validations{
 					MinBound: strconv.Itoa(*b.MinValue),
@@ -356,6 +362,100 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 	if err != nil {
 		c.Logger().Errorf("failed to update a questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
+	}
+
+	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	for i, question := range questions {
+		switch question.Type {
+		case "SingleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsSingleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, question.ID)
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to update options: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to update options")
+			}
+		case "MultipleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsMultipleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, question.ID)
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to update options: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to update options")
+			}
+		case "Scale":
+			b, err := params.Questions[i].AsQuestionSettingsScale()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IScaleLabel.UpdateScaleLabel(c.Request().Context(), question.ID, 
+				model.ScaleLabels{
+					ScaleLabelLeft: *b.MinLabel,
+					ScaleLabelRight: *b.MaxLabel,
+					ScaleMax: b.MaxValue,
+					ScaleMin: b.MinValue,
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert scale label: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert scale label")
+			}
+		case "Text":
+			b, err := params.Questions[i].AsQuestionSettingsText()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					MaxBound: strconv.Itoa(*b.MaxLength),
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "TextLong":
+			b, err := params.Questions[i].AsQuestionSettingsTextLong()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					MaxBound: strconv.FormatFloat(float64(*b.MaxLength), 'f', -1, 64),
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "Number":
+			b, err := params.Questions[i].AsQuestionSettingsNumber()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			// 数字かどうか，min<=maxになっているかどうか
+			err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+			if err != nil {
+				c.Logger().Errorf("invalid number: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid number")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					MinBound: strconv.Itoa(*b.MinValue),
+					MaxBound: strconv.Itoa(*b.MaxValue),
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		}
 	}
 
 	return nil
