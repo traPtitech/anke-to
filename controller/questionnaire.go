@@ -546,6 +546,89 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		return res, echo.NewHTTPError(http.StatusUnprocessableEntity, err)
 	}
 
+	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	responseMetas, err := responseBody2ResponseMetas(params.Body, questions)
+	if err != nil {
+		c.Logger().Errorf("failed to convert response body to response metas: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	// validationでチェック
+	questionIDs := make([]int, len(questions))
+	questionTypes := make(map[int]string, len(questions))
+	for i, question := range questions {
+		questionIDs[i] = question.ID
+		questionTypes[question.ID] = question.Type
+	}
+
+	validations, err := q.IValidation.GetValidations(c.Request().Context(), questionIDs)
+	if err != nil {
+		c.Logger().Errorf("failed to get validations: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	for i, validation := range validations {
+		switch questionTypes[validation.QuestionID] {
+		case "Text", "TextLong":
+			err := q.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrTextMatching) {
+					c.Logger().Errorf("invalid text: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid text: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Number":
+			err := q.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrInvalidNumber) {
+					c.Logger().Errorf("invalid number: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid number: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		}
+	}
+
+	// scaleのvalidation
+	scaleLabelIDs := []int{}
+	for _, question := range questions {
+		if question.Type == "Scale" {
+			scaleLabelIDs = append(scaleLabelIDs, question.ID)
+		}
+	}
+
+	scaleLabels, err := q.IScaleLabel.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
+	if err != nil {
+		c.Logger().Errorf("failed to get scale labels: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
+	for _, scaleLabel := range scaleLabels {
+		scaleLabelMap[scaleLabel.QuestionID] = scaleLabel
+	}
+
+	for i, question := range questions {
+		if question.Type == "Scale" {
+			label, ok := scaleLabelMap[question.ID]
+			if !ok {
+				label = model.ScaleLabels{}
+			}
+			err := q.IScaleLabel.CheckScaleLabel(label, responseMetas[i].Data)
+			if err != nil {
+				c.Logger().Errorf("invalid scale: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		}
+	}
+
 	var submittedAt, modifiedAt time.Time
 	//一時保存のときはnull
 	if params.IsDraft {
@@ -560,6 +643,14 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 	if err != nil {
 		c.Logger().Errorf("failed to insert respondant: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	if len(responseMetas) > 0 {
+		err = q.InsertResponses(c.Request().Context(), resopnseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
 	}
 
 	res = openapi.Response{
