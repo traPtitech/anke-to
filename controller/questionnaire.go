@@ -178,6 +178,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
 
+	// insert validations
 	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
 	for i, question := range questions {
 		switch question.Type {
@@ -232,7 +233,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			}
 			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					MaxBound: strconv.Itoa(*b.MaxLength),
+					RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 				})
 			if err != nil {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -246,7 +247,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			}
 			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					MaxBound: strconv.FormatFloat(float64(*b.MaxLength), 'f', -1, 64),
+					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
 				})
 			if err != nil {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -364,6 +365,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
 	}
 
+	// update validations
 	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
 	for i, question := range questions {
 		switch question.Type {
@@ -414,7 +416,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			}
 			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					MaxBound: strconv.Itoa(*b.MaxLength),
+					RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 				})
 			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -428,7 +430,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			}
 			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					MaxBound: strconv.FormatFloat(float64(*b.MaxLength), 'f', -1, 64),
+					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
 				})
 			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
