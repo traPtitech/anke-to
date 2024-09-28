@@ -18,6 +18,8 @@ type Response struct {
 	model.IResponse
 	model.ITarget
 	model.IQuestion
+	model.IValidation
+	model.IScaleLabel
 }
 
 func NewResponse() *Response {
@@ -162,6 +164,77 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 	if err != nil {
 		ctx.Logger().Errorf("failed to convert response body into response metas: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert response body into response metas: %w", err))
+	}
+
+	// validationでチェック
+	questionIDs := make([]int, len(questions))
+	questionTypes := make(map[int]string, len(questions))
+	for i, question := range questions {
+		questionIDs[i] = question.ID
+		questionTypes[question.ID] = question.Type
+	}
+
+	validations, err := r.IValidation.GetValidations(ctx.Request().Context(), questionIDs)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get validations: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validations: %w", err))
+	}
+
+	for i, validation := range validations {
+		switch questionTypes[validation.QuestionID] {
+		case "Text", "TextLong":
+			err := r.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrTextMatching) {
+					ctx.Logger().Errorf("invalid text: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid text: %w", err))
+				}
+				ctx.Logger().Errorf("invalid text: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid text: %w", err))
+			}
+		case "Number":
+			err := r.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrInvalidNumber) {
+					ctx.Logger().Errorf("invalid number: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid number: %w", err))
+				}
+				ctx.Logger().Errorf("invalid number: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid number: %w", err))
+			}
+		}
+	}
+
+	// scaleのvalidation
+	scaleLabelIDs := []int{}
+	for _, question := range questions {
+		if question.Type == "Scale" {
+			scaleLabelIDs = append(scaleLabelIDs, question.ID)
+		}
+	}
+
+	scaleLabels, err := r.IScaleLabel.GetScaleLabels(ctx.Request().Context(), scaleLabelIDs)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get scale labels: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get scale labels: %w", err))
+	}
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
+	for _, scaleLabel := range scaleLabels {
+		scaleLabelMap[scaleLabel.QuestionID] = scaleLabel
+	}
+
+	for i, question := range questions {
+		if question.Type == "Scale" {
+			label, ok := scaleLabelMap[question.ID]
+			if !ok {
+				label = model.ScaleLabels{}
+			}
+			err := r.IScaleLabel.CheckScaleLabel(label, responseMetas[i].Data)
+			if err != nil {
+				ctx.Logger().Errorf("invalid scale: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid scale: %w", err))
+			}
+		}
 	}
 
 	if len(responseMetas) > 0 {
