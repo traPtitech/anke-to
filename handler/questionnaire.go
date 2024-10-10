@@ -61,7 +61,7 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to post questionnaire: %w", err))
 	}
 
-	return ctx.JSON(200, res)
+	return ctx.JSON(201, res)
 }
 
 // (GET /questionnaires/{questionnaireID})
