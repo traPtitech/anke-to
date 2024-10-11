@@ -201,6 +201,9 @@ func (h Handler) GetQuestionnaireResult(ctx echo.Context, questionnaireID openap
 	q := controller.NewQuestionnaire()
 	res, err = q.GetQuestionnaireResult(ctx, questionnaireID, userID)
 	if err != nil {
+		if errors.Is(err, echo.ErrNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire result not found: %w", err))
+		}
 		ctx.Logger().Errorf("failed to get questionnaire result: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire result: %w", err))
 	}

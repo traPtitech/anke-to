@@ -425,6 +425,9 @@ func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID 
 	params := openapi.GetQuestionnaireResponsesParams{}
 	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
 	if err != nil {
+		if errors.Is(echo.ErrNotFound, err) {
+			return openapi.Result{}, err
+		}
 		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
 		return openapi.Result{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}
