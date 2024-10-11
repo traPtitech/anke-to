@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/controller"
+	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 )
 
@@ -70,6 +72,9 @@ func (h Handler) GetQuestionnaire(ctx echo.Context, questionnaireID openapi.Ques
 	q := controller.NewQuestionnaire()
 	res, err := q.GetQuestionnaire(ctx, questionnaireID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found: %w", err))
+		}
 		ctx.Logger().Errorf("failed to get questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire: %w", err))
 	}
