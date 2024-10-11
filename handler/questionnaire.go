@@ -145,6 +145,10 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 	}
 	q := controller.NewQuestionnaire()
 	res, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
+		return err
+	}
 
 	return ctx.JSON(200, res)
 }
