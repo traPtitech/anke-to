@@ -64,8 +64,36 @@ func main() {
 	}
 	e.Use(oapiMiddleware.OapiRequestValidator(swagger))
 	e.Use(handler.SetUserIDMiddleware)
+	e.Use(handler.TraPMemberAuthenticate)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	apiTrapRateLimitMiddlewareFunc := // todo
+	{
+		apiTrapRateLimitMiddlewareFunc.GET("/questionnaires")
+	}
+	apiTrapRateLimitMiddlewareFunc.Use(handler.TrapRateLimitMiddlewareFunc())
+
+	apiQuestionnaireAdministratorAuthenticate := // todo
+	{
+		apiQuestionnaireAdministratorAuthenticate.PATCH("/questionnaires/:questionnaireID")
+		apiQuestionnaireAdministratorAuthenticate.DELETE("/questionnaires/:questionnaireID")
+	}
+	apiQuestionnaireAdministratorAuthenticate.Use(handler.QuestionnaireAdministratorAuthenticate)
+
+	apiResponseReadAuthenticate := // todo
+	{
+		apiResponseReadAuthenticate.GET("/responses/:responseID")
+	}
+	apiResponseReadAuthenticate.Use(handler.ResponseReadAuthenticate)
+
+	apiRespondentAuthenticate := // todo
+	{
+		apiRespondentAuthenticate.PATCH("/responses/:responseID")
+		apiRespondentAuthenticate.DELETE("/responses/:responseID")
+	}
+	apiRespondentAuthenticate.Use(handler.RespondentAuthenticate)
+
 	openapi.RegisterHandlers(e, handler.Handler{})
 	e.Logger.Fatal(e.Start(port))
 
