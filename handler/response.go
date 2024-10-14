@@ -53,7 +53,7 @@ func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPa
 	res, err := r.GetResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %w", err))
+		return err
 	}
 	return ctx.JSON(200, res)
 }
