@@ -39,7 +39,7 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	err = r.DeleteResponse(ctx, responseID, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to delete response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
+		return err
 	}
 
 	return ctx.NoContent(200)
