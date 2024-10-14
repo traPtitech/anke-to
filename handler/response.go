@@ -77,5 +77,13 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		ctx.Logger().Errorf("failed to validate request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
+
+	r := controller.NewResponse()
+	err = r.EditResponse(ctx, responseID, req)
+	if err != nil {
+		ctx.Logger().Errorf("failed to edit response: %+v", err)
+		return err 
+	}
+
 	return ctx.NoContent(200)
 }
