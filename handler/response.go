@@ -39,7 +39,7 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	err = r.DeleteResponse(ctx, responseID, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to delete response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
+		return err
 	}
 
 	return ctx.NoContent(200)
@@ -53,7 +53,7 @@ func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPa
 	res, err := r.GetResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %w", err))
+		return err
 	}
 	return ctx.JSON(200, res)
 }
@@ -77,5 +77,13 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		ctx.Logger().Errorf("failed to validate request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
+
+	r := controller.NewResponse()
+	err = r.EditResponse(ctx, responseID, req)
+	if err != nil {
+		ctx.Logger().Errorf("failed to edit response: %+v", err)
+		return err 
+	}
+
 	return ctx.NoContent(200)
 }

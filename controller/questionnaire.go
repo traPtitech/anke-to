@@ -315,6 +315,9 @@ func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID
 	res := []openapi.Response{}
 	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, string(*params.Sort), *params.OnlyMyResponse, userID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
+		}
 		c.Logger().Errorf("failed to get respondent details: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to get respondent details")
 	}
@@ -422,6 +425,9 @@ func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID 
 	params := openapi.GetQuestionnaireResponsesParams{}
 	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
 	if err != nil {
+		if errors.Is(echo.ErrNotFound, err) {
+			return openapi.Result{}, err
+		}
 		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
 		return openapi.Result{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}

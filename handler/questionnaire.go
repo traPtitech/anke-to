@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/controller"
+	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 )
 
@@ -61,7 +63,7 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to post questionnaire: %w", err))
 	}
 
-	return ctx.JSON(200, res)
+	return ctx.JSON(201, res)
 }
 
 // (GET /questionnaires/{questionnaireID})
@@ -70,6 +72,9 @@ func (h Handler) GetQuestionnaire(ctx echo.Context, questionnaireID openapi.Ques
 	q := controller.NewQuestionnaire()
 	res, err := q.GetQuestionnaire(ctx, questionnaireID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found: %w", err))
+		}
 		ctx.Logger().Errorf("failed to get questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire: %w", err))
 	}
@@ -140,6 +145,10 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 	}
 	q := controller.NewQuestionnaire()
 	res, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
+		return err
+	}
 
 	return ctx.JSON(200, res)
 }
@@ -192,6 +201,9 @@ func (h Handler) GetQuestionnaireResult(ctx echo.Context, questionnaireID openap
 	q := controller.NewQuestionnaire()
 	res, err = q.GetQuestionnaireResult(ctx, questionnaireID, userID)
 	if err != nil {
+		if errors.Is(err, echo.ErrNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire result not found: %w", err))
+		}
 		ctx.Logger().Errorf("failed to get questionnaire result: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire result: %w", err))
 	}
