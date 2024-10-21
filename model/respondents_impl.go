@@ -257,7 +257,7 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
+func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string) ([]RespondentDetail, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tx: %w", err)
@@ -306,7 +306,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	}
 
 	questions := []Questions{}
-	err = db.
+	query = db.
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("ResponseID", "QuestionID", "Body").
@@ -314,7 +314,11 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
-		Select("ID", "Type").
+		Select("ID", "Type")
+	if onlyMyResponse {
+		query = query.Where("user_traqid = ?", userID)
+	}
+	err = query.
 		Find(&questions).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get questions: %w", err)
@@ -380,6 +384,26 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 	}
 
 	return respondents, nil
+}
+
+// GetMyResponses 自分のすべての回答を取得
+func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	responsesID := []int{}
+	err = db.
+		Model(&Respondents{}).
+		Where("user_traqid = ?", userID).
+		Select("response_id").
+		Find(&responsesID).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get responsesID: %w", err)
+	}
+
+	return responsesID, nil
 }
 
 // CheckRespondent 回答者かどうかの確認

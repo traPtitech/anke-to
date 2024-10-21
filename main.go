@@ -7,7 +7,13 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/traPtitech/anke-to/handler"
 	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/openapi"
+
 	"github.com/traPtitech/anke-to/tuning"
 )
 
@@ -51,5 +57,17 @@ func main() {
 		panic("no PORT")
 	}
 
-	SetRouting(port)
+	e := echo.New()
+	swagger, err := openapi.GetSwagger()
+	if err != nil {
+		panic(err)
+	}
+	e.Use(oapiMiddleware.OapiRequestValidator(swagger))
+	e.Use(handler.SetUserIDMiddleware)
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	openapi.RegisterHandlers(e, handler.Handler{})
+	e.Logger.Fatal(e.Start(port))
+
+	// SetRouting(port)
 }
