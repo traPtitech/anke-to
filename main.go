@@ -66,7 +66,21 @@ func main() {
 	e.Use(handler.SetUserIDMiddleware)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	mws := NewMiddlewareSwitcher()
+	mws.AddGroupConfig("", handler.TraPMemberAuthenticate)
+
+	mws.AddRouteConfig("/questionnaires", http.MethodGet, handler.TrapRateLimitMiddlewareFunc())
+	mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodPatch, handler.QuestionnaireAdministratorAuthenticate)
+	mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodDelete, handler.QuestionnaireAdministratorAuthenticate)
+
+	mws.AddRouteConfig("/responses/:responseID", http.MethodGet, handler.ResponseReadAuthenticate)
+	mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, handler.RespondentAuthenticate)
+	mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, handler.RespondentAuthenticate)
+
 	openapi.RegisterHandlers(e, handler.Handler{})
+
+	e.Use(mws.ApplyMiddlewares)
 	e.Logger.Fatal(e.Start(port))
 
 	// SetRouting(port)
