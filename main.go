@@ -71,6 +71,7 @@ func main() {
 	mws.AddGroupConfig("", handler.TraPMemberAuthenticate)
 
 	mws.AddRouteConfig("/questionnaires", http.MethodGet, handler.TrapRateLimitMiddlewareFunc())
+	mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodGet, handler.QuestionnaireReadAuthenticate)
 	mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodPatch, handler.QuestionnaireAdministratorAuthenticate)
 	mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodDelete, handler.QuestionnaireAdministratorAuthenticate)
 
