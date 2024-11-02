@@ -151,11 +151,11 @@ type NewQuestionnaire struct {
 	Admins      UsersAndGroups `json:"admins"`
 	Description string         `json:"description"`
 
-	// IsAllowingMultipleResponses 一人が複数回回答できるかどうか
-	IsAllowingMultipleResponses bool `json:"is_allowing_multiple_responses"`
-
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
 
 	// IsPublished アンケートが公開されているかどうか
 	IsPublished bool          `json:"is_published"`
@@ -315,11 +315,11 @@ type QuestionnaireBase struct {
 	Admins      UsersAndGroups `json:"admins"`
 	Description string         `json:"description"`
 
-	// IsAllowingMultipleResponses 一人が複数回回答できるかどうか
-	IsAllowingMultipleResponses bool `json:"is_allowing_multiple_responses"`
-
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
 
 	// IsPublished アンケートが公開されているかどうか
 	IsPublished bool `json:"is_published"`
@@ -349,11 +349,11 @@ type QuestionnaireDetail struct {
 	CreatedAt   time.Time      `json:"created_at"`
 	Description string         `json:"description"`
 
-	// IsAllowingMultipleResponses 一人が複数回回答できるかどうか
-	IsAllowingMultipleResponses bool `json:"is_allowing_multiple_responses"`
-
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
 
 	// IsPublished アンケートが公開されているかどうか
 	IsPublished     bool       `json:"is_published"`
@@ -389,16 +389,16 @@ type QuestionnaireInfo struct {
 	Title               string     `json:"title"`
 }
 
-// QuestionnaireIsAllowingMultipleResponses defines model for QuestionnaireIsAllowingMultipleResponses.
-type QuestionnaireIsAllowingMultipleResponses struct {
-	// IsAllowingMultipleResponses 一人が複数回回答できるかどうか
-	IsAllowingMultipleResponses bool `json:"is_allowing_multiple_responses"`
-}
-
 // QuestionnaireIsAnonymous defines model for QuestionnaireIsAnonymous.
 type QuestionnaireIsAnonymous struct {
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
+}
+
+// QuestionnaireIsDuplicateAnswerAllowed defines model for QuestionnaireIsDuplicateAnswerAllowed.
+type QuestionnaireIsDuplicateAnswerAllowed struct {
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
 }
 
 // QuestionnaireIsPublished defines model for QuestionnaireIsPublished.
@@ -456,11 +456,11 @@ type QuestionnaireSummary struct {
 	// HasMyResponse 回答が存在する
 	HasMyResponse bool `json:"has_my_response"`
 
-	// IsAllowingMultipleResponses 一人が複数回回答できるかどうか
-	IsAllowingMultipleResponses bool `json:"is_allowing_multiple_responses"`
-
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
 
 	// IsPublished アンケートが公開されているかどうか
 	IsPublished bool `json:"is_published"`

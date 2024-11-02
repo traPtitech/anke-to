@@ -11,14 +11,14 @@ import (
 
 func questionnaireInfo2questionnaireSummary(questionnaireInfo model.QuestionnaireInfo, allResponded bool, hasMyDraft bool, hasMyResponse bool, respondedDateTimeByMe null.Time) *openapi.QuestionnaireSummary {
 	res := openapi.QuestionnaireSummary{
-		AllResponded:  allResponded,
-		CreatedAt:     questionnaireInfo.CreatedAt,
-		Description:   questionnaireInfo.Description,
-		HasMyDraft:    hasMyDraft,
-		HasMyResponse: hasMyResponse,
-		// IsAllowingMultipleResponses: questionnaireInfo.IsAllowingMultipleResponses,
+		AllResponded:             allResponded,
+		CreatedAt:                questionnaireInfo.CreatedAt,
+		Description:              questionnaireInfo.Description,
+		HasMyDraft:               hasMyDraft,
+		HasMyResponse:            hasMyResponse,
+		IsDuplicateAnswerAllowed: questionnaireInfo.IsDuplicateAnswerAllowed,
 		// IsAnonymous:                 questionnaireInfo.IsAnonymous,
-		// IsPublished:                 questionnaireInfo.IsPublished,
+		IsPublished:     questionnaireInfo.IsPublished,
 		IsTargetingMe:   questionnaireInfo.IsTargeted,
 		ModifiedAt:      questionnaireInfo.ModifiedAt,
 		QuestionnaireId: questionnaireInfo.ID,
@@ -149,12 +149,12 @@ func convertRespondents(respondents []model.Respondents) []string {
 
 func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []string, targetUsers []string, targetGroups []string, respondents []string) openapi.QuestionnaireDetail {
 	res := openapi.QuestionnaireDetail{
-		Admins:      createUsersAndGroups(adminUsers, adminGroups),
-		CreatedAt:   questionnaires.CreatedAt,
-		Description: questionnaires.Description,
-		// IsAllowingMultipleResponses: questionnaires.IsAllowingMultipleResponses,
+		Admins:                   createUsersAndGroups(adminUsers, adminGroups),
+		CreatedAt:                questionnaires.CreatedAt,
+		Description:              questionnaires.Description,
+		IsDuplicateAnswerAllowed: questionnaires.IsDuplicateAnswerAllowed,
 		// IsAnonymous:                 questionnaires.IsAnonymous,
-		// IsPublished:                 questionnaires.IsPublished,
+		IsPublished:         questionnaires.IsPublished,
 		ModifiedAt:          questionnaires.ModifiedAt,
 		QuestionnaireId:     questionnaires.ID,
 		Questions:           convertQuestions(questionnaires.Questions),
