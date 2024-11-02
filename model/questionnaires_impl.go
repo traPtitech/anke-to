@@ -35,6 +35,7 @@ type Questionnaires struct {
 	TargetGroups   []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	IsPublished    bool             `json:"is_published" gorm:"type:boolean;default:false"`
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
@@ -81,7 +82,7 @@ type ResponseReadPrivilegeInfo struct {
 }
 
 // InsertQuestionnaire アンケートの追加
-func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tx: %w", err)
@@ -93,6 +94,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			Title:       title,
 			Description: description,
 			ResSharedTo: resSharedTo,
+			IsPublished: isPublished,
 		}
 	} else {
 		questionnaire = Questionnaires{
@@ -100,6 +102,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
+			IsPublished:  isPublished,
 		}
 	}
 
@@ -112,7 +115,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 }
 
 // UpdateQuestionnaire アンケートの更新
-func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx: %w", err)
@@ -125,6 +128,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
+			IsPublished:  isPublished,
 		}
 	} else {
 		questionnaire = map[string]interface{}{
@@ -132,6 +136,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			"description":    description,
 			"res_time_limit": gorm.Expr("NULL"),
 			"res_shared_to":  resSharedTo,
+			"is_published":   isPublished,
 		}
 	}
 
@@ -186,7 +191,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 
 	query := db.
 		Table("questionnaires").
-		Where("deleted_at IS NULL").
+		Where("deleted_at IS NULL AND is_published IS TRUE").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
 	query, err = setQuestionnairesOrder(query, sort)

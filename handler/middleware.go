@@ -91,6 +91,62 @@ func TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	return middleware.RateLimiterWithConfig(config)
 }
 
+// QuestionnaireReadAuthenticate アンケートの閲覧権限があるかの認証
+func QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		m := NewMiddleware()
+
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Errorf("failed to get userID: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		// 管理者ならOK
+		for _, adminID := range adminUserIDs {
+			if userID == adminID {
+				c.Set(questionnaireIDKey, questionnaireID)
+
+				return next(c)
+			}
+		}
+		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+		}
+		if isAdmin {
+			c.Set(questionnaireIDKey, questionnaireID)
+			return next(c)
+		}
+
+		// 公開されたらOK
+		questionnaire, _, _, _, _, _, err := m.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Infof("questionnaire not found: %+v", err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found:%d", questionnaireID))
+		}
+		if err != nil {
+			c.Logger().Errorf("failed to get questionnaire read privilege info: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire read privilege info: %w", err))
+		}
+		if !questionnaire.IsPublished {
+			return c.String(http.StatusForbidden, "The questionnaire is not published.")
+		}
+
+		c.Set(questionnaireIDKey, questionnaireID)
+
+		return next(c)
+	}
+}
+
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
 func QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
