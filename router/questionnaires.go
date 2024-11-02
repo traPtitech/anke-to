@@ -141,12 +141,13 @@ func (q *Questionnaire) GetQuestionnaires(c echo.Context) error {
 }
 
 type PostAndEditQuestionnaireRequest struct {
-	Title          string    `json:"title" validate:"required,max=50"`
-	Description    string    `json:"description"`
-	ResTimeLimit   null.Time `json:"res_time_limit"`
-	ResSharedTo    string    `json:"res_shared_to" validate:"required,oneof=administrators respondents public"`
-	Targets        []string  `json:"targets" validate:"dive,max=32"`
-	Administrators []string  `json:"administrators" validate:"required,min=1,dive,max=32"`
+	Title                    string    `json:"title" validate:"required,max=50"`
+	Description              string    `json:"description"`
+	ResTimeLimit             null.Time `json:"res_time_limit"`
+	ResSharedTo              string    `json:"res_shared_to" validate:"required,oneof=administrators respondents public"`
+	Targets                  []string  `json:"targets" validate:"dive,max=32"`
+	Administrators           []string  `json:"administrators" validate:"required,min=1,dive,max=32"`
+	IsDuplicateAnswerAllowed bool      `json:"is_duplicate_answer_allowed"`
 }
 
 // PostQuestionnaire POST /questionnaires
@@ -182,7 +183,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 	var questionnaireID int
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+		questionnaireID, err = q.InsertQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, req.IsDuplicateAnswerAllowed)
 		if err != nil {
 			c.Logger().Errorf("failed to insert a questionnaire: %+v", err)
 			return err
@@ -228,16 +229,17 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context) error {
 
 	now := time.Now()
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"questionnaireID": questionnaireID,
-		"title":           req.Title,
-		"description":     req.Description,
-		"res_time_limit":  req.ResTimeLimit,
-		"deleted_at":      "NULL",
-		"created_at":      now.Format(time.RFC3339),
-		"modified_at":     now.Format(time.RFC3339),
-		"res_shared_to":   req.ResSharedTo,
-		"targets":         req.Targets,
-		"administrators":  req.Administrators,
+		"questionnaireID":             questionnaireID,
+		"title":                       req.Title,
+		"description":                 req.Description,
+		"res_time_limit":              req.ResTimeLimit,
+		"deleted_at":                  "NULL",
+		"created_at":                  now.Format(time.RFC3339),
+		"modified_at":                 now.Format(time.RFC3339),
+		"res_shared_to":               req.ResSharedTo,
+		"targets":                     req.Targets,
+		"administrators":              req.Administrators,
+		"is_duplicate_answer_allowed": req.IsDuplicateAnswerAllowed,
 	})
 }
 
@@ -261,16 +263,17 @@ func (q *Questionnaire) GetQuestionnaire(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"questionnaireID": questionnaire.ID,
-		"title":           questionnaire.Title,
-		"description":     questionnaire.Description,
-		"res_time_limit":  questionnaire.ResTimeLimit,
-		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
-		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
-		"res_shared_to":   questionnaire.ResSharedTo,
-		"targets":         targets,
-		"administrators":  administrators,
-		"respondents":     respondents,
+		"questionnaireID":             questionnaire.ID,
+		"title":                       questionnaire.Title,
+		"description":                 questionnaire.Description,
+		"res_time_limit":              questionnaire.ResTimeLimit,
+		"created_at":                  questionnaire.CreatedAt.Format(time.RFC3339),
+		"modified_at":                 questionnaire.ModifiedAt.Format(time.RFC3339),
+		"res_shared_to":               questionnaire.ResSharedTo,
+		"targets":                     targets,
+		"administrators":              administrators,
+		"respondents":                 respondents,
+		"is_duplicate_answer_allowed": questionnaire.IsDuplicateAnswerAllowed,
 	})
 }
 
@@ -409,7 +412,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context) error {
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, questionnaireID)
+		err = q.UpdateQuestionnaire(ctx, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo, req.IsDuplicateAnswerAllowed, questionnaireID)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err

@@ -364,11 +364,12 @@ func insertQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
-		isPublished  bool
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -483,7 +484,7 @@ func insertQuestionnaireTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo, testCase.args.isPublished)
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo, testCase.args.isPublished, testCase.args.isDuplicateAnswerAllowed)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -508,6 +509,7 @@ func insertQuestionnaireTest(t *testing.T) {
 		assertion.WithinDuration(testCase.args.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(testCase.args.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
 		assertion.Equal(testCase.args.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
+		assertion.Equal(testCase.args.isDuplicateAnswerAllowed, questionnaire.IsDuplicateAnswerAllowed, testCase.description, "is_duplicate_answer_allowed")
 
 		assertion.WithinDuration(time.Now(), questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -520,11 +522,12 @@ func updateQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
-		isPublished  bool
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -716,11 +719,12 @@ func updateQuestionnaireTest(t *testing.T) {
 
 		before := &testCase.before
 		questionnaire := Questionnaires{
-			Title:        before.title,
-			Description:  before.description,
-			ResTimeLimit: before.resTimeLimit,
-			ResSharedTo:  before.resSharedTo,
-			IsPublished:  before.isPublished,
+			Title:                    before.title,
+			Description:              before.description,
+			ResTimeLimit:             before.resTimeLimit,
+			ResSharedTo:              before.resSharedTo,
+			IsPublished:              before.isPublished,
+			IsDuplicateAnswerAllowed: before.isDuplicateAnswerAllowed,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -732,7 +736,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		createdAt := questionnaire.CreatedAt
 		questionnaireID := questionnaire.ID
 		after := &testCase.after
-		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID, after.isPublished)
+		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID, after.isPublished, after.isDuplicateAnswerAllowed)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -757,6 +761,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(after.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
 		assertion.Equal(after.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
+		assertion.Equal(after.isDuplicateAnswerAllowed, questionnaire.IsDuplicateAnswerAllowed, testCase.description, "is_duplicate_answer_allowed")
 
 		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -799,7 +804,7 @@ func updateQuestionnaireTest(t *testing.T) {
 	for _, arg := range invalidTestCases {
 		ctx := context.Background()
 
-		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID, arg.isPublished)
+		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID, arg.isPublished, arg.isDuplicateAnswerAllowed)
 		if !errors.Is(err, ErrNoRecordUpdated) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
@@ -816,11 +821,12 @@ func deleteQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
-		isPublished  bool
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -847,11 +853,12 @@ func deleteQuestionnaireTest(t *testing.T) {
 		ctx := context.Background()
 
 		questionnaire := Questionnaires{
-			Title:        testCase.args.title,
-			Description:  testCase.args.description,
-			ResTimeLimit: testCase.args.resTimeLimit,
-			ResSharedTo:  testCase.args.resSharedTo,
-			IsPublished:  testCase.isPublished,
+			Title:                    testCase.args.title,
+			Description:              testCase.args.description,
+			ResTimeLimit:             testCase.args.resTimeLimit,
+			ResSharedTo:              testCase.args.resSharedTo,
+			IsPublished:              testCase.isPublished,
+			IsDuplicateAnswerAllowed: testCase.args.isDuplicateAnswerAllowed,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -1129,7 +1136,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
+		questionnaires, pageMax, err := questionnaireImpl.	(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1418,6 +1425,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		assertion.Equal(testCase.expect.questionnaire.Description, actualQuestionnaire.Description, testCase.description, "questionnaire(Description)")
 		assertion.Equal(testCase.expect.questionnaire.ResSharedTo, actualQuestionnaire.ResSharedTo, testCase.description, "questionnaire(ResSharedTo)")
 		assertion.Equal(testCase.expect.questionnaire.IsPublished, actualQuestionnaire.IsPublished, testCase.description, "questionnaire(IsPublished)")
+		assertion.Equal(testCase.expect.questionnaire.IsDuplicateAnswerAllowed, actualQuestionnaire.IsDuplicateAnswerAllowed, testCase.description, "questionnaire(IsDuplicateAnswerAllowed)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ResTimeLimit.ValueOrZero(), actualQuestionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(ResTimeLimit)")
 		assertion.WithinDuration(testCase.expect.questionnaire.CreatedAt, actualQuestionnaire.CreatedAt, 2*time.Second, testCase.description, "questionnaire(CreatedAt)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
