@@ -966,11 +966,12 @@ func getQuestionnairesTest(t *testing.T) {
 	}
 
 	type args struct {
-		userID      string
-		sort        string
-		search      string
-		pageNum     int
-		nontargeted bool
+		userID                string
+		sort                  string
+		search                string
+		pageNum               int
+		onlyTargetingMe       bool
+		onlyAdministratedByMe bool
 	}
 	type expect struct {
 		isErr      bool
@@ -988,81 +989,89 @@ func getQuestionnairesTest(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:created_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "created_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:-created_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-created_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:title, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "title",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:-title, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-title",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:modified_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "modified_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:-modified_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-modified_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:no, search:GetQuestionnaireTest$, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "GetQuestionnaireTest$",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "GetQuestionnaireTest$",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 			expect: expect{
 				isCheckLen: true,
@@ -1072,21 +1081,23 @@ func getQuestionnairesTest(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:no, page:2",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     2,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               2,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "too large page",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     100000,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               100000,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
 			},
 			expect: expect{
 				isErr: true,
@@ -1096,21 +1107,23 @@ func getQuestionnairesTest(t *testing.T) {
 		{
 			description: "userID:valid, sort:no, search:no, page:1, nontargetted",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     1,
-				nontargeted: true,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "notFoundQuestionnaire",
-				pageNum:     1,
-				nontargeted: true,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "notFoundQuestionnaire",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
 			},
 			expect: expect{
 				isCheckLen: false,
@@ -1120,11 +1133,171 @@ func getQuestionnairesTest(t *testing.T) {
 		{
 			description: "userID:valid, sort:invalid, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "hogehoge",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "hogehoge",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrInvalidSortParam,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:created_at, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:-created_at, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "-created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:title, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:-title, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "-title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:modified_at, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:-modified_at, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "-modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:GetQuestionnaireTest$, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "GetQuestionnaireTest$",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+			expect: expect{
+				isCheckLen: true,
+				length:     4,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:2",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               2,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "too large page",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               100000,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+			expect: expect{
+				isErr: true,
+				err:   ErrTooLargePageNum,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:1, nontargetted",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "notFoundQuestionnaire",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+			expect: expect{
+				isCheckLen: false,
+				length:     0,
+			},
+		},
+		{
+			description: "userID:valid, sort:invalid, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "hogehoge",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 			expect: expect{
 				isErr: true,
@@ -1136,7 +1309,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.	(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1163,9 +1336,14 @@ func getQuestionnairesTest(t *testing.T) {
 		for _, questionnaire := range questionnaires {
 			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
 		}
-		if testCase.args.nontargeted {
+		if testCase.args.onlyTargetingMe {
 			for _, targettedQuestionnaireID := range userTargetMap[questionnairesTestUserID] {
 				assertion.NotContains(actualQuestionnaireIDs, targettedQuestionnaireID, testCase.description, "not contain(targetted)")
+			}
+		}
+		if testCase.args.onlyAdministratedByMe {
+			for _, targettedQuestionnaireID := range userTargetMap[questionnairesTestUserID] {
+				assertion.NotContains(actualQuestionnaireIDs, targettedQuestionnaireID, testCase.description, "not contain(administrated)")
 			}
 		}
 		for _, deletedQuestionnaireID := range deletedQuestionnaireIDs {
@@ -1176,7 +1354,7 @@ func getQuestionnairesTest(t *testing.T) {
 			assertion.Regexp(testCase.args.search, questionnaire.Title, testCase.description, "regexp")
 		}
 
-		if len(testCase.args.search) == 0 && !testCase.args.nontargeted {
+		if len(testCase.args.search) == 0 && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
 			fmt.Println(testCase.description)
 			fmt.Println(questionnaireNum)
 			fmt.Println(pageMax)
@@ -1408,6 +1586,9 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		ctx := context.Background()
 
 		actualQuestionnaire, actualTargets, actualTargetGroups, actualAdministrators, actualAdministratorGroups, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
+
+		_ = actualTargetGroups
+		_ = actualAdministratorGroups
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
