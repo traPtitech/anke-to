@@ -107,3 +107,4 @@
 | ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
 | user_traqid      | char(32) | NO   | PRI | _NULL_  |
+| is_canceled      | boolean  | NO   |     | false   |       | アンケートの対象者がキャンセルしたかどうか |
