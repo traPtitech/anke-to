@@ -28,6 +28,7 @@ type Questionnaires struct {
 	ResTimeLimit   null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	DeletedAt      gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	ResSharedTo    string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	IsAnonymous    bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
 	CreatedAt      time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
@@ -81,7 +82,7 @@ type ResponseReadPrivilegeInfo struct {
 }
 
 // InsertQuestionnaire アンケートの追加
-func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error) {
+func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isAnonymous bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tx: %w", err)
@@ -93,6 +94,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			Title:       title,
 			Description: description,
 			ResSharedTo: resSharedTo,
+			IsAnonymous: isAnonymous,
 		}
 	} else {
 		questionnaire = Questionnaires{
@@ -100,6 +102,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
+			IsAnonymous:  isAnonymous,
 		}
 	}
 
@@ -112,7 +115,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 }
 
 // UpdateQuestionnaire アンケートの更新
-func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error {
+func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isAnonymous bool) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx: %w", err)
@@ -125,6 +128,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			Description:  description,
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
+			IsAnonymous:  isAnonymous,
 		}
 	} else {
 		questionnaire = map[string]interface{}{
@@ -132,6 +136,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			"description":    description,
 			"res_time_limit": gorm.Expr("NULL"),
 			"res_shared_to":  resSharedTo,
+			"is_anonymous":   isAnonymous,
 		}
 	}
 
@@ -469,6 +474,28 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.
 	}
 
 	return &responseReadPrivilegeInfo, nil
+}
+
+func (*Questionnaire) GetResponseIsAnonymousByQuestionnaireID(ctx context.Context, questionnaireID int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return true, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	var isAnonymous bool
+	err = db.
+		Table("questionnaires").
+		Where("questionnaires.id = ?", questionnaireID).
+		Select("questionnaires.is_anonymous").
+		Take(&isAnonymous).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return true, ErrRecordNotFound
+	}
+	if err != nil {
+		return true, fmt.Errorf("failed to get is_anonymous: %w", err)
+	}
+
+	return isAnonymous, nil
 }
 
 func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
