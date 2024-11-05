@@ -111,7 +111,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 	questionnaireID := 0
 
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy))
+		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsAnonymous)
 		if err != nil {
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err
@@ -302,7 +302,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID)
+		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsAnonymous)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
