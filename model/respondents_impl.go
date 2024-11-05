@@ -65,6 +65,15 @@ type RespondentDetail struct {
 	Responses       []ResponseBody `json:"body"`
 }
 
+// AnonymousRespondantDetail 匿名の回答の詳細情報の構造体
+type AnonymousRenspondantDetail struct {
+	ResponseID      int            `json:"responseID,omitempty"`
+	QuestionnaireID int            `json:"questionnaireID,omitempty"`
+	SubmittedAt     null.Time      `json:"submitted_at,omitempty"`
+	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
+	Responses       []ResponseBody `json:"body"`
+}
+
 // InsertRespondent 回答の追加
 func (*Respondent) InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error) {
 	db, err := getTx(ctx)
@@ -366,6 +375,115 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	return respondentDetails, nil
 }
 
+// GetAnonymousRespondantDetails アンケートの回答の匿名詳細情報一覧の取得
+func (*Respondent) GetAnonymousRespondantDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string) ([]AnonymousRenspondantDetail, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	respondents := []Respondents{}
+
+	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
+	query := db.
+		Session(&gorm.Session{}).
+		Where("respondants.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+
+	query, sortNum, err := setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set order: %w", err)
+	}
+
+	err = query.
+		Find(&respondents).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get respondants: %w", err)
+	}
+
+	if len(respondents) == 0 {
+		return []AnonymousRenspondantDetail{}, nil
+	}
+
+	responseIDs := make([]int, 0, len(respondents))
+	for _, respondent := range respondents {
+		responseIDs = append(responseIDs, respondent.ResponseID)
+	}
+
+	respondantDetails := make([]AnonymousRenspondantDetail, 0, len(respondents))
+	respondantDetailMap := make(map[int]*AnonymousRenspondantDetail, len(respondents))
+	for i, respondent := range respondents {
+		respondantDetails = append(respondantDetails, AnonymousRenspondantDetail{
+			ResponseID:      respondent.ResponseID,
+			QuestionnaireID: questionnaireID,
+			SubmittedAt:     respondent.SubmittedAt,
+			ModifiedAt:      respondent.ModifiedAt,
+		})
+
+		respondantDetailMap[respondent.ResponseID] = &respondantDetails[i]
+	}
+
+	questions := []Questions{}
+	query = db.
+		Preload("Responses", func(db *gorm.DB) *gorm.DB {
+			return db.
+				Select("ResponseID", "QuestionID", "Body").
+				Where("response_id IN (?)", responseIDs)
+		}).
+		Where("questionnaire_id = ?", questionnaireID).
+		Order("question_num").
+		Select("ID", "Type")
+	if onlyMyResponse {
+		query = query.Where("user_traqid = ?", userID)
+	}
+	err = query.
+		Find(&questions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get questions: &w", err)
+	}
+
+	for _, question := range questions {
+		responseBodyMap := make(map[int][]string, len(respondents))
+		for _, response := range question.Responses {
+			if response.Body.Valid {
+				responseBodyMap[response.ResponseID] = append(responseBodyMap[response.ResponseID], response.Body.String)
+			}
+		}
+
+		for i := range respondantDetails {
+			responseBodies := responseBodyMap[respondantDetails[i].ResponseID]
+			responseBody := ResponseBody{
+				QuestionID:   question.ID,
+				QuestionType: question.Type,
+			}
+
+			switch responseBody.QuestionType {
+			case "MultipleChoice", "Checkbox", "Dropdown":
+				if responseBodies == nil {
+					responseBody.OptionResponse = []string{}
+				} else {
+					responseBody.OptionResponse = responseBodies
+				}
+			default:
+				if len(responseBodies) == 0 {
+					responseBody.Body = null.NewString("", false)
+				} else {
+					responseBody.Body = null.NewString(responseBodies[0], true)
+				}
+			}
+
+			respondantDetails[i].Responses = append(respondantDetails[i].Responses, responseBody)
+		}
+	}
+
+	respondantDetails, err = sortAnonymousRespondantDetail(sortNum, len(questions), respondantDetails)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sort RespondantDetails: %w", err)
+	}
+
+	return respondantDetails, nil
+}
+
 // GetRespondentsUserIDs 回答者のユーザーID取得
 func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error) {
 	db, err := getTx(ctx)
@@ -471,6 +589,63 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 			numj, err := strconv.ParseFloat(bodyJ.Body.String, 64)
 			if err != nil {
 				return true
+			}
+			if sortNum < 0 {
+				return numi > numj
+			}
+			return numi < numj
+		}
+		if bodyI.QuestionType == "MultipleChoice" {
+			choiceI := ""
+			if len(bodyI.OptionResponse) > 0 {
+				choiceI = bodyI.OptionResponse[0]
+			}
+			choiceJ := ""
+			if len(bodyJ.OptionResponse) > 0 {
+				choiceJ = bodyJ.OptionResponse[0]
+			}
+			if sortNum < 0 {
+				return choiceI > choiceJ
+			}
+			return choiceI < choiceJ
+		}
+		if bodyI.QuestionType == "Checkbox" {
+			selectionsI := strings.Join(bodyI.OptionResponse, ", ")
+			selectionsJ := strings.Join(bodyJ.OptionResponse, ", ")
+			if sortNum < 0 {
+				return selectionsI > selectionsJ
+			}
+			return selectionsI < selectionsJ
+		}
+		if sortNum < 0 {
+			return bodyI.Body.String > bodyJ.Body.String
+		}
+		return bodyI.Body.String < bodyJ.Body.String
+	})
+
+	return respondentDetails, nil
+}
+
+func sortAnonymousRespondantDetail(sortNum int, questionNum int, respondentDetails []AnonymousRenspondantDetail) ([]AnonymousRenspondantDetail, error) {
+	if sortNum == 0 {
+		return respondentDetails, nil
+	}
+	sortNumAbs := int(math.Abs(float64(sortNum)))
+	if sortNumAbs > questionNum {
+		return nil, fmt.Errorf("sort param is too large: %d", sortNum)
+	}
+
+	sort.Slice(respondentDetails, func(i, j int) bool {
+		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
+		bodyJ := respondentDetails[i].Responses[sortNumAbs-1]
+		if bodyI.QuestionType == "Number" {
+			numi, err := strconv.ParseFloat(bodyI.Body.String, 64)
+			if err != nil {
+				return true
+			}
+			numj, err := strconv.ParseFloat(bodyJ.Body.String, 64)
+			if err != nil {
+				return true 
 			}
 			if sortNum < 0 {
 				return numi > numj
