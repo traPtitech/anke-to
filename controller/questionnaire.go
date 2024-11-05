@@ -531,7 +531,38 @@ func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionna
 }
 
 func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
-	// todo: edit remind status
+	if isRemindEnabled {
+		status, err := Jq.CheckRemindStatus(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check remind status: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+		}
+		if status {
+			return nil
+		}
+
+		questionnaire, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		if err != nil {
+			if errors.Is(err, model.ErrRecordNotFound) {
+				c.Logger().Info("questionnaire not found")
+				return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+			}
+			c.Logger().Errorf("failed to get questionnaire: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire")
+		}
+
+		err = Jq.PushReminder(questionnaireID, &questionnaire.ResTimeLimit.Time)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
+		}
+	} else {
+		err := Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete reminder")
+		}
+	}
 	return nil
 }
 
