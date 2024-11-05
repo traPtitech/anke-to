@@ -318,7 +318,7 @@ func TestIsTargetingMe(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", false)
 	require.NoError(t, err)
 
 	err = targetImpl.InsertTargets(ctx, questionnaireID, []string{userOne})
