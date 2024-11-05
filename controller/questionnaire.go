@@ -171,6 +171,12 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			return err
 		}
 
+		Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -358,6 +364,17 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			return err
 		}
 
+		err = Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
+			return err
+		}
+		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -480,6 +497,12 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		err = Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
 
@@ -698,6 +721,35 @@ func createQuestionnaireMessage(questionnaireID int, title string, description s
 https://anke-to.trap.jp/responses/new/%d`,
 		title,
 		questionnaireID,
+		strings.Join(administrators, ","),
+		description,
+		resTimeLimitText,
+		targetsMentionText,
+		questionnaireID,
+	)
+}
+
+func createReminderMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit time.Time, targets []string, leftTimeText string) string {
+	resTimeLimitText := resTimeLimit.Local().Format("2006/01/02 15:04")
+	targetsMentionText := "@" + strings.Join(targets, " @")
+
+	return fmt.Sprintf(
+		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』の回答期限が迫っています!
+==残り%sです!==
+#### 管理者
+%s
+#### 説明
+%s
+#### 回答期限
+%s
+#### 対象者
+%s
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/%d
+`,
+		title,
+		questionnaireID,
+		leftTimeText,
 		strings.Join(administrators, ","),
 		description,
 		resTimeLimitText,
