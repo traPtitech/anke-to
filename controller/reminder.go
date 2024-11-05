@@ -84,6 +84,17 @@ func (jq *JobQueue) DeleteReminder(questionnaireID int) error {
 	return nil
 }
 
+func (jq *JobQueue) CheckRemindStatus(questionnaireID int) (bool, error) {
+	jq.mu.Lock()
+	defer jq.mu.Unlock()
+	for _, job := range jq.jobs {
+		if job.QuestionnaireID == questionnaireID {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func reminderAction(questionnaireID int, leftTimeText string) error {
 	ctx := context.Background()
 	q := model.Questionnaire{}

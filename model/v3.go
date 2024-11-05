@@ -9,7 +9,7 @@ func v3() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "3",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&Targets{}); err != nil {
+			if err := tx.AutoMigrate(&v3Targets{}); err != nil {
 				return err
 			}
 			return nil

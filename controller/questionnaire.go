@@ -521,11 +521,16 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 }
 
 func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
-	// todo: check remind status
-	return false, nil
+	status, err := Jq.CheckRemindStatus(questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to check remind status: %+v", err)
+		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+	}
+
+	return status, nil
 }
 
-func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) error {
+func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
 	// todo: edit remind status
 	return nil
 }
