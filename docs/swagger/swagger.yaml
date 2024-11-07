@@ -169,7 +169,7 @@ paths: # TODO 変数の命名を確認する
       operationId: getQuestionnaireResponses
       tags:
         - questionnaire
-      description: アンケートの全ての回答を取得します。アンケートが匿名回答の場合、取得できません。
+      description: アンケートの全ての回答を取得します。匿名回答の場合はRespondentが空文字列になります。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
@@ -183,8 +183,6 @@ paths: # TODO 変数の命名を確認する
                 $ref: "#/components/schemas/Responses"
         "400":
           description: アンケートのIDが無効です
-        "403":
-          description: アンケートが匿名回答のため回答を取得できません
         "404":
           description: アンケートが存在しません
         "500":
@@ -217,29 +215,6 @@ paths: # TODO 変数の命名を確認する
           description: 回答期限が過ぎたため回答できません
         "500":
           description: 正常に回答が作成できませんでした
-  /questionnaires/{questionnaireID}/result:
-    get:
-      operationId: getQuestionnaireResult
-      tags:
-        - questionnaire
-      description: アンケートの回答を集計した結果を取得します。回答者の情報は含まれず、アンケートが匿名回答であっても取得できます。
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Result"
-        "400":
-          description: アンケートのIDが無効です
-        "403":
-          description: 結果を閲覧する権限がありません。
-        "404":
-          description: アンケートが存在しません
-        "500":
-          description: アンケートの結果を正常に取得できませんでした
   /responses/{responseID}:
     get:
       operationId: getResponse
@@ -861,6 +836,9 @@ components:
               example: 1
             respondent:
               $ref: "#/components/schemas/TraqId"
+            is_anonymous:
+              type: boolean
+              example: true
             submitted_at:
               type: string
               format: date-time
@@ -871,7 +849,6 @@ components:
               example: 2020-01-01T00:00:00+09:00
           required:
             - response_id
-            - respondent
             - submitted_at
             - modified_at
         - $ref: "#/components/schemas/NewResponse"
