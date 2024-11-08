@@ -10,8 +10,8 @@ import (
 
 // IQuestionnaire QuestionnaireのRepository
 type IQuestionnaire interface {
-	InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string) (int, error)
-	UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int) error
+	InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, IsDuplicateAnswerAllowed bool) (int, error)
+	UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, IsDuplicateAnswerAllowed bool, questionnaireID int) error
 	DeleteQuestionnaire(ctx context.Context, questionnaireID int) error
 	GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, nontargeted bool) ([]QuestionnaireInfo, int, error)
 	GetAdminQuestionnaires(ctx context.Context, userID string) ([]Questionnaires, error)
