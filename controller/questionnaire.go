@@ -659,7 +659,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,
 		ResponseId:      resopnseID,
-		Respondent:      userID,
+		Respondent:      &userID,
 		SubmittedAt:     submittedAt,
 		ModifiedAt:      modifiedAt,
 		IsDraft:         params.IsDraft,
