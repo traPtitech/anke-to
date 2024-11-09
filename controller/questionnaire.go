@@ -656,6 +656,8 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		}
 	}
 
+	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,
 		ResponseId:      resopnseID,
@@ -663,6 +665,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		SubmittedAt:     submittedAt,
 		ModifiedAt:      modifiedAt,
 		IsDraft:         params.IsDraft,
+		IsAnonymous:     &isAnonymous,
 		Body:            params.Body,
 	}
 
