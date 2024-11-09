@@ -34,6 +34,7 @@ type v3Questionnaires struct {
 	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	IsPublished    bool             `json:"is_published" gorm:"type:boolean;default:false"`
 }
 
 func (*v3Questionnaires) TableName() string {
