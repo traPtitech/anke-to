@@ -76,7 +76,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 			ModifiedAt:        response.ModifiedAt,
 			QuestionnaireId:   response.QuestionnaireId,
 			QuestionnaireInfo: &questionnaireInfo,
-			Respondent:        userID,
+			Respondent:        &userID,
 			ResponseId:        response.ResponseId,
 			SubmittedAt:       response.SubmittedAt,
 		}
