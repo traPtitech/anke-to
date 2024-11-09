@@ -275,7 +275,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		IsDraft:         respondentDetail.SubmittedAt.Valid,
 		ModifiedAt:      respondentDetail.ModifiedAt,
 		QuestionnaireId: respondentDetail.QuestionnaireID,
-		Respondent:      &(respondentDetail.TraqID),
+		Respondent:      &respondentDetail.TraqID,
 		ResponseId:      respondentDetail.ResponseID,
 		SubmittedAt:     respondentDetail.SubmittedAt.Time,
 		IsAnonymous:     &isAnonymous,
