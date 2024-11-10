@@ -93,7 +93,7 @@ func (h Handler) EditQuestionnaire(ctx echo.Context, questionnaireID openapi.Que
 	err := q.EditQuestionnaire(ctx, questionnaireID, params)
 	if err != nil {
 		ctx.Logger().Errorf("failed to edit questionnaire: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to edit questionnaire: %w", err))
+		return err
 	}
 
 	return ctx.NoContent(200)
