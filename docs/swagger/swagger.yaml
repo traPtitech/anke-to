@@ -684,17 +684,14 @@ components:
     QuestionBase:
       type: object
       properties:
-        title:
-          type: string
-        description:
+        body:
           type: string
         is_required:
           type: boolean
           description: |
             回答必須かどうか
       required:
-        - title
-        - description
+        - body
         - is_required
     QuestionSettingsByType:
       oneOf:
