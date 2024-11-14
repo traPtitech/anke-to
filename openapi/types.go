@@ -5,7 +5,6 @@ package openapi
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -138,10 +137,11 @@ type Groups = []string
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 	union      json.RawMessage
 }
 
@@ -177,24 +177,24 @@ type NewResponse struct {
 
 // Question defines model for Question.
 type Question struct {
-	Body      string    `json:"body"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
-
-	// QuestionId 質問を追加する場合はnull。
-	QuestionId      *int `json:"question_id,omitempty"`
-	QuestionnaireId int  `json:"questionnaire_id"`
+	IsRequired      bool   `json:"is_required"`
+	QuestionId      int    `json:"question_id"`
+	QuestionnaireId int    `json:"questionnaire_id"`
+	Title           string `json:"title"`
 	union           json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
 type QuestionBase struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 }
 
 // QuestionSettingsByType defines model for QuestionSettingsByType.
@@ -862,14 +862,19 @@ func (t NewQuestion) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
+	object["description"], err = json.Marshal(t.Description)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
+	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -887,10 +892,10 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
 		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -898,6 +903,13 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.IsRequired)
 		if err != nil {
 			return fmt.Errorf("error reading 'is_required': %w", err)
+		}
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 
@@ -1073,14 +1085,14 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
-	}
-
 	object["created_at"], err = json.Marshal(t.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+	}
+
+	object["description"], err = json.Marshal(t.Description)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1088,16 +1100,19 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
 	}
 
-	if t.QuestionId != nil {
-		object["question_id"], err = json.Marshal(t.QuestionId)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
-		}
+	object["question_id"], err = json.Marshal(t.QuestionId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 	}
 
 	object["questionnaire_id"], err = json.Marshal(t.QuestionnaireId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'questionnaire_id': %w", err)
+	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -1115,17 +1130,17 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
-		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
-		}
-	}
-
 	if raw, found := object["created_at"]; found {
 		err = json.Unmarshal(raw, &t.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("error reading 'created_at': %w", err)
+		}
+	}
+
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
+		if err != nil {
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -1150,6 +1165,13 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+	}
+
 	return err
 }
 
@@ -1162,7 +1184,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsText() (QuestionSettingsText, 
 
 // FromQuestionSettingsText overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsText
 func (t *QuestionSettingsByType) FromQuestionSettingsText(v QuestionSettingsText) error {
-	v.QuestionType = "QuestionSettingsText"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1170,7 +1191,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsText(v QuestionSettingsText
 
 // MergeQuestionSettingsText performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsText
 func (t *QuestionSettingsByType) MergeQuestionSettingsText(v QuestionSettingsText) error {
-	v.QuestionType = "QuestionSettingsText"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1190,7 +1210,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsTextLong() (QuestionSettingsTe
 
 // FromQuestionSettingsTextLong overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsTextLong
 func (t *QuestionSettingsByType) FromQuestionSettingsTextLong(v QuestionSettingsTextLong) error {
-	v.QuestionType = "QuestionSettingsTextLong"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1198,7 +1217,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsTextLong(v QuestionSettings
 
 // MergeQuestionSettingsTextLong performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsTextLong
 func (t *QuestionSettingsByType) MergeQuestionSettingsTextLong(v QuestionSettingsTextLong) error {
-	v.QuestionType = "QuestionSettingsTextLong"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1218,7 +1236,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsNumber() (QuestionSettingsNumb
 
 // FromQuestionSettingsNumber overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsNumber
 func (t *QuestionSettingsByType) FromQuestionSettingsNumber(v QuestionSettingsNumber) error {
-	v.QuestionType = "QuestionSettingsNumber"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1226,7 +1243,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsNumber(v QuestionSettingsNu
 
 // MergeQuestionSettingsNumber performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsNumber
 func (t *QuestionSettingsByType) MergeQuestionSettingsNumber(v QuestionSettingsNumber) error {
-	v.QuestionType = "QuestionSettingsNumber"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1246,7 +1262,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsSingleChoice() (QuestionSettin
 
 // FromQuestionSettingsSingleChoice overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsSingleChoice
 func (t *QuestionSettingsByType) FromQuestionSettingsSingleChoice(v QuestionSettingsSingleChoice) error {
-	v.QuestionType = "QuestionSettingsSingleChoice"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1254,7 +1269,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsSingleChoice(v QuestionSett
 
 // MergeQuestionSettingsSingleChoice performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsSingleChoice
 func (t *QuestionSettingsByType) MergeQuestionSettingsSingleChoice(v QuestionSettingsSingleChoice) error {
-	v.QuestionType = "QuestionSettingsSingleChoice"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1274,7 +1288,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsMultipleChoice() (QuestionSett
 
 // FromQuestionSettingsMultipleChoice overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsMultipleChoice
 func (t *QuestionSettingsByType) FromQuestionSettingsMultipleChoice(v QuestionSettingsMultipleChoice) error {
-	v.QuestionType = "QuestionSettingsMultipleChoice"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1282,7 +1295,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsMultipleChoice(v QuestionSe
 
 // MergeQuestionSettingsMultipleChoice performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsMultipleChoice
 func (t *QuestionSettingsByType) MergeQuestionSettingsMultipleChoice(v QuestionSettingsMultipleChoice) error {
-	v.QuestionType = "QuestionSettingsMultipleChoice"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1302,7 +1314,6 @@ func (t QuestionSettingsByType) AsQuestionSettingsScale() (QuestionSettingsScale
 
 // FromQuestionSettingsScale overwrites any union data inside the QuestionSettingsByType as the provided QuestionSettingsScale
 func (t *QuestionSettingsByType) FromQuestionSettingsScale(v QuestionSettingsScale) error {
-	v.QuestionType = "QuestionSettingsScale"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1310,7 +1321,6 @@ func (t *QuestionSettingsByType) FromQuestionSettingsScale(v QuestionSettingsSca
 
 // MergeQuestionSettingsScale performs a merge with any union data inside the QuestionSettingsByType, using the provided QuestionSettingsScale
 func (t *QuestionSettingsByType) MergeQuestionSettingsScale(v QuestionSettingsScale) error {
-	v.QuestionType = "QuestionSettingsScale"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1319,37 +1329,6 @@ func (t *QuestionSettingsByType) MergeQuestionSettingsScale(v QuestionSettingsSc
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
-}
-
-func (t QuestionSettingsByType) Discriminator() (string, error) {
-	var discriminator struct {
-		Discriminator string `json:"question_type"`
-	}
-	err := json.Unmarshal(t.union, &discriminator)
-	return discriminator.Discriminator, err
-}
-
-func (t QuestionSettingsByType) ValueByDiscriminator() (interface{}, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
-		return nil, err
-	}
-	switch discriminator {
-	case "QuestionSettingsMultipleChoice":
-		return t.AsQuestionSettingsMultipleChoice()
-	case "QuestionSettingsNumber":
-		return t.AsQuestionSettingsNumber()
-	case "QuestionSettingsScale":
-		return t.AsQuestionSettingsScale()
-	case "QuestionSettingsSingleChoice":
-		return t.AsQuestionSettingsSingleChoice()
-	case "QuestionSettingsText":
-		return t.AsQuestionSettingsText()
-	case "QuestionSettingsTextLong":
-		return t.AsQuestionSettingsTextLong()
-	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
-	}
 }
 
 func (t QuestionSettingsByType) MarshalJSON() ([]byte, error) {
