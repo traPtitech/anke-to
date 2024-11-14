@@ -672,6 +672,8 @@ components:
               example: 1
             question_id:
               type: integer
+              description: |
+                質問を追加する場合はnull。
               example: 1
             created_at:
               type: string
@@ -679,7 +681,6 @@ components:
               example: 2020-01-01T00:00:00+09:00
           required:
             - questionnaire_id
-            - question_id
             - created_at
     QuestionBase:
       type: object
