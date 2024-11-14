@@ -702,8 +702,6 @@ components:
         - $ref: "#/components/schemas/QuestionSettingsSingleChoice"
         - $ref: "#/components/schemas/QuestionSettingsMultipleChoice"
         - $ref: "#/components/schemas/QuestionSettingsScale"
-      discriminator:
-        propertyName: question_type
     QuestionSettingsText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
