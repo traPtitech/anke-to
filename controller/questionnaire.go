@@ -304,7 +304,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 	}
 	if isAnonymous && !params.IsAnonymous {
 		c.Logger().Info("unable to change the questionnaire from anoymous to non-anonymous")
-		return echo.NewHTTPError(http.StatusMethodNotAllowed, "unable to change the questionnaire from anoymous to non-anonymous")
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to change the questionnaire from anoymous to non-anonymous")
 	}
 
 	responseDueDateTime := null.Time{}
