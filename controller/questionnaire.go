@@ -793,31 +793,3 @@ https://anke-to.trap.jp/responses/new/%d
 		questionnaireID,
 	)
 }
-
-func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID int, userID string) (openapi.Result, error) {
-	res := openapi.Result{}
-
-	params := openapi.GetQuestionnaireResponsesParams{}
-	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
-	if err != nil {
-		if errors.Is(echo.ErrNotFound, err) {
-			return openapi.Result{}, err
-		}
-		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
-		return openapi.Result{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
-	}
-
-	for _, response := range responses {
-		tmp := openapi.ResultItem{
-			Body:            response.Body,
-			IsDraft:         response.IsDraft,
-			ModifiedAt:      response.ModifiedAt,
-			QuestionnaireId: response.QuestionnaireId,
-			ResponseId:      response.ResponseId,
-			SubmittedAt:     response.SubmittedAt,
-		}
-		res = append(res, tmp)
-	}
-
-	return res, nil
-}
