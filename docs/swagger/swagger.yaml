@@ -669,6 +669,9 @@ components:
         - $ref: "#/components/schemas/QuestionBase"
         - $ref: "#/components/schemas/QuestionSettingsByType"
         - properties:
+            questionnaire_id:
+              type: integer
+              example: 1
             question_id:
               type: integer
               example: 1
@@ -677,14 +680,12 @@ components:
               format: date-time
               example: 2020-01-01T00:00:00+09:00
           required:
+            - questionnaire_id
             - question_id
             - created_at
     QuestionBase:
       type: object
       properties:
-        questionnaire_id:
-          type: integer
-          example: 1
         title:
           type: string
         description:
@@ -694,7 +695,6 @@ components:
           description: |
             回答必須かどうか
       required:
-        - questionnaire_id
         - title
         - description
         - is_required

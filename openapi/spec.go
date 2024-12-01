@@ -17,7 +17,6 @@ import (
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-
 	"H4sIAAAAAAAC/+xcb3PTSJP/Ki7dvYA6BZvAU/Wc3wWy9VSqlueAhLsXJOVS7EmifWzJSDLgo1KVkfkT",
 	"iIFUgGRD2ISwWQhkSdiF47L8/S43kWO/uq9wNaN/I2lkSY4Nu1tXRVGxND3T0/2b7p6eHl3h8nKpLEtA",
 	"0lQue4UrC4pQAhpQyC9ZKlYHCiVRElVNETRQOFE9BYakMxWgVPH7AlDziljWRFnislzzxgtj9jqC9f3t",
