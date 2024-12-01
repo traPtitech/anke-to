@@ -118,7 +118,7 @@ func (h Handler) GetQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireI
 	status, err := q.GetQuestionnaireMyRemindStatus(ctx, questionnaireID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get questionnaire my remind status: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire my remind status: %w", err))
+		return err
 	}
 	res.IsRemindEnabled = status
 
@@ -127,11 +127,17 @@ func (h Handler) GetQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireI
 
 // (PATCH /questionnaires/{questionnaireID}/myRemindStatus)
 func (h Handler) EditQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	params := openapi.EditQuestionnaireMyRemindStatusJSONRequestBody{}
+	if err := ctx.Bind(&params); err != nil {
+		ctx.Logger().Errorf("failed to bind request body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
+	}
+
 	q := controller.NewQuestionnaire()
-	err := q.EditQuestionnaireMyRemindStatus(ctx, questionnaireID)
+	err := q.EditQuestionnaireMyRemindStatus(ctx, questionnaireID, params.IsRemindEnabled)
 	if err != nil {
 		ctx.Logger().Errorf("failed to edit questionnaire my remind status: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to edit questionnaire my remind status: %w", err))
+		return err
 	}
 	return ctx.NoContent(200)
 }

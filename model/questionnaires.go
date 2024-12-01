@@ -21,4 +21,5 @@ type IQuestionnaire interface {
 	GetQuestionnaireLimitByResponseID(ctx context.Context, responseID int) (null.Time, error)
 	GetResponseReadPrivilegeInfoByResponseID(ctx context.Context, userID string, responseID int) (*ResponseReadPrivilegeInfo, error)
 	GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.Context, userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error)
+	GetQuestionnairesInfoForReminder(ctx context.Context) ([]Questionnaires, error)
 }

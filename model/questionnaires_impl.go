@@ -296,6 +296,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 
 	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
+		Preload("Targets").
 		First(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil, nil, nil, nil, nil, ErrRecordNotFound
@@ -373,6 +374,24 @@ func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID str
 	err = query.Find(&questionnaires).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
+	}
+
+	return questionnaires, nil
+}
+
+// GetQuestionnairesInfoForReminder 回答期限が7日以内のアンケートの詳細情報の取得
+func (*Questionnaire) GetQuestionnairesInfoForReminder(ctx context.Context) ([]Questionnaires, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	questionnaires := []Questionnaires{}
+	err = db.
+		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
+		Find(&questionnaires).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
 	return questionnaires, nil
