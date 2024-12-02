@@ -137,11 +137,10 @@ type Groups = []string
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
-	Description string `json:"description"`
+	Body string `json:"body"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool   `json:"is_required"`
-	Title      string `json:"title"`
+	IsRequired bool `json:"is_required"`
 	union      json.RawMessage
 }
 
@@ -177,24 +176,24 @@ type NewResponse struct {
 
 // Question defines model for Question.
 type Question struct {
-	CreatedAt   time.Time `json:"created_at"`
-	Description string    `json:"description"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired      bool   `json:"is_required"`
-	QuestionId      int    `json:"question_id"`
-	QuestionnaireId int    `json:"questionnaire_id"`
-	Title           string `json:"title"`
+	IsRequired bool `json:"is_required"`
+
+	// QuestionId 質問を追加する場合はnull。
+	QuestionId      *int `json:"question_id,omitempty"`
+	QuestionnaireId int  `json:"questionnaire_id"`
 	union           json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
 type QuestionBase struct {
-	Description string `json:"description"`
+	Body string `json:"body"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool   `json:"is_required"`
-	Title      string `json:"title"`
+	IsRequired bool `json:"is_required"`
 }
 
 // QuestionSettingsByType defines model for QuestionSettingsByType.
@@ -862,19 +861,14 @@ func (t NewQuestion) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["description"], err = json.Marshal(t.Description)
+	object["body"], err = json.Marshal(t.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'description': %w", err)
+		return nil, fmt.Errorf("error marshaling 'body': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
-	}
-
-	object["title"], err = json.Marshal(t.Title)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -892,10 +886,10 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["description"]; found {
-		err = json.Unmarshal(raw, &t.Description)
+	if raw, found := object["body"]; found {
+		err = json.Unmarshal(raw, &t.Body)
 		if err != nil {
-			return fmt.Errorf("error reading 'description': %w", err)
+			return fmt.Errorf("error reading 'body': %w", err)
 		}
 	}
 
@@ -903,13 +897,6 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.IsRequired)
 		if err != nil {
 			return fmt.Errorf("error reading 'is_required': %w", err)
-		}
-	}
-
-	if raw, found := object["title"]; found {
-		err = json.Unmarshal(raw, &t.Title)
-		if err != nil {
-			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 
@@ -1085,14 +1072,14 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	object["body"], err = json.Marshal(t.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'body': %w", err)
+	}
+
 	object["created_at"], err = json.Marshal(t.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
-	}
-
-	object["description"], err = json.Marshal(t.Description)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1100,19 +1087,16 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
 	}
 
-	object["question_id"], err = json.Marshal(t.QuestionId)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
+	if t.QuestionId != nil {
+		object["question_id"], err = json.Marshal(t.QuestionId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
+		}
 	}
 
 	object["questionnaire_id"], err = json.Marshal(t.QuestionnaireId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'questionnaire_id': %w", err)
-	}
-
-	object["title"], err = json.Marshal(t.Title)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -1130,17 +1114,17 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	if raw, found := object["body"]; found {
+		err = json.Unmarshal(raw, &t.Body)
+		if err != nil {
+			return fmt.Errorf("error reading 'body': %w", err)
+		}
+	}
+
 	if raw, found := object["created_at"]; found {
 		err = json.Unmarshal(raw, &t.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("error reading 'created_at': %w", err)
-		}
-	}
-
-	if raw, found := object["description"]; found {
-		err = json.Unmarshal(raw, &t.Description)
-		if err != nil {
-			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -1162,13 +1146,6 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionnaireId)
 		if err != nil {
 			return fmt.Errorf("error reading 'questionnaire_id': %w", err)
-		}
-	}
-
-	if raw, found := object["title"]; found {
-		err = json.Unmarshal(raw, &t.Title)
-		if err != nil {
-			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 
