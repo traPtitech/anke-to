@@ -111,7 +111,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 	questionnaireID := 0
 
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished)
+		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous)
 		if err != nil {
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err
@@ -302,13 +302,24 @@ func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (
 }
 
 func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
+	// unable to change the questionnaire from anoymous to non-anonymous
+	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get anonymous info: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get anonymous info")
+	}
+	if isAnonymous && !params.IsAnonymous {
+		c.Logger().Info("unable to change the questionnaire from anoymous to non-anonymous")
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to change the questionnaire from anoymous to non-anonymous")
+	}
+
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsPublished)
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -715,6 +726,8 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		}
 	}
 
+	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,
 		ResponseId:      resopnseID,
@@ -722,6 +735,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		SubmittedAt:     submittedAt,
 		ModifiedAt:      modifiedAt,
 		IsDraft:         params.IsDraft,
+		IsAnonymous:     &isAnonymous,
 		Body:            params.Body,
 	}
 

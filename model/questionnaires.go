@@ -10,8 +10,8 @@ import (
 
 // IQuestionnaire QuestionnaireのRepository
 type IQuestionnaire interface {
-	InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool) (int, error)
-	UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool) error
+	InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool, isAnonymous bool) (int, error)
+	UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool, isAnonymous bool) error
 	DeleteQuestionnaire(ctx context.Context, questionnaireID int) error
 	GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool) ([]QuestionnaireInfo, int, error)
 	GetAdminQuestionnaires(ctx context.Context, userID string) ([]Questionnaires, error)
@@ -21,5 +21,6 @@ type IQuestionnaire interface {
 	GetQuestionnaireLimitByResponseID(ctx context.Context, responseID int) (null.Time, error)
 	GetResponseReadPrivilegeInfoByResponseID(ctx context.Context, userID string, responseID int) (*ResponseReadPrivilegeInfo, error)
 	GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.Context, userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error)
+	GetResponseIsAnonymousByQuestionnaireID(ctx context.Context, questionnaireID int) (bool, error)
 	GetQuestionnairesInfoForReminder(ctx context.Context) ([]Questionnaires, error)
 }

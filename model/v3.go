@@ -15,9 +15,9 @@ func v3() *gormigrate.Migration {
 			if err := tx.AutoMigrate(&v3Targets{}); err != nil {
 				return err
 			}
-      if err := tx.AutoMigrate(&v3Questionnaires{}); err != nil {
+			if err := tx.AutoMigrate(&v3Questionnaires{}); err != nil {
 				return err
-      }
+			}
 			return nil
 		},
 	}
@@ -40,11 +40,11 @@ type v3Questionnaires struct {
 	ResTimeLimit   null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	DeletedAt      gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	ResSharedTo    string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	IsAnonymous    bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
 	CreatedAt      time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Targets        []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	TargetGroups   []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions      []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents    []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	IsPublished    bool             `json:"is_published" gorm:"type:boolean;default:false"`

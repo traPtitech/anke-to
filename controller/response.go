@@ -79,6 +79,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 			Respondent:        &userID,
 			ResponseId:        response.ResponseId,
 			SubmittedAt:       response.SubmittedAt,
+			IsAnonymous:       response.IsAnonymous,
 		}
 		res = append(res, tmp)
 	}
@@ -244,6 +245,6 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 		}
 	}
-	
+
 	return nil
 }

@@ -291,16 +291,25 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		responseIDs = append(responseIDs, respondent.ResponseID)
 	}
 
+	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
+
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
 	for i, respondent := range respondents {
-		respondentDetails = append(respondentDetails, RespondentDetail{
+		r := RespondentDetail{
 			ResponseID:      respondent.ResponseID,
-			TraqID:          respondent.UserTraqid,
 			QuestionnaireID: questionnaireID,
 			SubmittedAt:     respondent.SubmittedAt,
 			ModifiedAt:      respondent.ModifiedAt,
-		})
+		}
+
+		if !isAnonymous {
+			r.TraqID = respondent.UserTraqid
+		} else {
+			r.TraqID = ""
+		}
+
+		respondentDetails = append(respondentDetails, r)
 
 		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
 	}

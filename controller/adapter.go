@@ -153,8 +153,8 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		CreatedAt:   questionnaires.CreatedAt,
 		Description: questionnaires.Description,
 		// IsAllowingMultipleResponses: questionnaires.IsAllowingMultipleResponses,
-		// IsAnonymous:                 questionnaires.IsAnonymous,
-		// IsPublished:                 questionnaires.IsPublished,
+		IsAnonymous:                 questionnaires.IsAnonymous,
+		IsPublished:                 questionnaires.IsPublished,
 		ModifiedAt:          questionnaires.ModifiedAt,
 		QuestionnaireId:     questionnaires.ID,
 		Questions:           convertQuestions(questionnaires.Questions),
@@ -264,6 +264,12 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		oResponseBodies = append(oResponseBodies, oResponseBody)
 	}
 
+	isAnonymous, err := model.NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx.Request().Context(), respondentDetail.QuestionnaireID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get response is anonymous: %+v", err)
+		return openapi.Response{}, err
+	}
+
 	res := openapi.Response{
 		Body:            oResponseBodies,
 		IsDraft:         respondentDetail.SubmittedAt.Valid,
@@ -272,6 +278,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		Respondent:      &respondentDetail.TraqID,
 		ResponseId:      respondentDetail.ResponseID,
 		SubmittedAt:     respondentDetail.SubmittedAt.Time,
+		IsAnonymous:     &isAnonymous,
 	}
 
 	return res, nil
