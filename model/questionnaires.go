@@ -22,4 +22,5 @@ type IQuestionnaire interface {
 	GetResponseReadPrivilegeInfoByResponseID(ctx context.Context, userID string, responseID int) (*ResponseReadPrivilegeInfo, error)
 	GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.Context, userID string, questionnaireID int) (*ResponseReadPrivilegeInfo, error)
 	GetResponseIsAnonymousByQuestionnaireID(ctx context.Context, questionnaireID int) (bool, error)
+	GetQuestionnairesInfoForReminder(ctx context.Context) ([]Questionnaires, error)
 }
