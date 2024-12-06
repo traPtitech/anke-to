@@ -17,7 +17,7 @@ func NewQuestion() *Question {
 	return new(Question)
 }
 
-//Questions questionテーブルの構造体
+// Questions questionテーブルの構造体
 type Questions struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);not null"`
@@ -41,18 +41,18 @@ func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-//TableName テーブル名が単数形なのでその対応
+// TableName テーブル名が単数形なのでその対応
 func (*Questions) TableName() string {
 	return "question"
 }
 
-//QuestionIDType 質問のIDと種類の構造体
+// QuestionIDType 質問のIDと種類の構造体
 type QuestionIDType struct {
 	ID   int
 	Type string
 }
 
-//InsertQuestion 質問の追加
+// InsertQuestion 質問の追加
 func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -77,7 +77,7 @@ func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNu
 	return question.ID, nil
 }
 
-//UpdateQuestion 質問の修正
+// UpdateQuestion 質問の修正
 func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool, questionID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -104,7 +104,7 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 	return nil
 }
 
-//DeleteQuestion 質問の削除
+// DeleteQuestion 質問の削除
 func (*Question) DeleteQuestion(ctx context.Context, questionID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -125,7 +125,7 @@ func (*Question) DeleteQuestion(ctx context.Context, questionID int) error {
 	return nil
 }
 
-//GetQuestions 質問一覧の取得
+// GetQuestions 質問一覧の取得
 func (*Question) GetQuestions(ctx context.Context, questionnaireID int) ([]Questions, error) {
 	db, err := getTx(ctx)
 	if err != nil {

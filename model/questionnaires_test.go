@@ -67,6 +67,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(questionnairesNow, true),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
@@ -80,6 +81,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "respondents",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
@@ -93,6 +95,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "administrators",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(time.Second),
 				ModifiedAt:   questionnairesNow.Add(2 * time.Second),
 			},
@@ -106,6 +109,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
@@ -126,6 +130,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
@@ -145,6 +150,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(2 * time.Second),
 				ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 			},
@@ -158,6 +164,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 				DeletedAt: gorm.DeletedAt{
@@ -177,6 +184,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(time.Duration(len(datas)) * time.Second),
 				ModifiedAt:   questionnairesNow,
 			},
@@ -191,6 +199,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow.Add(2 * time.Second),
 			ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 		},
@@ -203,6 +212,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
@@ -222,6 +232,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
@@ -240,6 +251,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(questionnairesNow, true),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
@@ -259,6 +271,7 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
@@ -355,6 +368,8 @@ func insertQuestionnaireTest(t *testing.T) {
 		description  string
 		resTimeLimit null.Time
 		resSharedTo  string
+		isPublished  bool
+		isAnonymous  bool
 	}
 	type expect struct {
 		isErr bool
@@ -375,6 +390,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -384,6 +401,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -393,6 +412,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -402,6 +423,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "administrators",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -411,6 +434,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -420,6 +445,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			expect: expect{
 				isErr: true,
@@ -432,6 +459,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  strings.Repeat("a", 2000),
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -441,9 +470,33 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  strings.Repeat("a", 200000),
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			expect: expect{
 				isErr: true,
+			},
+		},
+		{
+			description: "not published",
+			args: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  false,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "anonymous questionnaire",
+			args: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  true,
 			},
 		},
 	}
@@ -451,7 +504,7 @@ func insertQuestionnaireTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo, testCase.args.isPublished, testCase.args.isAnonymous)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -475,6 +528,7 @@ func insertQuestionnaireTest(t *testing.T) {
 		assertion.Equal(testCase.args.description, questionnaire.Description, testCase.description, "description")
 		assertion.WithinDuration(testCase.args.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(testCase.args.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
+		assertion.Equal(testCase.args.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
 
 		assertion.WithinDuration(time.Now(), questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -491,6 +545,8 @@ func updateQuestionnaireTest(t *testing.T) {
 		description  string
 		resTimeLimit null.Time
 		resSharedTo  string
+		isPublished  bool
+		isAnonymous  bool
 	}
 	type expect struct {
 		isErr bool
@@ -512,12 +568,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -527,12 +587,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第2回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -542,12 +606,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第2回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -557,12 +625,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -572,12 +644,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第2回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -587,12 +663,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第2回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -602,12 +682,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -617,12 +701,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now().Add(time.Minute), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -632,12 +720,54 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "update is_published(false->true)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  false,
+				isAnonymous:  false,
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "update is_anonymous(false->true)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, true),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, true),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  true,
 			},
 		},
 	}
@@ -651,6 +781,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			Description:  before.description,
 			ResTimeLimit: before.resTimeLimit,
 			ResSharedTo:  before.resSharedTo,
+			IsPublished:  before.isPublished,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -662,7 +793,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		createdAt := questionnaire.CreatedAt
 		questionnaireID := questionnaire.ID
 		after := &testCase.after
-		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
+		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID, after.isPublished, false)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -686,6 +817,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		assertion.Equal(after.description, questionnaire.Description, testCase.description, "description")
 		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(after.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
+		assertion.Equal(after.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
 
 		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -714,19 +846,23 @@ func updateQuestionnaireTest(t *testing.T) {
 			description:  "第1回集会らん☆ぷろ参加者募集",
 			resTimeLimit: null.NewTime(time.Time{}, false),
 			resSharedTo:  "public",
+			isPublished:  true,
+			isAnonymous:  false,
 		},
 		{
 			title:        "第1回集会らん☆ぷろ募集アンケート",
 			description:  "第1回集会らん☆ぷろ参加者募集",
 			resTimeLimit: null.NewTime(time.Now(), true),
 			resSharedTo:  "public",
+			isPublished:  true,
+			isAnonymous:  false,
 		},
 	}
 
 	for _, arg := range invalidTestCases {
 		ctx := context.Background()
 
-		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID, arg.isPublished, arg.isAnonymous)
 		if !errors.Is(err, ErrNoRecordUpdated) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
@@ -747,6 +883,8 @@ func deleteQuestionnaireTest(t *testing.T) {
 		description  string
 		resTimeLimit null.Time
 		resSharedTo  string
+		isPublished  bool
+		isAnonymous  bool
 	}
 	type expect struct {
 		isErr bool
@@ -764,6 +902,8 @@ func deleteQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 	}
@@ -776,6 +916,8 @@ func deleteQuestionnaireTest(t *testing.T) {
 			Description:  testCase.args.description,
 			ResTimeLimit: testCase.args.resTimeLimit,
 			ResSharedTo:  testCase.args.resSharedTo,
+			IsPublished:  testCase.isPublished,
+			IsAnonymous:  testCase.args.isAnonymous,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -1070,7 +1212,7 @@ func getQuestionnairesTest(t *testing.T) {
 		err = db.
 			Session(&gorm.Session{NewDB: true}).
 			Model(&Questionnaires{}).
-			Where("deleted_at IS NULL").
+			Where("deleted_at IS NULL AND is_published IS TRUE").
 			Count(&questionnaireNum).Error
 		if err != nil {
 			t.Errorf("failed to count questionnaire(%s): %v", testCase.description, err)
@@ -1324,7 +1466,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
+		actualQuestionnaire, actualTargets, actualTargetGroups, actualAdministrators, actualAdministratorGroups, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1341,6 +1483,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		assertion.Equal(testCase.expect.questionnaire.Title, actualQuestionnaire.Title, testCase.description, "questionnaire(Title)")
 		assertion.Equal(testCase.expect.questionnaire.Description, actualQuestionnaire.Description, testCase.description, "questionnaire(Description)")
 		assertion.Equal(testCase.expect.questionnaire.ResSharedTo, actualQuestionnaire.ResSharedTo, testCase.description, "questionnaire(ResSharedTo)")
+		assertion.Equal(testCase.expect.questionnaire.IsPublished, actualQuestionnaire.IsPublished, testCase.description, "questionnaire(IsPublished)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ResTimeLimit.ValueOrZero(), actualQuestionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(ResTimeLimit)")
 		assertion.WithinDuration(testCase.expect.questionnaire.CreatedAt, actualQuestionnaire.CreatedAt, 2*time.Second, testCase.description, "questionnaire(CreatedAt)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
