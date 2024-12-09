@@ -1,4 +1,4 @@
-package router
+package handler
 
 import (
 	"errors"
@@ -21,13 +21,8 @@ type Middleware struct {
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware(administrator model.IAdministrator, respondent model.IRespondent, question model.IQuestion, questionnaire model.IQuestionnaire) *Middleware {
-	return &Middleware{
-		IAdministrator: administrator,
-		IRespondent:    respondent,
-		IQuestion:      question,
-		IQuestionnaire: questionnaire,
-	}
+func NewMiddleware() *Middleware {
+	return &Middleware{}
 }
 
 const (
@@ -38,17 +33,11 @@ const (
 	questionIDKey      = "questionID"
 )
 
-func (*Middleware) SetValidatorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		validate := validator.New()
-		c.Set(validatorKey, validate)
+/*
+	消せないアンケートの発生を防ぐための管理者
 
-		return next(c)
-	}
-}
-
-/* 消せないアンケートの発生を防ぐための管理者
-暫定的にハードコーディングで対応*/
+暫定的にハードコーディングで対応
+*/
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
@@ -102,9 +91,65 @@ func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	return middleware.RateLimiterWithConfig(config)
 }
 
+// QuestionnaireReadAuthenticate アンケートの閲覧権限があるかの認証
+func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		userID, err := getUserID(c)
+		if err != nil {
+			c.Logger().Errorf("failed to get userID: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+		}
+
+		strQuestionnaireID := c.Param("questionnaireID")
+		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
+		if err != nil {
+			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
+		}
+
+		// 管理者ならOK
+		for _, adminID := range adminUserIDs {
+			if userID == adminID {
+				c.Set(questionnaireIDKey, questionnaireID)
+
+				return next(c)
+			}
+		}
+		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
+		}
+		if isAdmin {
+			c.Set(questionnaireIDKey, questionnaireID)
+			return next(c)
+		}
+
+		// 公開されたらOK
+		questionnaire, _, _, _, _, _, err := m.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		if errors.Is(err, model.ErrRecordNotFound) {
+			c.Logger().Infof("questionnaire not found: %+v", err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found:%d", questionnaireID))
+		}
+		if err != nil {
+			c.Logger().Errorf("failed to get questionnaire read privilege info: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire read privilege info: %w", err))
+		}
+		if !questionnaire.IsPublished {
+			return c.String(http.StatusForbidden, "The questionnaire is not published.")
+		}
+
+		c.Set(questionnaireIDKey, questionnaireID)
+
+		return next(c)
+	}
+}
+
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
 func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+
 		userID, err := getUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
@@ -143,6 +188,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 // ResponseReadAuthenticate 回答閲覧権限があるかの認証
 func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+
 		userID, err := getUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
@@ -208,6 +254,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 // RespondentAuthenticate 回答者かどうかの認証
 func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+
 		userID, err := getUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
@@ -244,82 +291,6 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	}
 }
 
-// QuestionAdministratorAuthenticate アンケートの管理者かどうかの認証
-func (m *Middleware) QuestionAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			c.Logger().Errorf("failed to get userID: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-		}
-
-		strQuestionID := c.Param("questionID")
-		questionID, err := strconv.Atoi(strQuestionID)
-		if err != nil {
-			c.Logger().Infof("failed to convert questionID to int: %+v", err)
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionID:%s(error: %w)", strQuestionID, err))
-		}
-
-		for _, adminID := range adminUserIDs {
-			if userID == adminID {
-				c.Set(questionIDKey, questionID)
-
-				return next(c)
-			}
-		}
-		isAdmin, err := m.CheckQuestionAdmin(c.Request().Context(), userID, questionID)
-		if err != nil {
-			c.Logger().Errorf("failed to check if you are a question administrator: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
-		}
-		if !isAdmin {
-			return c.String(http.StatusForbidden, "You are not a administrator of this questionnaire.")
-		}
-
-		c.Set(questionIDKey, questionID)
-
-		return next(c)
-	}
-}
-
-// ResultAuthenticate アンケートの回答を確認できるかの認証
-func (m *Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			c.Logger().Errorf("failed to get userID: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-		}
-
-		strQuestionnaireID := c.Param("questionnaireID")
-		questionnaireID, err := strconv.Atoi(strQuestionnaireID)
-		if err != nil {
-			c.Logger().Infof("failed to convert questionnaireID to int: %+v", err)
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid questionnaireID:%s(error: %w)", strQuestionnaireID, err))
-		}
-
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID)
-		if errors.Is(err, model.ErrRecordNotFound) {
-			c.Logger().Infof("response not found: %+v", err)
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", questionnaireID))
-		} else if err != nil {
-			c.Logger().Errorf("failed to get responseReadPrivilegeInfo: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response read privilege info: %w", err))
-		}
-
-		haveReadPrivilege, err := checkResponseReadPrivilege(responseReadPrivilegeInfo)
-		if err != nil {
-			c.Logger().Errorf("failed to check response read privilege: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check response read privilege: %w", err))
-		}
-		if !haveReadPrivilege {
-			return c.String(http.StatusForbidden, "You do not have permission to view this response.")
-		}
-
-		return next(c)
-	}
-}
-
 func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPrivilegeInfo) (bool, error) {
 	switch responseReadPrivilegeInfo.ResSharedTo {
 	case "administrators":
@@ -333,6 +304,7 @@ func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPri
 	return false, errors.New("invalid resSharedTo")
 }
 
+// getValidator Validatorを設定する
 func getValidator(c echo.Context) (*validator.Validate, error) {
 	rowValidate := c.Get(validatorKey)
 	validate, ok := rowValidate.(*validator.Validate)
@@ -343,6 +315,7 @@ func getValidator(c echo.Context) (*validator.Validate, error) {
 	return validate, nil
 }
 
+// getUserID ユーザーIDを取得する
 func getUserID(c echo.Context) (string, error) {
 	rowUserID := c.Get(userIDKey)
 	userID, ok := rowUserID.(string)
@@ -351,34 +324,4 @@ func getUserID(c echo.Context) (string, error) {
 	}
 
 	return userID, nil
-}
-
-func getQuestionnaireID(c echo.Context) (int, error) {
-	rowQuestionnaireID := c.Get(questionnaireIDKey)
-	questionnaireID, ok := rowQuestionnaireID.(int)
-	if !ok {
-		return 0, errors.New("invalid context questionnaireID")
-	}
-
-	return questionnaireID, nil
-}
-
-func getResponseID(c echo.Context) (int, error) {
-	rowResponseID := c.Get(responseIDKey)
-	responseID, ok := rowResponseID.(int)
-	if !ok {
-		return 0, errors.New("invalid context responseID")
-	}
-
-	return responseID, nil
-}
-
-func getQuestionID(c echo.Context) (int, error) {
-	rowQuestionID := c.Get(questionIDKey)
-	questionID, ok := rowQuestionID.(int)
-	if !ok {
-		return 0, errors.New("invalid context questionID")
-	}
-
-	return questionID, nil
 }
