@@ -3,6 +3,7 @@ package controller
 import (
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
@@ -64,10 +65,10 @@ func convertResSharedTo(resSharedTo string) openapi.ResShareType {
 
 }
 
-func createUsersAndGroups(users []string, groups []string) openapi.UsersAndGroups {
+func createUsersAndGroups(users []string, groups uuid.UUIDs) openapi.UsersAndGroups {
 	res := openapi.UsersAndGroups{
 		Users:  users,
-		Groups: groups,
+		Groups: groups.Strings(),
 	}
 	return res
 }
@@ -147,14 +148,14 @@ func convertRespondents(respondents []model.Respondents) []string {
 	return res
 }
 
-func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []string, targetUsers []string, targetGroups []string, respondents []string) openapi.QuestionnaireDetail {
+func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) openapi.QuestionnaireDetail {
 	res := openapi.QuestionnaireDetail{
 		Admins:      createUsersAndGroups(adminUsers, adminGroups),
 		CreatedAt:   questionnaires.CreatedAt,
 		Description: questionnaires.Description,
 		// IsAllowingMultipleResponses: questionnaires.IsAllowingMultipleResponses,
-		IsAnonymous:                 questionnaires.IsAnonymous,
-		IsPublished:                 questionnaires.IsPublished,
+		IsAnonymous:         questionnaires.IsAnonymous,
+		IsPublished:         questionnaires.IsPublished,
 		ModifiedAt:          questionnaires.ModifiedAt,
 		QuestionnaireId:     questionnaires.ID,
 		Questions:           convertQuestions(questionnaires.Questions),
