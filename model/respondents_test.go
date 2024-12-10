@@ -1025,6 +1025,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	type args struct {
+		sort   string
 		userID string
 	}
 	type expect struct {
@@ -1042,6 +1043,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 		{
 			description: "valid user with one resonse",
 			args: args{
+				sort:   "submitted_at",
 				userID: userOne,
 			},
 			expect: expect{
@@ -1051,6 +1053,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 		{
 			description: "valid user with multiple responses",
 			args: args{
+				sort:   "submitted_at",
 				userID: userTwo,
 			},
 			expect: expect{
@@ -1060,6 +1063,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 		{
 			description: "valid user with no response",
 			args: args{
+				sort:   "submitted_at",
 				userID: userThree,
 			},
 			expect: expect{
@@ -1069,7 +1073,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.userID)
+		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
