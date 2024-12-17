@@ -291,16 +291,25 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		responseIDs = append(responseIDs, respondent.ResponseID)
 	}
 
+	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
+
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
 	for i, respondent := range respondents {
-		respondentDetails = append(respondentDetails, RespondentDetail{
+		r := RespondentDetail{
 			ResponseID:      respondent.ResponseID,
-			TraqID:          respondent.UserTraqid,
 			QuestionnaireID: questionnaireID,
 			SubmittedAt:     respondent.SubmittedAt,
 			ModifiedAt:      respondent.ModifiedAt,
-		})
+		}
+
+		if !isAnonymous {
+			r.TraqID = respondent.UserTraqid
+		} else {
+			r.TraqID = ""
+		}
+
+		respondentDetails = append(respondentDetails, r)
 
 		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
 	}
@@ -387,18 +396,23 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 }
 
 // GetMyResponses 自分のすべての回答を取得
-func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, error) {
+func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string) ([]int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
 	}
 
 	responsesID := []int{}
-	err = db.
-		Model(&Respondents{}).
+	query := db.Model(&Respondents{}).
 		Where("user_traqid = ?", userID).
-		Select("response_id").
-		Find(&responsesID).Error
+		Select("response_id")
+
+	query, _, err = setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set respondents order: %w", err)
+	}
+
+	err = query.Find(&responsesID).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get responsesID: %w", err)
 	}

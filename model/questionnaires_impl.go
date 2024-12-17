@@ -28,6 +28,7 @@ type Questionnaires struct {
 	ResTimeLimit   null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	DeletedAt      gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	ResSharedTo    string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	IsAnonymous    bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
 	CreatedAt      time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	ModifiedAt     time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	Administrators []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
@@ -82,7 +83,7 @@ type ResponseReadPrivilegeInfo struct {
 }
 
 // InsertQuestionnaire アンケートの追加
-func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool) (int, error) {
+func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool, isAnonymous bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tx: %w", err)
@@ -95,6 +96,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			Description: description,
 			ResSharedTo: resSharedTo,
 			IsPublished: isPublished,
+			IsAnonymous: isAnonymous,
 		}
 	} else {
 		questionnaire = Questionnaires{
@@ -103,6 +105,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
 			IsPublished:  isPublished,
+			IsAnonymous:  isAnonymous,
 		}
 	}
 
@@ -115,7 +118,7 @@ func (*Questionnaire) InsertQuestionnaire(ctx context.Context, title string, des
 }
 
 // UpdateQuestionnaire アンケートの更新
-func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool) error {
+func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool, isAnonymous bool) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx: %w", err)
@@ -129,6 +132,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			ResTimeLimit: resTimeLimit,
 			ResSharedTo:  resSharedTo,
 			IsPublished:  isPublished,
+			IsAnonymous:  isAnonymous,
 		}
 	} else {
 		questionnaire = map[string]interface{}{
@@ -137,6 +141,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 			"res_time_limit": gorm.Expr("NULL"),
 			"res_shared_to":  resSharedTo,
 			"is_published":   isPublished,
+			"is_anonymous":   isAnonymous,
 		}
 	}
 
@@ -296,6 +301,7 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 
 	err = db.
 		Where("questionnaires.id = ?", questionnaireID).
+		Preload("Targets").
 		First(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil, nil, nil, nil, nil, ErrRecordNotFound
@@ -373,6 +379,24 @@ func (*Questionnaire) GetTargettedQuestionnaires(ctx context.Context, userID str
 	err = query.Find(&questionnaires).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
+	}
+
+	return questionnaires, nil
+}
+
+// GetQuestionnairesInfoForReminder 回答期限が7日以内のアンケートの詳細情報の取得
+func (*Questionnaire) GetQuestionnairesInfoForReminder(ctx context.Context) ([]Questionnaires, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	questionnaires := []Questionnaires{}
+	err = db.
+		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
+		Find(&questionnaires).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the questionnaires: %w", err)
 	}
 
 	return questionnaires, nil
@@ -474,6 +498,28 @@ func (*Questionnaire) GetResponseReadPrivilegeInfoByQuestionnaireID(ctx context.
 	}
 
 	return &responseReadPrivilegeInfo, nil
+}
+
+func (*Questionnaire) GetResponseIsAnonymousByQuestionnaireID(ctx context.Context, questionnaireID int) (bool, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return true, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	var isAnonymous bool
+	err = db.
+		Table("questionnaires").
+		Where("questionnaires.id = ?", questionnaireID).
+		Select("questionnaires.is_anonymous").
+		Take(&isAnonymous).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return true, ErrRecordNotFound
+	}
+	if err != nil {
+		return true, fmt.Errorf("failed to get is_anonymous: %w", err)
+	}
+
+	return isAnonymous, nil
 }
 
 func setQuestionnairesOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
