@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/openapi"
 )
 
@@ -18,8 +17,7 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	r := controller.NewResponse()
-	res, err = r.GetMyResponses(ctx, params, userID)
+	res, err = h.Response.GetMyResponses(ctx, params, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %w", err))
@@ -35,8 +33,7 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	r := controller.NewResponse()
-	err = r.DeleteResponse(ctx, responseID, userID)
+	err = h.Response.DeleteResponse(ctx, responseID, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to delete response: %+v", err)
 		return err
@@ -49,8 +46,7 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
 	res := openapi.Response{}
 
-	r := controller.NewResponse()
-	res, err := r.GetResponse(ctx, responseID)
+	res, err := h.Response.GetResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get response: %+v", err)
 		return err
@@ -78,11 +74,10 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
-	r := controller.NewResponse()
-	err = r.EditResponse(ctx, responseID, req)
+	err = h.Response.EditResponse(ctx, responseID, req)
 	if err != nil {
 		ctx.Logger().Errorf("failed to edit response: %+v", err)
-		return err 
+		return err
 	}
 
 	return ctx.NoContent(200)

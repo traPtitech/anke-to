@@ -32,8 +32,28 @@ type Questionnaire struct {
 	Response
 }
 
-func NewQuestionnaire() *Questionnaire {
-	return &Questionnaire{}
+func NewQuestionnaire(
+	questionnaire model.IQuestionnaire,
+	target model.ITarget,
+	administrator model.IAdministrator,
+	question model.IQuestion,
+	option model.IOption,
+	scaleLabel model.IScaleLabel,
+	validation model.IValidation,
+	transaction model.ITransaction,
+	webhook traq.IWebhook,
+) *Questionnaire {
+	return &Questionnaire{
+		IQuestionnaire: questionnaire,
+		ITarget:        target,
+		IAdministrator: administrator,
+		IQuestion:      question,
+		IOption:        option,
+		IScaleLabel:    scaleLabel,
+		IValidation:    validation,
+		ITransaction:   transaction,
+		IWebhook:       webhook,
+	}
 }
 
 const MaxTitleLength = 50

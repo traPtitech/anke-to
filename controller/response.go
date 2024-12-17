@@ -22,8 +22,24 @@ type Response struct {
 	model.IScaleLabel
 }
 
-func NewResponse() *Response {
-	return &Response{}
+func NewResponse(
+	questionnaire model.IQuestionnaire,
+	respondent model.IRespondent,
+	response model.IResponse,
+	target model.ITarget,
+	question model.IQuestion,
+	validation model.IValidation,
+	scaleLabel model.IScaleLabel,
+) *Response {
+	return &Response{
+		IQuestionnaire: questionnaire,
+		IRespondent:    respondent,
+		IResponse:      response,
+		ITarget:        target,
+		IQuestion:      question,
+		IValidation:    validation,
+		IScaleLabel:    scaleLabel,
+	}
 }
 
 func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {

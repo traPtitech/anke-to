@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/anke-to/controller"
-	"github.com/traPtitech/anke-to/handler"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 
@@ -83,7 +82,8 @@ func main() {
 		mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, api.RespondentAuthenticate)
 		mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, api.RespondentAuthenticate)
 
-		openapi.RegisterHandlers(e, handler.Handler{})
+		handlerApi := InjectHandler()
+		openapi.RegisterHandlers(e, handlerApi)
 
 		e.Use(mws.ApplyMiddlewares)
 		e.Logger.Fatal(e.Start(port))
