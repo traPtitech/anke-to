@@ -22,8 +22,24 @@ type Response struct {
 	model.IScaleLabel
 }
 
-func NewResponse() *Response {
-	return &Response{}
+func NewResponse(
+	questionnaire model.IQuestionnaire,
+	respondent model.IRespondent,
+	response model.IResponse,
+	target model.ITarget,
+	question model.IQuestion,
+	validation model.IValidation,
+	scaleLabel model.IScaleLabel,
+) *Response {
+	return &Response{
+		IQuestionnaire: questionnaire,
+		IRespondent:    respondent,
+		IResponse:      response,
+		ITarget:        target,
+		IQuestion:      question,
+		IValidation:    validation,
+		IScaleLabel:    scaleLabel,
+	}
 }
 
 func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {
@@ -79,6 +95,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 			Respondent:        &userID,
 			ResponseId:        response.ResponseId,
 			SubmittedAt:       response.SubmittedAt,
+			IsAnonymous:       response.IsAnonymous,
 		}
 		res = append(res, tmp)
 	}
@@ -244,6 +261,6 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
 		}
 	}
-	
+
 	return nil
 }

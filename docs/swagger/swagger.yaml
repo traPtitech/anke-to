@@ -91,7 +91,7 @@ paths: # TODO 変数の命名を確認する
       operationId: editQuestionnaire
       tags:
         - questionnaire
-      description: アンケートの情報を変更します。
+      description: アンケートの情報を変更します。匿名のアンケートを非匿名アンケートに変更することができません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
@@ -105,6 +105,8 @@ paths: # TODO 変数の命名を確認する
           description: 正常にアンケートを変更できました。
         "400":
           description: アンケートのIDが無効です
+        "405":
+          description: 匿名のアンケートを非匿名アンケートに変更することができません
         "500":
           description: 正常にアンケートを変更できませんでした
     delete:
@@ -672,6 +674,8 @@ components:
               example: 1
             question_id:
               type: integer
+              description: |
+                質問を追加する場合はnull。
               example: 1
             created_at:
               type: string
@@ -679,22 +683,18 @@ components:
               example: 2020-01-01T00:00:00+09:00
           required:
             - questionnaire_id
-            - question_id
             - created_at
     QuestionBase:
       type: object
       properties:
-        title:
-          type: string
-        description:
+        body:
           type: string
         is_required:
           type: boolean
           description: |
             回答必須かどうか
       required:
-        - title
-        - description
+        - body
         - is_required
     QuestionSettingsByType:
       oneOf:
