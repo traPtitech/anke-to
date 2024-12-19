@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
-  - url: "http://localhost:8080/api"
+  - url: "http://localhost:1323"
     description: local
 info:
   title: anke-to API
