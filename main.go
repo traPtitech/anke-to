@@ -9,7 +9,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
@@ -60,12 +59,7 @@ func main() {
 	controller.Wg.Add(1)
 	go func() {
 		e := echo.New()
-		swagger, err := openapi.GetSwagger()
-		if err != nil {
-			panic(err)
-		}
 		api := InjectAPIServer()
-		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
 		e.Use(api.Middleware.SetUserIDMiddleware)
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
