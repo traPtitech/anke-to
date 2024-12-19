@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"errors"
@@ -21,8 +21,18 @@ type Middleware struct {
 }
 
 // NewMiddleware Middlewareのコンストラクタ
-func NewMiddleware() *Middleware {
-	return &Middleware{}
+func NewMiddleware(
+	administrator model.IAdministrator,
+	respondent model.IRespondent,
+	question model.IQuestion,
+	questionnaire model.IQuestionnaire,
+) *Middleware {
+	return &Middleware{
+		IAdministrator: administrator,
+		IRespondent:    respondent,
+		IQuestion:      question,
+		IQuestionnaire: questionnaire,
+	}
 }
 
 const (
@@ -41,7 +51,7 @@ const (
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
-func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Request().Header.Get("X-Showcase-User")
 		if userID == "" {
@@ -55,9 +65,9 @@ func (*Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 // TraPMemberAuthenticate traP部員かの認証
-func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
+		userID, err := m.GetUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -74,11 +84,11 @@ func (*Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFun
 }
 
 // TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
-func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
+func (m Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStore(5),
 		IdentifierExtractor: func(c echo.Context) (string, error) {
-			userID, err := getUserID(c)
+			userID, err := m.GetUserID(c)
 			if err != nil {
 				c.Logger().Errorf("failed to get userID: %+v", err)
 				return "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -92,10 +102,10 @@ func (*Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 }
 
 // QuestionnaireReadAuthenticate アンケートの閲覧権限があるかの認証
-func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		userID, err := getUserID(c)
+		userID, err := m.GetUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -116,7 +126,7 @@ func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.H
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+		isAdmin, err := m.IAdministrator.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
@@ -127,7 +137,7 @@ func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.H
 		}
 
 		// 公開されたらOK
-		questionnaire, _, _, _, _, _, err := m.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		questionnaire, _, _, _, _, _, err := m.IQuestionnaire.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Infof("questionnaire not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found:%d", questionnaireID))
@@ -147,10 +157,10 @@ func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.H
 }
 
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
-func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		userID, err := getUserID(c)
+		userID, err := m.GetUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -170,7 +180,7 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 				return next(c)
 			}
 		}
-		isAdmin, err := m.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+		isAdmin, err := m.IAdministrator.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if you are administrator: %w", err))
@@ -186,10 +196,10 @@ func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFun
 }
 
 // ResponseReadAuthenticate 回答閲覧権限があるかの認証
-func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		userID, err := getUserID(c)
+		userID, err := m.GetUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -203,7 +213,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		// 回答者ならOK
-		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
+		respondent, err := m.IRespondent.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
@@ -229,7 +239,7 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 		}
 
 		// アンケートごとの回答閲覧権限チェック
-		responseReadPrivilegeInfo, err := m.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
+		responseReadPrivilegeInfo, err := m.IQuestionnaire.GetResponseReadPrivilegeInfoByResponseID(c.Request().Context(), userID, responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid responseID: %d", responseID))
@@ -252,10 +262,10 @@ func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handle
 }
 
 // RespondentAuthenticate 回答者かどうかの認証
-func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		userID, err := getUserID(c)
+		userID, err := m.GetUserID(c)
 		if err != nil {
 			c.Logger().Errorf("failed to get userID: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -268,7 +278,7 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid responseID:%s(error: %w)", strResponseID, err))
 		}
 
-		respondent, err := m.GetRespondent(c.Request().Context(), responseID)
+		respondent, err := m.IRespondent.GetRespondent(c.Request().Context(), responseID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Infof("response not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("response not found:%d", responseID))
@@ -291,6 +301,28 @@ func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerF
 	}
 }
 
+// GetValidator Validatorを設定する
+func (m Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
+	rowValidate := c.Get(validatorKey)
+	validate, ok := rowValidate.(*validator.Validate)
+	if !ok {
+		return nil, fmt.Errorf("failed to get validator")
+	}
+
+	return validate, nil
+}
+
+// GetUserID ユーザーIDを取得する
+func (m Middleware) GetUserID(c echo.Context) (string, error) {
+	rowUserID := c.Get(userIDKey)
+	userID, ok := rowUserID.(string)
+	if !ok {
+		return "", errors.New("invalid context userID")
+	}
+
+	return userID, nil
+}
+
 func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPrivilegeInfo) (bool, error) {
 	switch responseReadPrivilegeInfo.ResSharedTo {
 	case "administrators":
@@ -302,26 +334,4 @@ func checkResponseReadPrivilege(responseReadPrivilegeInfo *model.ResponseReadPri
 	}
 
 	return false, errors.New("invalid resSharedTo")
-}
-
-// getValidator Validatorを設定する
-func getValidator(c echo.Context) (*validator.Validate, error) {
-	rowValidate := c.Get(validatorKey)
-	validate, ok := rowValidate.(*validator.Validate)
-	if !ok {
-		return nil, fmt.Errorf("failed to get validator")
-	}
-
-	return validate, nil
-}
-
-// getUserID ユーザーIDを取得する
-func getUserID(c echo.Context) (string, error) {
-	rowUserID := c.Get(userIDKey)
-	userID, ok := rowUserID.(string)
-	if !ok {
-		return "", errors.New("invalid context userID")
-	}
-
-	return userID, nil
 }

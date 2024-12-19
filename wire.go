@@ -26,11 +26,12 @@ var (
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )
 
-func InjectHandler() *handler.Handler {
+func InjectAPIServer() *handler.Handler {
 	wire.Build(
 		handler.NewHandler,
 		controller.NewResponse,
 		controller.NewQuestionnaire,
+		controller.NewMiddleware,
 		model.NewAdministrator,
 		model.NewOption,
 		model.NewQuestionnaire,
@@ -54,39 +55,5 @@ func InjectHandler() *handler.Handler {
 		transactionBind,
 		webhookBind,
 	)
-
-	return nil
-}
-
-func InjectAPIServer() *handler.Middleware {
-	wire.Build(
-		// handler.NewHandler,
-		handler.NewMiddleware,
-		// controller.NewResponse,
-		// controller.NewQuestionnaire,
-		// model.NewAdministrator,
-		// model.NewOption,
-		// model.NewQuestionnaire,
-		// model.NewQuestion,
-		// model.NewRespondent,
-		// model.NewResponse,
-		// model.NewScaleLabel,
-		// model.NewTarget,
-		// model.NewValidation,
-		// model.NewTransaction,
-		// traq.NewWebhook,
-		// administratorBind,
-		// optionBind,
-		// questionnaireBind,
-		// questionBind,
-		// respondentBind,
-		// responseBind,
-		// scaleLabelBind,
-		// targetBind,
-		// validationBind,
-		// transactionBind,
-		// webhookBind,
-	)
-
-	return nil
+	return &handler.Handler{}
 }
