@@ -11,7 +11,7 @@ import (
 // (GET /responses/myResponses)
 func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams) error {
 	res := openapi.ResponsesWithQuestionnaireInfo{}
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -27,7 +27,7 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 
 // (DELETE /responses/{responseID})
 func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -62,7 +62,7 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind Responses: %w", err))
 	}
 
-	validate, err := getValidator(ctx)
+	validate, err := h.Middleware.GetValidator(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))

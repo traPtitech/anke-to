@@ -20,7 +20,7 @@ import (
 
 // Injectors from wire.go:
 
-func InjectHandler() *handler.Handler {
+func InjectAPIServer() *handler.Handler {
 	questionnaire := model.NewQuestionnaire()
 	target := model.NewTarget()
 	administrator := model.NewAdministrator()
@@ -34,13 +34,9 @@ func InjectHandler() *handler.Handler {
 	respondent := model.NewRespondent()
 	response := model.NewResponse()
 	controllerResponse := controller.NewResponse(questionnaire, respondent, response, target, question, validation, scaleLabel)
-	handlerHandler := handler.NewHandler(controllerQuestionnaire, controllerResponse)
+	middleware := controller.NewMiddleware(administrator, respondent, question, questionnaire)
+	handlerHandler := handler.NewHandler(controllerQuestionnaire, controllerResponse, middleware)
 	return handlerHandler
-}
-
-func InjectAPIServer() *handler.Middleware {
-	middleware := handler.NewMiddleware()
-	return middleware
 }
 
 // wire.go:

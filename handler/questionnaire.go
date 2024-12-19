@@ -13,7 +13,7 @@ import (
 // (GET /questionnaires)
 func (h Handler) GetQuestionnaires(ctx echo.Context, params openapi.GetQuestionnairesParams) error {
 	res := openapi.QuestionnaireList{}
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -35,7 +35,7 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
 	}
-	validate, err := getValidator(ctx)
+	validate, err := h.Middleware.GetValidator(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
@@ -48,7 +48,7 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 	}
 
 	res := openapi.QuestionnaireDetail{}
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -136,7 +136,7 @@ func (h Handler) EditQuestionnaireMyRemindStatus(ctx echo.Context, questionnaire
 
 // (GET /questionnaires/{questionnaireID}/responses)
 func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath, params openapi.GetQuestionnaireResponsesParams) error {
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -153,7 +153,7 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 // (POST /questionnaires/{questionnaireID}/responses)
 func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	res := openapi.Response{}
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
@@ -164,7 +164,7 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
 	}
-	validate, err := getValidator(ctx)
+	validate, err := h.Middleware.GetValidator(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
