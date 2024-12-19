@@ -91,7 +91,7 @@ paths: # TODO 変数の命名を確認する
       operationId: editQuestionnaire
       tags:
         - questionnaire
-      description: アンケートの情報を変更します。
+      description: アンケートの情報を変更します。匿名のアンケートを非匿名アンケートに変更することができません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
@@ -105,6 +105,8 @@ paths: # TODO 変数の命名を確認する
           description: 正常にアンケートを変更できました。
         "400":
           description: アンケートのIDが無効です
+        "405":
+          description: 匿名のアンケートを非匿名アンケートに変更することができません
         "500":
           description: 正常にアンケートを変更できませんでした
     delete:
@@ -169,7 +171,7 @@ paths: # TODO 変数の命名を確認する
       operationId: getQuestionnaireResponses
       tags:
         - questionnaire
-      description: アンケートの全ての回答を取得します。アンケートが匿名回答の場合、取得できません。
+      description: アンケートの全ての回答を取得します。匿名回答の場合はRespondentが空文字列になります。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
@@ -183,8 +185,6 @@ paths: # TODO 変数の命名を確認する
                 $ref: "#/components/schemas/Responses"
         "400":
           description: アンケートのIDが無効です
-        "403":
-          description: アンケートが匿名回答のため回答を取得できません
         "404":
           description: アンケートが存在しません
         "500":
@@ -217,29 +217,6 @@ paths: # TODO 変数の命名を確認する
           description: 回答期限が過ぎたため回答できません
         "500":
           description: 正常に回答が作成できませんでした
-  /questionnaires/{questionnaireID}/result:
-    get:
-      operationId: getQuestionnaireResult
-      tags:
-        - questionnaire
-      description: アンケートの回答を集計した結果を取得します。回答者の情報は含まれず、アンケートが匿名回答であっても取得できます。
-      parameters:
-        - $ref: "#/components/parameters/questionnaireIDInPath"
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Result"
-        "400":
-          description: アンケートのIDが無効です
-        "403":
-          description: 結果を閲覧する権限がありません。
-        "404":
-          description: アンケートが存在しません
-        "500":
-          description: アンケートの結果を正常に取得できませんでした
   /responses/{responseID}:
     get:
       operationId: getResponse
@@ -692,34 +669,32 @@ components:
         - $ref: "#/components/schemas/QuestionBase"
         - $ref: "#/components/schemas/QuestionSettingsByType"
         - properties:
+            questionnaire_id:
+              type: integer
+              example: 1
             question_id:
               type: integer
+              description: |
+                質問を追加する場合はnull。
               example: 1
             created_at:
               type: string
               format: date-time
               example: 2020-01-01T00:00:00+09:00
           required:
-            - question_id
+            - questionnaire_id
             - created_at
     QuestionBase:
       type: object
       properties:
-        questionnaire_id:
-          type: integer
-          example: 1
-        title:
-          type: string
-        description:
+        body:
           type: string
         is_required:
           type: boolean
           description: |
             回答必須かどうか
       required:
-        - questionnaire_id
-        - title
-        - description
+        - body
         - is_required
     QuestionSettingsByType:
       oneOf:
@@ -861,6 +836,9 @@ components:
               example: 1
             respondent:
               $ref: "#/components/schemas/TraqId"
+            is_anonymous:
+              type: boolean
+              example: true
             submitted_at:
               type: string
               format: date-time
@@ -871,7 +849,6 @@ components:
               example: 2020-01-01T00:00:00+09:00
           required:
             - response_id
-            - respondent
             - submitted_at
             - modified_at
         - $ref: "#/components/schemas/NewResponse"
@@ -963,33 +940,6 @@ components:
           type: integer
       required:
         - answer
-    Result:
-      type: array
-      items:
-        $ref: "#/components/schemas/ResultItem"
-    ResultItem:
-      type: object
-      allOf:
-        - $ref: "#/components/schemas/QuestionnaireID"
-        - type: object
-          properties:
-            response_id:
-              type: integer
-              example: 1
-            submitted_at:
-              type: string
-              format: date-time
-              example: 2020-01-01T00:00:00+09:00
-            modified_at:
-              type: string
-              format: date-time
-              example: 2020-01-01T00:00:00+09:00
-          required:
-            - response_id
-            - respondent
-            - submitted_at
-            - modified_at
-        - $ref: "#/components/schemas/NewResponse"
     UsersAndGroups:
       type: object
       properties:
