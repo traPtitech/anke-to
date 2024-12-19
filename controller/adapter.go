@@ -85,12 +85,11 @@ func convertQuestions(questions []model.Questions) []openapi.Question {
 	res := []openapi.Question{}
 	for _, question := range questions {
 		q := openapi.Question{
-			CreatedAt: question.CreatedAt,
-			// Description:     question.Description,
+			CreatedAt:       question.CreatedAt,
+			Body:            question.Body,
 			IsRequired:      question.IsRequired,
-			QuestionId:      question.ID,
+			QuestionId:      &question.ID,
 			QuestionnaireId: question.QuestionnaireID,
-			Title:           question.Body,
 		}
 		switch question.Type {
 		case "Text":
