@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -131,7 +132,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 	questionnaireID := 0
 
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous)
+		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err
@@ -175,6 +176,25 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 		if err != nil {
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
+		}
+		for questoinNum, question := range params.Questions {
+			b, err := question.MarshalJSON()
+			if err != nil {
+				c.Logger().Errorf("failed to marshal new question: %+v", err)
+				return err
+			}
+			var questionParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &questionParsed)
+			if err != nil {
+				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
+				return err
+			}
+			questionType := questionParsed["question_type"].(string)
+			_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+			if err != nil {
+				c.Logger().Errorf("failed to insert question: %+v", err)
+				return err
+			}
 		}
 
 		message := createQuestionnaireMessage(
@@ -339,7 +359,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous)
+		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -393,6 +413,33 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		if err != nil {
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
+		}
+		for questoinNum, question := range params.Questions {
+			b, err := question.MarshalJSON()
+			if err != nil {
+				c.Logger().Errorf("failed to marshal new question: %+v", err)
+				return err
+			}
+			var questionParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &questionParsed)
+			if err != nil {
+				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
+				return err
+			}
+			questionType := questionParsed["question_type"].(string)
+			if question.QuestionId == nil {
+				_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+				if err != nil {
+					c.Logger().Errorf("failed to insert question: %+v", err)
+					return err
+				}
+			} else {
+				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
+				if err != nil {
+					c.Logger().Errorf("failed to update question: %+v", err)
+					return err
+				}
+			}
 		}
 
 		err = Jq.DeleteReminder(questionnaireID)
@@ -529,6 +576,19 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
 			return err
+		}
+
+		questions, err := q.GetQuestions(c.Request().Context(), questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to get questions: %+v", err)
+			return err
+		}
+		for _, question := range questions {
+			err = q.DeleteQuestion(c.Request().Context(), question.ID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete administrators: %+v", err)
+				return err
+			}
 		}
 
 		err = Jq.DeleteReminder(questionnaireID)
