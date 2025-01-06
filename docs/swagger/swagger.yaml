@@ -457,7 +457,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsDuplicateAnswerAllowed"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
     NewQuestionnaire:
@@ -496,7 +496,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsDuplicateAnswerAllowed"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
@@ -585,16 +585,16 @@ components:
             匿名回答かどうか
       required:
         - is_anonymous
-    QuestionnaireIsAllowingMultipleResponses:
+    QuestionnaireIsDuplicateAnswerAllowed:
       type: object
       properties:
-        is_allowing_multiple_responses:
+        is_duplicate_answer_allowed:
           type: boolean
           example: true
           description: |
             一人が複数回回答できるかどうか
       required:
-        - is_allowing_multiple_responses
+        - is_duplicate_answer_allowed
     QuestionnaireIsPublished:
       type: object
       properties:

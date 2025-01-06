@@ -12,14 +12,14 @@ import (
 
 func questionnaireInfo2questionnaireSummary(questionnaireInfo model.QuestionnaireInfo, allResponded bool, hasMyDraft bool, hasMyResponse bool, respondedDateTimeByMe null.Time) *openapi.QuestionnaireSummary {
 	res := openapi.QuestionnaireSummary{
-		AllResponded:  allResponded,
-		CreatedAt:     questionnaireInfo.CreatedAt,
-		Description:   questionnaireInfo.Description,
-		HasMyDraft:    hasMyDraft,
-		HasMyResponse: hasMyResponse,
-		// IsAllowingMultipleResponses: questionnaireInfo.IsAllowingMultipleResponses,
+		AllResponded:             allResponded,
+		CreatedAt:                questionnaireInfo.CreatedAt,
+		Description:              questionnaireInfo.Description,
+		HasMyDraft:               hasMyDraft,
+		HasMyResponse:            hasMyResponse,
+		IsDuplicateAnswerAllowed: questionnaireInfo.IsDuplicateAnswerAllowed,
 		// IsAnonymous:                 questionnaireInfo.IsAnonymous,
-		// IsPublished:                 questionnaireInfo.IsPublished,
+		IsPublished:     questionnaireInfo.IsPublished,
 		IsTargetingMe:   questionnaireInfo.IsTargeted,
 		ModifiedAt:      questionnaireInfo.ModifiedAt,
 		QuestionnaireId: questionnaireInfo.ID,
@@ -150,20 +150,20 @@ func convertRespondents(respondents []model.Respondents) []string {
 
 func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) openapi.QuestionnaireDetail {
 	res := openapi.QuestionnaireDetail{
-		Admins:      createUsersAndGroups(adminUsers, adminGroups),
-		CreatedAt:   questionnaires.CreatedAt,
-		Description: questionnaires.Description,
-		// IsAllowingMultipleResponses: questionnaires.IsAllowingMultipleResponses,
-		IsAnonymous:         questionnaires.IsAnonymous,
-		IsPublished:         questionnaires.IsPublished,
-		ModifiedAt:          questionnaires.ModifiedAt,
-		QuestionnaireId:     questionnaires.ID,
-		Questions:           convertQuestions(questionnaires.Questions),
-		Respondents:         respondents,
-		ResponseDueDateTime: &questionnaires.ResTimeLimit.Time,
-		ResponseViewableBy:  convertResSharedTo(questionnaires.ResSharedTo),
-		Targets:             createUsersAndGroups(targetUsers, targetGroups),
-		Title:               questionnaires.Title,
+		Admins:                   createUsersAndGroups(adminUsers, adminGroups),
+		CreatedAt:                questionnaires.CreatedAt,
+		Description:              questionnaires.Description,
+		IsDuplicateAnswerAllowed: questionnaires.IsDuplicateAnswerAllowed,
+		IsAnonymous:              questionnaires.IsAnonymous,
+		IsPublished:              questionnaires.IsPublished,
+		ModifiedAt:               questionnaires.ModifiedAt,
+		QuestionnaireId:          questionnaires.ID,
+		Questions:                convertQuestions(questionnaires.Questions),
+		Respondents:              respondents,
+		ResponseDueDateTime:      &questionnaires.ResTimeLimit.Time,
+		ResponseViewableBy:       convertResSharedTo(questionnaires.ResSharedTo),
+		Targets:                  createUsersAndGroups(targetUsers, targetGroups),
+		Title:                    questionnaires.Title,
 	}
 	return res
 }
