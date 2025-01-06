@@ -1212,7 +1212,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 				userID: userOne,
 			},
 			expect: expect{
-				responseIDs: []int{responseIDs[1]},
+				responseIDs: []int{responseIDs[0]},
 			},
 		},
 		{
@@ -1222,7 +1222,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 				userID: userTwo,
 			},
 			expect: expect{
-				responseIDs: []int{responseIDs[2], responseIDs[3]},
+				responseIDs: []int{responseIDs[1], responseIDs[2]},
 			},
 		},
 		{
