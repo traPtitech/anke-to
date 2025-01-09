@@ -352,7 +352,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Session(&gorm.Session{NewDB: true}).
 				Create(respondentData.respondent).Error
 			if err != nil {
-				t.Error("failed to create respondent: %w", err)
+				t.Errorf("failed to create respondent: %v", err)
 			}
 		}
 	}
@@ -759,7 +759,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			before: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
-				resTimeLimit: null.NewTime(time.Time{}, true),
+				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
 				isPublished:  true,
 				isAnonymous:  false,
@@ -767,7 +767,7 @@ func updateQuestionnaireTest(t *testing.T) {
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
-				resTimeLimit: null.NewTime(time.Time{}, true),
+				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
 				isPublished:  true,
 				isAnonymous:  true,
