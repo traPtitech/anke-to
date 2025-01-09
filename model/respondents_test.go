@@ -897,8 +897,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -910,8 +910,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -923,8 +923,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 2, 1},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -936,8 +936,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{1, 2, 0},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -962,8 +962,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -975,8 +975,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -988,8 +988,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -1001,8 +1001,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 		{
@@ -1026,8 +1026,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  1,
+				sortIdx: []int{0},
 			},
 		},
 	}
@@ -1238,7 +1238,16 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		newMyResponseIDs := []int{}
 		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID)
+		for _, MyResponseID := range MyResponseIDs {
+			for _, responseID := range responseIDs {
+				if MyResponseID == responseID {
+					newMyResponseIDs = append(newMyResponseIDs, responseID)
+					break
+				}
+			}
+		}
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1251,7 +1260,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 			continue
 		}
 
-		assertion.Equal(testCase.expect.responseIDs, MyResponseIDs, testCase.description, "responseIDs")
+		assertion.Equal(testCase.expect.responseIDs, newMyResponseIDs, testCase.description, "responseIDs")
 	}
 }
 

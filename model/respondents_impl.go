@@ -296,6 +296,9 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		Session(&gorm.Session{}).
 		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+	if onlyMyResponse {
+		query = query.Where("user_traqid = ?", userID)
+	}
 
 	query, sortNum, err := setRespondentsOrder(query, sort)
 	if err != nil {
@@ -318,6 +321,9 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	}
 
 	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response is anonymous by questionnaire id: %w", err)
+	}
 
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
@@ -341,7 +347,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	}
 
 	questions := []Questions{}
-	query = db.
+	err = db.
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("ResponseID", "QuestionID", "Body").
@@ -349,11 +355,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
-		Select("ID", "Type")
-	if onlyMyResponse {
-		query = query.Where("user_traqid = ?", userID)
-	}
-	err = query.
+		Select("ID", "Type").
 		Find(&questions).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get questions: %w", err)
