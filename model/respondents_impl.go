@@ -196,12 +196,13 @@ func (*Respondent) GetRespondentInfos(ctx context.Context, userID string, questi
 		Order("respondents.submitted_at DESC").
 		Where("user_traqid = ? AND respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL", userID)
 
+	if len(questionnaireIDs) > 1 {
+		// 空配列か1要素の取得にしか用いない
+		return nil, errors.New("illegal function usage")
+	}
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
 		query = query.Where("questionnaire_id = ?", questionnaireID)
-	} else if len(questionnaireIDs) > 1 {
-		// 空配列か1要素の取得にしか用いない
-		return nil, errors.New("illegal function usage")
 	}
 
 	err = query.
