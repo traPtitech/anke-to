@@ -1168,17 +1168,17 @@ func TestGetMyResponseIDs(t *testing.T) {
 	respondents := []Respondents{
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userOne,
+			UserTraqid:      "TestGetMyResponseIDsuserOne",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userTwo,
+			UserTraqid:      "TestGetMyResponseIDsuserTwo",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userTwo,
+			UserTraqid:      "TestGetMyResponseIDsuserTwo",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 	}
@@ -1209,7 +1209,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 			description: "valid user with one resonse",
 			args: args{
 				sort:   "submitted_at",
-				userID: userOne,
+				userID: "TestGetMyResponseIDsuserOne",
 			},
 			expect: expect{
 				responseIDs: []int{responseIDs[0]},
@@ -1219,7 +1219,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 			description: "valid user with multiple responses",
 			args: args{
 				sort:   "submitted_at",
-				userID: userTwo,
+				userID: "TestGetMyResponseIDsuserTwo",
 			},
 			expect: expect{
 				responseIDs: []int{responseIDs[1], responseIDs[2]},
@@ -1229,7 +1229,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 			description: "valid user with no response",
 			args: args{
 				sort:   "submitted_at",
-				userID: userThree,
+				userID: "TestGetMyResponseIDsuserThree",
 			},
 			expect: expect{
 				responseIDs: []int{},
@@ -1238,16 +1238,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		newMyResponseIDs := []int{}
 		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID)
-		for _, MyResponseID := range MyResponseIDs {
-			for _, responseID := range responseIDs {
-				if MyResponseID == responseID {
-					newMyResponseIDs = append(newMyResponseIDs, responseID)
-					break
-				}
-			}
-		}
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1260,7 +1251,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 			continue
 		}
 
-		assertion.Equal(testCase.expect.responseIDs, newMyResponseIDs, testCase.description, "responseIDs")
+		assertion.Equal(testCase.expect.responseIDs, MyResponseIDs, testCase.description, "responseIDs")
 	}
 }
 
