@@ -18,12 +18,12 @@ func questionnaireInfo2questionnaireSummary(questionnaireInfo model.Questionnair
 		HasMyDraft:               hasMyDraft,
 		HasMyResponse:            hasMyResponse,
 		IsDuplicateAnswerAllowed: questionnaireInfo.IsDuplicateAnswerAllowed,
-		// IsAnonymous:                 questionnaireInfo.IsAnonymous,
-		IsPublished:     questionnaireInfo.IsPublished,
-		IsTargetingMe:   questionnaireInfo.IsTargeted,
-		ModifiedAt:      questionnaireInfo.ModifiedAt,
-		QuestionnaireId: questionnaireInfo.ID,
-		Title:           questionnaireInfo.Title,
+		IsAnonymous:              questionnaireInfo.IsAnonymous,
+		IsPublished:              questionnaireInfo.IsPublished,
+		IsTargetingMe:            questionnaireInfo.IsTargeted,
+		ModifiedAt:               questionnaireInfo.ModifiedAt,
+		QuestionnaireId:          questionnaireInfo.ID,
+		Title:                    questionnaireInfo.Title,
 	}
 	if respondedDateTimeByMe.Valid {
 		res.RespondedDateTimeByMe = &respondedDateTimeByMe.Time
@@ -81,7 +81,7 @@ func convertOptions(options []model.Options) openapi.QuestionSettingsSingleChoic
 	return res
 }
 
-func convertQuestions(questions []model.Questions) []openapi.Question {
+func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 	res := []openapi.Question{}
 	for _, question := range questions {
 		q := openapi.Question{
@@ -93,39 +93,54 @@ func convertQuestions(questions []model.Questions) []openapi.Question {
 		}
 		switch question.Type {
 		case "Text":
-			q.FromQuestionSettingsText(
+			err := q.FromQuestionSettingsText(
 				openapi.QuestionSettingsText{
 					QuestionType: "Text",
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		case "TextArea":
-			q.FromQuestionSettingsText(
+			err := q.FromQuestionSettingsText(
 				openapi.QuestionSettingsText{
 					QuestionType: "TextLong",
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		case "Number":
-			q.FromQuestionSettingsNumber(
+			err := q.FromQuestionSettingsNumber(
 				openapi.QuestionSettingsNumber{
 					QuestionType: "Number",
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		case "Radio":
-			q.FromQuestionSettingsSingleChoice(
+			err := q.FromQuestionSettingsSingleChoice(
 				openapi.QuestionSettingsSingleChoice{
 					QuestionType: "Radio",
 					Options:      convertOptions(question.Options).Options,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		case "MultipleChoice":
-			q.FromQuestionSettingsMultipleChoice(
+			err := q.FromQuestionSettingsMultipleChoice(
 				openapi.QuestionSettingsMultipleChoice{
 					QuestionType: "MultipleChoice",
 					Options:      convertOptions(question.Options).Options,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		case "LinearScale":
-			q.FromQuestionSettingsScale(
+			err := q.FromQuestionSettingsScale(
 				openapi.QuestionSettingsScale{
 					QuestionType: "LinearScale",
 					MinLabel:     &question.ScaleLabels[0].ScaleLabelLeft,
@@ -134,9 +149,12 @@ func convertQuestions(questions []model.Questions) []openapi.Question {
 					MaxValue:     question.ScaleLabels[0].ScaleMax,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	return res
+	return res, nil
 }
 
 func convertRespondents(respondents []model.Respondents) []string {
@@ -147,7 +165,11 @@ func convertRespondents(respondents []model.Respondents) []string {
 	return res
 }
 
-func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) openapi.QuestionnaireDetail {
+func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) (openapi.QuestionnaireDetail, error) {
+	questions, err := convertQuestions(questionnaires.Questions)
+	if err != nil {
+		return openapi.QuestionnaireDetail{}, err
+	}
 	res := openapi.QuestionnaireDetail{
 		Admins:                   createUsersAndGroups(adminUsers, adminGroups),
 		CreatedAt:                questionnaires.CreatedAt,
@@ -157,14 +179,14 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		IsPublished:              questionnaires.IsPublished,
 		ModifiedAt:               questionnaires.ModifiedAt,
 		QuestionnaireId:          questionnaires.ID,
-		Questions:                convertQuestions(questionnaires.Questions),
+		Questions:                questions,
 		Respondents:              respondents,
 		ResponseDueDateTime:      &questionnaires.ResTimeLimit.Time,
 		ResponseViewableBy:       convertResSharedTo(questionnaires.ResSharedTo),
 		Targets:                  createUsersAndGroups(targetUsers, targetGroups),
 		Title:                    questionnaires.Title,
 	}
-	return res
+	return res, nil
 }
 
 func respondentDetail2Response(ctx echo.Context, respondentDetail model.RespondentDetail) (openapi.Response, error) {
@@ -174,21 +196,27 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		switch r.QuestionType {
 		case "Text":
 			if r.Body.Valid {
-				oResponseBody.FromResponseBodyText(
+				err := oResponseBody.FromResponseBodyText(
 					openapi.ResponseBodyText{
 						Answer:       r.Body.String,
 						QuestionType: "Text",
 					},
 				)
+				if err != nil {
+					return openapi.Response{}, err
+				}
 			}
 		case "TextArea":
 			if r.Body.Valid {
-				oResponseBody.FromResponseBodyText(
+				err := oResponseBody.FromResponseBodyText(
 					openapi.ResponseBodyText{
 						Answer:       r.Body.String,
 						QuestionType: "TextLong",
 					},
 				)
+				if err != nil {
+					return openapi.Response{}, err
+				}
 			}
 		case "Number":
 			if r.Body.Valid {
@@ -197,12 +225,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 					ctx.Logger().Errorf("failed to convert string to float: %+v", err)
 					return openapi.Response{}, err
 				}
-				oResponseBody.FromResponseBodyNumber(
+				err = oResponseBody.FromResponseBodyNumber(
 					openapi.ResponseBodyNumber{
 						Answer:       float32(answer),
 						QuestionType: "Number",
 					},
 				)
+				if err != nil {
+					return openapi.Response{}, err
+				}
 			}
 		case "MultipleChoice":
 			if r.Body.Valid {
@@ -219,12 +250,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 						}
 					}
 				}
-				oResponseBody.FromResponseBodyMultipleChoice(
+				err = oResponseBody.FromResponseBodyMultipleChoice(
 					openapi.ResponseBodyMultipleChoice{
 						Answer:       answer,
 						QuestionType: "MultipleChoice",
 					},
 				)
+				if err != nil {
+					return openapi.Response{}, err
+				}
 			}
 		case "Checkbox":
 			if r.Body.Valid {
@@ -236,12 +270,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				for _, a := range r.OptionResponse {
 					for i, o := range questionnaire.Questions[j].Options {
 						if a == o.Body {
-							oResponseBody.FromResponseBodySingleChoice(
+							err := oResponseBody.FromResponseBodySingleChoice(
 								openapi.ResponseBodySingleChoice{
 									Answer:       i,
 									QuestionType: "SingleChoice",
 								},
 							)
+							if err != nil {
+								return openapi.Response{}, err
+							}
 						}
 					}
 				}
@@ -253,12 +290,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 					ctx.Logger().Errorf("failed to convert string to int: %+v", err)
 					return openapi.Response{}, err
 				}
-				oResponseBody.FromResponseBodyScale(
+				err = oResponseBody.FromResponseBodyScale(
 					openapi.ResponseBodyScale{
 						Answer:       answer,
 						QuestionType: "LinearScale",
 					},
 				)
+				if err != nil {
+					return openapi.Response{}, err
+				}
 			}
 		}
 		oResponseBodies = append(oResponseBodies, oResponseBody)

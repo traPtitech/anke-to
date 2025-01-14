@@ -329,7 +329,11 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info")
 	}
 
-	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	if err != nil {
+		c.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
+	}
 	return questionnaireDetail, nil
 }
 func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
@@ -337,7 +341,11 @@ func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
 	}
-	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	if err != nil {
+		ctx.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
+	}
 	return questionnaireDetail, nil
 }
 
