@@ -211,7 +211,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			return err
 		}
 
-		Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return err
@@ -226,6 +226,10 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 
 	// insert validations
 	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questions")
+	}
 	for i, question := range questions {
 		switch question.Type {
 		case "SingleChoice":
@@ -470,6 +474,10 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 
 	// update validations
 	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questions")
+	}
 	for i, question := range questions {
 		switch question.Type {
 		case "SingleChoice":
@@ -815,6 +823,10 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 	}
 
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get response isanonymous by questionnaire id: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,

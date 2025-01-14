@@ -46,7 +46,6 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 	res := openapi.ResponsesWithQuestionnaireInfo{}
 
 	sort := string(*params.Sort)
-	responsesID := []int{}
 	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
@@ -176,6 +175,10 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 	}
 
 	questions, err := r.IQuestion.GetQuestions(ctx.Request().Context(), req.QuestionnaireId)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get questions: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questions: %w", err))
+	}
 
 	responseMetas, err := responseBody2ResponseMetas(req.Body, questions)
 	if err != nil {

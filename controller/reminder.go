@@ -24,9 +24,9 @@ type JobQueue struct {
 }
 
 var (
-	sem = semaphore.NewWeighted(1)
-	Jq = &JobQueue{}
-	Wg = &sync.WaitGroup{}
+	sem                   = semaphore.NewWeighted(1)
+	Jq                    = &JobQueue{}
+	Wg                    = &sync.WaitGroup{}
 	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
 	reminderTimingStrings = []string{"5分", "30分", "1時間", "1日", "1週間"}
 )
