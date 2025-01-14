@@ -157,13 +157,13 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 	return res, nil
 }
 
-func convertRespondents(respondents []model.Respondents) []string {
-	res := []string{}
-	for _, respondent := range respondents {
-		res = append(res, respondent.UserTraqid)
-	}
-	return res
-}
+// func convertRespondents(respondents []model.Respondents) []string {
+// 	res := []string{}
+// 	for _, respondent := range respondents {
+// 		res = append(res, respondent.UserTraqid)
+// 	}
+// 	return res
+// }
 
 func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) (openapi.QuestionnaireDetail, error) {
 	questions, err := convertQuestions(questionnaires.Questions)

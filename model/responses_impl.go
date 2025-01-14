@@ -37,6 +37,8 @@ func (r *Responses) BeforeCreate(tx *gorm.DB) error {
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
 func (r *Responses) BeforeUpdate(tx *gorm.DB) error {
+	_ = tx
+
 	r.ModifiedAt = time.Now()
 
 	return nil

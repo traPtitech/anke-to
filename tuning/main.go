@@ -212,6 +212,8 @@ func Inititial() {
 			defer wg.Done()
 			questionnaireIDChan := make(chan int32, 1)
 			reqFuncChan <- func(questinnaireIDChan chan int32) func() error {
+				_ = questinnaireIDChan
+
 				return func() error {
 					questionnaireRes, _, err := client.QuestionnaireApi.PostQuestionnaire(ctx, newQuestionnaire)
 					if err != nil {

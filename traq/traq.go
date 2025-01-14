@@ -8,19 +8,19 @@ import (
 
 const TOKEN = "/* your token */"
 
-type TraqAPIClient struct {
+type APIClient struct {
 	client *traq.APIClient
 	auth   context.Context
 }
 
-func NewTraqAPIClient() *TraqAPIClient {
-	return &TraqAPIClient{
+func NewTraqAPIClient() *APIClient {
+	return &APIClient{
 		client: traq.NewAPIClient(traq.NewConfiguration()),
 		auth:   context.WithValue(context.Background(), traq.ContextAccessToken, TOKEN),
 	}
 }
 
-func (t *TraqAPIClient) GetGroupMembers(ctx context.Context, groupID string) ([]traq.UserGroupMember, error) {
+func (t *APIClient) GetGroupMembers(ctx context.Context, groupID string) ([]traq.UserGroupMember, error) {
 	v, _, err := t.client.GroupApi.GetUserGroupMembers(ctx, groupID).Execute()
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (t *TraqAPIClient) GetGroupMembers(ctx context.Context, groupID string) ([]
 	return v, nil
 }
 
-func (t *TraqAPIClient) GetUserTraqID(ctx context.Context, userUUID string) (string, error) {
+func (t *APIClient) GetUserTraqID(ctx context.Context, userUUID string) (string, error) {
 	v, _, err := t.client.UserApi.GetUser(ctx, userUUID).Execute()
 	if err != nil {
 		return "", err
@@ -36,7 +36,7 @@ func (t *TraqAPIClient) GetUserTraqID(ctx context.Context, userUUID string) (str
 	return v.Name, nil
 }
 
-func (t *TraqAPIClient) GetGroupName(ctx context.Context, groupID string) (string, error) {
+func (t *APIClient) GetGroupName(ctx context.Context, groupID string) (string, error) {
 	v, _, err := t.client.GroupApi.GetUserGroup(ctx, groupID).Execute()
 	if err != nil {
 		return "", err

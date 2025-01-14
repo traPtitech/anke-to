@@ -24,30 +24,30 @@ func isAllTargetsReponded(targets []model.Targets, respondents []model.Responden
 	return true
 }
 
-func minimizeUsersAndGroups(users []string, groups []uuid.UUID) ([]string, []uuid.UUID, error) {
-	ctx := context.Background()
-	client := traq.NewTraqAPIClient()
-	userSet := mapset.NewSet[string]()
-	for _, user := range users {
-		userSet.Add(user)
-	}
-	groupUserSet := mapset.NewSet[string]()
-	for _, group := range groups {
-		members, err := client.GetGroupMembers(ctx, group.String())
-		if err != nil {
-			return nil, nil, err
-		}
-		for _, member := range members {
-			memberTraqID, err := client.GetUserTraqID(ctx, member.Id)
-			if err != nil {
-				return nil, nil, err
-			}
-			groupUserSet.Add(memberTraqID)
-		}
-	}
-	userSet = userSet.Difference(groupUserSet)
-	return userSet.ToSlice(), groups, nil
-}
+// func minimizeUsersAndGroups(users []string, groups []uuid.UUID) ([]string, []uuid.UUID, error) {
+// 	ctx := context.Background()
+// 	client := traq.NewTraqAPIClient()
+// 	userSet := mapset.NewSet[string]()
+// 	for _, user := range users {
+// 		userSet.Add(user)
+// 	}
+// 	groupUserSet := mapset.NewSet[string]()
+// 	for _, group := range groups {
+// 		members, err := client.GetGroupMembers(ctx, group.String())
+// 		if err != nil {
+// 			return nil, nil, err
+// 		}
+// 		for _, member := range members {
+// 			memberTraqID, err := client.GetUserTraqID(ctx, member.Id)
+// 			if err != nil {
+// 				return nil, nil, err
+// 			}
+// 			groupUserSet.Add(memberTraqID)
+// 		}
+// 	}
+// 	userSet = userSet.Difference(groupUserSet)
+// 	return userSet.ToSlice(), groups, nil
+// }
 
 func rollOutUsersAndGroups(users []string, groups []string) ([]string, error) {
 	ctx := context.Background()
