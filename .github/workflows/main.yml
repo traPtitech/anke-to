@@ -19,10 +19,13 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
+          cache: false
+      - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
       - run: go mod download
   build:
     name: Build
@@ -35,6 +38,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
+          cache: false
       - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
@@ -70,7 +74,8 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
+          cache: false
+      - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -86,10 +91,9 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v5.1.2
         with:
-          file: ./coverage.txt
-          yml: ./codecov.yml
+          files: ./coverage.txt
       - uses: actions/upload-artifact@v4
         with:
           name: coverage.txt
@@ -118,3 +122,4 @@ jobs:
         with:
           file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+          spectral_ruleset: .spectral.yaml
