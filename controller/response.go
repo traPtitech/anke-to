@@ -123,6 +123,8 @@ func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 }
 
 func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, userID string) error {
+	_ = userID
+
 	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {

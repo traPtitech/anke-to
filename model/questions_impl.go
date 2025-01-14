@@ -36,6 +36,8 @@ type Questions struct {
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
 func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
+	_ = tx
+
 	questionnaire.CreatedAt = time.Now()
 
 	return nil

@@ -28,6 +28,8 @@ type Responses struct {
 
 // BeforeCreate insert時に自動でmodifiedAt更新
 func (r *Responses) BeforeCreate(tx *gorm.DB) error {
+	_ = tx
+
 	r.ModifiedAt = time.Now()
 
 	return nil

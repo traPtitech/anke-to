@@ -9,7 +9,7 @@ import (
 
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/traq"
-	"golang.org/x/sync/semaphore"
+	// "golang.org/x/sync/semaphore"
 )
 
 type Job struct {
@@ -24,7 +24,7 @@ type JobQueue struct {
 }
 
 var (
-	sem                   = semaphore.NewWeighted(1)
+	// sem                   = semaphore.NewWeighted(1)
 	Jq                    = &JobQueue{}
 	Wg                    = &sync.WaitGroup{}
 	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
@@ -60,7 +60,10 @@ func (jq *JobQueue) PushReminder(questionnaireID int, limit *time.Time) error {
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: questionnaireID,
 				Action: func() {
-					reminderAction(questionnaireID, reminderTimingStrings[i])
+					err := reminderAction(questionnaireID, reminderTimingStrings[i])
+					if err != nil {
+						panic(err)
+					}
 				},
 			})
 		}

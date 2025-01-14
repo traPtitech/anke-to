@@ -116,6 +116,8 @@ func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params
 }
 
 func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
+	_ = userID
+
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
@@ -576,31 +578,31 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 
 func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID)
+		err := q.IQuestionnaire.DeleteQuestionnaire(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 			return err
 		}
 
-		err = q.DeleteTargets(c.Request().Context(), questionnaireID)
+		err = q.DeleteTargets(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete targets: %+v", err)
 			return err
 		}
 
-		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
+		err = q.DeleteAdministrators(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
 			return err
 		}
 
-		questions, err := q.GetQuestions(c.Request().Context(), questionnaireID)
+		questions, err := q.GetQuestions(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to get questions: %+v", err)
 			return err
 		}
 		for _, question := range questions {
-			err = q.DeleteQuestion(c.Request().Context(), question.ID)
+			err = q.DeleteQuestion(ctx, question.ID)
 			if err != nil {
 				c.Logger().Errorf("failed to delete administrators: %+v", err)
 				return err
