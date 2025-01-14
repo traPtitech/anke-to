@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/traq"
 )
