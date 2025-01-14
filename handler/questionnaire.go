@@ -149,7 +149,6 @@ func (h Handler) GetQuestionnaireResponses(ctx echo.Context, questionnaireID ope
 
 // (POST /questionnaires/{questionnaireID}/responses)
 func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
-	res := openapi.Response{}
 	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
@@ -173,7 +172,7 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
-	res, err = h.Questionnaire.PostQuestionnaireResponse(ctx, questionnaireID, params, userID)
+	res, err := h.Questionnaire.PostQuestionnaireResponse(ctx, questionnaireID, params, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to post questionnaire response: %+v", err)
 		return err
