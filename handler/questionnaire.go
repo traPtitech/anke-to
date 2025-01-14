@@ -12,14 +12,13 @@ import (
 
 // (GET /questionnaires)
 func (h Handler) GetQuestionnaires(ctx echo.Context, params openapi.GetQuestionnairesParams) error {
-	res := openapi.QuestionnaireList{}
 	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	res, err = h.Questionnaire.GetQuestionnaires(ctx, userID, params)
+	res, err := h.Questionnaire.GetQuestionnaires(ctx, userID, params)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get questionnaires: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaires: %w", err))
@@ -47,14 +46,13 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
-	res := openapi.QuestionnaireDetail{}
 	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	res, err = h.Questionnaire.PostQuestionnaire(ctx, userID, params)
+	res, err := h.Questionnaire.PostQuestionnaire(ctx, userID, params)
 	if err != nil {
 		ctx.Logger().Errorf("failed to post questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to post questionnaire: %w", err))
@@ -65,7 +63,6 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 
 // (GET /questionnaires/{questionnaireID})
 func (h Handler) GetQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
-	res := openapi.QuestionnaireDetail{}
 	res, err := h.Questionnaire.GetQuestionnaire(ctx, questionnaireID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
