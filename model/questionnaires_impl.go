@@ -256,7 +256,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	err = query.
 		Limit(20).
 		Offset(offset).
-		Group("questionnaires.id").
+		Group("questionnaires.id, targets.user_traqid").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
