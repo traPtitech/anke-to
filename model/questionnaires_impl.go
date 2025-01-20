@@ -41,7 +41,7 @@ type Questionnaires struct {
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeCreate() error {
+func (questionnaire *Questionnaires) BeforeCreate(_ *gorm.DB) error {
 	now := time.Now()
 	questionnaire.ModifiedAt = now
 	questionnaire.CreatedAt = now
@@ -50,7 +50,7 @@ func (questionnaire *Questionnaires) BeforeCreate() error {
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeUpdate() error {
+func (questionnaire *Questionnaires) BeforeUpdate(_ *gorm.DB) error {
 	questionnaire.ModifiedAt = time.Now()
 
 	return nil
