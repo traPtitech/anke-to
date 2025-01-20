@@ -19,10 +19,13 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
+          cache: false
+      - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
       - run: go mod download
   build:
     name: Build
@@ -35,13 +38,14 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
+          cache: false
+      - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v3.3.2
+      - uses: actions/cache@v4.2.0
         with:
           path: /tmp/go/cache
           key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
@@ -49,7 +53,7 @@ jobs:
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
       - run: go build -o anke-to
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: anke-to
           path: anke-to
@@ -70,7 +74,8 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
+          cache: false
+      - uses: actions/cache@v4.2.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -78,18 +83,18 @@ jobs:
             ${{ runner.os }}-gomod-
       - run: go install github.com/golang/mock/mockgen@v1.5.0
       - run: go generate ./...
-      - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
+      - run: go test ./model -v -coverprofile=coverage.txt -race -vet=off # for temporary use as controller test is not ready
+      # - run: go test ./controller ./model -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v5.1.2
         with:
-          file: ./coverage.txt
-          yml: ./codecov.yml
-      - uses: actions/upload-artifact@v3
+          files: ./coverage.txt
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage.txt
           path: coverage.txt

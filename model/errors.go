@@ -29,4 +29,6 @@ var (
 	ErrInvalidTx = errors.New("invalid tx")
 	// ErrDeadlineExceeded deadline exceeded
 	ErrDeadlineExceeded = errors.New("deadline exceeded")
+	// ErrDuplicatedAnswered
+	ErrDuplicatedAnswered = errors.New("duplicated answered is not allowed")
 )

@@ -19,7 +19,7 @@ func TestInsertRespondent(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
@@ -129,7 +129,7 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
@@ -203,7 +203,7 @@ func TestDeleteRespondent(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
@@ -290,6 +290,7 @@ func TestGetRespondent(t *testing.T) {
 		Description:  "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！",
 		ResTimeLimit: null.NewTime(time.Now(), false),
 		ResSharedTo:  "private",
+		IsPublished:  true,
 	}
 	err := db.
 		Session(&gorm.Session{NewDB: true}).
@@ -390,9 +391,9 @@ func TestGetRespondentInfos(t *testing.T) {
 		args
 		expect
 	}
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public", true, false, true)
 	require.NoError(t, err)
-	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+	questionnaireID2, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第2回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public", true, false, true)
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -522,7 +523,7 @@ func TestGetRespondentDetail(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -619,7 +620,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	questionnaire := Questionnaires{}
@@ -636,6 +637,8 @@ func TestGetRespondentDetails(t *testing.T) {
 	type args struct {
 		questionnaireID int
 		sort            string
+		onlyMyResponse  bool
+		userID          string
 	}
 	type expect struct {
 		isErr   bool
@@ -682,7 +685,6 @@ func TestGetRespondentDetails(t *testing.T) {
 		questionID, err := questionImpl.InsertQuestion(ctx, question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
 		require.NoError(t, err)
 		questionIDs = append(questionIDs, questionID)
-
 	}
 
 	respondents := []Respondents{
@@ -749,6 +751,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "traqid",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -760,6 +764,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "-traqid",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -771,6 +777,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "submitted_at",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -782,6 +790,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "-submitted_at",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -793,6 +803,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: -1,
 				sort:            "1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  0,
@@ -804,6 +816,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "3",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -815,6 +829,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "-3",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -826,6 +842,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -837,6 +855,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "-1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
@@ -848,6 +868,8 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "a",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -858,16 +880,160 @@ func TestGetRespondentDetails(t *testing.T) {
 			args: args{
 				questionnaireID: questionnaireID,
 				sort:            "",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  3,
 				sortIdx: []int{0, 1, 2},
 			},
 		},
+		{
+			description: "traqid",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "traqid",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "-traqid",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "-traqid",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "submitted_at",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "submitted_at",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "-submitted_at",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "-submitted_at",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "questionnaire does not exist",
+			args: args{
+				questionnaireID: -1,
+				sort:            "1",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  0,
+				sortIdx: []int{},
+			},
+		},
+		{
+			description: "sortNum Number",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "3",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "sortNum Number",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "-3",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "sortNum Text",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "1",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "sortNum Text desc",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "-1",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
+		{
+			description: "invalid sortnum",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "a",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "empty sortnum",
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "",
+				onlyMyResponse:  true,
+				userID:          userOne,
+			},
+			expect: expect{
+				length:  1,
+				sortIdx: []int{0},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
-		respondentDetails, err := respondentImpl.GetRespondentDetails(ctx, testCase.args.questionnaireID, testCase.args.sort)
+		respondentDetails, err := respondentImpl.GetRespondentDetails(ctx, testCase.args.questionnaireID, testCase.args.sort, testCase.args.onlyMyResponse, testCase.args.userID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -908,7 +1074,7 @@ func TestGetRespondentsUserIDs(t *testing.T) {
 	}
 	questionnaireIDs := make([]int, 0, 3)
 	for i := 0; i < 3; i++ {
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public")
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "public", true, false, true)
 		require.NoError(t, err)
 		questionnaireIDs = append(questionnaireIDs, questionnaireID)
 	}
@@ -996,23 +1162,23 @@ func TestGetMyResponseIDs(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	respondents := []Respondents{
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userOne,
+			UserTraqid:      "TestGetMyResponseIDsuserOne",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userTwo,
+			UserTraqid:      "TestGetMyResponseIDsuserTwo",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 		{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:      userTwo,
+			UserTraqid:      "TestGetMyResponseIDsuserTwo",
 			SubmittedAt:     null.NewTime(time.Now(), true),
 		},
 	}
@@ -1024,6 +1190,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	type args struct {
+		sort   string
 		userID string
 	}
 	type expect struct {
@@ -1041,25 +1208,28 @@ func TestGetMyResponseIDs(t *testing.T) {
 		{
 			description: "valid user with one resonse",
 			args: args{
-				userID: userOne,
+				sort:   "submitted_at",
+				userID: "TestGetMyResponseIDsuserOne",
 			},
 			expect: expect{
-				responseIDs: []int{responseIDs[1]},
+				responseIDs: []int{responseIDs[0]},
 			},
 		},
 		{
 			description: "valid user with multiple responses",
 			args: args{
-				userID: userTwo,
+				sort:   "submitted_at",
+				userID: "TestGetMyResponseIDsuserTwo",
 			},
 			expect: expect{
-				responseIDs: []int{responseIDs[2], responseIDs[3]},
+				responseIDs: []int{responseIDs[1], responseIDs[2]},
 			},
 		},
 		{
 			description: "valid user with no response",
 			args: args{
-				userID: userThree,
+				sort:   "submitted_at",
+				userID: "TestGetMyResponseIDsuserThree",
 			},
 			expect: expect{
 				responseIDs: []int{},
@@ -1068,7 +1238,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.userID)
+		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1091,7 +1261,7 @@ func TestTestCheckRespondent(t *testing.T) {
 	assertion := assert.New(t)
 	ctx := context.Background()
 
-	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private")
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
 	require.NoError(t, err)
 
 	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})

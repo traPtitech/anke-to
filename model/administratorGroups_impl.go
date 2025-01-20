@@ -12,7 +12,7 @@ type AdministratorGroup struct{}
 
 // NewAdministratorGroup AdministratorGroupRepositoryのコンストラクタ
 func NewAdministratorGroup() *AdministratorGroup {
-	return &AdministratorGroup{}
+	return new(AdministratorGroup)
 }
 
 type AdministratorGroups struct {

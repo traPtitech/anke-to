@@ -34,14 +34,14 @@ type Respondents struct {
 }
 
 // BeforeCreate insert時に自動でmodifiedAt更新
-func (r *Respondents) BeforeCreate(tx *gorm.DB) error {
+func (r *Respondents) BeforeCreate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (r *Respondents) BeforeUpdate(tx *gorm.DB) error {
+func (r *Respondents) BeforeUpdate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
@@ -72,7 +72,19 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		return 0, fmt.Errorf("failed to get tx: %w", err)
 	}
 
+	var questionnaire Questionnaires
 	var respondent Respondents
+
+	err = db.
+		Where("id = ?", questionnaireID).
+		First(&questionnaire).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, ErrRecordNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get questionnaire: %w", err)
+	}
+
 	if submittedAt.Valid {
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
@@ -86,12 +98,26 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		}
 	}
 
+	if !questionnaire.IsDuplicateAnswerAllowed {
+		err = db.
+			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
+			First(&Respondents{}).Error
+		if err == nil {
+			return 0, ErrDuplicatedAnswered
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, fmt.Errorf("failed to check duplicate answer: %w", err)
+		}
+
+	}
+
 	err = db.Create(&respondent).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
 
 	return respondent.ResponseID, nil
+
 }
 
 // UpdateSubmittedAt 投稿日時更新
@@ -170,12 +196,13 @@ func (*Respondent) GetRespondentInfos(ctx context.Context, userID string, questi
 		Order("respondents.submitted_at DESC").
 		Where("user_traqid = ? AND respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL", userID)
 
+	if len(questionnaireIDs) > 1 {
+		// 空配列か1要素の取得にしか用いない
+		return nil, errors.New("illegal function usage")
+	}
 	if len(questionnaireIDs) != 0 {
 		questionnaireID := questionnaireIDs[0]
 		query = query.Where("questionnaire_id = ?", questionnaireID)
-	} else if len(questionnaireIDs) > 1 {
-		// 空配列か1要素の取得にしか用いない
-		return nil, errors.New("illegal function usage")
 	}
 
 	err = query.
@@ -270,6 +297,9 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		Session(&gorm.Session{}).
 		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+	if onlyMyResponse {
+		query = query.Where("user_traqid = ?", userID)
+	}
 
 	query, sortNum, err := setRespondentsOrder(query, sort)
 	if err != nil {
@@ -291,22 +321,34 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		responseIDs = append(responseIDs, respondent.ResponseID)
 	}
 
+	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response is anonymous by questionnaire id: %w", err)
+	}
+
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
 	for i, respondent := range respondents {
-		respondentDetails = append(respondentDetails, RespondentDetail{
+		r := RespondentDetail{
 			ResponseID:      respondent.ResponseID,
-			TraqID:          respondent.UserTraqid,
 			QuestionnaireID: questionnaireID,
 			SubmittedAt:     respondent.SubmittedAt,
 			ModifiedAt:      respondent.ModifiedAt,
-		})
+		}
+
+		if !isAnonymous {
+			r.TraqID = respondent.UserTraqid
+		} else {
+			r.TraqID = ""
+		}
+
+		respondentDetails = append(respondentDetails, r)
 
 		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
 	}
 
 	questions := []Questions{}
-	query = db.
+	err = db.
 		Preload("Responses", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("ResponseID", "QuestionID", "Body").
@@ -314,11 +356,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		}).
 		Where("questionnaire_id = ?", questionnaireID).
 		Order("question_num").
-		Select("ID", "Type")
-	if onlyMyResponse {
-		query = query.Where("user_traqid = ?", userID)
-	}
-	err = query.
+		Select("ID", "Type").
 		Find(&questions).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get questions: %w", err)
@@ -387,18 +425,23 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 }
 
 // GetMyResponses 自分のすべての回答を取得
-func (*Respondent) GetMyResponseIDs(ctx context.Context, userID string) ([]int, error) {
+func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string) ([]int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
 	}
 
 	responsesID := []int{}
-	err = db.
-		Model(&Respondents{}).
+	query := db.Model(&Respondents{}).
 		Where("user_traqid = ?", userID).
-		Select("response_id").
-		Find(&responsesID).Error
+		Select("response_id")
+
+	query, _, err = setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set respondents order: %w", err)
+	}
+
+	err = query.Find(&responsesID).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get responsesID: %w", err)
 	}

@@ -5,8 +5,9 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/traPtitech/anke-to/controller"
+	"github.com/traPtitech/anke-to/handler"
 	"github.com/traPtitech/anke-to/model"
-	"github.com/traPtitech/anke-to/router"
 	"github.com/traPtitech/anke-to/traq"
 )
 
@@ -25,15 +26,12 @@ var (
 	webhookBind = wire.Bind(new(traq.IWebhook), new(*traq.Webhook))
 )
 
-func InjectAPIServer() *router.API {
+func InjectAPIServer() *handler.Handler {
 	wire.Build(
-		router.NewAPI,
-		router.NewMiddleware,
-		router.NewQuestionnaire,
-		router.NewQuestion,
-		router.NewResponse,
-		router.NewResult,
-		router.NewUser,
+		handler.NewHandler,
+		controller.NewResponse,
+		controller.NewQuestionnaire,
+		controller.NewMiddleware,
 		model.NewAdministrator,
 		model.NewOption,
 		model.NewQuestionnaire,
@@ -57,6 +55,5 @@ func InjectAPIServer() *router.API {
 		transactionBind,
 		webhookBind,
 	)
-
-	return nil
+	return &handler.Handler{}
 }

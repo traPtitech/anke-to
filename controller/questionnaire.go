@@ -2,9 +2,11 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,8 +33,28 @@ type Questionnaire struct {
 	Response
 }
 
-func NewQuestionnaire() *Questionnaire {
-	return &Questionnaire{}
+func NewQuestionnaire(
+	questionnaire model.IQuestionnaire,
+	target model.ITarget,
+	administrator model.IAdministrator,
+	question model.IQuestion,
+	option model.IOption,
+	scaleLabel model.IScaleLabel,
+	validation model.IValidation,
+	transaction model.ITransaction,
+	webhook traq.IWebhook,
+) *Questionnaire {
+	return &Questionnaire{
+		IQuestionnaire: questionnaire,
+		ITarget:        target,
+		IAdministrator: administrator,
+		IQuestion:      question,
+		IOption:        option,
+		IScaleLabel:    scaleLabel,
+		IValidation:    validation,
+		ITransaction:   transaction,
+		IWebhook:       webhook,
+	}
 }
 
 const MaxTitleLength = 50
@@ -93,7 +115,7 @@ func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params
 	return res, nil
 }
 
-func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
+func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
@@ -110,7 +132,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 	questionnaireID := 0
 
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy))
+		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err
@@ -155,6 +177,25 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
 		}
+		for questoinNum, question := range params.Questions {
+			b, err := question.MarshalJSON()
+			if err != nil {
+				c.Logger().Errorf("failed to marshal new question: %+v", err)
+				return err
+			}
+			var questionParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &questionParsed)
+			if err != nil {
+				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
+				return err
+			}
+			questionType := questionParsed["question_type"].(string)
+			_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+			if err != nil {
+				c.Logger().Errorf("failed to insert question: %+v", err)
+				return err
+			}
+		}
 
 		message := createQuestionnaireMessage(
 			questionnaireID,
@@ -170,19 +211,133 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params o
 			return err
 		}
 
+		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
 		c.Logger().Errorf("failed to create a questionnaire: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
 	}
+
+	// insert validations
+	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questions")
+	}
+	for i, question := range questions {
+		switch question.Type {
+		case "SingleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsSingleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			for i, v := range b.Options {
+				err := q.IOption.InsertOption(c.Request().Context(), question.ID, i+1, v)
+				if err != nil {
+					c.Logger().Errorf("failed to insert option: %+v", err)
+					return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert option")
+				}
+			}
+		case "MultipleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsMultipleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			for i, v := range b.Options {
+				err := q.IOption.InsertOption(c.Request().Context(), question.ID, i+1, v)
+				if err != nil {
+					c.Logger().Errorf("failed to insert option: %+v", err)
+					return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert option")
+				}
+			}
+		case "Scale":
+			b, err := params.Questions[i].AsQuestionSettingsScale()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IScaleLabel.InsertScaleLabel(c.Request().Context(), question.ID,
+				model.ScaleLabels{
+					ScaleLabelLeft:  *b.MinLabel,
+					ScaleLabelRight: *b.MaxLabel,
+					ScaleMax:        b.MaxValue,
+					ScaleMin:        b.MinValue,
+				})
+			if err != nil {
+				c.Logger().Errorf("failed to insert scale label: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert scale label")
+			}
+		case "Text":
+			b, err := params.Questions[i].AsQuestionSettingsText()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+				})
+			if err != nil {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "TextLong":
+			b, err := params.Questions[i].AsQuestionSettingsTextLong()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
+				})
+			if err != nil {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "Number":
+			b, err := params.Questions[i].AsQuestionSettingsNumber()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			// 数字かどうか，min<=maxになっているかどうか
+			err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+			if err != nil {
+				c.Logger().Errorf("invalid number: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid number")
+			}
+			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					MinBound: strconv.Itoa(*b.MinValue),
+					MaxBound: strconv.Itoa(*b.MaxValue),
+				})
+			if err != nil {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		}
+	}
+
 	questionnaireInfo, targets, targetGroups, admins, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to get questionnaire info: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info")
 	}
 
-	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	if err != nil {
+		c.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
+	}
 	return questionnaireDetail, nil
 }
 func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
@@ -190,18 +345,33 @@ func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
 	}
-	questionnaireDetail := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	if err != nil {
+		ctx.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
+	}
 	return questionnaireDetail, nil
 }
 
 func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
+	// unable to change the questionnaire from anoymous to non-anonymous
+	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get anonymous info: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get anonymous info")
+	}
+	if isAnonymous && !params.IsAnonymous {
+		c.Logger().Info("unable to change the questionnaire from anoymous to non-anonymous")
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to change the questionnaire from anoymous to non-anonymous")
+	}
+
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID)
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, string(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -256,6 +426,44 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
 		}
+		for questoinNum, question := range params.Questions {
+			b, err := question.MarshalJSON()
+			if err != nil {
+				c.Logger().Errorf("failed to marshal new question: %+v", err)
+				return err
+			}
+			var questionParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &questionParsed)
+			if err != nil {
+				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
+				return err
+			}
+			questionType := questionParsed["question_type"].(string)
+			if question.QuestionId == nil {
+				_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+				if err != nil {
+					c.Logger().Errorf("failed to insert question: %+v", err)
+					return err
+				}
+			} else {
+				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
+				if err != nil {
+					c.Logger().Errorf("failed to update question: %+v", err)
+					return err
+				}
+			}
+		}
+
+		err = Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
+			return err
+		}
+		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return err
+		}
 
 		return nil
 	})
@@ -264,26 +472,144 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
 	}
 
+	// update validations
+	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questions")
+	}
+	for i, question := range questions {
+		switch question.Type {
+		case "SingleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsSingleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, question.ID)
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to update options: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to update options")
+			}
+		case "MultipleChoice":
+			b, err := params.Questions[i].AsQuestionSettingsMultipleChoice()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, question.ID)
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to update options: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to update options")
+			}
+		case "Scale":
+			b, err := params.Questions[i].AsQuestionSettingsScale()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IScaleLabel.UpdateScaleLabel(c.Request().Context(), question.ID,
+				model.ScaleLabels{
+					ScaleLabelLeft:  *b.MinLabel,
+					ScaleLabelRight: *b.MaxLabel,
+					ScaleMax:        b.MaxValue,
+					ScaleMin:        b.MinValue,
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert scale label: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert scale label")
+			}
+		case "Text":
+			b, err := params.Questions[i].AsQuestionSettingsText()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "TextLong":
+			b, err := params.Questions[i].AsQuestionSettingsTextLong()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		case "Number":
+			b, err := params.Questions[i].AsQuestionSettingsNumber()
+			if err != nil {
+				c.Logger().Errorf("failed to get question settings: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			// 数字かどうか，min<=maxになっているかどうか
+			err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+			if err != nil {
+				c.Logger().Errorf("invalid number: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid number")
+			}
+			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
+				model.Validations{
+					MinBound: strconv.Itoa(*b.MinValue),
+					MaxBound: strconv.Itoa(*b.MaxValue),
+				})
+			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
+				c.Logger().Errorf("failed to insert validation: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
+			}
+		}
+	}
+
 	return nil
 }
 
 func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.IQuestionnaire.DeleteQuestionnaire(c.Request().Context(), questionnaireID)
+		err := q.IQuestionnaire.DeleteQuestionnaire(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 			return err
 		}
 
-		err = q.DeleteTargets(c.Request().Context(), questionnaireID)
+		err = q.DeleteTargets(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete targets: %+v", err)
 			return err
 		}
 
-		err = q.DeleteAdministrators(c.Request().Context(), questionnaireID)
+		err = q.DeleteAdministrators(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		questions, err := q.GetQuestions(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to get questions: %+v", err)
+			return err
+		}
+		for _, question := range questions {
+			err = q.DeleteQuestion(ctx, question.ID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete administrators: %+v", err)
+				return err
+			}
+		}
+
+		err = Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
 
@@ -302,12 +628,48 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 }
 
 func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
-	// todo: check remind status
-	return false, nil
+	status, err := Jq.CheckRemindStatus(questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to check remind status: %+v", err)
+		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+	}
+
+	return status, nil
 }
 
-func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) error {
-	// todo: edit remind status
+func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
+	if isRemindEnabled {
+		status, err := Jq.CheckRemindStatus(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check remind status: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+		}
+		if status {
+			return nil
+		}
+
+		questionnaire, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		if err != nil {
+			if errors.Is(err, model.ErrRecordNotFound) {
+				c.Logger().Info("questionnaire not found")
+				return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+			}
+			c.Logger().Errorf("failed to get questionnaire: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire")
+		}
+
+		err = Jq.PushReminder(questionnaireID, &questionnaire.ResTimeLimit.Time)
+		if err != nil {
+			c.Logger().Errorf("failed to push reminder: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
+		}
+	} else {
+		err := Jq.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete reminder")
+		}
+	}
 	return nil
 }
 
@@ -315,6 +677,9 @@ func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID
 	res := []openapi.Response{}
 	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, string(*params.Sort), *params.OnlyMyResponse, userID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
+		}
 		c.Logger().Errorf("failed to get respondent details: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to get respondent details")
 	}
@@ -350,6 +715,89 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		return res, echo.NewHTTPError(http.StatusUnprocessableEntity, err)
 	}
 
+	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questions: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	responseMetas, err := responseBody2ResponseMetas(params.Body, questions)
+	if err != nil {
+		c.Logger().Errorf("failed to convert response body to response metas: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	// validationでチェック
+	questionIDs := make([]int, len(questions))
+	questionTypes := make(map[int]string, len(questions))
+	for i, question := range questions {
+		questionIDs[i] = question.ID
+		questionTypes[question.ID] = question.Type
+	}
+
+	validations, err := q.IValidation.GetValidations(c.Request().Context(), questionIDs)
+	if err != nil {
+		c.Logger().Errorf("failed to get validations: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	for i, validation := range validations {
+		switch questionTypes[validation.QuestionID] {
+		case "Text", "TextLong":
+			err := q.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrTextMatching) {
+					c.Logger().Errorf("invalid text: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid text: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Number":
+			err := q.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrInvalidNumber) {
+					c.Logger().Errorf("invalid number: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid number: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		}
+	}
+
+	// scaleのvalidation
+	scaleLabelIDs := []int{}
+	for _, question := range questions {
+		if question.Type == "Scale" {
+			scaleLabelIDs = append(scaleLabelIDs, question.ID)
+		}
+	}
+
+	scaleLabels, err := q.IScaleLabel.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
+	if err != nil {
+		c.Logger().Errorf("failed to get scale labels: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
+	for _, scaleLabel := range scaleLabels {
+		scaleLabelMap[scaleLabel.QuestionID] = scaleLabel
+	}
+
+	for i, question := range questions {
+		if question.Type == "Scale" {
+			label, ok := scaleLabelMap[question.ID]
+			if !ok {
+				label = model.ScaleLabels{}
+			}
+			err := q.IScaleLabel.CheckScaleLabel(label, responseMetas[i].Data)
+			if err != nil {
+				c.Logger().Errorf("invalid scale: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		}
+	}
+
 	var submittedAt, modifiedAt time.Time
 	//一時保存のときはnull
 	if params.IsDraft {
@@ -366,13 +814,28 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
+	if len(responseMetas) > 0 {
+		err = q.InsertResponses(c.Request().Context(), resopnseID, responseMetas)
+		if err != nil {
+			c.Logger().Errorf("failed to insert responses: %+v", err)
+			return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get response isanonymous by questionnaire id: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,
 		ResponseId:      resopnseID,
-		Respondent:      userID,
+		Respondent:      &userID,
 		SubmittedAt:     submittedAt,
 		ModifiedAt:      modifiedAt,
 		IsDraft:         params.IsDraft,
+		IsAnonymous:     &isAnonymous,
 		Body:            params.Body,
 	}
 
@@ -416,27 +879,31 @@ https://anke-to.trap.jp/responses/new/%d`,
 	)
 }
 
-func (q Questionnaire) GetQuestionnaireResult(ctx echo.Context, questionnaireID int, userID string) (openapi.Result, error) {
-	res := openapi.Result{}
+func createReminderMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit time.Time, targets []string, leftTimeText string) string {
+	resTimeLimitText := resTimeLimit.Local().Format("2006/01/02 15:04")
+	targetsMentionText := "@" + strings.Join(targets, " @")
 
-	params := openapi.GetQuestionnaireResponsesParams{}
-	responses, err := q.GetQuestionnaireResponses(ctx, questionnaireID, params, userID)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get questionnaire responses: %+v", err)
-		return openapi.Result{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
-	}
-
-	for _, response := range responses {
-		tmp := openapi.ResultItem{
-			Body:            response.Body,
-			IsDraft:         response.IsDraft,
-			ModifiedAt:      response.ModifiedAt,
-			QuestionnaireId: response.QuestionnaireId,
-			ResponseId:      response.ResponseId,
-			SubmittedAt:     response.SubmittedAt,
-		}
-		res = append(res, tmp)
-	}
-
-	return res, nil
+	return fmt.Sprintf(
+		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』の回答期限が迫っています!
+==残り%sです!==
+#### 管理者
+%s
+#### 説明
+%s
+#### 回答期限
+%s
+#### 対象者
+%s
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/%d
+`,
+		title,
+		questionnaireID,
+		leftTimeText,
+		strings.Join(administrators, ","),
+		description,
+		resTimeLimitText,
+		targetsMentionText,
+		questionnaireID,
+	)
 }
