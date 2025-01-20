@@ -307,12 +307,6 @@ paths: # TODO 変数の命名を確認する
           description: 自分の回答のリストを取得できませんでした
 components:
   parameters:
-    # answeredInQuery:
-    #   name: answered
-    #   in: query
-    #   description: 回答したもの(answered)か未回答のもの(unanswered)かを選別
-    #   schema:
-    #     $ref: "#/components/schemas/AnsweredType"
     sortInQuery:
       name: sort
       in: query
@@ -372,14 +366,6 @@ components:
         アンケートID
       schema:
         type: integer
-    # questionIDInPath:
-    #   name: questionID
-    #   in: path
-    #   required: true
-    #   description: |
-    #     質問ID
-    #   schema:
-    #     type: integer
     responseIDInPath:
       name: responseID
       in: path
@@ -388,24 +374,7 @@ components:
         回答ID
       schema:
         type: integer
-    # traQIDInPath:
-    #   name: traQID
-    #   in: path
-    #   required: true
-    #   description: |
-    #     traQ ID(ex:mazrean)
-    #   schema:
-    #     type: string
   schemas: # TODO: description, exampleを確認する
-    # AnsweredType:
-    #   type: string
-    #   description: アンケート検索時に回答済みかの状態での絞り込み
-    #   enum:
-    #     - answered
-    #     - unanswered
-    #   x-enum-varnames:
-    #     - Answered
-    #     - Unanswered
     SortType:
       type: string
       description: question、questionnaire用のソートの種類
@@ -640,14 +609,6 @@ components:
       required:
         - targets
         - admins
-    # QuestionnaireHasMyResponse:
-    #   type: object
-    #   properties:
-    #     has_response:
-    #       type: boolean
-    #       description: 回答済みあるいは下書きが存在する
-    #   required:
-    #     - has_response
     QuestionnaireIsRemindEnabled:
       type: object
       properties:

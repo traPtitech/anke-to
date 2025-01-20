@@ -46,13 +46,7 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
-	userID, err := h.Middleware.GetUserID(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get userID: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-	}
-
-	res, err := h.Questionnaire.PostQuestionnaire(ctx, userID, params)
+	res, err := h.Questionnaire.PostQuestionnaire(ctx, params)
 	if err != nil {
 		ctx.Logger().Errorf("failed to post questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to post questionnaire: %w", err))

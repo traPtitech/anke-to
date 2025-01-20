@@ -27,18 +27,14 @@ type Responses struct {
 }
 
 // BeforeCreate insert時に自動でmodifiedAt更新
-func (r *Responses) BeforeCreate(tx *gorm.DB) error {
-	_ = tx
-
+func (r *Responses) BeforeCreate() error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (r *Responses) BeforeUpdate(tx *gorm.DB) error {
-	_ = tx
-
+func (r *Responses) BeforeUpdate() error {
 	r.ModifiedAt = time.Now()
 
 	return nil

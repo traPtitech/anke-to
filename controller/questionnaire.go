@@ -115,9 +115,7 @@ func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params
 	return res, nil
 }
 
-func (q Questionnaire) PostQuestionnaire(c echo.Context, userID string, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
-	_ = userID
-
+func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
