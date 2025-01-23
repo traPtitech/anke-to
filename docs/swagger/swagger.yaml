@@ -964,7 +964,7 @@ components:
       type: array
       items:
         type: string
-        example: "1"
+        format: uuid
         description: |
           Group UUID
   securitySchemes:

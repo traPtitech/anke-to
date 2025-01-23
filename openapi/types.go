@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -164,7 +165,7 @@ type EditQuestionnaireTargetsAndAdmins struct {
 }
 
 // Groups defines model for Groups.
-type Groups = []string
+type Groups = []openapi_types.UUID
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
