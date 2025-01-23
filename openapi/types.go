@@ -132,6 +132,37 @@ const (
 	SortTypeTitleDESC      SortType = "-title"
 )
 
+// EditQuestionnaire defines model for EditQuestionnaire.
+type EditQuestionnaire struct {
+	Admin       *UsersAndGroups `json:"admin,omitempty"`
+	Description string          `json:"description"`
+
+	// IsAnonymous 匿名回答かどうか
+	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
+
+	// IsPublished アンケートが公開されているかどうか
+	IsPublished     bool       `json:"is_published"`
+	QuestionnaireId int        `json:"questionnaire_id"`
+	Questions       []Question `json:"questions"`
+
+	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
+	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
+
+	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
+	ResponseViewableBy ResShareType    `json:"response_viewable_by"`
+	Target             *UsersAndGroups `json:"target,omitempty"`
+	Title              string          `json:"title"`
+}
+
+// EditQuestionnaireTargetsAndAdmins defines model for EditQuestionnaireTargetsAndAdmins.
+type EditQuestionnaireTargetsAndAdmins struct {
+	Admin  *UsersAndGroups `json:"admin,omitempty"`
+	Target *UsersAndGroups `json:"target,omitempty"`
+}
+
 // Groups defines model for Groups.
 type Groups = []string
 
@@ -146,7 +177,7 @@ type NewQuestion struct {
 
 // NewQuestionnaire defines model for NewQuestionnaire.
 type NewQuestionnaire struct {
-	Admins      UsersAndGroups `json:"admins"`
+	Admin       UsersAndGroups `json:"admin"`
 	Description string         `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
@@ -164,7 +195,7 @@ type NewQuestionnaire struct {
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
 	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
+	Target             UsersAndGroups `json:"target"`
 	Title              string         `json:"title"`
 }
 
@@ -309,8 +340,7 @@ type QuestionTypeTextLongQuestionType string
 
 // QuestionnaireBase defines model for QuestionnaireBase.
 type QuestionnaireBase struct {
-	Admins      UsersAndGroups `json:"admins"`
-	Description string         `json:"description"`
+	Description string `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
@@ -325,9 +355,8 @@ type QuestionnaireBase struct {
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
-	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
-	Title              string         `json:"title"`
+	ResponseViewableBy ResShareType `json:"response_viewable_by"`
+	Title              string       `json:"title"`
 }
 
 // QuestionnaireCreatedAt defines model for QuestionnaireCreatedAt.
@@ -342,9 +371,12 @@ type QuestionnaireDescription struct {
 
 // QuestionnaireDetail defines model for QuestionnaireDetail.
 type QuestionnaireDetail struct {
-	Admins      UsersAndGroups `json:"admins"`
-	CreatedAt   time.Time      `json:"created_at"`
-	Description string         `json:"description"`
+	Admin UsersAndGroups `json:"admin"`
+
+	// Admins 回答者の一覧。匿名回答の場合はnull。
+	Admins      *Users    `json:"admins,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
@@ -357,15 +389,20 @@ type QuestionnaireDetail struct {
 	ModifiedAt      time.Time  `json:"modified_at"`
 	QuestionnaireId int        `json:"questionnaire_id"`
 	Questions       []Question `json:"questions"`
-	Respondents     Users      `json:"respondents"`
+
+	// Respondents 回答者の一覧。匿名回答の場合はnull。
+	Respondents Users `json:"respondents"`
 
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
 	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
-	Title              string         `json:"title"`
+	Target             UsersAndGroups `json:"target"`
+
+	// Targets 回答者の一覧。匿名回答の場合はnull。
+	Targets *Users `json:"targets,omitempty"`
+	Title   string `json:"title"`
 }
 
 // QuestionnaireID defines model for QuestionnaireID.
@@ -478,8 +515,8 @@ type QuestionnaireSummary struct {
 
 // QuestionnaireTargetsAndAdmins defines model for QuestionnaireTargetsAndAdmins.
 type QuestionnaireTargetsAndAdmins struct {
-	Admins  UsersAndGroups `json:"admins"`
-	Targets UsersAndGroups `json:"targets"`
+	Admin  UsersAndGroups `json:"admin"`
+	Target UsersAndGroups `json:"target"`
 }
 
 // QuestionnaireTitle defines model for QuestionnaireTitle.
@@ -608,13 +645,15 @@ type SortType string
 // TraqId traQ ID
 type TraqId = string
 
-// Users defines model for Users.
+// Users 回答者の一覧。匿名回答の場合はnull。
 type Users = []TraqId
 
 // UsersAndGroups defines model for UsersAndGroups.
 type UsersAndGroups struct {
 	Groups Groups `json:"groups"`
-	Users  Users  `json:"users"`
+
+	// Users 回答者の一覧。匿名回答の場合はnull。
+	Users Users `json:"users"`
 }
 
 // OnlyAdministratedByMeInQuery defines model for onlyAdministratedByMeInQuery.
@@ -681,7 +720,7 @@ type GetMyResponsesParams struct {
 type PostQuestionnaireJSONRequestBody = NewQuestionnaire
 
 // EditQuestionnaireJSONRequestBody defines body for EditQuestionnaire for application/json ContentType.
-type EditQuestionnaireJSONRequestBody = QuestionnaireDetail
+type EditQuestionnaireJSONRequestBody = EditQuestionnaire
 
 // EditQuestionnaireMyRemindStatusJSONRequestBody defines body for EditQuestionnaireMyRemindStatus for application/json ContentType.
 type EditQuestionnaireMyRemindStatusJSONRequestBody = QuestionnaireIsRemindEnabled

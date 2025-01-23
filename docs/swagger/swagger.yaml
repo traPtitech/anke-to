@@ -99,7 +99,7 @@ paths: # TODO 変数の命名を確認する
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QuestionnaireDetail"
+              $ref: "#/components/schemas/EditQuestionnaire"
       responses:
         "200":
           description: 正常にアンケートを変更できました。
@@ -428,15 +428,29 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
         - $ref: "#/components/schemas/QuestionnaireIsDuplicateAnswerAllowed"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
-        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireBase"
+        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
         - properties:
             questions:
               type: array
               items:
                 $ref: "#/components/schemas/NewQuestion"
+          required:
+            - questions
+            - targets
+            - admins
+    EditQuestionnaire:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - $ref: "#/components/schemas/QuestionnaireBase"
+        - $ref: "#/components/schemas/EditQuestionnaireTargetsAndAdmins"
+        - properties:
+            questions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Question"
           required:
             - questions
     QuestionnaireDetail:
@@ -445,12 +459,24 @@ components:
         - $ref: "#/components/schemas/QuestionnaireBase"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
-        - $ref: "#/components/schemas/Users"
+        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
         - properties:
             questions:
               type: array
               items:
                 $ref: "#/components/schemas/Question"
+            respondents:
+              $ref: "#/components/schemas/Users"
+              description: |
+                回答者の一覧。匿名回答の場合はnull。
+            targets:
+              $ref: "#/components/schemas/Users"
+              description: |
+                対象者の一覧。
+            admins:
+              $ref: "#/components/schemas/Users"
+              description: |
+                管理者の一覧。
           required:
             - questions
             - respondents
@@ -602,13 +628,24 @@ components:
     QuestionnaireTargetsAndAdmins:
       type: object
       properties:
-        targets:
+        target:
           $ref: "#/components/schemas/UsersAndGroups"
-        admins:
+        admin:
           $ref: "#/components/schemas/UsersAndGroups"
       required:
-        - targets
-        - admins
+        - target
+        - admin
+    EditQuestionnaireTargetsAndAdmins:
+      type: object
+      properties:
+        target:
+          $ref: "#/components/schemas/UsersAndGroups"
+          description: |
+            nullの場合は対象者を変更しない。
+        admin:
+          $ref: "#/components/schemas/UsersAndGroups"
+          description: |
+            nullの場合は管理者を変更しない。
     QuestionnaireIsRemindEnabled:
       type: object
       properties:

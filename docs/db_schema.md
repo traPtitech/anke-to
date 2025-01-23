@@ -9,6 +9,24 @@
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
 | user_traqid      | char(32) | NO   | PRI | _NULL_  |
 
+### administrator_groups
+
+アンケートの運営 (編集等ができるグループ)（実際の管理はadministratorsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| group_id         | char(36) | NO   | PRI | _NULL_  |
+
+### administrator_users
+
+アンケートの運営 (編集等ができるユーザー)（実際の管理はadministratorsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |
+
 ### options
 
 選択肢
@@ -110,3 +128,21 @@
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
 | user_traqid      | char(32) | NO   | PRI | _NULL_  |
 | is_canceled      | boolean  | NO   |     | false   |       | アンケートの対象者がキャンセルしたかどうか |
+
+### target_groups
+
+選択したアンケートの対象者（グループ）（実際の管理はtargetsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| group_id         | char(36) | NO   | PRI | _NULL_  |
+
+### target_groups
+
+選択したアンケートの対象者（ユーザー）（実際の管理はtargetsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |
