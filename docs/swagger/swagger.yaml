@@ -91,7 +91,7 @@ paths: # TODO 変数の命名を確認する
       operationId: editQuestionnaire
       tags:
         - questionnaire
-      description: アンケートの情報を変更します。匿名のアンケートを非匿名アンケートに変更することができません。
+      description: アンケートの情報を変更します。匿名のアンケートを非匿名アンケートに変更することができません。admin/targetがnullの場合は管理者/対象者を変更しません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
@@ -466,20 +466,28 @@ components:
               items:
                 $ref: "#/components/schemas/Question"
             respondents:
-              $ref: "#/components/schemas/Users"
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
               description: |
                 回答者の一覧。匿名回答の場合はnull。
             targets:
-              $ref: "#/components/schemas/Users"
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
               description: |
-                対象者の一覧。
+                対象者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
             admins:
-              $ref: "#/components/schemas/Users"
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
               description: |
-                管理者の一覧。
+                管理者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
           required:
             - questions
             - respondents
+            - targets
+            - admins
     QuestionnaireSummary: # ResponseCountとRespondentCountを入れてもいいかも
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -640,12 +648,8 @@ components:
       properties:
         target:
           $ref: "#/components/schemas/UsersAndGroups"
-          description: |
-            nullの場合は対象者を変更しない。
         admin:
           $ref: "#/components/schemas/UsersAndGroups"
-          description: |
-            nullの場合は管理者を変更しない。
     QuestionnaireIsRemindEnabled:
       type: object
       properties:

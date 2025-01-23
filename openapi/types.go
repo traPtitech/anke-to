@@ -373,8 +373,8 @@ type QuestionnaireDescription struct {
 type QuestionnaireDetail struct {
 	Admin UsersAndGroups `json:"admin"`
 
-	// Admins 回答者の一覧。匿名回答の場合はnull。
-	Admins      *Users    `json:"admins,omitempty"`
+	// Admins 管理者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
+	Admins      []TraqId  `json:"admins"`
 	CreatedAt   time.Time `json:"created_at"`
 	Description string    `json:"description"`
 
@@ -391,7 +391,7 @@ type QuestionnaireDetail struct {
 	Questions       []Question `json:"questions"`
 
 	// Respondents 回答者の一覧。匿名回答の場合はnull。
-	Respondents Users `json:"respondents"`
+	Respondents []TraqId `json:"respondents"`
 
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
@@ -400,9 +400,9 @@ type QuestionnaireDetail struct {
 	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
 	Target             UsersAndGroups `json:"target"`
 
-	// Targets 回答者の一覧。匿名回答の場合はnull。
-	Targets *Users `json:"targets,omitempty"`
-	Title   string `json:"title"`
+	// Targets 対象者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
+	Targets []TraqId `json:"targets"`
+	Title   string   `json:"title"`
 }
 
 // QuestionnaireID defines model for QuestionnaireID.
