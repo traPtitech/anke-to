@@ -101,7 +101,7 @@ func (jq *JobQueue) CheckRemindStatus(questionnaireID int) (bool, error) {
 func reminderAction(questionnaireID int, leftTimeText string) error {
 	ctx := context.Background()
 	q := model.Questionnaire{}
-	questionnaire, _, _, administrators, _, respondants, err := q.GetQuestionnaireInfo(ctx, questionnaireID)
+	questionnaire, _, _, _, administrators, _, _, respondants, err := q.GetQuestionnaireInfo(ctx, questionnaireID)
 	if err != nil {
 		return err
 	}

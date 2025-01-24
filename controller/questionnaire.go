@@ -22,38 +22,51 @@ type Questionnaire struct {
 	model.IQuestionnaire
 	model.ITarget
 	model.ITargetGroup
+	model.ITargetUser
 	model.IAdministrator
 	model.IAdministratorGroup
+	model.IAdministratorUser
 	model.IQuestion
 	model.IOption
 	model.IScaleLabel
 	model.IValidation
 	model.ITransaction
 	traq.IWebhook
-	Response
+	*Response
 }
 
 func NewQuestionnaire(
 	questionnaire model.IQuestionnaire,
 	target model.ITarget,
+	targetGroup model.ITargetGroup,
+	targetUser model.ITargetUser,
 	administrator model.IAdministrator,
+	administratorGroup model.IAdministratorGroup,
+	administratorUser model.IAdministratorUser,
 	question model.IQuestion,
 	option model.IOption,
 	scaleLabel model.IScaleLabel,
 	validation model.IValidation,
 	transaction model.ITransaction,
+	respodent model.IRespondent,
 	webhook traq.IWebhook,
+	response *Response,
 ) *Questionnaire {
 	return &Questionnaire{
-		IQuestionnaire: questionnaire,
-		ITarget:        target,
-		IAdministrator: administrator,
-		IQuestion:      question,
-		IOption:        option,
-		IScaleLabel:    scaleLabel,
-		IValidation:    validation,
-		ITransaction:   transaction,
-		IWebhook:       webhook,
+		IQuestionnaire:      questionnaire,
+		ITarget:             target,
+		ITargetGroup:        targetGroup,
+		ITargetUser:         targetUser,
+		IAdministrator:      administrator,
+		IAdministratorGroup: administratorGroup,
+		IAdministratorUser:  administratorUser,
+		IQuestion:           question,
+		IOption:             option,
+		IScaleLabel:         scaleLabel,
+		IValidation:         validation,
+		ITransaction:        transaction,
+		IWebhook:            webhook,
+		Response:            response,
 	}
 }
 
@@ -137,12 +150,12 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err
 		}
-		allTargetUsers, err := rollOutUsersAndGroups(params.Targets.Users, params.Targets.Groups)
+		allTargetUsers, err := rollOutUsersAndGroups(params.Target.Users, params.Target.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to roll out users and groups: %+v", err)
 			return err
 		}
-		targetGroupNames, err := uuid2GroupNames(params.Targets.Groups)
+		targetGroupNames, err := uuid2GroupNames(params.Target.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to get group names: %+v", err)
 			return err
@@ -152,17 +165,22 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			c.Logger().Errorf("failed to insert targets: %+v", err)
 			return err
 		}
-		err = q.InsertTargetGroups(ctx, questionnaireID, params.Targets.Groups)
+		err = q.InsertTargetUsers(ctx, questionnaireID, params.Target.Users)
 		if err != nil {
 			c.Logger().Errorf("failed to insert target groups: %+v", err)
 			return err
 		}
-		allAdminUsers, err := rollOutUsersAndGroups(params.Admins.Users, params.Admins.Groups)
+		err = q.InsertTargetGroups(ctx, questionnaireID, params.Target.Groups)
+		if err != nil {
+			c.Logger().Errorf("failed to insert target groups: %+v", err)
+			return err
+		}
+		allAdminUsers, err := rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to roll out administrators: %+v", err)
 			return err
 		}
-		adminGroupNames, err := uuid2GroupNames(params.Admins.Groups)
+		adminGroupNames, err := uuid2GroupNames(params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to get group names: %+v", err)
 			return err
@@ -172,7 +190,12 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			c.Logger().Errorf("failed to insert administrators: %+v", err)
 			return err
 		}
-		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admins.Groups)
+		err = q.InsertAdministratorUsers(ctx, questionnaireID, params.Admin.Users)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrator users: %+v", err)
+			return err
+		}
+		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
@@ -327,13 +350,13 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 		}
 	}
 
-	questionnaireInfo, targets, targetGroups, admins, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+	questionnaireInfo, targets, targetUsers, targetGroups, admins, adminUsers, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to get questionnaire info: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info")
 	}
 
-	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminUsers, adminGroups, targets, targetUsers, targetGroups, respondents)
 	if err != nil {
 		c.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
@@ -341,11 +364,11 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 	return questionnaireDetail, nil
 }
 func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
-	questionnaireInfo, targets, targetGroups, admins, adminGroups, respondents, err := q.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
+	questionnaireInfo, targets, targetUsers, targetGroups, admins, adminUsers, adminGroups, respondents, err := q.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
 	}
-	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminGroups, targets, targetGroups, respondents)
+	questionnaireDetail, err := questionnaire2QuestionnaireDetail(*questionnaireInfo, admins, adminUsers, adminGroups, targets, targetUsers, targetGroups, respondents)
 	if err != nil {
 		ctx.Logger().Errorf("failed to convert questionnaire to questionnaire detail: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert questionnaire to questionnaire detail")
@@ -386,7 +409,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to delete target groups: %+v", err)
 			return err
 		}
-		allTargetUsers, err := rollOutUsersAndGroups(params.Targets.Users, params.Targets.Groups)
+		allTargetUsers, err := rollOutUsersAndGroups(params.Target.Users, params.Target.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to roll out users and groups: %+v", err)
 			return err
@@ -396,7 +419,12 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to insert targets: %+v", err)
 			return err
 		}
-		err = q.InsertTargetGroups(ctx, questionnaireID, params.Targets.Groups)
+		err = q.InsertTargetUsers(ctx, questionnaireID, params.Target.Users)
+		if err != nil {
+			c.Logger().Errorf("failed to insert target users: %+v", err)
+			return err
+		}
+		err = q.InsertTargetGroups(ctx, questionnaireID, params.Target.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to insert target groups: %+v", err)
 			return err
@@ -411,7 +439,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to delete administrator groups: %+v", err)
 			return err
 		}
-		allAdminUsers, err := rollOutUsersAndGroups(params.Admins.Users, params.Admins.Groups)
+		allAdminUsers, err := rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to roll out administrators: %+v", err)
 			return err
@@ -421,7 +449,12 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to insert administrators: %+v", err)
 			return err
 		}
-		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admins.Groups)
+		err = q.InsertAdministratorUsers(ctx, questionnaireID, params.Admin.Users)
+		if err != nil {
+			c.Logger().Errorf("failed to insert administrator users: %+v", err)
+			return err
+		}
+		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
 			return err
@@ -648,7 +681,7 @@ func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionn
 			return nil
 		}
 
-		questionnaire, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		questionnaire, _, _, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 		if err != nil {
 			if errors.Is(err, model.ErrRecordNotFound) {
 				c.Logger().Info("questionnaire not found")

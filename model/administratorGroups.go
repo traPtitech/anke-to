@@ -1,10 +1,14 @@
 package model
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // IAdministratorGroup AdministratorGroupのRepository
 type IAdministratorGroup interface {
-	InsertAdministratorGroups(ctx context.Context, questionnaireID int, administratorGroups []string) error
+	InsertAdministratorGroups(ctx context.Context, questionnaireID int, groupID []uuid.UUID) error
 	DeleteAdministratorGroups(ctx context.Context, questionnaireID int) error
 	GetAdministratorGroups(ctx context.Context, questionnaireIDs []int) ([]AdministratorGroups, error)
 }

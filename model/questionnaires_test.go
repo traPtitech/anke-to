@@ -1540,7 +1540,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		actualQuestionnaire, actualTargets, _, actualAdministrators, _, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
+		actualQuestionnaire, actualTargets, _, _, actualAdministrators, _, _, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 		// TODO with https://github.com/traPtitech/anke-to/issues/1289
 
 		if !testCase.expect.isErr {
