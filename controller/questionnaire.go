@@ -401,65 +401,69 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
 		}
-		err = q.DeleteTargets(ctx, questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete targets: %+v", err)
-			return err
+		if params.Target != nil {
+			err = q.DeleteTargets(ctx, questionnaireID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete targets: %+v", err)
+				return err
+			}
+			err = q.DeleteTargetGroups(ctx, questionnaireID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete target groups: %+v", err)
+				return err
+			}
+			allTargetUsers, err := rollOutUsersAndGroups((*params.Target).Users, params.Target.Groups)
+			if err != nil {
+				c.Logger().Errorf("failed to roll out users and groups: %+v", err)
+				return err
+			}
+			err = q.InsertTargets(ctx, questionnaireID, allTargetUsers)
+			if err != nil {
+				c.Logger().Errorf("failed to insert targets: %+v", err)
+				return err
+			}
+			err = q.InsertTargetUsers(ctx, questionnaireID, params.Target.Users)
+			if err != nil {
+				c.Logger().Errorf("failed to insert target users: %+v", err)
+				return err
+			}
+			err = q.InsertTargetGroups(ctx, questionnaireID, params.Target.Groups)
+			if err != nil {
+				c.Logger().Errorf("failed to insert target groups: %+v", err)
+				return err
+			}
 		}
-		err = q.DeleteTargetGroups(ctx, questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete target groups: %+v", err)
-			return err
-		}
-		allTargetUsers, err := rollOutUsersAndGroups(params.Target.Users, params.Target.Groups)
-		if err != nil {
-			c.Logger().Errorf("failed to roll out users and groups: %+v", err)
-			return err
-		}
-		err = q.InsertTargets(ctx, questionnaireID, allTargetUsers)
-		if err != nil {
-			c.Logger().Errorf("failed to insert targets: %+v", err)
-			return err
-		}
-		err = q.InsertTargetUsers(ctx, questionnaireID, params.Target.Users)
-		if err != nil {
-			c.Logger().Errorf("failed to insert target users: %+v", err)
-			return err
-		}
-		err = q.InsertTargetGroups(ctx, questionnaireID, params.Target.Groups)
-		if err != nil {
-			c.Logger().Errorf("failed to insert target groups: %+v", err)
-			return err
-		}
-		err = q.DeleteAdministrators(ctx, questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete administrators: %+v", err)
-			return err
-		}
-		err = q.DeleteAdministratorGroups(ctx, questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete administrator groups: %+v", err)
-			return err
-		}
-		allAdminUsers, err := rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
-		if err != nil {
-			c.Logger().Errorf("failed to roll out administrators: %+v", err)
-			return err
-		}
-		err = q.InsertAdministrators(ctx, questionnaireID, allAdminUsers)
-		if err != nil {
-			c.Logger().Errorf("failed to insert administrators: %+v", err)
-			return err
-		}
-		err = q.InsertAdministratorUsers(ctx, questionnaireID, params.Admin.Users)
-		if err != nil {
-			c.Logger().Errorf("failed to insert administrator users: %+v", err)
-			return err
-		}
-		err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admin.Groups)
-		if err != nil {
-			c.Logger().Errorf("failed to insert administrator groups: %+v", err)
-			return err
+		if params.Admin != nil {
+			err = q.DeleteAdministrators(ctx, questionnaireID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete administrators: %+v", err)
+				return err
+			}
+			err = q.DeleteAdministratorGroups(ctx, questionnaireID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete administrator groups: %+v", err)
+				return err
+			}
+			allAdminUsers, err := rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
+			if err != nil {
+				c.Logger().Errorf("failed to roll out administrators: %+v", err)
+				return err
+			}
+			err = q.InsertAdministrators(ctx, questionnaireID, allAdminUsers)
+			if err != nil {
+				c.Logger().Errorf("failed to insert administrators: %+v", err)
+				return err
+			}
+			err = q.InsertAdministratorUsers(ctx, questionnaireID, params.Admin.Users)
+			if err != nil {
+				c.Logger().Errorf("failed to insert administrator users: %+v", err)
+				return err
+			}
+			err = q.InsertAdministratorGroups(ctx, questionnaireID, params.Admin.Groups)
+			if err != nil {
+				c.Logger().Errorf("failed to insert administrator groups: %+v", err)
+				return err
+			}
 		}
 		for questoinNum, question := range params.Questions {
 			b, err := question.MarshalJSON()
