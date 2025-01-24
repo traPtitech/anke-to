@@ -31,6 +31,7 @@ type Questionnaire struct {
 	model.IScaleLabel
 	model.IValidation
 	model.ITransaction
+	model.IRespondent
 	traq.IWebhook
 	*Response
 }
@@ -65,6 +66,7 @@ func NewQuestionnaire(
 		IScaleLabel:         scaleLabel,
 		IValidation:         validation,
 		ITransaction:        transaction,
+		IRespondent:         respodent,
 		IWebhook:            webhook,
 		Response:            response,
 	}
