@@ -34,7 +34,7 @@ func (*TargetUser) InsertTargetUsers(ctx context.Context, questionnaireID int, t
 	for _, targetUser := range traqID {
 		dbTargetUsers = append(dbTargetUsers, TargetUsers{
 			QuestionnaireID: questionnaireID,
-			UserTraqid:         targetUser,
+			UserTraqid:      targetUser,
 		})
 	}
 
