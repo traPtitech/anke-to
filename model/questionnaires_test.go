@@ -1053,36 +1053,14 @@ func getQuestionnairesTest(t *testing.T) {
 
 	testCases := []test{
 		{
-			description: "userID:valid, sort:no, search:no, page:1",
-			args: args{
-				userID:                questionnairesTestUserID,
-				sort:                  "",
-				search:                "",
-				pageNum:               1,
-				onlyTargetingMe:       false,
-				onlyAdministratedByMe: true,
-			},
-		},
-		{
 			description: "userID:valid, sort:no, search:no, page:1, onlytargetted",
 			args: args{
 				userID:                questionnairesTestUserID,
 				sort:                  "",
 				search:                "",
 				pageNum:               1,
-				onlyTargetingMe:       true,
-				onlyAdministratedByMe: true,
-			},
-		},
-		{
-			description: "userID:valid, sort:no, search:no, page:1",
-			args: args{
-				userID:                questionnairesTestUserID,
-				sort:                  "",
-				search:                "",
-				pageNum:               1,
 				onlyTargetingMe:       false,
-				onlyAdministratedByMe: false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
@@ -1093,11 +1071,33 @@ func getQuestionnairesTest(t *testing.T) {
 				search:                "",
 				pageNum:               1,
 				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:1",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
 				onlyAdministratedByMe: false,
 			},
 		},
 		{
-			description: "userID:valid, sort:created_at, search:no, page:1",
+			description: "userID:valid, sort:no, search:no, page:1, onlytargetted",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:created_at, search:no, page:1, onlyadministrated",
 			args: args{
 				userID:                questionnairesTestUserID,
 				sort:                  "created_at",
@@ -1108,7 +1108,7 @@ func getQuestionnairesTest(t *testing.T) {
 			},
 		},
 		{
-			description: "userID:valid, sort:created_at, search:no, page:1, onlyadministrated",
+			description: "userID:valid, sort:created_at, search:no, page:1",
 			args: args{
 				userID:                questionnairesTestUserID,
 				sort:                  "created_at",
