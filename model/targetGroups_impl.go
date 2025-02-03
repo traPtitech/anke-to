@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 // TargetGroup TargetGroupsRepositoryの実装
 type TargetGroup struct{}
 
 // NewTargetGroups TargetGroupsのコンストラクター
-func NewTargetGroups() *TargetGroups {
-	return new(TargetGroups)
+func NewTargetGroup() *TargetGroup {
+	return new(TargetGroup)
 }
 
 // TargetGroups targets_groupsテーブルの構造体
@@ -21,7 +21,7 @@ type TargetGroups struct {
 	GroupID         uuid.UUID `gorm:"type:char(36);size:36;not null;primaryKey"`
 }
 
-// InsertTargetGroups アンケートの対象としてuser_groupを追加
+// InsertTargetGroups 選択したアンケート対象者（グループ）を追加
 func (*TargetGroup) InsertTargetGroups(ctx context.Context, questionnaireID int, groupID []uuid.UUID) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -48,7 +48,7 @@ func (*TargetGroup) InsertTargetGroups(ctx context.Context, questionnaireID int,
 	return nil
 }
 
-// GetTargetGroups アンケートの対象としてuser_groupを取得
+// GetTargetGroups 選択したアンケート対象者（グループ）を取得
 func (*TargetGroup) GetTargetGroups(ctx context.Context, questionnaireIDs []int) ([]TargetGroups, error) {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -66,7 +66,7 @@ func (*TargetGroup) GetTargetGroups(ctx context.Context, questionnaireIDs []int)
 	return targetGroups, nil
 }
 
-// DeleteTargetGroups アンケートの対象としてuser_groupを削除
+// DeleteTargetGroups 選択したアンケート対象者（グループ）を削除
 func (*TargetGroup) DeleteTargetGroups(ctx context.Context, questionnaireID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
