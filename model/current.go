@@ -18,9 +18,13 @@ func AllTables() []interface{} {
 		&Respondents{},
 		&Responses{},
 		&Administrators{},
+		&AdministratorUsers{},
+		&AdministratorGroups{},
 		&Options{},
 		&ScaleLabels{},
 		&Targets{},
+		&TargetUsers{},
+		&TargetGroups{},
 		&Validations{},
 	}
 }

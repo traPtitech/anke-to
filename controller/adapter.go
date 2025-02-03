@@ -68,7 +68,7 @@ func convertResSharedTo(resSharedTo string) openapi.ResShareType {
 func createUsersAndGroups(users []string, groups uuid.UUIDs) openapi.UsersAndGroups {
 	res := openapi.UsersAndGroups{
 		Users:  users,
-		Groups: groups.Strings(),
+		Groups: groups,
 	}
 	return res
 }
@@ -157,21 +157,14 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 	return res, nil
 }
 
-// func convertRespondents(respondents []model.Respondents) []string {
-// 	res := []string{}
-// 	for _, respondent := range respondents {
-// 		res = append(res, respondent.UserTraqid)
-// 	}
-// 	return res
-// }
-
-func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, adminUsers []string, adminGroups []uuid.UUID, targetUsers []string, targetGroups []uuid.UUID, respondents []string) (openapi.QuestionnaireDetail, error) {
+func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admins []string, adminUsers []string, adminGroups []uuid.UUID, targets []string, targetUsers []string, targetGroups []uuid.UUID, respondents []string) (openapi.QuestionnaireDetail, error) {
 	questions, err := convertQuestions(questionnaires.Questions)
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
 	}
 	res := openapi.QuestionnaireDetail{
-		Admins:                   createUsersAndGroups(adminUsers, adminGroups),
+		Admin:                    createUsersAndGroups(adminUsers, adminGroups),
+		Admins:                   admins,
 		CreatedAt:                questionnaires.CreatedAt,
 		Description:              questionnaires.Description,
 		IsDuplicateAnswerAllowed: questionnaires.IsDuplicateAnswerAllowed,
@@ -183,7 +176,8 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		Respondents:              respondents,
 		ResponseDueDateTime:      &questionnaires.ResTimeLimit.Time,
 		ResponseViewableBy:       convertResSharedTo(questionnaires.ResSharedTo),
-		Targets:                  createUsersAndGroups(targetUsers, targetGroups),
+		Target:                   createUsersAndGroups(targetUsers, targetGroups),
+		Targets:                  targets,
 		Title:                    questionnaires.Title,
 	}
 	return res, nil
@@ -238,7 +232,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		case "MultipleChoice":
 			if r.Body.Valid {
 				answer := []int{}
-				questionnaire, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
+				questionnaire, _, _, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
 				if err != nil {
 					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
 					return openapi.Response{}, err
@@ -262,7 +256,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 			}
 		case "Checkbox":
 			if r.Body.Valid {
-				questionnaire, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
+				questionnaire, _, _, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
 				if err != nil {
 					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
 					return openapi.Response{}, err

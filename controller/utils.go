@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	// "github.com/google/uuid"
+	"github.com/google/uuid"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/traq"
 )
@@ -24,32 +24,7 @@ func isAllTargetsReponded(targets []model.Targets, respondents []model.Responden
 	return true
 }
 
-// func minimizeUsersAndGroups(users []string, groups []uuid.UUID) ([]string, []uuid.UUID, error) {
-// 	ctx := context.Background()
-// 	client := traq.NewTraqAPIClient()
-// 	userSet := mapset.NewSet[string]()
-// 	for _, user := range users {
-// 		userSet.Add(user)
-// 	}
-// 	groupUserSet := mapset.NewSet[string]()
-// 	for _, group := range groups {
-// 		members, err := client.GetGroupMembers(ctx, group.String())
-// 		if err != nil {
-// 			return nil, nil, err
-// 		}
-// 		for _, member := range members {
-// 			memberTraqID, err := client.GetUserTraqID(ctx, member.Id)
-// 			if err != nil {
-// 				return nil, nil, err
-// 			}
-// 			groupUserSet.Add(memberTraqID)
-// 		}
-// 	}
-// 	userSet = userSet.Difference(groupUserSet)
-// 	return userSet.ToSlice(), groups, nil
-// }
-
-func rollOutUsersAndGroups(users []string, groups []string) ([]string, error) {
+func rollOutUsersAndGroups(users []string, groups []uuid.UUID) ([]string, error) {
 	ctx := context.Background()
 	client := traq.NewTraqAPIClient()
 	userSet := mapset.NewSet[string]()
@@ -57,7 +32,7 @@ func rollOutUsersAndGroups(users []string, groups []string) ([]string, error) {
 		userSet.Add(user)
 	}
 	for _, group := range groups {
-		members, err := client.GetGroupMembers(ctx, group)
+		members, err := client.GetGroupMembers(ctx, group.String())
 		if err != nil {
 			return nil, err
 		}
@@ -72,12 +47,12 @@ func rollOutUsersAndGroups(users []string, groups []string) ([]string, error) {
 	return userSet.ToSlice(), nil
 }
 
-func uuid2GroupNames(users []string) ([]string, error) {
+func uuid2GroupNames(groups []uuid.UUID) ([]string, error) {
 	ctx := context.Background()
 	client := traq.NewTraqAPIClient()
 	groupNames := []string{}
-	for _, user := range users {
-		groupName, err := client.GetGroupName(ctx, user)
+	for _, group := range groups {
+		groupName, err := client.GetGroupName(ctx, group.String())
 		if err != nil {
 			return nil, err
 		}

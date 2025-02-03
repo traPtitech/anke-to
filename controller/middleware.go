@@ -137,7 +137,7 @@ func (m Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.Ha
 		}
 
 		// 公開されたらOK
-		questionnaire, _, _, _, _, _, err := m.IQuestionnaire.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+		questionnaire, _, _, _, _, _, _, _, err := m.IQuestionnaire.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 		if errors.Is(err, model.ErrRecordNotFound) {
 			c.Logger().Infof("questionnaire not found: %+v", err)
 			return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("questionnaire not found:%d", questionnaireID))
