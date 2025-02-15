@@ -716,7 +716,7 @@ components:
         - type: object
           properties:
             max_length:
-              type: number
+              type: integer
     QuestionSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"

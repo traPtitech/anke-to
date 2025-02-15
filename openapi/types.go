@@ -284,7 +284,7 @@ type QuestionSettingsTextQuestionType string
 
 // QuestionSettingsTextLong defines model for QuestionSettingsTextLong.
 type QuestionSettingsTextLong struct {
-	MaxLength    *float32                             `json:"max_length,omitempty"`
+	MaxLength    *int                                 `json:"max_length,omitempty"`
 	QuestionType QuestionSettingsTextLongQuestionType `json:"question_type"`
 }
 
