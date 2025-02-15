@@ -49,7 +49,7 @@ func NewQuestionnaire(
 	scaleLabel model.IScaleLabel,
 	validation model.IValidation,
 	transaction model.ITransaction,
-	respodent model.IRespondent,
+	respondent model.IRespondent,
 	webhook traq.IWebhook,
 	response *Response,
 ) *Questionnaire {
@@ -66,7 +66,7 @@ func NewQuestionnaire(
 		IScaleLabel:         scaleLabel,
 		IValidation:         validation,
 		ITransaction:        transaction,
-		IRespondent:         respodent,
+		IRespondent:         respondent,
 		IWebhook:            webhook,
 		Response:            response,
 	}
