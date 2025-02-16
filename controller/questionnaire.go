@@ -322,7 +322,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			}
 			err = q.IValidation.InsertValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
+					RegexPattern: ".{," + fmt.Sprintf("%d", *b.MaxLength) + "}",
 				})
 			if err != nil {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
