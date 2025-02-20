@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,15 +37,15 @@ var (
 	groupFour  = uuid.MustParse("8564a706-f9d4-46f5-852c-3d44a474902a")
 	groupFive  = uuid.MustParse("db7f3c13-eb4f-4890-9773-286dde024d4c")
 
-	sampleAdmin = openapi.UsersAndGroups{}
-	sampleTarget = openapi.UsersAndGroups{}
-	sampleQuestionSettingsText = openapi.NewQuestion{}
-	sampleQuestionSettingsTextLong = openapi.NewQuestion{}
-	sampleQuestionSettingsNumber = openapi.NewQuestion{}
-	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{}
+	sampleAdmin                          = openapi.UsersAndGroups{}
+	sampleTarget                         = openapi.UsersAndGroups{}
+	sampleQuestionSettingsText           = openapi.NewQuestion{}
+	sampleQuestionSettingsTextLong       = openapi.NewQuestion{}
+	sampleQuestionSettingsNumber         = openapi.NewQuestion{}
+	sampleQuestionSettingsSingleChoice   = openapi.NewQuestion{}
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{}
-	sampleQeustionsettingsScale = openapi.NewQuestion{}
-	sampleQuestionnaire = openapi.PostQuestionnaireJSONRequestBody{}
+	sampleQeustionsettingsScale          = openapi.NewQuestion{}
+	sampleQuestionnaire                  = openapi.PostQuestionnaireJSONRequestBody{}
 )
 
 func setupSampleQuestionnaire() {
@@ -239,7 +240,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	sortModifiedAtDesc := (openapi.SortType)("-modified_at")
 	searchTest := (openapi.SearchInQuery)("search test")
 	largePageNum := 100000000
-	constTrue  := true
+	constTrue := true
 
 	testCases := []test{
 		{
@@ -530,6 +531,31 @@ func TestPostQuestionnaire(t *testing.T) {
 	responseDueDateTimeMinus := time.Now().Add(-24 * time.Hour)
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
+	invalidQuestionSettingsNumber := openapi.NewQuestion{
+		Body:       "質問（数値）",
+		IsRequired: true,
+	}
+	invalidQuestionSettingsNumberMaxValue := 0
+	invalidQuestionSettingsNumberMinValue := 100
+	invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+		MaxValue:     &invalidQuestionSettingsNumberMaxValue,
+		MinValue:     &invalidQuestionSettingsNumberMinValue,
+		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
+	})
+	invalidQeustionsettingsScale := openapi.NewQuestion{
+		Body:       "質問（スケール）",
+		IsRequired: true,
+	}
+	invalidQeustionsettingsScaleMaxLabel := "最大値"
+	invalidQeustionsettingsScaleMinLabel := "最小値"
+	invalidQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+		MaxLabel:     &invalidQeustionsettingsScaleMaxLabel,
+		MaxValue:     1,
+		MinLabel:     &invalidQeustionsettingsScaleMinLabel,
+		MinValue:     10,
+		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
+	})
+
 	testCases := []test{
 		{
 			description: "valid",
@@ -546,6 +572,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &responseDueDateTimePlus,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
@@ -562,6 +596,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &responseDueDateTimeMinus,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
@@ -581,11 +623,22 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "",
 				},
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 		{
@@ -597,11 +650,22 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				},
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 		{
@@ -613,6 +677,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "admins",
 					Target:              sampleTarget,
@@ -629,6 +701,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "respondents",
 					Target:              sampleTarget,
@@ -645,6 +725,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
@@ -664,6 +752,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
@@ -683,6 +779,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: false,
 					IsAnonymous:              false,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
@@ -699,6 +803,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              true,
 					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
@@ -715,6 +827,14 @@ func TestPostQuestionnaire(t *testing.T) {
 					IsDuplicateAnswerAllowed: true,
 					IsAnonymous:              false,
 					IsPublished:              false,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
 					ResponseDueDateTime: &time.Time{},
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
@@ -722,7 +842,60 @@ func TestPostQuestionnaire(t *testing.T) {
 				},
 			},
 		},
-		// todo: invalid question
+		{
+			description: "invalid question settings number",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						invalidQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &time.Time{},
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid question settings scale",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						invalidQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &time.Time{},
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -746,7 +919,54 @@ func TestPostQuestionnaire(t *testing.T) {
 			continue
 		}
 
-		// todo: check if inserted questionnnair is the same with the posted one
+		sort.Slice(questionnaireDetail.Admin.Users, func(i, j int) bool { return questionnaireDetail.Admin.Users[i] < questionnaireDetail.Admin.Users[j] })
+		sort.Slice(testCase.args.params.Admin.Users, func(i, j int) bool { return testCase.args.params.Admin.Users[i] < testCase.args.params.Admin.Users[j] })
+		assertion.NotEqual(questionnaireDetail.Admin.Users, testCase.args.params.Admin.Users, "admin users not equal")
+		sort.Slice(questionnaireDetail.Admin.Groups, func(i, j int) bool {
+			return questionnaireDetail.Admin.Groups[i].String() < questionnaireDetail.Admin.Groups[j].String()
+		})
+		sort.Slice(testCase.args.params.Admin.Groups, func(i, j int) bool {
+			return testCase.args.params.Admin.Groups[i].String() < testCase.args.params.Admin.Groups[j].String()
+		})
+		assertion.NotEqual(questionnaireDetail.Admin.Groups, testCase.args.params.Admin.Groups, "admin groups not equal")
+
+		assertion.NotEqual(questionnaireDetail.Description, testCase.args.params.Description, "description not equal")
+		assertion.NotEqual(questionnaireDetail.IsDuplicateAnswerAllowed, testCase.args.params.IsDuplicateAnswerAllowed, "is duplicate answer allowed not equal")
+		assertion.NotEqual(questionnaireDetail.IsAnonymous, testCase.args.params.IsAnonymous, "is anonymous not equal")
+		assertion.NotEqual(questionnaireDetail.IsPublished, testCase.args.params.IsPublished, "is published not equal")
+
+		for _, question := range testCase.params.Questions {
+			isMatch := false
+			for _, questionDetail := range questionnaireDetail.Questions {
+				if question.Body == questionDetail.Body && question.IsRequired == questionDetail.IsRequired && question.union == questionDetail.union {
+					isMatch = true
+					break
+				}
+			}
+			if !isMatch {
+				assertion.Fail("question not found")
+			}
+		}
+
+		assertion.NotEqual(questionnaireDetail.ResponseDueDateTime, testCase.args.params.ResponseDueDateTime, "response due date time not equal")
+		assertion.NotEqual(questionnaireDetail.ResponseViewableBy, testCase.args.params.ResponseViewableBy, "response viewable by not equal")
+
+		sort.Slice(questionnaireDetail.Target.Users, func(i, j int) bool { return questionnaireDetail.Target.Users[i] < questionnaireDetail.Target.Users[j] })
+		sort.Slice(testCase.args.params.Target.Users, func(i, j int) bool {
+			return testCase.args.params.Target.Users[i] < testCase.args.params.Target.Users[j]
+		})
+		assertion.NotEqual(questionnaireDetail.Target.Users, testCase.args.params.Target.Users, "target users not equal")
+		sort.Slice(questionnaireDetail.Target.Groups, func(i, j int) bool {
+			return questionnaireDetail.Target.Groups[i].String() < questionnaireDetail.Target.Groups[j].String()
+		})
+		sort.Slice(testCase.args.params.Target.Groups, func(i, j int) bool {
+			return testCase.args.params.Target.Groups[i].String() < testCase.args.params.Target.Groups[j].String()
+		})
+		assertion.NotEqual(questionnaireDetail.Target.Groups, testCase.args.params.Target.Groups, "target groups not equal")
+
+		assertion.NotEqual(questionnaireDetail.Title, testCase.args.params.Title, "title not equal")
+
+		// todo: set up the mock server for traq group and check if admins and targets are correctly expanded
 	}
 }
 
@@ -758,30 +978,44 @@ func TestGetQuestionnaire(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	q := NewQuestionnaire()
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockResponse := mock_model.NewMockIResponse(ctrl)
+	mockTarget := mock_model.NewMockITarget(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	mockValidation := mock_model.NewMockIValidation(ctrl)
+	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
 
-	questionnaires := []struct {
-		userID string
-		params openapi.PostQuestionnaireJSONRequestBody
-	}{
-		// todo: データを追加
-	}
+	mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
+	mockTargetUser := mock_model.NewMockITargetUser(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
+	mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
+	mockOption := mock_model.NewMockIOption(ctrl)
+	mockTransaction := mock_model.NewMockITransaction(ctrl)
+	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
-	questionnaireIDs := []int{}
-	for _, questionnaire := range questionnaires {
-		// ctxの作成
-		questionnairePosted, err := q.PostQuestionnaire(ctx, questionnaire.userID, questionnaire.params)
-		require.NoError(t, err)
-		questionnaireIDs = append(questionnaireIDs, questionnairePosted.QuestionnaireId)
-	}
+	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetailOrigin, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
 
 	type args struct {
-		questionnaireID int
+		questionnaireID        int
+		invalidQuestionnaireID bool
 	}
 	type expect struct {
-		isErr               bool
-		err                 error
-		questionnaireDetail openapi.QuestionnaireDetail
+		isErr bool
+		err   error
 	}
 	type test struct {
 		description string
@@ -790,13 +1024,50 @@ func TestGetQuestionnaire(t *testing.T) {
 	}
 
 	testCases := []test{
-		// todo: テストケースを追加
+		{
+			description: "valid",
+			args: args{
+				questionnaireID: questionnaireDetailOrigin.QuestionnaireId,
+			},
+		},
+		{
+			description: "invalid questionnaire id",
+			args: args{
+				invalidQuestionnaireID: true,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
-		// todo: ctxの作成
-
-		questionnaireDetail, err := q.GetQuestionnaire(ctx, testCase.args.questionnaireID)
+		var questionnaireID int
+		if testCase.args.invalidQuestionnaireID {
+			questionnaireID = 10000
+			valid := true
+			for valid {
+				ctx := context.Background()
+				_, _, _, _, _, _, _, _, err := mockQuestionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
+				if err == errors.New("record not found") {
+					valid = false
+				} else if err != nil {
+					assertion.Fail("unexpected error during getting questionnaire info")
+				} else {
+					questionnaireID *= 10
+				}
+			}
+		} else {
+			questionnaireID = testCase.args.questionnaireID
+		}
+		e := echo.New()
+		body, err := json.Marshal(questionnaire)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprint("/questionnaire/%d", questionnaireID), bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		questionnaireDetail, err := q.GetQuestionnaire(ctx, questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -809,7 +1080,7 @@ func TestGetQuestionnaire(t *testing.T) {
 			continue
 		}
 
-		assertion.Equal(testCase.expect.questionnaireDetail, questionnaireDetail, testCase.description, "questionnaireDetail")
+		assertion.NotEqual(questionnaireDetailOrigin, questionnaireDetail, testCase.description, "questionnaireDetail")
 	}
 }
 
