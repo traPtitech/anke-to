@@ -208,8 +208,10 @@ type NewResponse struct {
 
 // Question defines model for Question.
 type Question struct {
-	Body      string    `json:"body"`
-	CreatedAt time.Time `json:"created_at"`
+	Body string `json:"body"`
+
+	// CreatedAt 質問を追加または編集する場合はnull。
+	CreatedAt *time.Time `json:"created_at,omitempty"`
 
 	// IsRequired 回答必須かどうか
 	IsRequired bool `json:"is_required"`
@@ -1117,9 +1119,11 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'body': %w", err)
 	}
 
-	object["created_at"], err = json.Marshal(t.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+	if t.CreatedAt != nil {
+		object["created_at"], err = json.Marshal(t.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+		}
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
