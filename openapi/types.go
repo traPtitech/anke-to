@@ -217,9 +217,8 @@ type Question struct {
 	IsRequired bool `json:"is_required"`
 
 	// QuestionId 質問を追加する場合はnull。
-	QuestionId      *int `json:"question_id,omitempty"`
-	QuestionnaireId int  `json:"questionnaire_id"`
-	union           json.RawMessage
+	QuestionId *int `json:"question_id,omitempty"`
+	union      json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
@@ -1137,12 +1136,6 @@ func (t Question) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 		}
 	}
-
-	object["questionnaire_id"], err = json.Marshal(t.QuestionnaireId)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'questionnaire_id': %w", err)
-	}
-
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -1183,13 +1176,6 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionId)
 		if err != nil {
 			return fmt.Errorf("error reading 'question_id': %w", err)
-		}
-	}
-
-	if raw, found := object["questionnaire_id"]; found {
-		err = json.Unmarshal(raw, &t.QuestionnaireId)
-		if err != nil {
-			return fmt.Errorf("error reading 'questionnaire_id': %w", err)
 		}
 	}
 
