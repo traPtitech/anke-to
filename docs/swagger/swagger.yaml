@@ -668,9 +668,6 @@ components:
         - $ref: "#/components/schemas/QuestionBase"
         - $ref: "#/components/schemas/QuestionSettingsByType"
         - properties:
-            questionnaire_id:
-              type: integer
-              example: 1
             question_id:
               type: integer
               description: |
@@ -680,9 +677,8 @@ components:
               type: string
               format: date-time
               example: 2020-01-01T00:00:00+09:00
-          required:
-            - questionnaire_id
-            - created_at
+              description: |
+                質問を追加または編集する場合はnull。
     QuestionBase:
       type: object
       properties:

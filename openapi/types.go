@@ -208,16 +208,17 @@ type NewResponse struct {
 
 // Question defines model for Question.
 type Question struct {
-	Body      string    `json:"body"`
-	CreatedAt time.Time `json:"created_at"`
+	Body string `json:"body"`
+
+	// CreatedAt 質問を追加または編集する場合はnull。
+	CreatedAt *time.Time `json:"created_at,omitempty"`
 
 	// IsRequired 回答必須かどうか
 	IsRequired bool `json:"is_required"`
 
 	// QuestionId 質問を追加する場合はnull。
-	QuestionId      *int `json:"question_id,omitempty"`
-	QuestionnaireId int  `json:"questionnaire_id"`
-	union           json.RawMessage
+	QuestionId *int `json:"question_id,omitempty"`
+	union      json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
@@ -1117,9 +1118,11 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'body': %w", err)
 	}
 
-	object["created_at"], err = json.Marshal(t.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+	if t.CreatedAt != nil {
+		object["created_at"], err = json.Marshal(t.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+		}
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1133,12 +1136,6 @@ func (t Question) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 		}
 	}
-
-	object["questionnaire_id"], err = json.Marshal(t.QuestionnaireId)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'questionnaire_id': %w", err)
-	}
-
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -1179,13 +1176,6 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionId)
 		if err != nil {
 			return fmt.Errorf("error reading 'question_id': %w", err)
-		}
-	}
-
-	if raw, found := object["questionnaire_id"]; found {
-		err = json.Unmarshal(raw, &t.QuestionnaireId)
-		if err != nil {
-			return fmt.Errorf("error reading 'questionnaire_id': %w", err)
 		}
 	}
 
