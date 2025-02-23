@@ -465,6 +465,8 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 				return err
 			}
 		}
+
+		var ifQuestionExist = make(map[int]bool)
 		for questoinNum, question := range params.Questions {
 			b, err := question.MarshalJSON()
 			if err != nil {
@@ -485,9 +487,24 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					return err
 				}
 			} else {
+				ifQuestionExist[*question.QuestionId] = true
 				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
 				if err != nil {
 					c.Logger().Errorf("failed to update question: %+v", err)
+					return err
+				}
+			}
+		}
+		questions, err := q.IQuestion.GetQuestions(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to get questions: %+v", err)
+			return err
+		}
+		for _, question := range questions {
+			if !ifQuestionExist[question.ID] {
+				err = q.DeleteQuestion(ctx, question.ID)
+				if err != nil {
+					c.Logger().Errorf("failed to delete question: %+v", err)
 					return err
 				}
 			}
