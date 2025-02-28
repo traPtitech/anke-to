@@ -597,7 +597,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			}
 			err = q.IValidation.UpdateValidation(c.Request().Context(), question.ID,
 				model.Validations{
-					RegexPattern: ".{," + fmt.Sprintf("%.0f", *b.MaxLength) + "}",
+					RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 				})
 			if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 				c.Logger().Errorf("failed to insert validation: %+v", err)
