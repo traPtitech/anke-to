@@ -1,8 +1,4 @@
 // todo: set up the mock server for user group and add testCases for user group
-// todo: add mock to simulate the behavior of function
-// todo: check sort param of responses (title & modified_at)
-//       in IRespondent, only (-)traqid & (-)submitted_at
-// todo: issue at line 2702
 
 package controller
 
@@ -27,6 +23,7 @@ import (
 	"github.com/traPtitech/anke-to/model/mock_model"
 	"github.com/traPtitech/anke-to/openapi"
 	"github.com/traPtitech/anke-to/traq/mock_traq"
+	"gopkg.in/guregu/null.v4"
 )
 
 const (
@@ -1230,11 +1227,12 @@ func TestEditQuestionnaire(t *testing.T) {
 	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
 
 	type args struct {
-		questionnaireID        int
-		invalidQuestionnaireID bool
-		invalidQuestionID      bool
-		params                 openapi.PostQuestionnaireJSONRequestBody
-		isNewQuestion          []bool
+		questionnaireID           int
+		isAnonymousToNotAnonymous bool
+		invalidQuestionnaireID    bool
+		invalidQuestionID         bool
+		params                    openapi.PostQuestionnaireJSONRequestBody
+		isNewQuestion             []bool
 	}
 	type expect struct {
 		isErr bool
@@ -1336,6 +1334,26 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+			},
+		},
+		{
+			description: "invalid question id",
+			args: args{
+				invalidQuestionID: true,
+				params:            sampleQuestionnaire,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid anonymous to not anonymous",
+			args: args{
+				isAnonymousToNotAnonymous: true,
+				params:                    sampleQuestionnaire,
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 		{
@@ -1668,6 +1686,9 @@ func TestEditQuestionnaire(t *testing.T) {
 
 	for _, testCase := range testCases {
 		questionnaire := sampleQuestionnaire
+		if testCase.args.isAnonymousToNotAnonymous {
+			questionnaire.IsAnonymous = true
+		}
 		e := echo.New()
 		body, err := json.Marshal(questionnaire)
 		require.NoError(t, err)
@@ -1713,7 +1734,20 @@ func TestEditQuestionnaire(t *testing.T) {
 				require.NoError(t, err)
 				questions = append(questions, question)
 			} else {
-				question, err := newQuestion2Question(questionnaireDetail.Questions[i].QuestionId, questionnaireDetail.Questions[i].CreatedAt, newQuestion)
+				questionID := *questionnaireDetail.Questions[i].QuestionId
+				if testCase.args.invalidQuestionID {
+					questionID = 10000
+					valid := true
+					for valid {
+						ctx := context.Background()
+						valid, err = mockQuestion.CheckQuestionNum(ctx, questionnaireID, questionID)
+						require.NoError(t, err)
+						if valid {
+							questionID *= 10
+						}
+					}
+				}
+				question, err := newQuestion2Question(&questionID, questionnaireDetail.Questions[i].CreatedAt, newQuestion)
 				require.NoError(t, err)
 				questions = append(questions, question)
 			}
@@ -1753,7 +1787,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					break
 				}
 			}
-			assertion.False(exist, testCase.description, "question was incorrectly deleted")
+			assertion.True(exist, testCase.description, "question was incorrectly deleted")
 		}
 		for _, dedeletedQuestionID := range deletedQuestionIDs {
 			for _, question := range questionnaireDetailEdited.Questions {
@@ -2291,6 +2325,10 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			for _, response := range responseList {
 				assertion.Equal(response.Respondent, nil, testCase.description, "anonymous questionnaire with respondent")
 			}
+		} else {
+			for _, response := range responseList {
+				assertion.NotEqual(response.Respondent, nil, testCase.description, "not anonymous questionnaire with no respondent")
+			}
 		}
 	}
 }
@@ -2392,7 +2430,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 
 	type args struct {
 		invalidQuestionnaireID bool
-		questionnaireID        int
+		questionnaireDetail    openapi.QuestionnaireDetail
 		isNoMultipleResponse   bool
 		isAnonymous            bool
 		params                 openapi.PostQuestionnaireResponseJSONRequestBody
@@ -2444,24 +2482,24 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
-				params:          sampleResponse,
-				userID:          userOne,
+				questionnaireDetail: questionnaireDetail,
+				params:              sampleResponse,
+				userID:              userOne,
 			},
 		},
 		{
 			description: "valid anonymous",
 			args: args{
-				questionnaireID: questionnaireDetailAnonymous.QuestionnaireId,
-				isAnonymous:     true,
-				params:          sampleResponse,
-				userID:          userOne,
+				questionnaireDetail: questionnaireDetailAnonymous,
+				isAnonymous:         true,
+				params:              sampleResponse,
+				userID:              userOne,
 			},
 		},
 		{
 			description: "valid draft",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2490,7 +2528,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "question type not match",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyTextLong,
@@ -2511,7 +2549,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body text",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						invalidResponseBodyText,
@@ -2532,7 +2570,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body text long",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2553,7 +2591,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body number",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2574,7 +2612,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body single choice",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2595,7 +2633,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body multiple choice",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2616,7 +2654,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "invalid response body scale",
 			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
+				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
 						sampleResponseBodyText,
@@ -2637,7 +2675,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "is no multiple response",
 			args: args{
-				questionnaireID:      questionnaireDetailNoMultipleResponse.QuestionnaireId,
+				questionnaireDetail:  questionnaireDetailNoMultipleResponse,
 				isNoMultipleResponse: true,
 				params:               sampleResponse,
 				userID:               userOne,
@@ -2646,21 +2684,9 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "not published",
 			args: args{
-				questionnaireID: questionnaireDetailNotPublished.QuestionnaireId,
-				params:          sampleResponse,
-				userID:          userOne,
-			},
-			expect: expect{
-				isErr: true,
-			},
-		},
-		{
-			description: "is time after due",
-			args: args{
-				questionnaireID: questionnaireDetail.QuestionnaireId,
-				params:          sampleResponse,
-				userID:          userOne,
-				isTimeAfterDue:  true,
+				questionnaireDetail: questionnaireDetailNotPublished,
+				params:              sampleResponse,
+				userID:              userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -2669,9 +2695,21 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		{
 			description: "questionnaire no due",
 			args: args{
-				questionnaireID: questionnaireDetailNoDue.QuestionnaireId,
-				params:          sampleResponse,
-				userID:          userOne,
+				questionnaireDetail: questionnaireDetailNoDue,
+				params:              sampleResponse,
+				userID:              userOne,
+			},
+		},
+		{
+			description: "is time after due (attention: need to be the last testCase)",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params:              sampleResponse,
+				userID:              userOne,
+				isTimeAfterDue:      true,
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 	}
@@ -2680,7 +2718,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		var questionnaireID int
 
 		if !testCase.args.invalidQuestionnaireID {
-			questionnaireID = testCase.args.questionnaireID
+			questionnaireID = testCase.args.questionnaireDetail.QuestionnaireId
 		} else {
 			questionnaireID = 10000
 			valid := true
@@ -2698,7 +2736,12 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		}
 
 		if testCase.args.isTimeAfterDue {
-			// change time.Now() to after due, use mock?
+			c := context.Background()
+			responseDueDateTime := null.Time{}
+			responseDueDateTime.Valid = true
+			responseDueDateTime.Time = time.Now().Add(-24 * time.Hour)
+			err = mockQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, string(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
+			require.NoError(t, err)
 		}
 
 		e = echo.New()
@@ -2708,7 +2751,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
-		response, err := q.PostQuestionnaireResponse(ctx, testCase.args.questionnaireID, testCase.args.params, testCase.args.userID)
+		response, err := q.PostQuestionnaireResponse(ctx, questionnaireID, testCase.args.params, testCase.args.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -2724,7 +2767,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		assertion.Equal(testCase.args.params.Body, response.Body, testCase.description, "response body")
 		assertion.Equal(testCase.args.params.IsDraft, response.IsDraft, testCase.description, "is draft")
 
-		assertion.Equal(testCase.args.questionnaireID, response.QuestionnaireId, testCase.description, "questionnaire id")
+		assertion.Equal(testCase.args.questionnaireDetail.QuestionnaireId, response.QuestionnaireId, testCase.description, "questionnaire id")
 		assertion.Equal(testCase.args.userID, response.Respondent, testCase.description, "respondent")
 		assertion.Equal(testCase.args.isAnonymous, response.IsAnonymous, testCase.description, "is anonymous")
 
@@ -2743,7 +2786,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
-		_, err = q.PostQuestionnaireResponse(ctx, testCase.args.questionnaireID, sampleResponse, testCase.args.userID)
+		_, err = q.PostQuestionnaireResponse(ctx, questionnaireID, sampleResponse, testCase.args.userID)
 
 		if !testCase.args.isNoMultipleResponse {
 			assertion.NoError(err, testCase.description, "multiple response")
