@@ -2795,3 +2795,494 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateQuestionnaireMessage(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		questionnaireID int
+		title           string
+		description     string
+		administrators  []string
+		resTimeLimit    null.Time
+		targets         []string
+	}
+	type expect struct {
+		message string
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	tm, err := time.ParseInLocation("2006/01/02 15:04", "2021/10/01 09:06", time.Local)
+	if err != nil {
+		t.Errorf("failed to parse time: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "通常の引数なので問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "questionnaireIDが0でも問題なし",
+			args: args{
+				questionnaireID: 0,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/0`,
+			},
+		},
+		{
+			// 実際には発生しないけど念の為
+			description: "titleが空文字でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "説明が空文字でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "administrator複数人でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1", "administrator2"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1,administrator2
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			// 実際には発生しないけど念の為
+			description: "administratorがいなくても問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "回答期限なしでも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.NewTime(time.Time{}, false),
+				targets:         []string{"target1"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+なし
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "対象者が複数人でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{"target1", "target2"},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1 @target2
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "対象者がいなくても問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    null.TimeFrom(tm),
+				targets:         []string{},
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+なし
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			message := createQuestionnaireMessage(
+				testCase.args.questionnaireID,
+				testCase.args.title,
+				testCase.args.description,
+				testCase.args.administrators,
+				testCase.args.resTimeLimit,
+				testCase.args.targets,
+			)
+
+			assert.Equal(t, testCase.expect.message, message)
+		})
+	}
+}
+
+func TestCreateReminderMessage(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		questionnaireID int
+		title           string
+		description     string
+		administrators  []string
+		resTimeLimit    time.Time
+		targets         []string
+		leftTimeText    string
+	}
+	type expect struct {
+		message string
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	tm, err := time.ParseInLocation("2006/01/02 15:04", "2021/10/01 09:06", time.Local)
+	if err != nil {
+		t.Errorf("failed to parse time: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "通常の引数なので問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "5分",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り5分です!==
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "questionnaireIDが0でも問題なし",
+			args: args{
+				questionnaireID: 0,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "30分",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』の回答期限が迫っています!
+==残り30分です!==
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/0`,
+			},
+		},
+		{
+			// 実際には発生しないけど念の為
+			description: "titleが空文字でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "1時間",
+			},
+			expect: expect{
+				message: `### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り1時間です!==
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "説明が空文字でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "1日",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り1日です!==
+#### 管理者
+administrator1
+#### 説明
+
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "administrator複数人でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1", "administrator2"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "5分",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り5分です!==
+#### 管理者
+administrator1,administrator2
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			// 実際には発生しないけど念の為
+			description: "administratorがいなくても問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{},
+				resTimeLimit:    tm,
+				targets:         []string{"target1"},
+				leftTimeText:    "1週間",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り1週間です!==
+#### 管理者
+
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+		{
+			description: "対象者が複数人でも問題なし",
+			args: args{
+				questionnaireID: 1,
+				title:           "title",
+				description:     "description",
+				administrators:  []string{"administrator1"},
+				resTimeLimit:    tm,
+				targets:         []string{"target1", "target2"},
+				leftTimeText:    "5分",
+			},
+			expect: expect{
+				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+==残り5分です!==
+#### 管理者
+administrator1
+#### 説明
+description
+#### 回答期限
+2021/10/01 09:06
+#### 対象者
+@target1 @target2
+#### 回答リンク
+https://anke-to.trap.jp/responses/new/1`,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			message := createReminderMessage(
+				testCase.args.questionnaireID,
+				testCase.args.title,
+				testCase.args.description,
+				testCase.args.administrators,
+				testCase.args.resTimeLimit,
+				testCase.args.targets,
+				testCase.args.leftTimeText,
+			)
+
+			assert.Equal(t, testCase.expect.message, message)
+		})
+	}
+}
