@@ -83,8 +83,7 @@ jobs:
             ${{ runner.os }}-gomod-
       - run: go install github.com/golang/mock/mockgen@v1.5.0
       - run: go generate ./...
-      - run: go test ./model -v -coverprofile=coverage.txt -race -vet=off # for temporary use as controller test is not ready
-      # - run: go test ./controller ./model -v -coverprofile=coverage.txt -race -vet=off
+      - run: go test ./controller ./model -v -coverprofile=coverage.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
