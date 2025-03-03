@@ -951,8 +951,7 @@ func createReminderMessage(questionnaireID int, title string, description string
 #### 対象者
 %s
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/%d
-`,
+https://anke-to.trap.jp/responses/new/%d`,
 		title,
 		questionnaireID,
 		leftTimeText,
