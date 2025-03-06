@@ -34,6 +34,7 @@ type Questionnaire struct {
 	model.IRespondent
 	traq.IWebhook
 	*Response
+	*Reminder
 }
 
 func NewQuestionnaire(
@@ -52,6 +53,7 @@ func NewQuestionnaire(
 	respondent model.IRespondent,
 	webhook traq.IWebhook,
 	response *Response,
+	reminder *Reminder,
 ) *Questionnaire {
 	return &Questionnaire{
 		IQuestionnaire:      questionnaire,
@@ -69,6 +71,7 @@ func NewQuestionnaire(
 		IRespondent:         respondent,
 		IWebhook:            webhook,
 		Response:            response,
+		Reminder:            reminder,
 	}
 }
 
@@ -236,7 +239,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			return err
 		}
 
-		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return err
@@ -510,12 +513,12 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			}
 		}
 
-		err = Jq.DeleteReminder(questionnaireID)
+		err = q.DeleteReminder(questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
-		err = Jq.PushReminder(questionnaireID, params.ResponseDueDateTime)
+		err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return err
@@ -663,7 +666,7 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 			}
 		}
 
-		err = Jq.DeleteReminder(questionnaireID)
+		err = q.DeleteReminder(questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
@@ -684,7 +687,7 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 }
 
 func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
-	status, err := Jq.CheckRemindStatus(questionnaireID)
+	status, err := q.CheckRemindStatus(questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to check remind status: %+v", err)
 		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
@@ -695,7 +698,7 @@ func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionna
 
 func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
 	if isRemindEnabled {
-		status, err := Jq.CheckRemindStatus(questionnaireID)
+		status, err := q.CheckRemindStatus(questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to check remind status: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
@@ -714,13 +717,13 @@ func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionn
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire")
 		}
 
-		err = Jq.PushReminder(questionnaireID, &questionnaire.ResTimeLimit.Time)
+		err = q.PushReminder(questionnaireID, &questionnaire.ResTimeLimit.Time)
 		if err != nil {
 			c.Logger().Errorf("failed to push reminder: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
 		}
 	} else {
-		err := Jq.DeleteReminder(questionnaireID)
+		err := q.DeleteReminder(questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete reminder")

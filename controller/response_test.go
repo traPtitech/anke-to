@@ -96,8 +96,9 @@ func TestGetMyResponses(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 	setupSampleResponse()
@@ -411,8 +412,9 @@ func TestGetResponse(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 	setupSampleResponse()
@@ -575,8 +577,9 @@ func TestDeleteResponse(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	type args struct {
 		invalidResponseID bool
@@ -703,8 +706,9 @@ func TestEditResponse(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 	setupSampleResponse()

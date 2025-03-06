@@ -34,6 +34,7 @@ func InjectAPIServer() *handler.Handler {
 		handler.NewHandler,
 		controller.NewResponse,
 		controller.NewQuestionnaire,
+		controller.NewReminder,
 		controller.NewMiddleware,
 		model.NewAdministrator,
 		model.NewAdministratorGroup,

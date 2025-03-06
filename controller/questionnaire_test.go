@@ -213,8 +213,9 @@ func TestGetQuestionnaires(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 
@@ -620,8 +621,9 @@ func TestPostQuestionnaire(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	type args struct {
 		params openapi.PostQuestionnaireJSONRequestBody
@@ -1109,8 +1111,9 @@ func TestGetQuestionnaire(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	questionnaire := sampleQuestionnaire
 	e := echo.New()
@@ -1223,8 +1226,9 @@ func TestEditQuestionnaire(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	type args struct {
 		questionnaireID           int
@@ -1840,8 +1844,9 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	type args struct {
 		invalidQuestionnaireID bool
@@ -1933,7 +1938,62 @@ func TestDeleteQuestionnaire(t *testing.T) {
 }
 
 func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
-	// todo
+	// t.Parallel()
+
+	// assertion := assert.New(t)
+
+	// ctrl := gomock.NewController(t)
+	// defer ctrl.Finish()
+
+	// mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	// mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	// mockResponse := mock_model.NewMockIResponse(ctrl)
+	// mockTarget := mock_model.NewMockITarget(ctrl)
+	// mockQuestion := mock_model.NewMockIQuestion(ctrl)
+	// mockValidation := mock_model.NewMockIValidation(ctrl)
+	// mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
+
+	// mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
+	// mockTargetUser := mock_model.NewMockITargetUser(ctrl)
+	// mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	// mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
+	// mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
+	// mockOption := mock_model.NewMockIOption(ctrl)
+	// mockTransaction := mock_model.NewMockITransaction(ctrl)
+	// mockWebhook := mock_traq.NewMockIWebhook(ctrl)
+
+	// r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
+	// q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+
+	// setupSampleQuestionnaire()
+
+	// type args struct {
+	// }
+	// type expect struct {
+	// 	isErr bool
+	// 	err   error
+	// }
+	// type test struct {
+	// 	description string
+	// 	args
+	// 	expect
+	// }
+
+	// testCases := []test{}
+
+	// for _, testCase := range testCases {
+
+	// 	if !testCase.expect.isErr {
+	// 		assertion.NoError(err, testCase.description, "no error")
+	// 	} else if testCase.expect.err != nil {
+	// 		assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+	// 	} else {
+	// 		assertion.Error(err, testCase.description, "any error")
+	// 	}
+	// 	if err != nil {
+	// 		continue
+	// 	}
+	// }
 }
 
 func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
@@ -1965,8 +2025,9 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 	setupSampleResponse()
@@ -2358,8 +2419,9 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	mockTransaction := mock_model.NewMockITransaction(ctrl)
 	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
 
+	re := NewReminder()
 	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r)
+	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
 
 	setupSampleQuestionnaire()
 	setupSampleResponse()
