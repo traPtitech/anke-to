@@ -34,6 +34,9 @@ var (
 )
 
 func setupSampleResponse() {
+	if len(sampleResponse.Body) > 0 {
+		return
+	}
 	sampleResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "テキスト",
 		QuestionType: "Text",

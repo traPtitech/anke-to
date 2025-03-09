@@ -53,6 +53,9 @@ var (
 )
 
 func setupSampleQuestionnaire() {
+	if sampleQuestionnaire.Title != "" {
+		return
+	}
 	sampleQuestionSettingsText = openapi.NewQuestion{
 		Body:       "質問（テキスト）",
 		IsRequired: true,
