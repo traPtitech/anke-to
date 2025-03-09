@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,9 +32,13 @@ var (
 	sampleResponseBodyMultipleChoice = openapi.ResponseBody{}
 	sampleResponseBodyScale          = openapi.ResponseBody{}
 	sampleResponse                   = openapi.NewResponse{}
+	sampleResponseMutex              sync.Mutex
 )
 
 func setupSampleResponse() {
+	sampleResponseMutex.Lock()
+	defer sampleResponseMutex.Unlock()
+
 	if len(sampleResponse.Body) > 0 {
 		return
 	}

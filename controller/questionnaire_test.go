@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -50,6 +51,7 @@ var (
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{}
 	sampleQeustionsettingsScale          = openapi.NewQuestion{}
 	sampleQuestionnaire                  = openapi.PostQuestionnaireJSONRequestBody{}
+	sampleQuestionnaireMutex             sync.Mutex
 )
 
 func setupSampleQuestionnaire() {
