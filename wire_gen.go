@@ -37,9 +37,10 @@ func InjectAPIServer() *handler.Handler {
 	webhook := traq.NewWebhook()
 	response := model.NewResponse()
 	controllerResponse := controller.NewResponse(questionnaire, respondent, response, target, question, validation, scaleLabel)
-	controllerQuestionnaire := controller.NewQuestionnaire(questionnaire, target, targetGroup, targetUser, administrator, administratorGroup, administratorUser, question, option, scaleLabel, validation, transaction, respondent, webhook, controllerResponse)
+	reminder := controller.NewReminder()
+	controllerQuestionnaire := controller.NewQuestionnaire(questionnaire, target, targetGroup, targetUser, administrator, administratorGroup, administratorUser, question, option, scaleLabel, validation, transaction, respondent, webhook, controllerResponse, reminder)
 	middleware := controller.NewMiddleware(administrator, respondent, question, questionnaire)
-	handlerHandler := handler.NewHandler(controllerQuestionnaire, controllerResponse, middleware)
+	handlerHandler := handler.NewHandler(controllerQuestionnaire, controllerResponse, reminder, middleware)
 	return handlerHandler
 }
 

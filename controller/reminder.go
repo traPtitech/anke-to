@@ -18,45 +18,61 @@ type Job struct {
 	Action          func()
 }
 
-type JobQueue struct {
+type Reminder struct {
 	jobs []*Job
 	mu   sync.Mutex
+	Wg   sync.WaitGroup
+}
+
+func NewReminder() *Reminder {
+	return &Reminder{}
 }
 
 var (
 	// sem                   = semaphore.NewWeighted(1)
-	Jq                    = &JobQueue{}
-	Wg                    = &sync.WaitGroup{}
 	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
 	reminderTimingStrings = []string{"5分", "30分", "1時間", "1日", "1週間"}
 )
 
-func (jq *JobQueue) Push(job *Job) {
-	jq.mu.Lock()
-	defer jq.mu.Unlock()
-	jq.jobs = append(jq.jobs, job)
-	sort.Slice(jq.jobs, func(i, j int) bool {
-		return jq.jobs[i].Timestamp.Before(jq.jobs[j].Timestamp)
-	})
-}
-
-func (jq *JobQueue) Pop() *Job {
-	jq.mu.Lock()
-	defer jq.mu.Unlock()
-	if len(jq.jobs) == 0 {
-		return nil
+func (re *Reminder) ReminderInit() {
+	questionnaires, err := model.NewQuestionnaire().GetQuestionnairesInfoForReminder(context.Background())
+	if err != nil {
+		panic(err)
 	}
-	job := jq.jobs[0]
-	jq.jobs = jq.jobs[1:]
-	return job
+	for _, questionnaire := range questionnaires {
+		err := re.PushReminder(questionnaire.ID, &questionnaire.ResTimeLimit.Time)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
-func (jq *JobQueue) PushReminder(questionnaireID int, limit *time.Time) error {
+func (re *Reminder) ReminderWorker() {
+	for {
+		job := re.pop()
+		if job == nil {
+			time.Sleep(1 * time.Minute)
+			continue
+		}
+
+		if time.Until(job.Timestamp) > 0 {
+			time.Sleep(time.Until(job.Timestamp))
+		}
+
+		re.Wg.Add(1)
+		go func() {
+			defer re.Wg.Done()
+			job.Action()
+		}()
+	}
+}
+
+func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 
 	for i, timing := range reminderTimingMinutes {
 		remindTimeStamp := limit.Add(-time.Duration(timing) * time.Minute)
 		if remindTimeStamp.Before(time.Now()) {
-			Jq.Push(&Job{
+			re.push(&Job{
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: questionnaireID,
 				Action: func() {
@@ -72,25 +88,25 @@ func (jq *JobQueue) PushReminder(questionnaireID int, limit *time.Time) error {
 	return nil
 }
 
-func (jq *JobQueue) DeleteReminder(questionnaireID int) error {
-	jq.mu.Lock()
-	defer jq.mu.Unlock()
-	if len(jq.jobs) == 1 && jq.jobs[0].QuestionnaireID == questionnaireID {
-		jq.jobs = []*Job{}
+func (re *Reminder) DeleteReminder(questionnaireID int) error {
+	re.mu.Lock()
+	defer re.mu.Unlock()
+	if len(re.jobs) == 1 && re.jobs[0].QuestionnaireID == questionnaireID {
+		re.jobs = []*Job{}
 	}
-	for i, job := range jq.jobs {
+	for i, job := range re.jobs {
 		if job.QuestionnaireID == questionnaireID {
-			jq.jobs = append(jq.jobs[:i], jq.jobs[i+1:]...)
+			re.jobs = append(re.jobs[:i], re.jobs[i+1:]...)
 		}
 	}
 
 	return nil
 }
 
-func (jq *JobQueue) CheckRemindStatus(questionnaireID int) (bool, error) {
-	jq.mu.Lock()
-	defer jq.mu.Unlock()
-	for _, job := range jq.jobs {
+func (re *Reminder) CheckRemindStatus(questionnaireID int) (bool, error) {
+	re.mu.Lock()
+	defer re.mu.Unlock()
+	for _, job := range re.jobs {
 		if job.QuestionnaireID == questionnaireID {
 			return true, nil
 		}
@@ -98,10 +114,29 @@ func (jq *JobQueue) CheckRemindStatus(questionnaireID int) (bool, error) {
 	return false, nil
 }
 
+func (re *Reminder) push(job *Job) {
+	re.mu.Lock()
+	defer re.mu.Unlock()
+	re.jobs = append(re.jobs, job)
+	sort.Slice(re.jobs, func(i, j int) bool {
+		return re.jobs[i].Timestamp.Before(re.jobs[j].Timestamp)
+	})
+}
+
+func (re *Reminder) pop() *Job {
+	re.mu.Lock()
+	defer re.mu.Unlock()
+	if len(re.jobs) == 0 {
+		return nil
+	}
+	job := re.jobs[0]
+	re.jobs = re.jobs[1:]
+	return job
+}
+
 func reminderAction(questionnaireID int, leftTimeText string) error {
 	ctx := context.Background()
-	q := model.Questionnaire{}
-	questionnaire, _, _, _, administrators, _, _, respondants, err := q.GetQuestionnaireInfo(ctx, questionnaireID)
+	questionnaire, _, _, _, administrators, _, _, respondants, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -125,37 +160,4 @@ func reminderAction(questionnaireID int, leftTimeText string) error {
 	}
 
 	return nil
-}
-
-func ReminderWorker() {
-	for {
-		job := Jq.Pop()
-		if job == nil {
-			time.Sleep(1 * time.Minute)
-			continue
-		}
-
-		if time.Until(job.Timestamp) > 0 {
-			time.Sleep(time.Until(job.Timestamp))
-		}
-
-		Wg.Add(1)
-		go func() {
-			defer Wg.Done()
-			job.Action()
-		}()
-	}
-}
-
-func ReminderInit() {
-	questionnaires, err := model.NewQuestionnaire().GetQuestionnairesInfoForReminder(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	for _, questionnaire := range questionnaires {
-		err := Jq.PushReminder(questionnaire.ID, &questionnaire.ResTimeLimit.Time)
-		if err != nil {
-			panic(err)
-		}
-	}
 }

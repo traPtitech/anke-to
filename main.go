@@ -9,7 +9,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 
@@ -56,10 +55,11 @@ func main() {
 		panic("no PORT")
 	}
 
-	controller.Wg.Add(1)
+	e := echo.New()
+	api := InjectAPIServer()
+
+	api.Reminder.Wg.Add(1)
 	go func() {
-		e := echo.New()
-		api := InjectAPIServer()
 		e.Use(api.Middleware.SetUserIDMiddleware)
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
@@ -77,27 +77,22 @@ func main() {
 		mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, api.Middleware.RespondentAuthenticate)
 		mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, api.Middleware.RespondentAuthenticate)
 
+		e.Use(mws.ApplyMiddlewares)
+
 		openapi.RegisterHandlers(e, api)
 
-		e.Use(mws.ApplyMiddlewares)
 		e.Logger.Fatal(e.Start(port))
 
-		controller.Wg.Done()
+		api.Reminder.Wg.Done()
 	}()
 
-	controller.Wg.Add(1)
+	api.Reminder.Wg.Add(1)
 	go func() {
-		controller.ReminderInit()
-		controller.Wg.Done()
+		api.Reminder.ReminderWorker()
+		api.Reminder.Wg.Done()
 	}()
 
-	controller.Wg.Add(1)
-	go func() {
-		controller.ReminderWorker()
-		controller.Wg.Done()
-	}()
-
-	controller.Wg.Wait()
+	api.Reminder.Wg.Wait()
 
 	// SetRouting(port)
 }
