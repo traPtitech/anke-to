@@ -1737,7 +1737,7 @@ func TestEditQuestionnaire(t *testing.T) {
 		questionnaireDetailExpected.QuestionnaireId = questionnaireDetailEdited.QuestionnaireId
 		questionnaireDetailExpected.CreatedAt = questionnaireDetailEdited.CreatedAt
 		questionnaireDetailExpected.ModifiedAt = questionnaireDetailEdited.ModifiedAt
-		
+
 		assertion.Equal(len(questionnaireDetailExpected.Questions), len(questionnaireDetailEdited.Questions), testCase.description, "question length")
 		for i := range questionnaireDetailExpected.Questions {
 			questionnaireDetailExpected.Questions[i].QuestionId = questionnaireDetailEdited.Questions[i].QuestionId

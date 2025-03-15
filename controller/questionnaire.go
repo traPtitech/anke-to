@@ -285,7 +285,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					return errors.New("failed to get question settings")
 				}
 				for i, v := range b.Options {
-					err := q.IOption.InsertOption(c.Request().Context(), questionID, i+1, v)
+					err := q.IOption.InsertOption(ctx, questionID, i+1, v)
 					if err != nil {
 						c.Logger().Errorf("failed to insert option: %+v", err)
 						return errors.New("failed to insert option")
@@ -298,7 +298,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					return errors.New("failed to get question settings")
 				}
 				for i, v := range b.Options {
-					err := q.IOption.InsertOption(c.Request().Context(), questionID, i+1, v)
+					err := q.IOption.InsertOption(ctx, questionID, i+1, v)
 					if err != nil {
 						c.Logger().Errorf("failed to insert option: %+v", err)
 						return errors.New("failed to insert option")
@@ -314,7 +314,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					c.Logger().Errorf("invalid scale")
 					return errors.New("invalid scale")
 				}
-				err = q.IScaleLabel.InsertScaleLabel(c.Request().Context(), questionID,
+				err = q.IScaleLabel.InsertScaleLabel(ctx, questionID,
 					model.ScaleLabels{
 						ScaleLabelLeft:  *b.MinLabel,
 						ScaleLabelRight: *b.MaxLabel,
@@ -331,7 +331,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					c.Logger().Errorf("failed to get question settings: %+v", err)
 					return errors.New("failed to get question settings")
 				}
-				err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
 						RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 					})
@@ -345,7 +345,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					c.Logger().Errorf("failed to get question settings: %+v", err)
 					return errors.New("failed to get question settings")
 				}
-				err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
 						RegexPattern: ".{," + fmt.Sprintf("%d", *b.MaxLength) + "}",
 					})
@@ -365,7 +365,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					c.Logger().Errorf("invalid number: %+v", err)
 					return errors.New("invalid number")
 				}
-				err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
 						MinBound: strconv.Itoa(*b.MinValue),
 						MaxBound: strconv.Itoa(*b.MaxValue),
@@ -449,6 +449,19 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
+	if responseDueDateTime.Valid {
+		isBefore := responseDueDateTime.ValueOrZero().Before(time.Now())
+		if isBefore {
+			c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
+		}
+	}
+
+	if len(params.Title) == 0 || len(params.Title) > MaxTitleLength {
+		c.Logger().Infof("invalid title: %+v", params.Title)
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid title")
+	}
+
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
@@ -513,6 +526,10 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 				c.Logger().Errorf("failed to roll out administrators: %+v", err)
 				return err
 			}
+			if len(allAdminUsers) == 0 {
+				c.Logger().Errorf("no administrators")
+				return errors.New("no administrators")
+			}
 			err = q.InsertAdministrators(ctx, questionnaireID, allAdminUsers)
 			if err != nil {
 				c.Logger().Errorf("failed to insert administrators: %+v", err)
@@ -566,6 +583,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					c.Logger().Errorf("failed to insert question: %+v", err)
 					return err
 				}
+				ifQuestionExist[questionID] = true
 				// insert validations
 				switch questionType {
 				case "Checkbox":
@@ -575,7 +593,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						return errors.New("failed to get question settings")
 					}
 					for i, v := range b.Options {
-						err := q.IOption.InsertOption(c.Request().Context(), questionID, i+1, v)
+						err := q.IOption.InsertOption(ctx, questionID, i+1, v)
 						if err != nil {
 							c.Logger().Errorf("failed to insert option: %+v", err)
 							return errors.New("failed to insert option")
@@ -588,7 +606,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						return errors.New("failed to get question settings")
 					}
 					for i, v := range b.Options {
-						err := q.IOption.InsertOption(c.Request().Context(), questionID, i+1, v)
+						err := q.IOption.InsertOption(ctx, questionID, i+1, v)
 						if err != nil {
 							c.Logger().Errorf("failed to insert option: %+v", err)
 							return errors.New("failed to insert option")
@@ -604,7 +622,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("invalid scale")
 						return errors.New("invalid scale")
 					}
-					err = q.IScaleLabel.InsertScaleLabel(c.Request().Context(), questionID,
+					err = q.IScaleLabel.InsertScaleLabel(ctx, questionID,
 						model.ScaleLabels{
 							ScaleLabelLeft:  *b.MinLabel,
 							ScaleLabelRight: *b.MaxLabel,
@@ -621,7 +639,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
 							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 						})
@@ -635,7 +653,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
 							RegexPattern: ".{," + fmt.Sprintf("%d", *b.MaxLength) + "}",
 						})
@@ -655,7 +673,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("invalid number: %+v", err)
 						return errors.New("invalid number")
 					}
-					err = q.IValidation.InsertValidation(c.Request().Context(), questionID,
+					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
 							MinBound: strconv.Itoa(*b.MinValue),
 							MaxBound: strconv.Itoa(*b.MaxValue),
@@ -680,7 +698,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, *question.QuestionId)
+					err = q.IOption.UpdateOptions(ctx, b.Options, *question.QuestionId)
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to update options: %+v", err)
 						return errors.New("failed to update options")
@@ -691,18 +709,22 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IOption.UpdateOptions(c.Request().Context(), b.Options, *question.QuestionId)
+					err = q.IOption.UpdateOptions(ctx, b.Options, *question.QuestionId)
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to update options: %+v", err)
 						return errors.New("failed to update options")
 					}
-				case "Scale":
+				case "LinearScale":
 					b, err := question.AsQuestionSettingsScale()
 					if err != nil {
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IScaleLabel.UpdateScaleLabel(c.Request().Context(), *question.QuestionId,
+					if b.MaxValue < b.MinValue {
+						c.Logger().Errorf("invalid scale")
+						return errors.New("invalid scale")
+					}
+					err = q.IScaleLabel.UpdateScaleLabel(ctx, *question.QuestionId,
 						model.ScaleLabels{
 							ScaleLabelLeft:  *b.MinLabel,
 							ScaleLabelRight: *b.MaxLabel,
@@ -719,7 +741,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IValidation.UpdateValidation(c.Request().Context(), *question.QuestionId,
+					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
 							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 						})
@@ -733,7 +755,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("failed to get question settings: %+v", err)
 						return errors.New("failed to get question settings")
 					}
-					err = q.IValidation.UpdateValidation(c.Request().Context(), *question.QuestionId,
+					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
 							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
 						})
@@ -753,7 +775,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 						c.Logger().Errorf("invalid number: %+v", err)
 						return errors.New("invalid number")
 					}
-					err = q.IValidation.UpdateValidation(c.Request().Context(), *question.QuestionId,
+					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
 							MinBound: strconv.Itoa(*b.MinValue),
 							MaxBound: strconv.Itoa(*b.MaxValue),
