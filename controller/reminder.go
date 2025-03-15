@@ -25,7 +25,11 @@ type Reminder struct {
 }
 
 func NewReminder() *Reminder {
-	return &Reminder{}
+	return &Reminder{
+		jobs: []*Job{},
+		mu:   sync.Mutex{},
+		Wg:   sync.WaitGroup{},
+	}
 }
 
 var (
