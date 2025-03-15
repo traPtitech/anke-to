@@ -533,7 +533,6 @@ func TestCheckResponseReadPrivilege(t *testing.T) {
 	type expect struct {
 		haveReadPrivilege bool
 		isErr             bool
-		err               error
 	}
 	type test struct {
 		description string
