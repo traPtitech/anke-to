@@ -239,10 +239,12 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			return err
 		}
 
-		err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
-		if err != nil {
-			c.Logger().Errorf("failed to push reminder: %+v", err)
-			return err
+		if params.ResponseDueDateTime != nil {
+			err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
+			if err != nil {
+				c.Logger().Errorf("failed to push reminder: %+v", err)
+				return err
+			}
 		}
 
 		return nil
@@ -518,10 +520,12 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
-		err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
-		if err != nil {
-			c.Logger().Errorf("failed to push reminder: %+v", err)
-			return err
+		if params.ResponseDueDateTime != nil {
+			err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
+			if err != nil {
+				c.Logger().Errorf("failed to push reminder: %+v", err)
+				return err
+			}
 		}
 
 		return nil
