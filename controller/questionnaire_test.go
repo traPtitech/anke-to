@@ -55,6 +55,9 @@ var (
 )
 
 func setupSampleQuestionnaire() {
+	sampleQuestionnaireMutex.Lock()
+	defer sampleQuestionnaireMutex.Unlock()
+
 	if sampleQuestionnaire.Title != "" {
 		return
 	}
