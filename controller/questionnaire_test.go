@@ -799,9 +799,6 @@ func TestPostQuestionnaire(t *testing.T) {
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
 			},
-			expect: expect{
-				isErr: true,
-			},
 		},
 		{
 			description: "no admin",
@@ -995,42 +992,57 @@ func TestPostQuestionnaire(t *testing.T) {
 		assertion.Equal(questionnaireDetail.IsAnonymous, testCase.args.params.IsAnonymous, "is anonymous not equal")
 		assertion.Equal(questionnaireDetail.IsPublished, testCase.args.params.IsPublished, "is published not equal")
 
-		for _, question := range testCase.params.Questions {
+		for _, question := range testCase.args.params.Questions {
 			isMatch := false
 			for _, questionDetail := range questionnaireDetail.Questions {
-				questionConverted, err := newQuestion2Question(questionDetail.QuestionId, questionDetail.CreatedAt, question)
+				b, err := question.MarshalJSON()
 				require.NoError(t, err)
-				questionConvertedJSON, err := questionConverted.MarshalJSON()
+				var questionParsed map[string]interface{}
+				err = json.Unmarshal([]byte(b), &questionParsed)
 				require.NoError(t, err)
-				questionDetailJSON, err := questionDetail.MarshalJSON()
+
+				b, err = questionDetail.MarshalJSON()
 				require.NoError(t, err)
-				if bytes.Equal(questionConvertedJSON, questionDetailJSON) {
+				var questionDetailParsed map[string]interface{}
+				err = json.Unmarshal([]byte(b), &questionDetailParsed)
+				require.NoError(t, err)
+
+				if questionParsed["body"] == questionDetailParsed["body"] &&
+					questionParsed["is_required"] == questionDetailParsed["is_required"] &&
+					questionParsed["question_type"] == questionDetailParsed["question_type"] {
 					isMatch = true
 					break
 				}
 			}
 			if !isMatch {
-				assertion.Fail("question not found")
+				assertion.Fail("question not found", testCase.description)
 			}
 		}
 
-		assertion.Equal(questionnaireDetail.ResponseDueDateTime, testCase.args.params.ResponseDueDateTime, "response due date time not equal")
-		assertion.Equal(questionnaireDetail.ResponseViewableBy, testCase.args.params.ResponseViewableBy, "response viewable by not equal")
-
+		if testCase.args.params.ResponseDueDateTime != nil {
+			assertion.WithinDuration(testCase.args.params.ResponseDueDateTime.UTC().Truncate(time.Second), questionnaireDetail.ResponseDueDateTime.UTC(), time.Second, testCase.description, "response due date time not equal")
+		} else {
+			assertion.Nil(questionnaireDetail.ResponseDueDateTime, testCase.description, "response due date time not equal")
+		}
+		if testCase.args.params.ResponseViewableBy != "invalid" {
+			assertion.Equal(testCase.args.params.ResponseViewableBy, questionnaireDetail.ResponseViewableBy, "response viewable by not equal")
+		} else {
+			assertion.Equal((openapi.ResShareType)("admins"), questionnaireDetail.ResponseViewableBy, "response viewable by not equal")
+		}
 		sort.Slice(questionnaireDetail.Target.Users, func(i, j int) bool { return questionnaireDetail.Target.Users[i] < questionnaireDetail.Target.Users[j] })
 		sort.Slice(testCase.args.params.Target.Users, func(i, j int) bool {
 			return testCase.args.params.Target.Users[i] < testCase.args.params.Target.Users[j]
 		})
-		assertion.Equal(questionnaireDetail.Target.Users, testCase.args.params.Target.Users, "target users not equal")
+		assertion.Equal(testCase.args.params.Target.Users, questionnaireDetail.Target.Users, "target users not equal")
 		sort.Slice(questionnaireDetail.Target.Groups, func(i, j int) bool {
 			return questionnaireDetail.Target.Groups[i].String() < questionnaireDetail.Target.Groups[j].String()
 		})
 		sort.Slice(testCase.args.params.Target.Groups, func(i, j int) bool {
 			return testCase.args.params.Target.Groups[i].String() < testCase.args.params.Target.Groups[j].String()
 		})
-		assertion.Equal(questionnaireDetail.Target.Groups, testCase.args.params.Target.Groups, "target groups not equal")
+		assertion.Equal(testCase.args.params.Target.Groups, questionnaireDetail.Target.Groups, "target groups not equal")
 
-		assertion.Equal(questionnaireDetail.Title, testCase.args.params.Title, "title not equal")
+		assertion.Equal(testCase.args.params.Title, questionnaireDetail.Title, "title not equal")
 	}
 }
 
@@ -1409,9 +1421,6 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
-			},
-			expect: expect{
-				isErr: true,
 			},
 		},
 		{

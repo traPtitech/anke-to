@@ -176,6 +176,11 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 	questionnaireID := 0
 	var err error
 
+	if len(params.Title) == 0 || len(params.Title) > MaxTitleLength {
+		c.Logger().Infof("invalid title: %+v", params.Title)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid title")
+	}
+
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		questionnaireID, err = q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
@@ -212,6 +217,10 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 			c.Logger().Errorf("failed to roll out administrators: %+v", err)
 			return err
 		}
+		if len(allAdminUsers) == 0 {
+			c.Logger().Errorf("no administrators")
+			return errors.New("no administrators")
+		}
 		adminGroupNames, err := uuid2GroupNames(params.Admin.Groups)
 		if err != nil {
 			c.Logger().Errorf("failed to get group names: %+v", err)
@@ -245,6 +254,22 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
+			if questionType == "Text" {
+				questionType = "Text"
+			} else if questionType == "TextLong" {
+				questionType = "TextArea"
+			} else if questionType == "Number" {
+				questionType = "Number"
+			} else if questionType == "SingleChoice" {
+				questionType = "Checkbox"
+			} else if questionType == "MultipleChoice" {
+				questionType = "MultipleChoice"
+			} else if questionType == "Scale" {
+				questionType = "LinearScale"
+			} else {
+				c.Logger().Errorf("invalid question type")
+				return errors.New("invalid question type")
+			}
 			_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
 			if err != nil {
 				c.Logger().Errorf("failed to insert question: %+v", err)
@@ -289,7 +314,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 	}
 	for i, question := range questions {
 		switch question.Type {
-		case "SingleChoice":
+		case "Checkbox":
 			b, err := params.Questions[i].AsQuestionSettingsSingleChoice()
 			if err != nil {
 				c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -315,11 +340,15 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 					return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert option")
 				}
 			}
-		case "Scale":
+		case "LinearScale":
 			b, err := params.Questions[i].AsQuestionSettingsScale()
 			if err != nil {
 				c.Logger().Errorf("failed to get question settings: %+v", err)
 				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get question settings")
+			}
+			if b.MaxValue < b.MinValue {
+				c.Logger().Errorf("invalid scale")
+				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "invalid scale")
 			}
 			err = q.IScaleLabel.InsertScaleLabel(c.Request().Context(), question.ID,
 				model.ScaleLabels{
@@ -346,7 +375,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 				c.Logger().Errorf("failed to insert validation: %+v", err)
 				return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
 			}
-		case "TextLong":
+		case "TextArea":
 			b, err := params.Questions[i].AsQuestionSettingsTextLong()
 			if err != nil {
 				c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -512,6 +541,22 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
+			if questionType == "Text" {
+				questionType = "Text"
+			} else if questionType == "TextLong" {
+				questionType = "TextArea"
+			} else if questionType == "Number" {
+				questionType = "Number"
+			} else if questionType == "SingleChoice" {
+				questionType = "Checkbox"
+			} else if questionType == "MultipleChoice" {
+				questionType = "MultipleChoice"
+			} else if questionType == "Scale" {
+				questionType = "LinearScale"
+			} else {
+				c.Logger().Errorf("invalid question type")
+				return errors.New("invalid question type")
+			}
 			if question.QuestionId == nil {
 				_, err = q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
 				if err != nil {
@@ -570,7 +615,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 	}
 	for i, question := range questions {
 		switch question.Type {
-		case "SingleChoice":
+		case "Checkbox":
 			b, err := params.Questions[i].AsQuestionSettingsSingleChoice()
 			if err != nil {
 				c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -623,7 +668,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 				c.Logger().Errorf("failed to insert validation: %+v", err)
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert validation")
 			}
-		case "TextLong":
+		case "TextArea":
 			b, err := params.Questions[i].AsQuestionSettingsTextLong()
 			if err != nil {
 				c.Logger().Errorf("failed to get question settings: %+v", err)

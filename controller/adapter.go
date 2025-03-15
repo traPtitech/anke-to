@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -85,10 +86,10 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 	res := []openapi.Question{}
 	for _, question := range questions {
 		q := openapi.Question{
-			CreatedAt:       &question.CreatedAt,
-			Body:            question.Body,
-			IsRequired:      question.IsRequired,
-			QuestionId:      &question.ID,
+			CreatedAt:  &question.CreatedAt,
+			Body:       question.Body,
+			IsRequired: question.IsRequired,
+			QuestionId: &question.ID,
 		}
 		switch question.Type {
 		case "Text":
@@ -118,10 +119,15 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 			if err != nil {
 				return nil, err
 			}
-		case "Radio":
-			err := q.FromQuestionSettingsSingleChoice(
+		case "Checkbox":
+			var err error
+			question.Options, err = model.NewOption().GetOptions(context.Background(), []int{question.ID})
+			if err != nil {
+				return nil, err
+			}
+			err = q.FromQuestionSettingsSingleChoice(
 				openapi.QuestionSettingsSingleChoice{
-					QuestionType: "Radio",
+					QuestionType: "SingleChoice",
 					Options:      convertOptions(question.Options).Options,
 				},
 			)
@@ -129,7 +135,12 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 				return nil, err
 			}
 		case "MultipleChoice":
-			err := q.FromQuestionSettingsMultipleChoice(
+			var err error
+			question.Options, err = model.NewOption().GetOptions(context.Background(), []int{question.ID})
+			if err != nil {
+				return nil, err
+			}
+			err = q.FromQuestionSettingsMultipleChoice(
 				openapi.QuestionSettingsMultipleChoice{
 					QuestionType: "MultipleChoice",
 					Options:      convertOptions(question.Options).Options,
@@ -139,9 +150,14 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 				return nil, err
 			}
 		case "LinearScale":
-			err := q.FromQuestionSettingsScale(
+			var err error
+			question.ScaleLabels, err = model.NewScaleLabel().GetScaleLabels(context.Background(), []int{question.ID})
+			if err != nil {
+				return nil, err
+			}
+			err = q.FromQuestionSettingsScale(
 				openapi.QuestionSettingsScale{
-					QuestionType: "LinearScale",
+					QuestionType: "Scale",
 					MinLabel:     &question.ScaleLabels[0].ScaleLabelLeft,
 					MaxLabel:     &question.ScaleLabels[0].ScaleLabelRight,
 					MinValue:     question.ScaleLabels[0].ScaleMin,
@@ -152,14 +168,23 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 				return nil, err
 			}
 		}
+		res = append(res, q)
 	}
 	return res, nil
 }
 
 func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admins []string, adminUsers []string, adminGroups []uuid.UUID, targets []string, targetUsers []string, targetGroups []uuid.UUID, respondents []string) (openapi.QuestionnaireDetail, error) {
-	questions, err := convertQuestions(questionnaires.Questions)
+	questions, err := model.NewQuestion().GetQuestions(context.Background(), questionnaires.ID)
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
+	}
+	questionsConverted, err := convertQuestions(questions)
+	if err != nil {
+		return openapi.QuestionnaireDetail{}, err
+	}
+	responseDueDateTime := &questionnaires.ResTimeLimit.Time
+	if !questionnaires.ResTimeLimit.Valid {
+		responseDueDateTime = nil
 	}
 	res := openapi.QuestionnaireDetail{
 		Admin:                    createUsersAndGroups(adminUsers, adminGroups),
@@ -171,9 +196,9 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		IsPublished:              questionnaires.IsPublished,
 		ModifiedAt:               questionnaires.ModifiedAt,
 		QuestionnaireId:          questionnaires.ID,
-		Questions:                questions,
+		Questions:                questionsConverted,
 		Respondents:              respondents,
-		ResponseDueDateTime:      &questionnaires.ResTimeLimit.Time,
+		ResponseDueDateTime:      responseDueDateTime,
 		ResponseViewableBy:       convertResSharedTo(questionnaires.ResSharedTo),
 		Target:                   createUsersAndGroups(targetUsers, targetGroups),
 		Targets:                  targets,
@@ -286,7 +311,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				err = oResponseBody.FromResponseBodyScale(
 					openapi.ResponseBodyScale{
 						Answer:       answer,
-						QuestionType: "LinearScale",
+						QuestionType: "Scale",
 					},
 				)
 				if err != nil {
@@ -369,7 +394,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 					Data:       strconv.FormatInt(int64(a), 10),
 				})
 			}
-		case "LinearScale":
+		case "Scale":
 			bScale, err := b.AsResponseBodyScale()
 			if err != nil {
 				return nil, err
