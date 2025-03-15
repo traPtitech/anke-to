@@ -10,17 +10,13 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/anke-to/model/mock_model"
 	"github.com/traPtitech/anke-to/openapi"
-	"github.com/traPtitech/anke-to/traq/mock_traq"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -32,13 +28,9 @@ var (
 	sampleResponseBodyMultipleChoice = openapi.ResponseBody{}
 	sampleResponseBodyScale          = openapi.ResponseBody{}
 	sampleResponse                   = openapi.NewResponse{}
-	sampleResponseMutex              sync.Mutex
 )
 
 func setupSampleResponse() {
-	sampleResponseMutex.Lock()
-	defer sampleResponseMutex.Unlock()
-
 	if len(sampleResponse.Body) > 0 {
 		return
 	}
@@ -83,33 +75,6 @@ func TestGetMyResponses(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
-	mockRespondent := mock_model.NewMockIRespondent(ctrl)
-	mockResponse := mock_model.NewMockIResponse(ctrl)
-	mockTarget := mock_model.NewMockITarget(ctrl)
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-	mockValidation := mock_model.NewMockIValidation(ctrl)
-	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
-
-	mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
-	mockTargetUser := mock_model.NewMockITargetUser(ctrl)
-	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
-	mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
-	mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
-	mockOption := mock_model.NewMockIOption(ctrl)
-	mockTransaction := mock_model.NewMockITransaction(ctrl)
-	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
-
-	re := NewReminder()
-	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
-
-	setupSampleQuestionnaire()
-	setupSampleResponse()
 
 	questionnaire := sampleQuestionnaire
 	e := echo.New()
@@ -400,33 +365,6 @@ func TestGetResponse(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
-	mockRespondent := mock_model.NewMockIRespondent(ctrl)
-	mockResponse := mock_model.NewMockIResponse(ctrl)
-	mockTarget := mock_model.NewMockITarget(ctrl)
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-	mockValidation := mock_model.NewMockIValidation(ctrl)
-	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
-
-	mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
-	mockTargetUser := mock_model.NewMockITargetUser(ctrl)
-	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
-	mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
-	mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
-	mockOption := mock_model.NewMockIOption(ctrl)
-	mockTransaction := mock_model.NewMockITransaction(ctrl)
-	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
-
-	re := NewReminder()
-	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
-
-	setupSampleQuestionnaire()
-	setupSampleResponse()
-
 	questionnaire := sampleQuestionnaire
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
@@ -520,7 +458,7 @@ func TestGetResponse(t *testing.T) {
 			valid := true
 			for valid {
 				c := context.Background()
-				_, err := mockRespondent.GetRespondent(c, responseID)
+				_, err := IRespondent.GetRespondent(c, responseID)
 				if err == errors.New("record not found") {
 					valid = false
 				} else if err != nil {
@@ -565,30 +503,6 @@ func TestDeleteResponse(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
-	mockRespondent := mock_model.NewMockIRespondent(ctrl)
-	mockResponse := mock_model.NewMockIResponse(ctrl)
-	mockTarget := mock_model.NewMockITarget(ctrl)
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-	mockValidation := mock_model.NewMockIValidation(ctrl)
-	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
-
-	mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
-	mockTargetUser := mock_model.NewMockITargetUser(ctrl)
-	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
-	mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
-	mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
-	mockOption := mock_model.NewMockIOption(ctrl)
-	mockTransaction := mock_model.NewMockITransaction(ctrl)
-	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
-
-	re := NewReminder()
-	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
-
 	type args struct {
 		invalidResponseID bool
 	}
@@ -601,9 +515,6 @@ func TestDeleteResponse(t *testing.T) {
 		args
 		expect
 	}
-
-	setupSampleQuestionnaire()
-	setupSampleResponse()
 
 	testCases := []test{
 		{
@@ -652,7 +563,7 @@ func TestDeleteResponse(t *testing.T) {
 			valid := true
 			for valid {
 				c := context.Background()
-				_, err := mockRespondent.GetRespondent(c, responseID)
+				_, err := IRespondent.GetRespondent(c, responseID)
 				if err == errors.New("record not found") {
 					valid = false
 				} else if err != nil {
@@ -679,7 +590,7 @@ func TestDeleteResponse(t *testing.T) {
 		}
 
 		c := context.Background()
-		_, err = mockRespondent.GetRespondent(c, responseID)
+		_, err = IRespondent.GetRespondent(c, responseID)
 
 		if err == nil {
 			assertion.Fail("response not deleted")
@@ -693,33 +604,6 @@ func TestEditResponse(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
-	mockRespondent := mock_model.NewMockIRespondent(ctrl)
-	mockResponse := mock_model.NewMockIResponse(ctrl)
-	mockTarget := mock_model.NewMockITarget(ctrl)
-	mockQuestion := mock_model.NewMockIQuestion(ctrl)
-	mockValidation := mock_model.NewMockIValidation(ctrl)
-	mockScaleLabel := mock_model.NewMockIScaleLabel(ctrl)
-
-	mockTargetGroup := mock_model.NewMockITargetGroup(ctrl)
-	mockTargetUser := mock_model.NewMockITargetUser(ctrl)
-	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
-	mockAdministratorGroup := mock_model.NewMockIAdministratorGroup(ctrl)
-	mockAdministratorUser := mock_model.NewMockIAdministratorUser(ctrl)
-	mockOption := mock_model.NewMockIOption(ctrl)
-	mockTransaction := mock_model.NewMockITransaction(ctrl)
-	mockWebhook := mock_traq.NewMockIWebhook(ctrl)
-
-	re := NewReminder()
-	r := NewResponse(mockQuestionnaire, mockRespondent, mockResponse, mockTarget, mockQuestion, mockValidation, mockScaleLabel)
-	q := NewQuestionnaire(mockQuestionnaire, mockTarget, mockTargetGroup, mockTargetUser, mockAdministrator, mockAdministratorGroup, mockAdministratorUser, mockQuestion, mockOption, mockScaleLabel, mockValidation, mockTransaction, mockRespondent, mockWebhook, r, re)
-
-	setupSampleQuestionnaire()
-	setupSampleResponse()
 
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
@@ -1067,7 +951,7 @@ func TestEditResponse(t *testing.T) {
 			valid := true
 			for valid {
 				c := context.Background()
-				_, err := mockRespondent.GetRespondent(c, responseID)
+				_, err := IRespondent.GetRespondent(c, responseID)
 				if err == errors.New("record not found") {
 					valid = false
 				} else if err != nil {
@@ -1083,7 +967,7 @@ func TestEditResponse(t *testing.T) {
 			responseDueDateTime := null.Time{}
 			responseDueDateTime.Valid = true
 			responseDueDateTime.Time = time.Now().Add(-24 * time.Hour)
-			err = mockQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, string(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
+			err = IQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, string(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
 			require.NoError(t, err)
 		}
 
