@@ -79,14 +79,40 @@ const MaxTitleLength = 50
 
 func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
 	res := openapi.QuestionnaireList{}
-	sort := string(*params.Sort)
-	search := string(*params.Search)
-	pageNum := int(*params.Page)
+	var sort string
+	if params.Sort == nil {
+		sort = ""
+	} else {
+		sort = string(*params.Sort)
+	}
+	var search string
+	if params.Search == nil {
+		search = ""
+	} else {
+		search = string(*params.Search)
+	}
+	var pageNum int
+	if params.Page == nil {
+		pageNum = 1
+	} else {
+		pageNum = int(*params.Page)
+	}
 	if pageNum < 1 {
 		pageNum = 1
 	}
 
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, *params.OnlyTargetingMe, *params.OnlyAdministratedByMe)
+	var onlyTargetingMe, onlyAdministratedByMe bool
+	if params.OnlyTargetingMe == nil {
+		onlyTargetingMe = false
+	} else {
+		onlyTargetingMe = *params.OnlyTargetingMe
+	}
+	if params.OnlyAdministratedByMe == nil {
+		onlyAdministratedByMe = false
+	} else {
+		onlyAdministratedByMe = *params.OnlyAdministratedByMe
+	}
+	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe)
 	if err != nil {
 		return res, err
 	}
@@ -148,9 +174,10 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 	}
 
 	questionnaireID := 0
+	var err error
 
-	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		questionnaireID, err := q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		questionnaireID, err = q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
 			c.Logger().Errorf("failed to insert questionnaire: %+v", err)
 			return err

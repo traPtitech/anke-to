@@ -488,7 +488,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.Before(questionnaire.CreatedAt), testCase.description, "created_at")
+						assertion.False(preCreatedAt.After(questionnaire.CreatedAt), testCase.description, "created_at")
 					}
 					preCreatedAt = questionnaire.CreatedAt
 				}
@@ -496,7 +496,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.After(questionnaire.CreatedAt), testCase.description, "-created_at")
+						assertion.False(preCreatedAt.Before(questionnaire.CreatedAt), testCase.description, "-created_at")
 					}
 					preCreatedAt = questionnaire.CreatedAt
 				}
@@ -504,7 +504,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preTitle string
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if preTitle != "" {
-						assertion.True(preTitle > questionnaire.Title, testCase.description, "title")
+						assertion.False(preTitle > questionnaire.Title, testCase.description, "title")
 					}
 					preTitle = questionnaire.Title
 				}
@@ -512,7 +512,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preTitle string
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if preTitle != "" {
-						assertion.True(preTitle < questionnaire.Title, testCase.description, "-title")
+						assertion.False(preTitle < questionnaire.Title, testCase.description, "-title")
 					}
 					preTitle = questionnaire.Title
 				}
@@ -520,7 +520,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preModifiedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.Before(questionnaire.ModifiedAt), testCase.description, "modified_at")
+						assertion.False(preModifiedAt.After(questionnaire.ModifiedAt), testCase.description, "modified_at")
 					}
 					preModifiedAt = questionnaire.ModifiedAt
 				}
@@ -528,7 +528,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				var preModifiedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.After(questionnaire.ModifiedAt), testCase.description, "-modified_at")
+						assertion.False(preModifiedAt.Before(questionnaire.ModifiedAt), testCase.description, "-modified_at")
 					}
 					preModifiedAt = questionnaire.ModifiedAt
 				}
@@ -691,7 +691,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "",
@@ -718,7 +718,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -745,7 +745,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "admins",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -769,7 +769,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "respondents",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -793,7 +793,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -820,7 +820,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -847,7 +847,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -871,7 +871,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -895,7 +895,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -919,7 +919,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -946,7 +946,7 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						invalidQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -981,14 +981,14 @@ func TestPostQuestionnaire(t *testing.T) {
 
 		sort.Slice(questionnaireDetail.Admin.Users, func(i, j int) bool { return questionnaireDetail.Admin.Users[i] < questionnaireDetail.Admin.Users[j] })
 		sort.Slice(testCase.args.params.Admin.Users, func(i, j int) bool { return testCase.args.params.Admin.Users[i] < testCase.args.params.Admin.Users[j] })
-		assertion.Equal(questionnaireDetail.Admin.Users, testCase.args.params.Admin.Users, "admin users not equal")
+		assertion.Equal(questionnaireDetail.Admin.Users, testCase.args.params.Admin.Users, testCase.description, "admin users not equal")
 		sort.Slice(questionnaireDetail.Admin.Groups, func(i, j int) bool {
 			return questionnaireDetail.Admin.Groups[i].String() < questionnaireDetail.Admin.Groups[j].String()
 		})
 		sort.Slice(testCase.args.params.Admin.Groups, func(i, j int) bool {
 			return testCase.args.params.Admin.Groups[i].String() < testCase.args.params.Admin.Groups[j].String()
 		})
-		assertion.Equal(questionnaireDetail.Admin.Groups, testCase.args.params.Admin.Groups, "admin groups not equal")
+		assertion.Equal(questionnaireDetail.Admin.Groups, testCase.args.params.Admin.Groups, testCase.description, "admin groups not equal")
 
 		assertion.Equal(questionnaireDetail.Description, testCase.args.params.Description, "description not equal")
 		assertion.Equal(questionnaireDetail.IsDuplicateAnswerAllowed, testCase.args.params.IsDuplicateAnswerAllowed, "is duplicate answer allowed not equal")
@@ -1207,7 +1207,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					IsAnonymous:              false,
 					IsPublished:              true,
 					Questions:                []openapi.NewQuestion{},
-					ResponseDueDateTime:      &time.Time{},
+					ResponseDueDateTime:      nil,
 					ResponseViewableBy:       "anyone",
 					Target:                   sampleTarget,
 					Title:                    "第1回集会らん☆ぷろ募集アンケート",
@@ -1302,7 +1302,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "",
@@ -1329,7 +1329,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -1356,7 +1356,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "admins",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1380,7 +1380,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "respondents",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1404,7 +1404,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1431,7 +1431,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "invalid",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1458,7 +1458,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1482,7 +1482,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1506,7 +1506,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1530,7 +1530,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						sampleQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1557,7 +1557,7 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsMultipleChoice,
 						invalidQeustionsettingsScale,
 					},
-					ResponseDueDateTime: &time.Time{},
+					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
@@ -1577,7 +1577,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					IsAnonymous:              false,
 					IsPublished:              true,
 					Questions:                []openapi.NewQuestion{},
-					ResponseDueDateTime:      &time.Time{},
+					ResponseDueDateTime:      nil,
 					ResponseViewableBy:       "anyone",
 					Target:                   sampleTarget,
 					Title:                    "第1回集会らん☆ぷろ募集アンケート",
