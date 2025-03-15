@@ -144,7 +144,7 @@ func setupSampleQuestionnaire() {
 			sampleQuestionSettingsMultipleChoice,
 			sampleQeustionsettingsScale,
 		},
-		ResponseDueDateTime: &time.Time{},
+		ResponseDueDateTime: nil,
 		ResponseViewableBy:  "anyone",
 		Target:              sampleTarget,
 		Title:               "第1回集会らん☆ぷろ募集アンケート",

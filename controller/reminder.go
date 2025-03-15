@@ -71,7 +71,7 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 
 	for i, timing := range reminderTimingMinutes {
 		remindTimeStamp := limit.Add(-time.Duration(timing) * time.Minute)
-		if remindTimeStamp.Before(time.Now()) {
+		if remindTimeStamp.After(time.Now()) {
 			re.push(&Job{
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: questionnaireID,
@@ -91,14 +91,14 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 func (re *Reminder) DeleteReminder(questionnaireID int) error {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	if len(re.jobs) == 1 && re.jobs[0].QuestionnaireID == questionnaireID {
-		re.jobs = []*Job{}
-	}
-	for i, job := range re.jobs {
-		if job.QuestionnaireID == questionnaireID {
-			re.jobs = append(re.jobs[:i], re.jobs[i+1:]...)
+
+	newJobs := []*Job{}
+	for _, job := range re.jobs {
+		if job.QuestionnaireID != questionnaireID {
+			newJobs = append(newJobs, job)
 		}
 	}
+	re.jobs = newJobs
 
 	return nil
 }

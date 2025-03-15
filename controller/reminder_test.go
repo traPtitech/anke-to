@@ -33,7 +33,7 @@ func TestPushReminder(t *testing.T) {
 			description: "5 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-8 * 24 * time.Hour),
+				time:            time.Now().Add(8 * 24 * time.Hour),
 			},
 			expect: expect{
 				num: 5,
@@ -43,7 +43,7 @@ func TestPushReminder(t *testing.T) {
 			description: "4 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-25 * time.Hour),
+				time:            time.Now().Add(25 * time.Hour),
 			},
 			expect: expect{
 				num: 4,
@@ -53,7 +53,7 @@ func TestPushReminder(t *testing.T) {
 			description: "3 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-2 * time.Hour),
+				time:            time.Now().Add(2 * time.Hour),
 			},
 			expect: expect{
 				num: 3,
@@ -63,7 +63,7 @@ func TestPushReminder(t *testing.T) {
 			description: "2 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-50 * time.Minute),
+				time:            time.Now().Add(50 * time.Minute),
 			},
 			expect: expect{
 				num: 2,
@@ -73,7 +73,7 @@ func TestPushReminder(t *testing.T) {
 			description: "1 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-10 * time.Minute),
+				time:            time.Now().Add(10 * time.Minute),
 			},
 			expect: expect{
 				num: 1,
@@ -83,7 +83,7 @@ func TestPushReminder(t *testing.T) {
 			description: "0 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(-time.Minute),
+				time:            time.Now().Add(time.Minute),
 			},
 			expect: expect{
 				num: 0,
@@ -159,9 +159,9 @@ func TestDeleteReminder(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re := NewReminder()
-		reminderLimit1 := time.Now().Add(-2 * time.Hour)
-		reminderLimit2 := time.Now().Add(-10 * time.Minute)
-		reminderLimit3 := time.Now().Add(-25 * time.Hour)
+		reminderLimit1 := time.Now().Add(2 * time.Hour)
+		reminderLimit2 := time.Now().Add(10 * time.Minute)
+		reminderLimit3 := time.Now().Add(25 * time.Hour)
 		re.PushReminder(1, &reminderLimit1)
 		re.PushReminder(2, &reminderLimit2)
 		re.PushReminder(3, &reminderLimit3)
@@ -177,7 +177,7 @@ func TestDeleteReminder(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		assertion.Equal(jobsNum-testCase.expect.num, len(re.jobs), "reminder num")
+		assertion.Equal(jobsNum-testCase.expect.num, len(re.jobs), testCase.description, "reminder num")
 	}
 }
 func TestCheckRemindStatus(t *testing.T) {
@@ -231,9 +231,9 @@ func TestCheckRemindStatus(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re := NewReminder()
-		reminderLimit1 := time.Now().Add(-2 * time.Hour)
-		reminderLimit2 := time.Now().Add(-10 * time.Minute)
-		reminderLimit3 := time.Now().Add(-25 * time.Hour)
+		reminderLimit1 := time.Now().Add(2 * time.Hour)
+		reminderLimit2 := time.Now().Add(10 * time.Minute)
+		reminderLimit3 := time.Now().Add(25 * time.Hour)
 		re.PushReminder(1, &reminderLimit1)
 		re.PushReminder(2, &reminderLimit2)
 		re.PushReminder(3, &reminderLimit3)
@@ -264,8 +264,6 @@ func TestPush(t *testing.T) {
 	}
 	type expect struct {
 		position int
-		isErr    bool
-		err      error
 	}
 	type test struct {
 		description string
@@ -318,7 +316,8 @@ func TestPush(t *testing.T) {
 	for i, testCase := range testCases {
 		re.push(testCase.args.job)
 		assertion.Equal(i, len(re.jobs)-1, "queue length")
-		assertion.Equal(testCase.args.job, re.jobs[i], "pushed position")
+		assertion.Equal(testCase.args.job.Timestamp, re.jobs[testCase.expect.position].Timestamp, testCase.description, "pushed position timestamp")
+		assertion.Equal(testCase.args.job.QuestionnaireID, re.jobs[testCase.expect.position].QuestionnaireID, testCase.description, "pushed position questionnaire id")
 	}
 }
 
@@ -347,16 +346,11 @@ func TestPop(t *testing.T) {
 		},
 	}
 
-	type args struct {
-	}
 	type expect struct {
-		num   int
-		isErr bool
-		err   error
+		num int
 	}
 	type test struct {
 		description string
-		args
 		expect
 	}
 
@@ -393,7 +387,10 @@ func TestPop(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re.pop()
-		assertion.Equal(testCase.expect.num, len(re.jobs), "queue length")
-		assertion.Equal(jobs[testCase.expect.num-1], re.jobs[testCase.expect.num], "last content")
+		assertion.Equal(testCase.expect.num, len(re.jobs), testCase.description, "queue length")
+		if testCase.expect.num != 0 {
+			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, re.jobs[0].Timestamp, testCase.description, "first content timestamp")
+			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, re.jobs[0].QuestionnaireID, testCase.description, "first content questionnaire id")
+		}
 	}
 }
