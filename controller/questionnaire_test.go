@@ -19,6 +19,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 	"gopkg.in/guregu/null.v4"
 )
@@ -544,7 +545,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				return (*testCase.expect.questionnaireIdList)[i] < (*testCase.expect.questionnaireIdList)[j]
 			})
 			sort.Slice(questionnaireIdList, func(i, j int) bool { return questionnaireIdList[i] < questionnaireIdList[j] })
-			assertion.Equal(testCase.expect.questionnaireIdList, questionnaireIdList, testCase.description, "questionnaireIdList")
+			assertion.Equal(*testCase.expect.questionnaireIdList, questionnaireIdList, testCase.description, "questionnaireIdList")
 		}
 
 		if testCase.args.params.OnlyTargetingMe != nil || testCase.args.params.OnlyAdministratedByMe != nil {
@@ -1102,10 +1103,10 @@ func TestGetQuestionnaire(t *testing.T) {
 			for valid {
 				ctx := context.Background()
 				_, _, _, _, _, _, _, _, err := IQuestionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
-				if err == errors.New("record not found") {
+				if errors.Is(err, model.ErrRecordNotFound) {
 					valid = false
 				} else if err != nil {
-					assertion.Fail("unexpected error during getting questionnaire info")
+					assertion.Fail("unexpected error during getting questionnaire info", err)
 				} else {
 					questionnaireID *= 10
 				}
@@ -1143,7 +1144,6 @@ func TestEditQuestionnaire(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		questionnaireID           int
 		isAnonymousToNotAnonymous bool
 		invalidQuestionnaireID    bool
 		invalidQuestionID         bool
@@ -1192,11 +1192,12 @@ func TestEditQuestionnaire(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				params: sampleQuestionnaire,
+				params:        sampleQuestionnaire,
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
-			description: "valid new questoin",
+			description: "valid new question",
 			args: args{
 				params:        sampleQuestionnaire,
 				isNewQuestion: []bool{true, true, true, true, true, true},
@@ -1248,6 +1249,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1255,6 +1257,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			args: args{
 				invalidQuestionID: true,
 				params:            sampleQuestionnaire,
+				isNewQuestion:     []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1265,6 +1268,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			args: args{
 				isAnonymousToNotAnonymous: true,
 				params:                    sampleQuestionnaire,
+				isNewQuestion:             []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1292,6 +1296,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1319,6 +1324,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1346,6 +1352,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1373,6 +1380,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1397,6 +1405,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1421,6 +1430,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1445,6 +1455,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1472,6 +1483,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1496,6 +1508,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1520,6 +1533,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
@@ -1544,6 +1558,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1571,6 +1586,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
 				isErr: true,
@@ -1626,7 +1642,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			for valid {
 				ctx := context.Background()
 				_, _, _, _, _, _, _, _, err := IQuestionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
-				if err == errors.New("record not found") {
+				if errors.Is(err, model.ErrRecordNotFound) {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting questionnaire info")
@@ -1635,7 +1651,7 @@ func TestEditQuestionnaire(t *testing.T) {
 				}
 			}
 		} else {
-			questionnaireID = testCase.args.questionnaireID
+			questionnaireID = questionnaireDetail.QuestionnaireId
 		}
 
 		var questions []openapi.Question
@@ -1666,7 +1682,7 @@ func TestEditQuestionnaire(t *testing.T) {
 		params := postQuestionnaireParams2EditQuestionnaireParams(questionnaireDetail.QuestionnaireId, questions, testCase.args.params)
 
 		e = echo.New()
-		body, err = json.Marshal(questionnaire)
+		body, err = json.Marshal(params)
 		require.NoError(t, err)
 		req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaire/%d", questionnaireID), bytes.NewReader(body))
 		rec = httptest.NewRecorder()
@@ -1719,8 +1735,13 @@ func TestEditQuestionnaire(t *testing.T) {
 		require.NoError(t, err)
 
 		questionnaireDetailExpected.QuestionnaireId = questionnaireDetailEdited.QuestionnaireId
+		questionnaireDetailExpected.CreatedAt = questionnaireDetailEdited.CreatedAt
+		questionnaireDetailExpected.ModifiedAt = questionnaireDetailEdited.ModifiedAt
+		
+		assertion.Equal(len(questionnaireDetailExpected.Questions), len(questionnaireDetailEdited.Questions), testCase.description, "question length")
 		for i := range questionnaireDetailExpected.Questions {
 			questionnaireDetailExpected.Questions[i].QuestionId = questionnaireDetailEdited.Questions[i].QuestionId
+			questionnaireDetailExpected.Questions[i].CreatedAt = questionnaireDetailEdited.Questions[i].CreatedAt
 		}
 		assertion.Equal(questionnaireDetailExpected, questionnaireDetailEdited, testCase.description, "questionnaireDetail")
 	}
@@ -1782,7 +1803,7 @@ func TestDeleteQuestionnaire(t *testing.T) {
 			for valid {
 				c := context.Background()
 				_, _, _, _, _, _, _, _, err := IQuestionnaire.GetQuestionnaireInfo(c, questionnaireID)
-				if err == errors.New("record not found") {
+				if errors.Is(err, model.ErrRecordNotFound) {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting questionnaire info")
@@ -1812,7 +1833,7 @@ func TestDeleteQuestionnaire(t *testing.T) {
 
 		if err == nil {
 			assertion.Fail("questionnaire not deleted")
-		} else if err != errors.New("record not found") {
+		} else if !errors.Is(err, model.ErrRecordNotFound) {
 			assertion.Fail("unexpected error during getting questionnaire info")
 		}
 	}
@@ -2559,7 +2580,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			for valid {
 				ctx := context.Background()
 				_, _, _, _, _, _, _, _, err := IQuestionnaire.GetQuestionnaireInfo(ctx, questionnaireID)
-				if err == errors.New("record not found") {
+				if errors.Is(err, model.ErrRecordNotFound) {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting questionnaire info")

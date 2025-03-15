@@ -58,6 +58,11 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	_, err = model.Migrate()
+	if err != nil {
+		panic(err)
+	}
+
 	setupSampleQuestionnaire()
 	setupSampleResponse()
 
