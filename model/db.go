@@ -74,16 +74,11 @@ func EstablishConnection(isProduction bool) error {
 func Migrate() (init bool, err error) {
 	m := gormigrate.New(db.Session(&gorm.Session{}), gormigrate.DefaultOptions, Migrations())
 
-	var count int64
-	db.Table(gormigrate.DefaultOptions.TableName).Where(gormigrate.DefaultOptions.IDColumnName+" = ?", "SCHEMA_INIT").Count(&count)
+	m.InitSchema(func(db *gorm.DB) error {
+		init = true
 
-	if count == 0 {
-		m.InitSchema(func(db *gorm.DB) error {
-			init = true
-
-			return db.AutoMigrate(AllTables()...)
-		})
-	}
+		return db.AutoMigrate(AllTables()...)
+	})
 	err = m.Migrate()
 	return
 }
