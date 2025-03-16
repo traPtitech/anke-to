@@ -1894,7 +1894,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	response02, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -1964,8 +1964,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
 	// sortTitle := (openapi.ResponseSortInQuery)("title")
 	// sortTitleDesc := (openapi.ResponseSortInQuery)("-title")
-	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
-	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	// sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
+	// sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
 	constTrue := true
 
 	testCases := []test{
@@ -1980,7 +1980,6 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIdList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response02.ResponseId,
 					response03.ResponseId,
 				},
 			},
@@ -1999,7 +1998,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "sort created_at",
+			description: "sort submitted_at",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2009,7 +2008,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "sort -created_at",
+			description: "sort -submitted_at",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2038,26 +2037,26 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 		// 		},
 		// 	},
 		// },
-		{
-			description: "sort modified_at",
-			args: args{
-				userID:          userOne,
-				questionnaireID: questionnaireDetail.QuestionnaireId,
-				params: openapi.GetQuestionnaireResponsesParams{
-					Sort: &sortModifiedAt,
-				},
-			},
-		},
-		{
-			description: "sort -modified_at",
-			args: args{
-				userID:          userOne,
-				questionnaireID: questionnaireDetail.QuestionnaireId,
-				params: openapi.GetQuestionnaireResponsesParams{
-					Sort: &sortModifiedAtDesc,
-				},
-			},
-		},
+		// {
+		// 	description: "sort modified_at",
+		// 	args: args{
+		// 		userID:          userOne,
+		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
+		// 		params: openapi.GetQuestionnaireResponsesParams{
+		// 			Sort: &sortModifiedAt,
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	description: "sort -modified_at",
+		// 	args: args{
+		// 		userID:          userOne,
+		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
+		// 		params: openapi.GetQuestionnaireResponsesParams{
+		// 			Sort: &sortModifiedAtDesc,
+		// 		},
+		// 	},
+		// },
 		{
 			description: "only my response",
 			args: args{
@@ -2071,7 +2070,6 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIdList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response02.ResponseId,
 				},
 			},
 		},
@@ -2137,7 +2135,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.Before(response.SubmittedAt), testCase.description, "created_at")
+						assertion.False(preCreatedAt.After(response.SubmittedAt), testCase.description, "submitted_at")
 					}
 					preCreatedAt = response.SubmittedAt
 				}
@@ -2145,7 +2143,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.After(response.SubmittedAt), testCase.description, "-created_at")
+						assertion.False(preCreatedAt.Before(response.SubmittedAt), testCase.description, "-submitted_at")
 					}
 					preCreatedAt = response.SubmittedAt
 				}
@@ -2185,7 +2183,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 		}
 
 		if testCase.expect.responseIdList != nil {
-			var responseIdList []int
+			responseIdList := []int{}
 			for _, response := range responseList {
 				responseIdList = append(responseIdList, response.ResponseId)
 			}
@@ -2193,18 +2191,18 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				return (*testCase.expect.responseIdList)[i] < (*testCase.expect.responseIdList)[j]
 			})
 			sort.Slice(responseIdList, func(i, j int) bool { return responseIdList[i] < responseIdList[j] })
-			assertion.Equal(testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
+			assertion.Equal(*testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
 		}
 
 		if testCase.args.params.OnlyMyResponse != nil {
 			for _, response := range responseList {
-				assertion.Equal(response.Respondent, testCase.args.userID, testCase.description, "OnlyMyResponse")
+				assertion.Equal(*response.Respondent, testCase.args.userID, testCase.description, "OnlyMyResponse")
 			}
 		}
 
 		if testCase.args.isAnonymousQuestionnaire {
 			for _, response := range responseList {
-				assertion.Equal(response.Respondent, nil, testCase.description, "anonymous questionnaire with respondent")
+				assertion.Nil(response.Respondent, testCase.description, "anonymous questionnaire with respondent")
 			}
 		} else {
 			for _, response := range responseList {

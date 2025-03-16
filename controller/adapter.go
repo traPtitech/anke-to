@@ -329,12 +329,17 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		return openapi.Response{}, err
 	}
 
+	respondent := &respondentDetail.TraqID
+	if isAnonymous {
+		respondent = nil
+	}
+
 	res := openapi.Response{
 		Body:            oResponseBodies,
 		IsDraft:         respondentDetail.SubmittedAt.Valid,
 		ModifiedAt:      respondentDetail.ModifiedAt,
 		QuestionnaireId: respondentDetail.QuestionnaireID,
-		Respondent:      &respondentDetail.TraqID,
+		Respondent:      respondent,
 		ResponseId:      respondentDetail.ResponseID,
 		SubmittedAt:     respondentDetail.SubmittedAt.Time,
 		IsAnonymous:     &isAnonymous,

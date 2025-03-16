@@ -927,7 +927,19 @@ func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionn
 
 func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID int, params openapi.GetQuestionnaireResponsesParams, userID string) (openapi.Responses, error) {
 	res := []openapi.Response{}
-	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, string(*params.Sort), *params.OnlyMyResponse, userID)
+	var sort string
+	var onlyMyResponse bool
+	if params.Sort != nil {
+		sort = string(*params.Sort)
+	} else {
+		sort = ""
+	}
+	if params.OnlyMyResponse != nil {
+		onlyMyResponse = *params.OnlyMyResponse
+	} else {
+		onlyMyResponse = false
+	}
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
@@ -1073,7 +1085,7 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 				}
 				if selectedOption < 1 || selectedOption > len(option) {
 					ok = false
-					break;
+					break
 				}
 				preOption = &selectedOption
 			}
