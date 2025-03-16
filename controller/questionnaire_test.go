@@ -242,7 +242,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.Admin.Users = []string{"specialTargetUser"}
+	questionnaire.Target.Users = []string{"specialTargetUser"}
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -561,10 +561,10 @@ func TestGetQuestionnaires(t *testing.T) {
 				require.NoError(t, err)
 
 				if testCase.args.params.OnlyTargetingMe != nil {
-					assertion.NotContains(questionnaireDetail.Targets, testCase.args.userID, testCase.description, "OnlyTargetingMe")
+					assertion.Contains(questionnaireDetail.Targets, testCase.args.userID, testCase.description, "OnlyTargetingMe")
 				}
 				if testCase.args.params.OnlyAdministratedByMe != nil {
-					assertion.NotContains(questionnaireDetail.Admins, testCase.args.userID, testCase.description, "OnlyAdministratedByMe")
+					assertion.Contains(questionnaireDetail.Admins, testCase.args.userID, testCase.description, "OnlyAdministratedByMe")
 				}
 			}
 		}
