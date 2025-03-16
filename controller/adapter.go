@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -356,7 +357,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				QuestionID: questions[i].ID,
 				Data:       bText.Answer,
 			})
-		case "TextLong":
+		case "TextArea":
 			bTextLong, err := b.AsResponseBodyTextLong()
 			if err != nil {
 				return nil, err
@@ -374,27 +375,33 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				QuestionID: questions[i].ID,
 				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
 			})
-		case "SingleChoice":
+		case "Checkbox":
 			bSingleChoice, err := b.AsResponseBodySingleChoice()
+			if err != nil {
+				return nil, err
+			}
+			data, err := json.Marshal(bSingleChoice.Answer)
 			if err != nil {
 				return nil, err
 			}
 			res = append(res, &model.ResponseMeta{
 				QuestionID: questions[i].ID,
-				Data:       strconv.FormatInt(int64(bSingleChoice.Answer), 10),
+				Data:       string(data),
 			})
 		case "MultipleChoice":
 			bMultipleChoice, err := b.AsResponseBodyMultipleChoice()
 			if err != nil {
 				return nil, err
 			}
-			for _, a := range bMultipleChoice.Answer {
-				res = append(res, &model.ResponseMeta{
-					QuestionID: questions[i].ID,
-					Data:       strconv.FormatInt(int64(a), 10),
-				})
+			data, err := json.Marshal(bMultipleChoice.Answer)
+			if err != nil {
+				return nil, err
 			}
-		case "Scale":
+			res = append(res, &model.ResponseMeta{
+				QuestionID: questions[i].ID,
+				Data:       string(data),
+			})
+		case "LinearScale":
 			bScale, err := b.AsResponseBodyScale()
 			if err != nil {
 				return nil, err

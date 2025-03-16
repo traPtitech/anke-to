@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -333,7 +334,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 				}
 				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
-						RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+						RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
 					})
 				if err != nil {
 					c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -347,7 +348,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 				}
 				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
-						RegexPattern: ".{," + fmt.Sprintf("%d", *b.MaxLength) + "}",
+						RegexPattern: "^.{0," + fmt.Sprintf("%d", *b.MaxLength) + "}$",
 					})
 				if err != nil {
 					c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -641,7 +642,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					}
 					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
-							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
 						})
 					if err != nil {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -655,7 +656,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					}
 					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
-							RegexPattern: ".{," + fmt.Sprintf("%d", *b.MaxLength) + "}",
+							RegexPattern: "^.{0," + fmt.Sprintf("%d", *b.MaxLength) + "}$",
 						})
 					if err != nil {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -743,7 +744,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					}
 					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
-							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
 						})
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -757,7 +758,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 					}
 					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
-							RegexPattern: ".{," + strconv.Itoa(*b.MaxLength) + "}",
+							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
 						})
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -991,41 +992,22 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 		c.Logger().Errorf("failed to get validations: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-
-	for i, validation := range validations {
-		switch questionTypes[validation.QuestionID] {
-		case "Text", "TextLong":
-			err := q.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
-			if err != nil {
-				if errors.Is(err, model.ErrTextMatching) {
-					c.Logger().Errorf("invalid text: %+v", err)
-					return res, echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				c.Logger().Errorf("invalid text: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		case "Number":
-			err := q.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
-			if err != nil {
-				if errors.Is(err, model.ErrInvalidNumber) {
-					c.Logger().Errorf("invalid number: %+v", err)
-					return res, echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				c.Logger().Errorf("invalid number: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-		}
+	validationMap := make(map[int]model.Validations, len(validations))
+	for _, validation := range validations {
+		validationMap[validation.QuestionID] = validation
 	}
 
-	// scaleのvalidation
-	scaleLabelIDs := []int{}
-	for _, question := range questions {
-		if question.Type == "Scale" {
-			scaleLabelIDs = append(scaleLabelIDs, question.ID)
-		}
+	options, err := q.IOption.GetOptions(c.Request().Context(), questionIDs)
+	if err != nil {
+		c.Logger().Errorf("failed to get options: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	optionMap := make(map[int][]model.Options, len(options))
+	for _, option := range options {
+		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option)
 	}
 
-	scaleLabels, err := q.IScaleLabel.GetScaleLabels(c.Request().Context(), scaleLabelIDs)
+	scaleLabels, err := q.IScaleLabel.GetScaleLabels(c.Request().Context(), questionIDs)
 	if err != nil {
 		c.Logger().Errorf("failed to get scale labels: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -1036,7 +1018,70 @@ func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID
 	}
 
 	for i, question := range questions {
-		if question.Type == "Scale" {
+		switch questionTypes[question.ID] {
+		case "Text", "TextArea":
+			validation, ok := validationMap[question.ID]
+			if !ok {
+				validation = model.Validations{}
+			}
+			err := q.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrTextMatching) {
+					c.Logger().Errorf("invalid text: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid text: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Number":
+			validation, ok := validationMap[question.ID]
+			if !ok {
+				validation = model.Validations{}
+			}
+			err := q.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrInvalidNumber) {
+					c.Logger().Errorf("invalid number: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				c.Logger().Errorf("invalid number: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Checkbox", "MultipleChoice":
+			option, ok := optionMap[question.ID]
+			if !ok {
+				option = []model.Options{}
+			}
+			var selectedOptions []int
+			if questionTypes[question.ID] == "Checkbox" {
+				var selectedOption int
+				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOption)
+				selectedOptions = append(selectedOptions, selectedOption)
+			} else if questionTypes[question.ID] == "MultipleChoice" {
+				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOptions)
+			}
+			ok = true
+			if len(selectedOptions) == 0 {
+				ok = false
+			}
+			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
+			var preOption *int
+			for _, selectedOption := range selectedOptions {
+				if preOption != nil && *preOption == selectedOption {
+					ok = false
+					break
+				}
+				if selectedOption < 1 || selectedOption > len(option) {
+					ok = false
+					break;
+				}
+				preOption = &selectedOption
+			}
+			if !ok {
+				c.Logger().Errorf("invalid option: %+v", err)
+				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "LinearScale":
 			label, ok := scaleLabelMap[question.ID]
 			if !ok {
 				label = model.ScaleLabels{}

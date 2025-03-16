@@ -2260,19 +2260,6 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
-	questionnaire.IsPublished = false
-	e = echo.New()
-	body, err = json.Marshal(questionnaire)
-	require.NoError(t, err)
-	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
-	rec = httptest.NewRecorder()
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	ctx = e.NewContext(req, rec)
-	questionnaireDetailNotPublished, err := q.PostQuestionnaire(ctx, questionnaire)
-	require.NoError(t, err)
-
-	questionnaire = sampleQuestionnaire
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2309,7 +2296,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	})
 	invalidResponseBodyTextLong := openapi.ResponseBody{}
 	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
-		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
 	invalidResponseBodyNumber := openapi.ResponseBody{}
@@ -2386,12 +2373,32 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
+						sampleResponseBodyScale,
 						sampleResponseBodyTextLong,
-						invalidResponseBodyText,
 						sampleResponseBodyNumber,
 						sampleResponseBodySingleChoice,
 						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyText,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "no enough response",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.ResponseBody{
 						sampleResponseBodyScale,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
 					},
 					IsDraft: false,
 				},
@@ -2537,17 +2544,6 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "not published",
-			args: args{
-				questionnaireDetail: questionnaireDetailNotPublished,
-				params:              sampleResponse,
-				userID:              userOne,
-			},
-			expect: expect{
-				isErr: true,
-			},
-		},
-		{
 			description: "questionnaire no due",
 			args: args{
 				questionnaireDetail: questionnaireDetailNoDue,
@@ -2623,8 +2619,8 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		assertion.Equal(testCase.args.params.IsDraft, response.IsDraft, testCase.description, "is draft")
 
 		assertion.Equal(testCase.args.questionnaireDetail.QuestionnaireId, response.QuestionnaireId, testCase.description, "questionnaire id")
-		assertion.Equal(testCase.args.userID, response.Respondent, testCase.description, "respondent")
-		assertion.Equal(testCase.args.isAnonymous, response.IsAnonymous, testCase.description, "is anonymous")
+		assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "respondent")
+		assertion.Equal(testCase.args.isAnonymous, *response.IsAnonymous, testCase.description, "is anonymous")
 
 		if testCase.args.params.IsDraft {
 			assertion.Equal(response.SubmittedAt, time.Time{}, testCase.description, "submitted at")

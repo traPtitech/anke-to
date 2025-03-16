@@ -47,11 +47,11 @@ func setupSampleResponse() {
 		QuestionType: "Number",
 	})
 	sampleResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
-		Answer:       0,
+		Answer:       1,
 		QuestionType: "SingleChoice",
 	})
 	sampleResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
-		Answer:       []int{0, 1},
+		Answer:       []int{1, 2},
 		QuestionType: "MultipleChoice",
 	})
 	sampleResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
