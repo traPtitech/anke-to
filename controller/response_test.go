@@ -16,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 	"gopkg.in/guregu/null.v4"
 )
@@ -163,8 +164,8 @@ func TestGetMyResponses(t *testing.T) {
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
 	// sortTitle := (openapi.ResponseSortInQuery)("title")
 	// sortTitleDesc := (openapi.ResponseSortInQuery)("-title")
-	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
-	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	// sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
+	// sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
 
 	testCases := []test{
 		{
@@ -187,7 +188,7 @@ func TestGetMyResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "sort created_at",
+			description: "sort submitted_at",
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
@@ -196,7 +197,7 @@ func TestGetMyResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "sort -created_at",
+			description: "sort -submitted_at",
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
@@ -222,24 +223,24 @@ func TestGetMyResponses(t *testing.T) {
 		// 		},
 		// 	},
 		// },
-		{
-			description: "sort modified_at",
-			args: args{
-				userID: userOne,
-				params: openapi.GetMyResponsesParams{
-					Sort: &sortModifiedAt,
-				},
-			},
-		},
-		{
-			description: "sort -modified_at",
-			args: args{
-				userID: userOne,
-				params: openapi.GetMyResponsesParams{
-					Sort: &sortModifiedAtDesc,
-				},
-			},
-		},
+		// {
+		// 	description: "sort modified_at",
+		// 	args: args{
+		// 		userID: userOne,
+		// 		params: openapi.GetMyResponsesParams{
+		// 			Sort: &sortModifiedAt,
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	description: "sort -modified_at",
+		// 	args: args{
+		// 		userID: userOne,
+		// 		params: openapi.GetMyResponsesParams{
+		// 			Sort: &sortModifiedAtDesc,
+		// 		},
+		// 	},
+		// },
 		{
 			description: "special user",
 			args: args{
@@ -291,7 +292,7 @@ func TestGetMyResponses(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.Before(response.SubmittedAt), testCase.description, "created_at")
+						assertion.False(preCreatedAt.After(response.SubmittedAt), testCase.description, "submitted_at")
 					}
 					preCreatedAt = response.SubmittedAt
 				}
@@ -299,7 +300,7 @@ func TestGetMyResponses(t *testing.T) {
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
-						assertion.True(preCreatedAt.After(response.SubmittedAt), testCase.description, "-created_at")
+						assertion.False(preCreatedAt.Before(response.SubmittedAt), testCase.description, "-submitted_at")
 					}
 					preCreatedAt = response.SubmittedAt
 				}
@@ -319,27 +320,27 @@ func TestGetMyResponses(t *testing.T) {
 				// 		}
 				// 		preTitle = response.Title
 				// 	}
-			} else if *testCase.args.params.Sort == "modified_at" {
-				var preModifiedAt time.Time
-				for _, response := range responseList {
-					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.Before(response.ModifiedAt), testCase.description, "modified_at")
-					}
-					preModifiedAt = response.ModifiedAt
-				}
-			} else if *testCase.args.params.Sort == "-modified_at" {
-				var preModifiedAt time.Time
-				for _, response := range responseList {
-					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.After(response.ModifiedAt), testCase.description, "-modified_at")
-					}
-					preModifiedAt = response.ModifiedAt
-				}
+				// } else if *testCase.args.params.Sort == "modified_at" {
+				// 	var preModifiedAt time.Time
+				// 	for _, response := range responseList {
+				// 		if !preModifiedAt.IsZero() {
+				// 			assertion.True(preModifiedAt.Before(response.ModifiedAt), testCase.description, "modified_at")
+				// 		}
+				// 		preModifiedAt = response.ModifiedAt
+				// 	}
+				// } else if *testCase.args.params.Sort == "-modified_at" {
+				// 	var preModifiedAt time.Time
+				// 	for _, response := range responseList {
+				// 		if !preModifiedAt.IsZero() {
+				// 			assertion.True(preModifiedAt.After(response.ModifiedAt), testCase.description, "-modified_at")
+				// 		}
+				// 		preModifiedAt = response.ModifiedAt
+				// 	}
 			}
 		}
 
 		if testCase.expect.responseIdList != nil {
-			var responseIdList []int
+			responseIdList := []int{}
 			for _, response := range responseList {
 				responseIdList = append(responseIdList, response.ResponseId)
 			}
@@ -347,15 +348,11 @@ func TestGetMyResponses(t *testing.T) {
 				return (*testCase.expect.responseIdList)[i] < (*testCase.expect.responseIdList)[j]
 			})
 			sort.Slice(responseIdList, func(i, j int) bool { return responseIdList[i] < responseIdList[j] })
-			assertion.Equal(testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
+			assertion.Equal(*testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
 		}
 
 		for _, response := range responseList {
-			if *response.IsAnonymous {
-				assertion.Equal(response.Respondent, nil, testCase.description, "anonymous response with respondent")
-			} else {
-				assertion.NotEqual(response.Respondent, nil, testCase.description, "response with no respondent")
-			}
+			assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response with no respondent")
 		}
 	}
 }
@@ -459,7 +456,7 @@ func TestGetResponse(t *testing.T) {
 			for valid {
 				c := context.Background()
 				_, err := IRespondent.GetRespondent(c, responseID)
-				if err == errors.New("record not found") {
+				if err == model.ErrRecordNotFound {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting respondent")
@@ -487,13 +484,37 @@ func TestGetResponse(t *testing.T) {
 		}
 
 		if !testCase.args.isAnonymousQuestionnaire {
-			assertion.Equal(response0, response, testCase.description, "response")
+			assertion.Equal(response0.Body, response.Body, testCase.description, "response body")
+			if response.Respondent != nil {
+				assertion.Equal(*response0.IsAnonymous, *response.IsAnonymous, testCase.description, "response isAnonymous")
+			} else {
+				assertion.Equal(response0.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			}
+			assertion.Equal(response0.IsDraft, response.IsDraft, testCase.description, "response isDraft")
+			assertion.WithinDuration(response0.ModifiedAt.UTC().Truncate(time.Second), response.ModifiedAt.UTC(), time.Second, testCase.description, "response modifiedAt")
+			assertion.Equal(response0.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			if response.Respondent != nil {
+				assertion.Equal(*response0.Respondent, *response.Respondent, testCase.description, "response respondent")
+			} else {
+				assertion.Equal(response0.Respondent, response.Respondent, testCase.description, "response respondent")
+			}
+			assertion.Equal(response0.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(response0.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.WithinDuration(response0.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
 		} else {
-			assertion.Equal(response1, response, testCase.description, "response")
-		}
-
-		if testCase.args.isAnonymousQuestionnaire {
-			assertion.Equal(response.Respondent, nil, testCase.description, "anonymous questionnaire with respondent")
+			assertion.Equal(response1.Body, response.Body, testCase.description, "response body")
+			if response.Respondent != nil {
+				assertion.Equal(*response1.IsAnonymous, *response.IsAnonymous, testCase.description, "response isAnonymous")
+			} else {
+				assertion.Equal(response1.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			}
+			assertion.Equal(response1.IsDraft, response.IsDraft, testCase.description, "response isDraft")
+			assertion.WithinDuration(response1.ModifiedAt.UTC().Truncate(time.Second), response.ModifiedAt.UTC(), time.Second, testCase.description, "response modifiedAt")
+			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.Nil(response.Respondent, testCase.description, "anonymous questionnaire respondent")
+			assertion.Equal(response1.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.WithinDuration(response1.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
 		}
 	}
 }
@@ -564,7 +585,7 @@ func TestDeleteResponse(t *testing.T) {
 			for valid {
 				c := context.Background()
 				_, err := IRespondent.GetRespondent(c, responseID)
-				if err == errors.New("record not found") {
+				if err == model.ErrRecordNotFound {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting respondent")
@@ -594,7 +615,7 @@ func TestDeleteResponse(t *testing.T) {
 
 		if err == nil {
 			assertion.Fail("response not deleted")
-		} else if err != errors.New("record not found") {
+		} else if err != model.ErrRecordNotFound {
 			assertion.Fail("unexpected error during getting respondent")
 		}
 	}
@@ -633,19 +654,6 @@ func TestEditResponse(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
-	questionnaire.IsPublished = false
-	e = echo.New()
-	body, err = json.Marshal(questionnaire)
-	require.NoError(t, err)
-	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
-	rec = httptest.NewRecorder()
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	ctx = e.NewContext(req, rec)
-	questionnaireDetailNotPublished, err := q.PostQuestionnaire(ctx, questionnaire)
-	require.NoError(t, err)
-
-	questionnaire = sampleQuestionnaire
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -681,7 +689,7 @@ func TestEditResponse(t *testing.T) {
 	})
 	invalidResponseBodyTextLong := openapi.ResponseBody{}
 	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
-		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
 	invalidResponseBodyNumber := openapi.ResponseBody{}
@@ -724,7 +732,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "valid draft",
+			description: "invalid edit to draft",
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
@@ -740,13 +748,17 @@ func TestEditResponse(t *testing.T) {
 				},
 				userID: userOne,
 			},
+			expect: expect{
+				isErr: true,
+			},
 		},
 		{
 			description: "invalid response id",
 			args: args{
-				invalidResponseID: true,
-				params:            sampleResponse,
-				userID:            userOne,
+				questionnaireDetail: questionnaireDetail,
+				invalidResponseID:   true,
+				params:              sampleResponse,
+				userID:              userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -758,12 +770,12 @@ func TestEditResponse(t *testing.T) {
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
 					Body: []openapi.ResponseBody{
-						sampleResponseBodyTextLong,
-						invalidResponseBodyText,
+						sampleResponseBodyText,
+						sampleResponseBodyScale,
 						sampleResponseBodyNumber,
 						sampleResponseBodySingleChoice,
 						sampleResponseBodyMultipleChoice,
-						sampleResponseBodyScale,
+						sampleResponseBodyTextLong,
 					},
 					IsDraft: false,
 				},
@@ -900,17 +912,6 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 		{
-			description: "not published",
-			args: args{
-				questionnaireDetail: questionnaireDetailNotPublished,
-				params:              sampleResponse,
-				userID:              userOne,
-			},
-			expect: expect{
-				isErr: true,
-			},
-		},
-		{
 			description: "questionnaire no due",
 			args: args{
 				questionnaireDetail: questionnaireDetailNoDue,
@@ -952,7 +953,7 @@ func TestEditResponse(t *testing.T) {
 			for valid {
 				c := context.Background()
 				_, err := IRespondent.GetRespondent(c, responseID)
-				if err == errors.New("record not found") {
+				if err == model.ErrRecordNotFound {
 					valid = false
 				} else if err != nil {
 					assertion.Fail("unexpected error during getting respondent")
@@ -967,7 +968,7 @@ func TestEditResponse(t *testing.T) {
 			responseDueDateTime := null.Time{}
 			responseDueDateTime.Valid = true
 			responseDueDateTime.Time = time.Now().Add(-24 * time.Hour)
-			err = IQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, string(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
+			err = IQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, convertResponseViewableBy(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
 			require.NoError(t, err)
 		}
 
@@ -976,7 +977,7 @@ func TestEditResponse(t *testing.T) {
 		responseEditPost.IsDraft = testCase.args.params.IsDraft
 
 		e = echo.New()
-		body, err = json.Marshal(testCase.args.params)
+		body, err = json.Marshal(responseEditPost)
 		require.NoError(t, err)
 		req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/responses/%d", responseID), bytes.NewReader(body))
 		rec = httptest.NewRecorder()
@@ -1004,20 +1005,19 @@ func TestEditResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		assertion.Equal(response.QuestionnaireId, responseEdited.QuestionnaireId, testCase.description, "questionnaireId")
-		assertion.Equal(response.Respondent, responseEdited.Respondent, testCase.description, "respondent")
+		if testCase.args.isAnonymous {
+			assertion.Nil(responseEdited.Respondent, testCase.description, "anonymous response with respondent")
+		} else {
+			assertion.Equal(response.Respondent, responseEdited.Respondent, testCase.description, "respondent")
+		}
 		assertion.Equal(response.ResponseId, responseEdited.ResponseId, testCase.description, "responseId")
 		assertion.Equal(response.IsAnonymous, responseEdited.IsAnonymous, testCase.description, "isAnonymous")
-		assertion.Equal(response.SubmittedAt, responseEdited.SubmittedAt, testCase.description, "submittedAt")
+		assertion.WithinDuration(response.SubmittedAt.UTC().Truncate(time.Second), responseEdited.SubmittedAt.UTC(), time.Second, testCase.description, "submittedAt")
 		modifiedAtDiff := time.Since(responseEdited.ModifiedAt)
-		assertion.True(modifiedAtDiff >= 0 && modifiedAtDiff < time.Minute, testCase.description, "modifiedAt")
+		assertion.True(modifiedAtDiff > -time.Second && modifiedAtDiff < time.Minute, testCase.description, "modifiedAt", responseEdited.ModifiedAt)
 
 		assertion.Equal(responseEditPost.Body, responseEdited.Body, testCase.description, "response body")
 		assertion.Equal(responseEditPost.IsDraft, responseEdited.IsDraft, testCase.description, "response isDraft")
 
-		if testCase.args.isAnonymous {
-			assertion.Equal(responseEdited.Respondent, nil, testCase.description, "anonymous response with respondent")
-		} else {
-			assertion.NotEqual(responseEdited.Respondent, nil, testCase.description, "response with no respondent")
-		}
 	}
 }

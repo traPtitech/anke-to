@@ -37,6 +37,7 @@ func TestMain(m *testing.M) {
 	IResponse = model.NewResponse()
 	ITarget = model.NewTarget()
 	IQuestion = model.NewQuestion()
+	IOption = model.NewOption()
 	IValidation = model.NewValidation()
 	IScaleLabel = model.NewScaleLabel()
 
@@ -45,12 +46,11 @@ func TestMain(m *testing.M) {
 	IAdministrator = model.NewAdministrator()
 	IAdministratorGroup = model.NewAdministratorGroup()
 	IAdministratorUser = model.NewAdministratorUser()
-	IOption = model.NewOption()
 	ITransaction = model.NewTransaction()
 	IWebhook = traq.NewWebhook()
 
 	re = NewReminder()
-	r = NewResponse(IQuestionnaire, IRespondent, IResponse, ITarget, IQuestion, IValidation, IScaleLabel)
+	r = NewResponse(IQuestionnaire, IRespondent, IResponse, ITarget, IQuestion, IOption, IValidation, IScaleLabel)
 	q = NewQuestionnaire(IQuestionnaire, ITarget, ITargetGroup, ITargetUser, IAdministrator, IAdministratorGroup, IAdministratorUser, IQuestion, IOption, IScaleLabel, IValidation, ITransaction, IRespondent, IWebhook, r, re)
 
 	err := model.EstablishConnection(true)

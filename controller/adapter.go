@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -210,7 +211,7 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 
 func respondentDetail2Response(ctx echo.Context, respondentDetail model.RespondentDetail) (openapi.Response, error) {
 	oResponseBodies := []openapi.ResponseBody{}
-	for j, r := range respondentDetail.Responses {
+	for _, r := range respondentDetail.Responses {
 		oResponseBody := openapi.ResponseBody{}
 		switch r.QuestionType {
 		case "Text":
@@ -227,8 +228,8 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 			}
 		case "TextArea":
 			if r.Body.Valid {
-				err := oResponseBody.FromResponseBodyText(
-					openapi.ResponseBodyText{
+				err := oResponseBody.FromResponseBodyTextLong(
+					openapi.ResponseBodyTextLong{
 						Answer:       r.Body.String,
 						QuestionType: "TextLong",
 					},
@@ -255,50 +256,46 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				}
 			}
 		case "MultipleChoice":
-			if r.Body.Valid {
+			if len(r.OptionResponse) > 0 {
+				if len(r.OptionResponse) > 1 {
+					return openapi.Response{}, errors.New("too many responses")
+				}
 				answer := []int{}
-				questionnaire, _, _, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
-				if err != nil {
-					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
-					return openapi.Response{}, err
-				}
-				for _, a := range r.OptionResponse {
-					for i, o := range questionnaire.Questions[j].Options {
-						if a == o.Body {
-							answer = append(answer, i)
-						}
+				for _, o := range r.OptionResponse {
+					err := json.Unmarshal([]byte(o), &answer)
+					if err != nil {
+						return openapi.Response{}, err
 					}
-				}
-				err = oResponseBody.FromResponseBodyMultipleChoice(
-					openapi.ResponseBodyMultipleChoice{
-						Answer:       answer,
-						QuestionType: "MultipleChoice",
-					},
-				)
-				if err != nil {
-					return openapi.Response{}, err
+					err = oResponseBody.FromResponseBodyMultipleChoice(
+						openapi.ResponseBodyMultipleChoice{
+							Answer:       answer,
+							QuestionType: "MultipleChoice",
+						},
+					)
+					if err != nil {
+						return openapi.Response{}, err
+					}
 				}
 			}
 		case "Checkbox":
-			if r.Body.Valid {
-				questionnaire, _, _, _, _, _, _, _, err := model.NewQuestionnaire().GetQuestionnaireInfo(ctx.Request().Context(), r.QuestionID)
-				if err != nil {
-					ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
-					return openapi.Response{}, err
+			if len(r.OptionResponse) > 0 {
+				if len(r.OptionResponse) > 1 {
+					return openapi.Response{}, errors.New("too many responses")
 				}
-				for _, a := range r.OptionResponse {
-					for i, o := range questionnaire.Questions[j].Options {
-						if a == o.Body {
-							err := oResponseBody.FromResponseBodySingleChoice(
-								openapi.ResponseBodySingleChoice{
-									Answer:       i,
-									QuestionType: "SingleChoice",
-								},
-							)
-							if err != nil {
-								return openapi.Response{}, err
-							}
-						}
+				for _, o := range r.OptionResponse {
+					var option int
+					err := json.Unmarshal([]byte(o), &option)
+					if err != nil {
+						return openapi.Response{}, err
+					}
+					err = oResponseBody.FromResponseBodySingleChoice(
+						openapi.ResponseBodySingleChoice{
+							Answer:       option,
+							QuestionType: "SingleChoice",
+						},
+					)
+					if err != nil {
+						return openapi.Response{}, err
 					}
 				}
 			}
@@ -336,13 +333,13 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 
 	res := openapi.Response{
 		Body:            oResponseBodies,
-		IsDraft:         respondentDetail.SubmittedAt.Valid,
+		IsAnonymous:     &isAnonymous,
+		IsDraft:         !respondentDetail.SubmittedAt.Valid,
 		ModifiedAt:      respondentDetail.ModifiedAt,
 		QuestionnaireId: respondentDetail.QuestionnaireID,
 		Respondent:      respondent,
 		ResponseId:      respondentDetail.ResponseID,
 		SubmittedAt:     respondentDetail.SubmittedAt.Time,
-		IsAnonymous:     &isAnonymous,
 	}
 
 	return res, nil

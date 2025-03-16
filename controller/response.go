@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -18,6 +20,7 @@ type Response struct {
 	model.IResponse
 	model.ITarget
 	model.IQuestion
+	model.IOption
 	model.IValidation
 	model.IScaleLabel
 }
@@ -28,6 +31,7 @@ func NewResponse(
 	response model.IResponse,
 	target model.ITarget,
 	question model.IQuestion,
+	option model.IOption,
 	validation model.IValidation,
 	scaleLabel model.IScaleLabel,
 ) *Response {
@@ -37,6 +41,7 @@ func NewResponse(
 		IResponse:      response,
 		ITarget:        target,
 		IQuestion:      question,
+		IOption:        option,
 		IValidation:    validation,
 		IScaleLabel:    scaleLabel,
 	}
@@ -45,7 +50,12 @@ func NewResponse(
 func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {
 	res := openapi.ResponsesWithQuestionnaireInfo{}
 
-	sort := string(*params.Sort)
+	var sort string
+	if params.Sort == nil {
+		sort = ""
+	} else {
+		sort = string(*params.Sort)
+	}
 	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
@@ -197,46 +207,27 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 	validations, err := r.IValidation.GetValidations(ctx.Request().Context(), questionIDs)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get validations: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validations: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	validationMap := make(map[int]model.Validations, len(validations))
+	for _, validation := range validations {
+		validationMap[validation.QuestionID] = validation
 	}
 
-	for i, validation := range validations {
-		switch questionTypes[validation.QuestionID] {
-		case "Text", "TextLong":
-			err := r.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
-			if err != nil {
-				if errors.Is(err, model.ErrTextMatching) {
-					ctx.Logger().Errorf("invalid text: %+v", err)
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid text: %w", err))
-				}
-				ctx.Logger().Errorf("invalid text: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid text: %w", err))
-			}
-		case "Number":
-			err := r.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
-			if err != nil {
-				if errors.Is(err, model.ErrInvalidNumber) {
-					ctx.Logger().Errorf("invalid number: %+v", err)
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid number: %w", err))
-				}
-				ctx.Logger().Errorf("invalid number: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid number: %w", err))
-			}
-		}
+	options, err := r.IOption.GetOptions(ctx.Request().Context(), questionIDs)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get options: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	optionMap := make(map[int][]model.Options, len(options))
+	for _, option := range options {
+		optionMap[option.QuestionID] = append(optionMap[option.QuestionID], option)
 	}
 
-	// scaleのvalidation
-	scaleLabelIDs := []int{}
-	for _, question := range questions {
-		if question.Type == "Scale" {
-			scaleLabelIDs = append(scaleLabelIDs, question.ID)
-		}
-	}
-
-	scaleLabels, err := r.IScaleLabel.GetScaleLabels(ctx.Request().Context(), scaleLabelIDs)
+	scaleLabels, err := r.IScaleLabel.GetScaleLabels(ctx.Request().Context(), questionIDs)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get scale labels: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get scale labels: %w", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	scaleLabelMap := make(map[int]model.ScaleLabels, len(scaleLabels))
 	for _, scaleLabel := range scaleLabels {
@@ -244,7 +235,70 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 	}
 
 	for i, question := range questions {
-		if question.Type == "Scale" {
+		switch questionTypes[question.ID] {
+		case "Text", "TextArea":
+			validation, ok := validationMap[question.ID]
+			if !ok {
+				validation = model.Validations{}
+			}
+			err := r.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrTextMatching) {
+					ctx.Logger().Errorf("invalid text: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				ctx.Logger().Errorf("invalid text: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Number":
+			validation, ok := validationMap[question.ID]
+			if !ok {
+				validation = model.Validations{}
+			}
+			err := r.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			if err != nil {
+				if errors.Is(err, model.ErrInvalidNumber) {
+					ctx.Logger().Errorf("invalid number: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
+				ctx.Logger().Errorf("invalid number: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "Checkbox", "MultipleChoice":
+			option, ok := optionMap[question.ID]
+			if !ok {
+				option = []model.Options{}
+			}
+			var selectedOptions []int
+			if questionTypes[question.ID] == "Checkbox" {
+				var selectedOption int
+				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOption)
+				selectedOptions = append(selectedOptions, selectedOption)
+			} else if questionTypes[question.ID] == "MultipleChoice" {
+				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOptions)
+			}
+			ok = true
+			if len(selectedOptions) == 0 {
+				ok = false
+			}
+			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
+			var preOption *int
+			for _, selectedOption := range selectedOptions {
+				if preOption != nil && *preOption == selectedOption {
+					ok = false
+					break
+				}
+				if selectedOption < 1 || selectedOption > len(option) {
+					ok = false
+					break
+				}
+				preOption = &selectedOption
+			}
+			if !ok {
+				ctx.Logger().Errorf("invalid option: %+v", err)
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			}
+		case "LinearScale":
 			label, ok := scaleLabelMap[question.ID]
 			if !ok {
 				label = model.ScaleLabels{}
@@ -252,8 +306,28 @@ func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDIn
 			err := r.IScaleLabel.CheckScaleLabel(label, responseMetas[i].Data)
 			if err != nil {
 				ctx.Logger().Errorf("invalid scale: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid scale: %w", err))
+				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
+		}
+	}
+
+	respondentDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
+	}
+	if !respondentDetail.SubmittedAt.Valid {
+		if !req.IsDraft {
+			err = r.IRespondent.UpdateSubmittedAt(ctx.Request().Context(), responseID)
+			if err != nil {
+				ctx.Logger().Errorf("failed to update submitted at: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update submitted at: %w", err))
+			}
+		}
+	} else {
+		if req.IsDraft {
+			ctx.Logger().Errorf("unable to update the response to draft")
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("unable to update the response to draft"))
 		}
 	}
 
