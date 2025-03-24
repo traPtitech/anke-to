@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"log"
 	"slices"
 	"sort"
 	"sync"
@@ -62,7 +63,7 @@ func (jq *JobQueue) PushReminder(questionnaireID int, limit *time.Time) error {
 				Action: func() {
 					err := reminderAction(questionnaireID, reminderTimingStrings[i])
 					if err != nil {
-						panic(err)
+						log.Printf("Failed to execute reminderAction for questionnaireID %d: %v", questionnaireID, err)
 					}
 				},
 			})
