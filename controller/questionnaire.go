@@ -78,7 +78,7 @@ func NewQuestionnaire(
 
 const MaxTitleLength = 50
 
-func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
+func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
 	res := openapi.QuestionnaireList{}
 	var sort string
 	if params.Sort == nil {
@@ -160,7 +160,7 @@ func (q Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params
 	return res, nil
 }
 
-func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
+func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQuestionnaireJSONRequestBody) (openapi.QuestionnaireDetail, error) {
 	responseDueDateTime := null.Time{}
 	if params.ResponseDueDateTime != nil {
 		responseDueDateTime.Valid = true
@@ -420,7 +420,7 @@ func (q Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQues
 	}
 	return questionnaireDetail, nil
 }
-func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
+func (q *Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (openapi.QuestionnaireDetail, error) {
 	questionnaireInfo, targets, targetUsers, targetGroups, admins, adminUsers, adminGroups, respondents, err := q.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
 	if err != nil {
 		return openapi.QuestionnaireDetail{}, err
@@ -433,7 +433,7 @@ func (q Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) (
 	return questionnaireDetail, nil
 }
 
-func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
+func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
 	// unable to change the questionnaire from anoymous to non-anonymous
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
 	if err != nil {
@@ -826,7 +826,7 @@ func (q Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, pa
 	return nil
 }
 
-func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		err := q.IQuestionnaire.DeleteQuestionnaire(ctx, questionnaireID)
 		if err != nil {
@@ -879,7 +879,7 @@ func (q Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) 
 	return nil
 }
 
-func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
+func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
 	status, err := q.CheckRemindStatus(questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to check remind status: %+v", err)
@@ -889,7 +889,7 @@ func (q Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionna
 	return status, nil
 }
 
-func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
+func (q *Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
 	if isRemindEnabled {
 		status, err := q.CheckRemindStatus(questionnaireID)
 		if err != nil {
@@ -925,7 +925,7 @@ func (q Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionn
 	return nil
 }
 
-func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID int, params openapi.GetQuestionnaireResponsesParams, userID string) (openapi.Responses, error) {
+func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID int, params openapi.GetQuestionnaireResponsesParams, userID string) (openapi.Responses, error) {
 	res := []openapi.Response{}
 	var sort string
 	var onlyMyResponse bool
@@ -960,7 +960,7 @@ func (q Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireID
 	return res, nil
 }
 
-func (q Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID int, params openapi.PostQuestionnaireResponseJSONRequestBody, userID string) (openapi.Response, error) {
+func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireID int, params openapi.PostQuestionnaireResponseJSONRequestBody, userID string) (openapi.Response, error) {
 	res := openapi.Response{}
 
 	limit, err := q.GetQuestionnaireLimit(c.Request().Context(), questionnaireID)
