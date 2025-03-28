@@ -51,7 +51,7 @@ const (
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
 // SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
-func (m Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Request().Header.Get("X-Showcase-User")
 		if userID == "" {
@@ -65,7 +65,7 @@ func (m Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc 
 }
 
 // TraPMemberAuthenticate traP部員かの認証
-func (m Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := m.GetUserID(c)
 		if err != nil {
@@ -84,7 +84,7 @@ func (m Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerFu
 }
 
 // TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
-func (m Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
+func (m *Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStore(5),
 		IdentifierExtractor: func(c echo.Context) (string, error) {
@@ -102,7 +102,7 @@ func (m Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 }
 
 // QuestionnaireReadAuthenticate アンケートの閲覧権限があるかの認証
-func (m Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		userID, err := m.GetUserID(c)
@@ -157,7 +157,7 @@ func (m Middleware) QuestionnaireReadAuthenticate(next echo.HandlerFunc) echo.Ha
 }
 
 // QuestionnaireAdministratorAuthenticate アンケートの管理者かどうかの認証
-func (m Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		userID, err := m.GetUserID(c)
@@ -196,7 +196,7 @@ func (m Middleware) QuestionnaireAdministratorAuthenticate(next echo.HandlerFunc
 }
 
 // ResponseReadAuthenticate 回答閲覧権限があるかの認証
-func (m Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		userID, err := m.GetUserID(c)
@@ -262,7 +262,7 @@ func (m Middleware) ResponseReadAuthenticate(next echo.HandlerFunc) echo.Handler
 }
 
 // RespondentAuthenticate 回答者かどうかの認証
-func (m Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		userID, err := m.GetUserID(c)
@@ -302,7 +302,7 @@ func (m Middleware) RespondentAuthenticate(next echo.HandlerFunc) echo.HandlerFu
 }
 
 // GetValidator Validatorを設定する
-func (m Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
+func (m *Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
 	rowValidate := c.Get(validatorKey)
 	validate, ok := rowValidate.(*validator.Validate)
 	if !ok {
@@ -313,7 +313,7 @@ func (m Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
 }
 
 // GetUserID ユーザーIDを取得する
-func (m Middleware) GetUserID(c echo.Context) (string, error) {
+func (m *Middleware) GetUserID(c echo.Context) (string, error) {
 	rowUserID := c.Get(userIDKey)
 	userID, ok := rowUserID.(string)
 	if !ok {

@@ -42,7 +42,7 @@ func NewResponse(
 	}
 }
 
-func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {
+func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {
 	res := openapi.ResponsesWithQuestionnaireInfo{}
 
 	sort := string(*params.Sort)
@@ -102,7 +102,7 @@ func (r Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponses
 	return res, nil
 }
 
-func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) (openapi.Response, error) {
+func (r *Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) (openapi.Response, error) {
 	responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
@@ -122,7 +122,7 @@ func (r Response) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 	return res, nil
 }
 
-func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
+func (r *Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
 	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
@@ -152,7 +152,7 @@ func (r Response) DeleteResponse(ctx echo.Context, responseID openapi.ResponseID
 	return nil
 }
 
-func (r Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, req openapi.EditResponseJSONRequestBody) error {
+func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInPath, req openapi.EditResponseJSONRequestBody) error {
 	limit, err := r.IQuestionnaire.GetQuestionnaireLimitByResponseID(ctx.Request().Context(), responseID)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
