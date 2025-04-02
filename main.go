@@ -9,8 +9,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
-	"github.com/traPtitech/anke-to/controller"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 
@@ -57,53 +55,45 @@ func main() {
 		panic("no PORT")
 	}
 
-	controller.Wg.Add(1)
+	e := echo.New()
+	api := InjectAPIServer()
+
+	api.Reminder.Wg.Add(1)
 	go func() {
-		e := echo.New()
-		swagger, err := openapi.GetSwagger()
-		if err != nil {
-			panic(err)
-		}
-		api := InjectAPIServer()
-		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
-		e.Use(api.SetUserIDMiddleware)
+		e.Use(api.Middleware.SetUserIDMiddleware)
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
 
 		mws := NewMiddlewareSwitcher()
-		mws.AddGroupConfig("", api.TraPMemberAuthenticate)
+		mws.AddGroupConfig("", api.Middleware.TraPMemberAuthenticate)
 
-		mws.AddRouteConfig("/questionnaires", http.MethodGet, api.TrapRateLimitMiddlewareFunc())
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodGet, api.QuestionnaireReadAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodPatch, api.QuestionnaireAdministratorAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodDelete, api.QuestionnaireAdministratorAuthenticate)
+		mws.AddRouteConfig("/questionnaires", http.MethodGet, api.Middleware.TrapRateLimitMiddlewareFunc())
+		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodGet, api.Middleware.QuestionnaireReadAuthenticate)
+		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodPatch, api.Middleware.QuestionnaireAdministratorAuthenticate)
+		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodDelete, api.Middleware.QuestionnaireAdministratorAuthenticate)
+		mws.AddRouteConfig("/questionnaires/:questionnaireID/responses", http.MethodPost, api.Middleware.QuestionnaireReadAuthenticate)
+		mws.AddRouteConfig("/questionnaires/:questionnaireID/responses", http.MethodGet, api.Middleware.ResultAuthenticate)
 
-		mws.AddRouteConfig("/responses/:responseID", http.MethodGet, api.ResponseReadAuthenticate)
-		mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, api.RespondentAuthenticate)
-		mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, api.RespondentAuthenticate)
-
-		handlerApi := InjectHandler()
-		openapi.RegisterHandlers(e, handlerApi)
+		mws.AddRouteConfig("/responses/:responseID", http.MethodGet, api.Middleware.ResponseReadAuthenticate)
+		mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, api.Middleware.RespondentAuthenticate)
+		mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, api.Middleware.RespondentAuthenticate)
 
 		e.Use(mws.ApplyMiddlewares)
+
+		openapi.RegisterHandlers(e, api)
+
 		e.Logger.Fatal(e.Start(port))
 
-		controller.Wg.Done()
+		api.Reminder.Wg.Done()
 	}()
 
-	controller.Wg.Add(1)
+	api.Reminder.Wg.Add(1)
 	go func() {
-		controller.ReminderInit()
-		controller.Wg.Done()
+		api.Reminder.ReminderWorker()
+		api.Reminder.Wg.Done()
 	}()
 
-	controller.Wg.Add(1)
-	go func() {
-		controller.ReminderWorker()
-		controller.Wg.Done()
-	}()
-
-	controller.Wg.Wait()
+	api.Reminder.Wg.Wait()
 
 	// SetRouting(port)
 }

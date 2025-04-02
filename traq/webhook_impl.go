@@ -34,7 +34,11 @@ func (*Webhook) PostMessage(message string) error {
 	}
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
-	req.Header.Set("X-TRAQ-Signature", calcHMACSHA1(message))
+	messageHMAC, err := calcHMACSHA1(message)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("X-TRAQ-Signature", messageHMAC)
 
 	query := netUrl.Values{}
 	query.Add("embed", "1")
@@ -58,8 +62,11 @@ func (*Webhook) PostMessage(message string) error {
 	return nil
 }
 
-func calcHMACSHA1(message string) string {
+func calcHMACSHA1(message string) (string, error) {
 	mac := hmac.New(sha1.New, []byte(os.Getenv("TRAQ_WEBHOOK_SECRET")))
-	_, _ = mac.Write([]byte(message))
-	return hex.EncodeToString(mac.Sum(nil))
+	_, err := mac.Write([]byte(message))
+	if err != nil {
+		return "", fmt.Errorf("failed to write message to mac: %w", err)
+	}
+	return hex.EncodeToString(mac.Sum(nil)), nil
 }

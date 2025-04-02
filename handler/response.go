@@ -10,14 +10,13 @@ import (
 
 // (GET /responses/myResponses)
 func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams) error {
-	res := openapi.ResponsesWithQuestionnaireInfo{}
-	userID, err := getUserID(ctx)
+	userID, err := h.Middleware.GetUserID(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get userID: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
 	}
 
-	res, err = h.Response.GetMyResponses(ctx, params, userID)
+	res, err := h.Response.GetMyResponses(ctx, params, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %w", err))
@@ -27,13 +26,7 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 
 // (DELETE /responses/{responseID})
 func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
-	userID, err := getUserID(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get userID: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
-	}
-
-	err = h.Response.DeleteResponse(ctx, responseID, userID)
+	err := h.Response.DeleteResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to delete response: %+v", err)
 		return err
@@ -44,8 +37,6 @@ func (h Handler) DeleteResponse(ctx echo.Context, responseID openapi.ResponseIDI
 
 // (GET /responses/{responseID})
 func (h Handler) GetResponse(ctx echo.Context, responseID openapi.ResponseIDInPath) error {
-	res := openapi.Response{}
-
 	res, err := h.Response.GetResponse(ctx, responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get response: %+v", err)
@@ -62,7 +53,7 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind Responses: %w", err))
 	}
 
-	validate, err := getValidator(ctx)
+	validate, err := h.Middleware.GetValidator(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get validator: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))

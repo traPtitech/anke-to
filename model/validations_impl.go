@@ -15,7 +15,7 @@ func NewValidation() *Validation {
 	return new(Validation)
 }
 
-//Validations validationsテーブルの構造体
+// Validations validationsテーブルの構造体
 type Validations struct {
 	QuestionID   int    `json:"questionID"    gorm:"type:int(11);not null;primaryKey"`
 	RegexPattern string `json:"regex_pattern" gorm:"type:text;default:NULL"`
@@ -152,16 +152,15 @@ func (*Validation) CheckTextValidation(validation Validations, Response string) 
 // CheckNumberValid MinBound,MaxBoundが指定されていれば，有効な入力か確認する
 func (*Validation) CheckNumberValid(MinBound, MaxBound string) error {
 	var minBoundNum, maxBoundNum float64
+	var err error
 	if MinBound != "" {
-		min, err := strconv.ParseFloat(MinBound, 64)
-		minBoundNum = min
+		minBoundNum, err = strconv.ParseFloat(MinBound, 64)
 		if err != nil {
 			return fmt.Errorf("failed to check the boundary value. MinBound is not a numerical value: %w", ErrInvalidNumber)
 		}
 	}
 	if MaxBound != "" {
-		max, err := strconv.ParseFloat(MaxBound, 64)
-		maxBoundNum = max
+		maxBoundNum, err = strconv.ParseFloat(MaxBound, 64)
 		if err != nil {
 			return fmt.Errorf("failed to check the boundary value. MaxBound is not a numerical value: %w", ErrInvalidNumber)
 		}

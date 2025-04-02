@@ -35,7 +35,7 @@ type Questions struct {
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
+func (questionnaire *Questions) BeforeCreate(_ *gorm.DB) error {
 	questionnaire.CreatedAt = time.Now()
 
 	return nil
@@ -85,20 +85,25 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 	}
 
 	question := map[string]interface{}{
-		"questionnaire_id": questionnaireID,
-		"page_num":         pageNum,
-		"question_num":     questionNum,
-		"type":             questionType,
-		"body":             body,
-		"is_required":      isRequired,
+		"page_num":     pageNum,
+		"question_num": questionNum,
+		"type":         questionType,
+		"body":         body,
+		"is_required":  isRequired,
 	}
 
-	err = db.
+	result := db.
 		Model(&Questions{}).
-		Where("id = ?", questionID).
-		Updates(question).Error
-	if err != nil {
+		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
+		Updates(question)
+	if result.Error != nil {
 		return fmt.Errorf("failed to update a question record: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return ErrNoRecordUpdated
+	}
+	if result.RowsAffected != 1 {
+		return fmt.Errorf("expected to update 1 question record, but updated %d question records", result.RowsAffected)
 	}
 
 	return nil

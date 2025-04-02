@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,18 @@ func v3() *gormigrate.Migration {
 				return err
 			}
 			if err := tx.AutoMigrate(&v3Questionnaires{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&v3TargetUsers{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&v3TargetGroups{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&v3AdministratorUsers{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&v3AdministratorGroups{}); err != nil {
 				return err
 			}
 			return nil
@@ -54,4 +67,40 @@ type v3Questionnaires struct {
 
 func (*v3Questionnaires) TableName() string {
 	return "questionnaires"
+}
+
+type v3TargetUsers struct {
+	QuestionnaireID int    `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`
+}
+
+func (*v3TargetUsers) TableName() string {
+	return "targets_users"
+}
+
+type v3TargetGroups struct {
+	QuestionnaireID int       `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	GroupID         uuid.UUID `gorm:"type:char(36);size:36;not null;primaryKey"`
+}
+
+func (*v3TargetGroups) TableName() string {
+	return "targets_groups"
+}
+
+type v3AdministratorUsers struct {
+	QuestionnaireID int    `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`
+}
+
+func (*v3AdministratorUsers) TableName() string {
+	return "administrator_users"
+}
+
+type v3AdministratorGroups struct {
+	QuestionnaireID int       `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	GroupID         uuid.UUID `gorm:"type:char(36);size:36;not null;primaryKey"`
+}
+
+func (*v3AdministratorGroups) TableName() string {
+	return "administrator_groups"
 }

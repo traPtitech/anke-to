@@ -22,26 +22,29 @@ func NewQuestionnaire() *Questionnaire {
 
 // Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
-	ID                       int              `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
-	Title                    string           `json:"title"           gorm:"type:char(50);size:50;not null"`
-	Description              string           `json:"description"     gorm:"type:text;not null"`
-	ResTimeLimit             null.Time        `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
-	DeletedAt                gorm.DeletedAt   `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
-	ResSharedTo              string           `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
-	CreatedAt                time.Time        `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
-	ModifiedAt               time.Time        `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
-	Administrators           []Administrators `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	Targets                  []Targets        `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	TargetGroups             []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
-	Questions                []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	Respondents              []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	IsPublished              bool             `json:"is_published" gorm:"type:boolean;default:false"`
-	IsAnonymous              bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
-	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
+	ID                       int                   `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	Title                    string                `json:"title"           gorm:"type:char(50);size:50;not null"`
+	Description              string                `json:"description"     gorm:"type:text;not null"`
+	ResTimeLimit             null.Time             `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	DeletedAt                gorm.DeletedAt        `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
+	ResSharedTo              string                `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`
+	CreatedAt                time.Time             `json:"created_at"      gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	ModifiedAt               time.Time             `json:"modified_at"     gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	Administrators           []Administrators      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	AdministratorUsers       []AdministratorUsers  `json:"-" gorm:"foreignKey:QuestionnaireID"`
+	AdministratorGroups      []AdministratorGroups `json:"-" gorm:"foreignKey:QuestionnaireID"`
+	Targets                  []Targets             `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	TargetUsers              []TargetUsers         `json:"-" gorm:"foreignKey:QuestionnaireID"`
+	TargetGroups             []TargetGroups        `json:"-" gorm:"foreignKey:QuestionnaireID"`
+	Questions                []Questions           `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	Respondents              []Respondents         `json:"-"  gorm:"foreignKey:QuestionnaireID"`
+	IsPublished              bool                  `json:"is_published" gorm:"type:boolean;default:false"`
+	IsAnonymous              bool                  `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
+	IsDuplicateAnswerAllowed bool                  `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeCreate(tx *gorm.DB) error {
+func (questionnaire *Questionnaires) BeforeCreate(_ *gorm.DB) error {
 	now := time.Now()
 	questionnaire.ModifiedAt = now
 	questionnaire.CreatedAt = now
@@ -50,7 +53,7 @@ func (questionnaire *Questionnaires) BeforeCreate(tx *gorm.DB) error {
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questionnaires) BeforeUpdate(tx *gorm.DB) error {
+func (questionnaire *Questionnaires) BeforeUpdate(_ *gorm.DB) error {
 	questionnaire.ModifiedAt = time.Now()
 
 	return nil
@@ -256,7 +259,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	err = query.
 		Limit(20).
 		Offset(offset).
-		Group("questionnaires.id").
+		Group("questionnaires.id, targets.user_traqid").
 		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -291,16 +294,18 @@ func (*Questionnaire) GetAdminQuestionnaires(ctx context.Context, userID string)
 }
 
 // GetQuestionnaireInfo アンケートの詳細な情報取得
-func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []uuid.UUID, []string, []uuid.UUID, []string, error) {
+func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []string, []uuid.UUID, []string, []string, []uuid.UUID, []string, error) {
 	db, err := getTx(ctx)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get tx: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get tx: %w", err)
 	}
 
 	questionnaire := Questionnaires{}
 	targets := []string{}
+	targetUsers := []string{}
 	targetGroups := []uuid.UUID{}
 	administrators := []string{}
+	administratorUsers := []string{}
 	administoratorGroups := []uuid.UUID{}
 	respondents := []string{}
 
@@ -309,10 +314,10 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Preload("Targets").
 		First(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil, nil, nil, nil, nil, ErrRecordNotFound
+		return nil, nil, nil, nil, nil, nil, nil, nil, ErrRecordNotFound
 	}
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get a questionnaire: %w", err)
 	}
 
 	err = db.
@@ -321,7 +326,25 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &targets).Error
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get targets: %w", err)
+	}
+
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Table("target_users").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &targetUsers).Error
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get target users: %w", err)
+	}
+
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Table("target_groups").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("group_id", &targetGroups).Error
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get target groups: %w", err)
 	}
 
 	err = db.
@@ -330,7 +353,25 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ?", questionnaire.ID).
 		Pluck("user_traqid", &administrators).Error
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrators: %w", err)
+	}
+
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Table("administrator_users").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("user_traqid", &administratorUsers).Error
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrator users: %w", err)
+	}
+
+	err = db.
+		Session(&gorm.Session{NewDB: true}).
+		Table("administrator_groups").
+		Where("questionnaire_id = ?", questionnaire.ID).
+		Pluck("group_id", &administoratorGroups).Error
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrator groups: %w", err)
 	}
 
 	err = db.
@@ -339,10 +380,10 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
 		Pluck("user_traqid", &respondents).Error
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
 	}
 
-	return &questionnaire, targets, targetGroups, administrators, administoratorGroups, respondents, nil
+	return &questionnaire, targets, targetUsers, targetGroups, administrators, administratorUsers, administoratorGroups, respondents, nil
 }
 
 // GetTargettedQuestionnaires targetになっているアンケートの取得

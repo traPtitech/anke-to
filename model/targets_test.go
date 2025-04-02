@@ -467,14 +467,16 @@ func TestCancelTargets(t *testing.T) {
 			afterTargets := make([]Targets, 0, len(testCase.afterValidTargets)+len(testCase.afterInvalidTargets))
 			for _, afterTarget := range testCase.afterInvalidTargets {
 				afterTargets = append(afterTargets, Targets{
-					UserTraqid: afterTarget,
-					IsCanceled: false,
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      true,
 				})
 			}
 			for _, afterTarget := range testCase.afterValidTargets {
 				afterTargets = append(afterTargets, Targets{
-					UserTraqid: afterTarget,
-					IsCanceled: true,
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      false,
 				})
 			}
 

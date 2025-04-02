@@ -211,7 +211,7 @@ func Inititial() {
 		eg.Go(func() error {
 			defer wg.Done()
 			questionnaireIDChan := make(chan int32, 1)
-			reqFuncChan <- func(questinnaireIDChan chan int32) func() error {
+			reqFuncChan <- func(questionnaireIDChan chan int32) func() error {
 				return func() error {
 					questionnaireRes, _, err := client.QuestionnaireApi.PostQuestionnaire(ctx, newQuestionnaire)
 					if err != nil {
@@ -256,7 +256,7 @@ func Inititial() {
 						for j := range response.Body {
 							iQuestionID, ok := sm.Load(j)
 							if !ok {
-								return errors.New("No questionID")
+								return errors.New("no questionID")
 							}
 
 							response.Body[j].QuestionID, ok = iQuestionID.(int32)

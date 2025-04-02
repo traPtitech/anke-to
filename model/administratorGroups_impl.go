@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 // AdministratorGroup AdministratorGroupRepositoryの実装
@@ -20,7 +20,7 @@ type AdministratorGroups struct {
 	GroupID         uuid.UUID `gorm:"type:varchar(36);size:36;not null;primaryKey"`
 }
 
-// InsertAdministratorGroups アンケートの管理者グループを追加
+// InsertAdministratorGroups 選択したアンケート管理者（グループ）を追加
 func (*AdministratorGroup) InsertAdministratorGroups(ctx context.Context, questionnaireID int, groupID []uuid.UUID) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -47,7 +47,7 @@ func (*AdministratorGroup) InsertAdministratorGroups(ctx context.Context, questi
 	return nil
 }
 
-// DeleteAdministratorGroups アンケートの管理者グループを削除
+// DeleteAdministratorGroups 選択したアンケート管理者（グループ）を削除
 func (*AdministratorGroup) DeleteAdministratorGroups(ctx context.Context, questionnaireID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -64,7 +64,7 @@ func (*AdministratorGroup) DeleteAdministratorGroups(ctx context.Context, questi
 	return nil
 }
 
-// GetAdministratorGroups アンケートの管理者グループを取得
+// GetAdministratorGroups 選択したアンケート管理者（グループ）を取得
 func (*AdministratorGroup) GetAdministratorGroups(ctx context.Context, questionnaireIDs []int) ([]AdministratorGroups, error) {
 	db, err := getTx(ctx)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -132,8 +133,39 @@ const (
 	SortTypeTitleDESC      SortType = "-title"
 )
 
+// EditQuestionnaire defines model for EditQuestionnaire.
+type EditQuestionnaire struct {
+	Admin       *UsersAndGroups `json:"admin,omitempty"`
+	Description string          `json:"description"`
+
+	// IsAnonymous 匿名回答かどうか
+	IsAnonymous bool `json:"is_anonymous"`
+
+	// IsDuplicateAnswerAllowed 一人が複数回回答できるかどうか
+	IsDuplicateAnswerAllowed bool `json:"is_duplicate_answer_allowed"`
+
+	// IsPublished アンケートが公開されているかどうか
+	IsPublished     bool       `json:"is_published"`
+	QuestionnaireId int        `json:"questionnaire_id"`
+	Questions       []Question `json:"questions"`
+
+	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
+	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
+
+	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
+	ResponseViewableBy ResShareType    `json:"response_viewable_by"`
+	Target             *UsersAndGroups `json:"target,omitempty"`
+	Title              string          `json:"title"`
+}
+
+// EditQuestionnaireTargetsAndAdmins defines model for EditQuestionnaireTargetsAndAdmins.
+type EditQuestionnaireTargetsAndAdmins struct {
+	Admin  *UsersAndGroups `json:"admin,omitempty"`
+	Target *UsersAndGroups `json:"target,omitempty"`
+}
+
 // Groups defines model for Groups.
-type Groups = []string
+type Groups = []openapi_types.UUID
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
@@ -146,7 +178,7 @@ type NewQuestion struct {
 
 // NewQuestionnaire defines model for NewQuestionnaire.
 type NewQuestionnaire struct {
-	Admins      UsersAndGroups `json:"admins"`
+	Admin       UsersAndGroups `json:"admin"`
 	Description string         `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
@@ -164,7 +196,7 @@ type NewQuestionnaire struct {
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
 	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
+	Target             UsersAndGroups `json:"target"`
 	Title              string         `json:"title"`
 }
 
@@ -176,16 +208,17 @@ type NewResponse struct {
 
 // Question defines model for Question.
 type Question struct {
-	Body      string    `json:"body"`
-	CreatedAt time.Time `json:"created_at"`
+	Body string `json:"body"`
+
+	// CreatedAt 質問を追加または編集する場合はnull。
+	CreatedAt *time.Time `json:"created_at,omitempty"`
 
 	// IsRequired 回答必須かどうか
 	IsRequired bool `json:"is_required"`
 
 	// QuestionId 質問を追加する場合はnull。
-	QuestionId      *int `json:"question_id,omitempty"`
-	QuestionnaireId int  `json:"questionnaire_id"`
-	union           json.RawMessage
+	QuestionId *int `json:"question_id,omitempty"`
+	union      json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
@@ -252,7 +285,7 @@ type QuestionSettingsTextQuestionType string
 
 // QuestionSettingsTextLong defines model for QuestionSettingsTextLong.
 type QuestionSettingsTextLong struct {
-	MaxLength    *float32                             `json:"max_length,omitempty"`
+	MaxLength    *int                                 `json:"max_length,omitempty"`
 	QuestionType QuestionSettingsTextLongQuestionType `json:"question_type"`
 }
 
@@ -309,8 +342,7 @@ type QuestionTypeTextLongQuestionType string
 
 // QuestionnaireBase defines model for QuestionnaireBase.
 type QuestionnaireBase struct {
-	Admins      UsersAndGroups `json:"admins"`
-	Description string         `json:"description"`
+	Description string `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
@@ -325,9 +357,8 @@ type QuestionnaireBase struct {
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
-	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
-	Title              string         `json:"title"`
+	ResponseViewableBy ResShareType `json:"response_viewable_by"`
+	Title              string       `json:"title"`
 }
 
 // QuestionnaireCreatedAt defines model for QuestionnaireCreatedAt.
@@ -342,9 +373,12 @@ type QuestionnaireDescription struct {
 
 // QuestionnaireDetail defines model for QuestionnaireDetail.
 type QuestionnaireDetail struct {
-	Admins      UsersAndGroups `json:"admins"`
-	CreatedAt   time.Time      `json:"created_at"`
-	Description string         `json:"description"`
+	Admin UsersAndGroups `json:"admin"`
+
+	// Admins 管理者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
+	Admins      []TraqId  `json:"admins"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description"`
 
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
@@ -357,15 +391,20 @@ type QuestionnaireDetail struct {
 	ModifiedAt      time.Time  `json:"modified_at"`
 	QuestionnaireId int        `json:"questionnaire_id"`
 	Questions       []Question `json:"questions"`
-	Respondents     Users      `json:"respondents"`
+
+	// Respondents 回答者の一覧。匿名回答の場合はnull。
+	Respondents []TraqId `json:"respondents"`
 
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
 
 	// ResponseViewableBy アンケートの結果を, 運営は見られる ("admins"), 回答済みの人は見られる ("respondents") 誰でも見られる ("anyone")
 	ResponseViewableBy ResShareType   `json:"response_viewable_by"`
-	Targets            UsersAndGroups `json:"targets"`
-	Title              string         `json:"title"`
+	Target             UsersAndGroups `json:"target"`
+
+	// Targets 対象者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
+	Targets []TraqId `json:"targets"`
+	Title   string   `json:"title"`
 }
 
 // QuestionnaireID defines model for QuestionnaireID.
@@ -478,8 +517,8 @@ type QuestionnaireSummary struct {
 
 // QuestionnaireTargetsAndAdmins defines model for QuestionnaireTargetsAndAdmins.
 type QuestionnaireTargetsAndAdmins struct {
-	Admins  UsersAndGroups `json:"admins"`
-	Targets UsersAndGroups `json:"targets"`
+	Admin  UsersAndGroups `json:"admin"`
+	Target UsersAndGroups `json:"target"`
 }
 
 // QuestionnaireTitle defines model for QuestionnaireTitle.
@@ -608,13 +647,15 @@ type SortType string
 // TraqId traQ ID
 type TraqId = string
 
-// Users defines model for Users.
+// Users 回答者の一覧。匿名回答の場合はnull。
 type Users = []TraqId
 
 // UsersAndGroups defines model for UsersAndGroups.
 type UsersAndGroups struct {
 	Groups Groups `json:"groups"`
-	Users  Users  `json:"users"`
+
+	// Users 回答者の一覧。匿名回答の場合はnull。
+	Users Users `json:"users"`
 }
 
 // OnlyAdministratedByMeInQuery defines model for onlyAdministratedByMeInQuery.
@@ -681,7 +722,7 @@ type GetMyResponsesParams struct {
 type PostQuestionnaireJSONRequestBody = NewQuestionnaire
 
 // EditQuestionnaireJSONRequestBody defines body for EditQuestionnaire for application/json ContentType.
-type EditQuestionnaireJSONRequestBody = QuestionnaireDetail
+type EditQuestionnaireJSONRequestBody = EditQuestionnaire
 
 // EditQuestionnaireMyRemindStatusJSONRequestBody defines body for EditQuestionnaireMyRemindStatus for application/json ContentType.
 type EditQuestionnaireMyRemindStatusJSONRequestBody = QuestionnaireIsRemindEnabled
@@ -1077,9 +1118,11 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'body': %w", err)
 	}
 
-	object["created_at"], err = json.Marshal(t.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+	if t.CreatedAt != nil {
+		object["created_at"], err = json.Marshal(t.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
+		}
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1093,12 +1136,6 @@ func (t Question) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 		}
 	}
-
-	object["questionnaire_id"], err = json.Marshal(t.QuestionnaireId)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'questionnaire_id': %w", err)
-	}
-
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -1139,13 +1176,6 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionId)
 		if err != nil {
 			return fmt.Errorf("error reading 'question_id': %w", err)
-		}
-	}
-
-	if raw, found := object["questionnaire_id"]; found {
-		err = json.Unmarshal(raw, &t.QuestionnaireId)
-		if err != nil {
-			return fmt.Errorf("error reading 'questionnaire_id': %w", err)
 		}
 	}
 
