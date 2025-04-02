@@ -83,8 +83,13 @@ jobs:
             ${{ runner.os }}-gomod-
       - run: go install github.com/golang/mock/mockgen@v1.5.0
       - run: go generate ./...
-      - run: go test ./model -v -coverprofile=coverage.txt -race -vet=off # for temporary use as controller test is not ready
-      # - run: go test ./controller ./model -v -coverprofile=coverage.txt -race -vet=off
+      - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
+        env:
+          MARIADB_USERNAME: root
+          MARIADB_PASSWORD: password
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_DATABASE: anke-to
+      - run: go test ./controller -v -coverprofile=coverage-controller.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
@@ -93,11 +98,15 @@ jobs:
       - name: Upload coverage data
         uses: codecov/codecov-action@v5.1.2
         with:
-          files: ./coverage.txt
+          files: ./coverage-model.txt ./coverage-controller.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage.txt
-          path: coverage.txt
+          name: coverage-model.txt
+          path: coverage-model.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-controller.txt
+          path: coverage-controller.txt
   lint:
     name: Lint
     runs-on: ubuntu-latest
