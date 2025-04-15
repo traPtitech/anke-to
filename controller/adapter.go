@@ -121,7 +121,7 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 			if err != nil {
 				return nil, err
 			}
-		case "Checkbox":
+		case "MultipleChoice":
 			var err error
 			question.Options, err = model.NewOption().GetOptions(context.Background(), []int{question.ID})
 			if err != nil {
@@ -136,7 +136,7 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 			if err != nil {
 				return nil, err
 			}
-		case "MultipleChoice":
+		case "Checkbox":
 			var err error
 			question.Options, err = model.NewOption().GetOptions(context.Background(), []int{question.ID})
 			if err != nil {
@@ -255,7 +255,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 					return openapi.Response{}, err
 				}
 			}
-		case "MultipleChoice":
+		case "Checkbox":
 			if len(r.OptionResponse) > 0 {
 				if len(r.OptionResponse) > 1 {
 					return openapi.Response{}, errors.New("too many responses")
@@ -277,7 +277,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 					}
 				}
 			}
-		case "Checkbox":
+		case "MultipleChoice":
 			if len(r.OptionResponse) > 0 {
 				if len(r.OptionResponse) > 1 {
 					return openapi.Response{}, errors.New("too many responses")
@@ -377,7 +377,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				QuestionID: questions[i].ID,
 				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
 			})
-		case "Checkbox":
+		case "MultipleChoice":
 			bSingleChoice, err := b.AsResponseBodySingleChoice()
 			if err != nil {
 				return nil, err
@@ -390,7 +390,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				QuestionID: questions[i].ID,
 				Data:       string(data),
 			})
-		case "MultipleChoice":
+		case "Checkbox":
 			bMultipleChoice, err := b.AsResponseBodyMultipleChoice()
 			if err != nil {
 				return nil, err

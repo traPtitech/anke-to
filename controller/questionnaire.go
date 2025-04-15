@@ -262,9 +262,9 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			} else if questionType == "Number" {
 				questionType = "Number"
 			} else if questionType == "SingleChoice" {
-				questionType = "Checkbox"
-			} else if questionType == "MultipleChoice" {
 				questionType = "MultipleChoice"
+			} else if questionType == "MultipleChoice" {
+				questionType = "Checkbox"
 			} else if questionType == "Scale" {
 				questionType = "LinearScale"
 			} else {
@@ -279,7 +279,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 
 			// insert validations
 			switch questionType {
-			case "Checkbox":
+			case "MultipleChoice":
 				b, err := question.AsQuestionSettingsSingleChoice()
 				if err != nil {
 					c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -292,7 +292,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 						return errors.New("failed to insert option")
 					}
 				}
-			case "MultipleChoice":
+			case "Checkbox":
 				b, err := question.AsQuestionSettingsMultipleChoice()
 				if err != nil {
 					c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -569,9 +569,9 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 			} else if questionType == "Number" {
 				questionType = "Number"
 			} else if questionType == "SingleChoice" {
-				questionType = "Checkbox"
-			} else if questionType == "MultipleChoice" {
 				questionType = "MultipleChoice"
+			} else if questionType == "MultipleChoice" {
+				questionType = "Checkbox"
 			} else if questionType == "Scale" {
 				questionType = "LinearScale"
 			} else {
@@ -587,7 +587,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				ifQuestionExist[questionID] = true
 				// insert validations
 				switch questionType {
-				case "Checkbox":
+				case "MultipleChoice":
 					b, err := question.AsQuestionSettingsSingleChoice()
 					if err != nil {
 						c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -600,7 +600,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 							return errors.New("failed to insert option")
 						}
 					}
-				case "MultipleChoice":
+				case "Checkbox":
 					b, err := question.AsQuestionSettingsMultipleChoice()
 					if err != nil {
 						c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -693,7 +693,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				}
 				// update validations
 				switch questionType {
-				case "Checkbox":
+				case "MultipleChoice":
 					b, err := question.AsQuestionSettingsSingleChoice()
 					if err != nil {
 						c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -704,7 +704,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						c.Logger().Errorf("failed to update options: %+v", err)
 						return errors.New("failed to update options")
 					}
-				case "MultipleChoice":
+				case "Checkbox":
 					b, err := question.AsQuestionSettingsMultipleChoice()
 					if err != nil {
 						c.Logger().Errorf("failed to get question settings: %+v", err)
@@ -1065,11 +1065,11 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 				option = []model.Options{}
 			}
 			var selectedOptions []int
-			if questionTypes[question.ID] == "Checkbox" {
+			if questionTypes[question.ID] == "MultipleChoice" {
 				var selectedOption int
 				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOption)
 				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[question.ID] == "MultipleChoice" {
+			} else if questionTypes[question.ID] == "Checkbox" {
 				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOptions)
 			}
 			ok = true
