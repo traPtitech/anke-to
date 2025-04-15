@@ -270,11 +270,11 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				option = []model.Options{}
 			}
 			var selectedOptions []int
-			if questionTypes[question.ID] == "Checkbox" {
+			if questionTypes[question.ID] == "MultipleChoice" {
 				var selectedOption int
 				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOption)
 				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[question.ID] == "MultipleChoice" {
+			} else if questionTypes[question.ID] == "Checkbox" {
 				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOptions)
 			}
 			ok = true
