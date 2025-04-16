@@ -377,7 +377,111 @@ func TestIsTargetingMe(t *testing.T) {
 	}
 }
 
-func TestCancelTargets(t *testing.T) {
+func TestGetTargetsRemindStatus(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description     string
+		validTargets    []string // is_canceled = false
+		invalidTargets  []string // is_canceled = true
+		argTargets      []string
+		argTargetsValid []bool
+		isErr           bool
+		err             error
+	}
+
+	testCases := []test{
+		{
+			description:     "all valid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{},
+			argTargets:      []string{"a", "b"},
+			argTargetsValid: []bool{true, true},
+		},
+		{
+			description:     "all invalid targets",
+			validTargets:    []string{},
+			invalidTargets:  []string{"a", "b"},
+			argTargets:      []string{"a", "b"},
+			argTargetsValid: []bool{false, false},
+		},
+		{
+			description:     "both valid and invalid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"a", "b", "c", "d"},
+			argTargetsValid: []bool{true, true, false, false},
+		},
+		{
+			description:    "argTargets with target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"a", "b", "e"},
+			isErr:          true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.validTargets)+len(testCase.invalidTargets))
+			for _, target := range testCase.validTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: false,
+				})
+			}
+			for _, target := range testCase.invalidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: true,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			remindStatus, err := targetImpl.GetTargetsRemindStatus(ctx, questionnaire.ID, testCase.argTargets)
+			if err != nil {
+				if !testCase.isErr {
+					t.Errorf("unexpected error: %v", err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("invalid error: expected: %+v, actual: %+v", testCase.err, err)
+				}
+				return
+			}
+
+			queryTargets := make([]Targets, 0, len(testCase.argTargets))
+			for i, queryTarget := range testCase.argTargets {
+				queryTargets = append(queryTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      queryTarget,
+					IsCanceled:      !remindStatus[i],
+				})
+			}
+
+			actualTargets := make([]Targets, 0, len(testCase.argTargets))
+			for i, actualTarget := range testCase.argTargets {
+				actualTargets = append(actualTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      actualTarget,
+					IsCanceled:      testCase.argTargetsValid[i],
+				})
+			}
+
+			assert.ElementsMatchf(t, queryTargets, actualTargets, "targets")
+		})
+	}
+}
+
+func TestUpdateTargetsRemindStatus(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -388,7 +492,8 @@ func TestCancelTargets(t *testing.T) {
 		beforeInvalidTargets []string
 		afterValidTargets    []string
 		afterInvalidTargets  []string
-		argCancelTargets     []string
+		argUpdateTargets     []string
+		argRemindStatus      bool
 		isErr                bool
 		err                  error
 	}
@@ -400,7 +505,8 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a"},
-			argCancelTargets:     []string{"a"},
+			argUpdateTargets:     []string{"a"},
+			argRemindStatus:      false,
 		},
 		{
 			description:          "キャンセルするtargetが複数でエラーなし",
@@ -408,7 +514,8 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a", "b"},
-			argCancelTargets:     []string{"a", "b"},
+			argUpdateTargets:     []string{"a", "b"},
+			argRemindStatus:      false,
 		},
 		{
 			description:          "キャンセルするtargetがないときエラーなし",
@@ -416,7 +523,8 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
-			argCancelTargets:     []string{},
+			argUpdateTargets:     []string{},
+			argRemindStatus:      false,
 		},
 		{
 			description:          "キャンセルするtargetが見つからないときエラー",
@@ -424,8 +532,36 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
-			argCancelTargets:     []string{"b"},
+			argUpdateTargets:     []string{"b"},
+			argRemindStatus:      false,
 			isErr:                true,
+		},
+		{
+			description:          "再開するtargetが1人でエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{"b"},
+			afterValidTargets:    []string{"b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"b"},
+			argRemindStatus:      true,
+		},
+		{
+			description:          "再開するtargetが複数でエラーなし",
+			beforeValidTargets:   []string{},
+			beforeInvalidTargets: []string{"a", "b"},
+			afterValidTargets:    []string{"a", "b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"a", "b"},
+			argRemindStatus:      true,
+		},
+		{
+			description:          "再開するtargetがないときエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{},
+			argRemindStatus:      true,
 		},
 	}
 
@@ -454,7 +590,7 @@ func TestCancelTargets(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			err = targetImpl.CancelTargets(ctx, questionnaire.ID, testCase.argCancelTargets)
+			err = targetImpl.UpdateTargetsRemindStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argRemindStatus)
 			if err != nil {
 				if !testCase.isErr {
 					t.Errorf("unexpected error: %v", err)
