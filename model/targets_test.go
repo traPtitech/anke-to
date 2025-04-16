@@ -472,7 +472,7 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 				actualTargets = append(actualTargets, Targets{
 					QuestionnaireID: questionnaire.ID,
 					UserTraqid:      actualTarget,
-					IsCanceled:      testCase.argTargetsValid[i],
+					IsCanceled:      !testCase.argTargetsValid[i],
 				})
 			}
 
@@ -540,7 +540,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			description:          "再開するtargetが1人でエラーなし",
 			beforeValidTargets:   []string{"a"},
 			beforeInvalidTargets: []string{"b"},
-			afterValidTargets:    []string{"b"},
+			afterValidTargets:    []string{"a", "b"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{"b"},
 			argRemindStatus:      true,
