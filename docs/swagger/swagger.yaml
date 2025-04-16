@@ -398,17 +398,17 @@ components:
       enum:
         - submitted_at
         - -submitted_at
-        - title
-        - -title
         - modified_at
         - -modified_at
+        - traqid
+        - -traqid
       x-enum-varnames:
         - SubmittedAtASC
         - SubmittedAtDESC
-        - TitleASC
-        - TitleDESC
         - ModifiedAtASC
         - ModifiedAtDESC
+        - TraqIdASC
+        - TraqIdDESC
     ResShareType:
       type: string
       example: anyone

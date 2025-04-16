@@ -441,7 +441,7 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 		return nil, fmt.Errorf("failed to set respondents order: %w", err)
 	}
 
-	err = query.Find(&responsesID).Error
+	err = query.Select("respondents.response_id").Find(&responsesID).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get responsesID: %w", err)
 	}
@@ -480,6 +480,10 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 		query = query.Order("submitted_at")
 	case "-submitted_at":
 		query = query.Order("submitted_at DESC")
+	case "modified_at":
+		query = query.Order("modified_at")
+	case "-modified_at":
+		query = query.Order("modified_at DESC")
 	case "":
 	default:
 		var err error

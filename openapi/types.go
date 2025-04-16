@@ -119,8 +119,8 @@ const (
 	ResponseSortTypeModifiedAtDESC  ResponseSortType = "-modified_at"
 	ResponseSortTypeSubmittedAtASC  ResponseSortType = "submitted_at"
 	ResponseSortTypeSubmittedAtDESC ResponseSortType = "-submitted_at"
-	ResponseSortTypeTitleASC        ResponseSortType = "title"
-	ResponseSortTypeTitleDESC       ResponseSortType = "-title"
+	ResponseSortTypeTraqIdASC       ResponseSortType = "traqid"
+	ResponseSortTypeTraqIdDESC      ResponseSortType = "-traqid"
 )
 
 // Defines values for SortType.
