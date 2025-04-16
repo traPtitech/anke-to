@@ -98,8 +98,14 @@ func (h Handler) DeleteQuestionnaire(ctx echo.Context, questionnaireID openapi.Q
 
 // (GET /questionnaires/{questionnaireID}/myRemindStatus)
 func (h Handler) GetQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	userID, err := h.Middleware.GetUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	res := openapi.QuestionnaireIsRemindEnabled{}
-	status, err := h.Questionnaire.GetQuestionnaireMyRemindStatus(ctx, questionnaireID)
+	status, err := h.Questionnaire.GetQuestionnaireMyRemindStatus(ctx, questionnaireID, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get questionnaire my remind status: %+v", err)
 		return err
@@ -111,13 +117,19 @@ func (h Handler) GetQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireI
 
 // (PATCH /questionnaires/{questionnaireID}/myRemindStatus)
 func (h Handler) EditQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	userID, err := h.Middleware.GetUserID(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get userID: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get userID: %w", err))
+	}
+
 	params := openapi.EditQuestionnaireMyRemindStatusJSONRequestBody{}
 	if err := ctx.Bind(&params); err != nil {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
 	}
 
-	err := h.Questionnaire.EditQuestionnaireMyRemindStatus(ctx, questionnaireID, params.IsRemindEnabled)
+	err = h.Questionnaire.EditQuestionnaireMyRemindStatus(ctx, questionnaireID, userID, params.IsRemindEnabled)
 	if err != nil {
 		ctx.Logger().Errorf("failed to edit questionnaire my remind status: %+v", err)
 		return err
