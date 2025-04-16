@@ -380,6 +380,8 @@ func TestIsTargetingMe(t *testing.T) {
 func TestGetTargetsRemindStatus(t *testing.T) {
 	t.Parallel()
 
+	assertion := assert.New(t)
+
 	ctx := context.Background()
 
 	type test struct {
@@ -449,12 +451,14 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 			}
 
 			remindStatus, err := targetImpl.GetTargetsRemindStatus(ctx, questionnaire.ID, testCase.argTargets)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
 			if err != nil {
-				if !testCase.isErr {
-					t.Errorf("unexpected error: %v", err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("invalid error: expected: %+v, actual: %+v", testCase.err, err)
-				}
 				return
 			}
 
@@ -483,6 +487,8 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 
 func TestUpdateTargetsRemindStatus(t *testing.T) {
 	t.Parallel()
+
+	assertion := assert.New(t)
 
 	ctx := context.Background()
 
@@ -527,14 +533,13 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			argRemindStatus:      false,
 		},
 		{
-			description:          "キャンセルするtargetが見つからないときエラー",
+			description:          "キャンセルするtargetが見つからないときエラーなし",
 			beforeValidTargets:   []string{"a"},
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{"b"},
 			argRemindStatus:      false,
-			isErr:                true,
 		},
 		{
 			description:          "再開するtargetが1人でエラーなし",
@@ -591,12 +596,14 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			}
 
 			err = targetImpl.UpdateTargetsRemindStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argRemindStatus)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
 			if err != nil {
-				if !testCase.isErr {
-					t.Errorf("unexpected error: %v", err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("invalid error: expected: %+v, actual: %+v", testCase.err, err)
-				}
 				return
 			}
 
