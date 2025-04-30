@@ -385,42 +385,56 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 	ctx := context.Background()
 
 	type test struct {
-		description     string
-		validTargets    []string // is_canceled = false
-		invalidTargets  []string // is_canceled = true
-		argTargets      []string
-		argTargetsValid []bool
-		isErr           bool
-		err             error
+		description    string
+		validTargets   []string // is_canceled = false
+		invalidTargets []string // is_canceled = true
+		argTarget      string
+		argTargetValid bool
+		isErr          bool
+		err            error
 	}
 
 	testCases := []test{
 		{
-			description:     "all valid targets",
-			validTargets:    []string{"a", "b"},
-			invalidTargets:  []string{},
-			argTargets:      []string{"a", "b"},
-			argTargetsValid: []bool{true, true},
+			description:    "all valid targets",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{},
+			argTarget:      "a",
+			argTargetValid: true,
 		},
 		{
-			description:     "all invalid targets",
-			validTargets:    []string{},
-			invalidTargets:  []string{"a", "b"},
-			argTargets:      []string{"a", "b"},
-			argTargetsValid: []bool{false, false},
+			description:    "all invalid targets",
+			validTargets:   []string{},
+			invalidTargets: []string{"a", "b"},
+			argTarget:      "b",
+			argTargetValid: false,
 		},
 		{
-			description:     "both valid and invalid targets",
-			validTargets:    []string{"a", "b"},
-			invalidTargets:  []string{"c", "d"},
-			argTargets:      []string{"a", "b", "c", "d"},
-			argTargetsValid: []bool{true, true, false, false},
+			description:    "both valid and invalid targets",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTarget:      "c",
+			argTargetValid: false,
+		},
+		{
+			description:    "both valid and invalid targets changed order",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTarget:      "b",
+			argTargetValid: true,
+		},
+		{
+			description:    "both valid and invalid targets changed order duplicated arg targets",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTarget:      "c",
+			argTargetValid: false,
 		},
 		{
 			description:    "argTargets with target not in db",
 			validTargets:   []string{"a", "b"},
 			invalidTargets: []string{"c", "d"},
-			argTargets:     []string{"a", "b", "e"},
+			argTarget:      "e",
 			isErr:          true,
 		},
 	}
@@ -450,7 +464,7 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			remindStatus, err := targetImpl.GetTargetsRemindStatus(ctx, questionnaire.ID, testCase.argTargets)
+			remindStatus, err := targetImpl.GetTargetsRemindStatus(ctx, questionnaire.ID, testCase.argTarget)
 			if !testCase.isErr {
 				assertion.NoError(err, testCase.description, "no error")
 			} else if testCase.err != nil {
@@ -462,25 +476,7 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 				return
 			}
 
-			queryTargets := make([]Targets, 0, len(testCase.argTargets))
-			for i, queryTarget := range testCase.argTargets {
-				queryTargets = append(queryTargets, Targets{
-					QuestionnaireID: questionnaire.ID,
-					UserTraqid:      queryTarget,
-					IsCanceled:      !remindStatus[i],
-				})
-			}
-
-			actualTargets := make([]Targets, 0, len(testCase.argTargets))
-			for i, actualTarget := range testCase.argTargets {
-				actualTargets = append(actualTargets, Targets{
-					QuestionnaireID: questionnaire.ID,
-					UserTraqid:      actualTarget,
-					IsCanceled:      !testCase.argTargetsValid[i],
-				})
-			}
-
-			assert.ElementsMatchf(t, queryTargets, actualTargets, "targets")
+			assert.Equal(t, remindStatus, testCase.argTargetValid, testCase.description, "remindStatus")
 		})
 	}
 }

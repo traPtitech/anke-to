@@ -104,30 +104,23 @@ func (*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID str
 	return false, nil
 }
 
-func (*Target) GetTargetsRemindStatus(ctx context.Context, questionnaireID int, targets []string) ([]bool, error) {
+func (*Target) GetTargetsRemindStatus(ctx context.Context, questionnaireID int, target string) (bool, error) {
 	db, err := getTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction: %w", err)
+		return false, fmt.Errorf("failed to get transaction: %w", err)
 	}
 
-	var cancelStatus []bool
+	var cancelStatus bool
 	err = db.
 		Model(&Targets{}).
 		Select("is_canceled").
-		Where("questionnaire_id = ? AND user_traqid IN (?)", questionnaireID, targets).
-		Pluck("is_canceled", &cancelStatus).Error
+		Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, target).
+		Take(&cancelStatus).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get targets remind status: %w", err)
-	}
-	if len(cancelStatus) != len(targets) {
-		return nil, fmt.Errorf("some users are not the targets: %w", err)
+		return false, fmt.Errorf("failed to get targets remind status: %w", err)
 	}
 
-	remindStatus := []bool{}
-	for _, canceled := range cancelStatus {
-		remindStatus = append(remindStatus, !canceled)
-	}
-	return remindStatus, nil
+	return !cancelStatus, nil
 }
 
 func (*Target) UpdateTargetsRemindStatus(ctx context.Context, questionnaireID int, targets []string, remindStatus bool) error {
