@@ -330,6 +330,11 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("unable to update the response to draft"))
 		}
 	}
+	err = r.IRespondent.UpdateModifiedAt(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to update modified at: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update modified at: %w", err))
+	}
 
 	if len(responseMetas) > 0 {
 		err = r.IResponse.InsertResponses(ctx.Request().Context(), responseID, responseMetas)
