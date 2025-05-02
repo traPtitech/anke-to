@@ -1116,18 +1116,28 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		modifiedAt = time.Now()
 	}
 
-	resopnseID, err := q.InsertRespondent(c.Request().Context(), userID, questionnaireID, null.NewTime(submittedAt, !params.IsDraft))
-	if err != nil {
-		c.Logger().Errorf("failed to insert respondant: %+v", err)
-		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	if len(responseMetas) > 0 {
-		err = q.InsertResponses(c.Request().Context(), resopnseID, responseMetas)
+	var responseID int
+	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		var err error
+		responseID, err = q.InsertRespondent(ctx, userID, questionnaireID, null.NewTime(submittedAt, !params.IsDraft))
 		if err != nil {
-			c.Logger().Errorf("failed to insert responses: %+v", err)
-			return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+			c.Logger().Errorf("failed to insert respondant: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
+
+		if len(responseMetas) > 0 {
+			err = q.InsertResponses(ctx, responseID, responseMetas)
+			if err != nil {
+				c.Logger().Errorf("failed to insert responses: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		c.Logger().Errorf("failed to insert response: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert response: %w", err))
 	}
 
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
@@ -1138,7 +1148,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 
 	res = openapi.Response{
 		QuestionnaireId: questionnaireID,
-		ResponseId:      resopnseID,
+		ResponseId:      responseID,
 		Respondent:      &userID,
 		SubmittedAt:     submittedAt,
 		ModifiedAt:      modifiedAt,
