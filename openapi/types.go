@@ -705,7 +705,7 @@ type GetQuestionnairesParams struct {
 
 // GetQuestionnaireResponsesParams defines parameters for GetQuestionnaireResponses.
 type GetQuestionnaireResponsesParams struct {
-	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title", タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
+	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid", TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
 	Sort *ResponseSortInQuery `form:"sort,omitempty" json:"sort,omitempty"`
 
 	// OnlyMyResponse 自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
@@ -714,7 +714,7 @@ type GetQuestionnaireResponsesParams struct {
 
 // GetMyResponsesParams defines parameters for GetMyResponses.
 type GetMyResponsesParams struct {
-	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title", タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
+	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid", TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
 	Sort *ResponseSortInQuery `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
