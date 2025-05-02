@@ -2151,23 +2151,23 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
-						assertion.True(preTraqID > *response.Respondent, testCase.description, "traqid")
+						assertion.False(preTraqID > *response.Respondent, testCase.description, "traqid")
 					}
-					preTraqID = preTraqID
+					preTraqID = *response.Respondent
 				}
 			} else if *testCase.args.params.Sort == "-traqid" {
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
-						assertion.True(preTraqID < *response.Respondent, testCase.description, "-traqid")
+						assertion.False(preTraqID < *response.Respondent, testCase.description, "-traqid")
 					}
-					preTraqID = preTraqID
+					preTraqID = *response.Respondent
 				}
 			} else if *testCase.args.params.Sort == "modified_at" {
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.Before(response.ModifiedAt), testCase.description, "modified_at")
+						assertion.False(preModifiedAt.After(response.ModifiedAt), testCase.description, "modified_at")
 					}
 					preModifiedAt = response.ModifiedAt
 				}
@@ -2175,7 +2175,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.After(response.ModifiedAt), testCase.description, "-modified_at")
+						assertion.False(preModifiedAt.Before(response.ModifiedAt), testCase.description, "-modified_at")
 					}
 					preModifiedAt = response.ModifiedAt
 				}
