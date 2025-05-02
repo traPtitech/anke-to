@@ -545,7 +545,8 @@ type Response struct {
 
 // ResponseBody defines model for ResponseBody.
 type ResponseBody struct {
-	union json.RawMessage
+	QuestionId int `json:"question_id"`
+	union      json.RawMessage
 }
 
 // ResponseBodyBaseInteger defines model for ResponseBodyBaseInteger.
@@ -1506,10 +1507,43 @@ func (t *ResponseBody) MergeResponseBodyScale(v ResponseBodyScale) error {
 
 func (t ResponseBody) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["question_id"], err = json.Marshal(t.QuestionId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
+	}
+
+	b, err = json.Marshal(object)
 	return b, err
 }
 
 func (t *ResponseBody) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["question_id"]; found {
+		err = json.Unmarshal(raw, &t.QuestionId)
+		if err != nil {
+			return fmt.Errorf("error reading 'question_id': %w", err)
+		}
+	}
+
 	return err
 }
