@@ -994,9 +994,11 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 	// validationでチェック
 	questionIDs := make([]int, len(questions))
 	questionTypes := make(map[int]string, len(questions))
+	questionRequired := make(map[int]bool, len(questions))
 	for i, question := range questions {
 		questionIDs[i] = question.ID
 		questionTypes[question.ID] = question.Type
+		questionRequired[question.ID] = question.IsRequired
 	}
 
 	validations, err := q.IValidation.GetValidations(c.Request().Context(), questionIDs)
@@ -1030,6 +1032,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 	}
 
 	for _, responseMeta := range responseMetas {
+		questionRequired[responseMeta.QuestionID] = false
 		switch questionTypes[responseMeta.QuestionID] {
 		case "Text", "TextArea":
 			validation, ok := validationMap[responseMeta.QuestionID]
@@ -1106,6 +1109,13 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		default:
 			c.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
 			return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	for _, question := range questions {
+		if questionRequired[question.ID] {
+			c.Logger().Errorf("required question is not answered: %+v", question.ID)
+			return res, echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
 		}
 	}
 

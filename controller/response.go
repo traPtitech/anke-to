@@ -199,9 +199,11 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	// validationでチェック
 	questionIDs := make([]int, len(questions))
 	questionTypes := make(map[int]string, len(questions))
+	questionRequired := make(map[int]bool, len(questions))
 	for i, question := range questions {
 		questionIDs[i] = question.ID
 		questionTypes[question.ID] = question.Type
+		questionRequired[question.ID] = question.IsRequired
 	}
 
 	validations, err := r.IValidation.GetValidations(ctx.Request().Context(), questionIDs)
@@ -235,6 +237,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	}
 
 	for _, responseMeta := range responseMetas {
+		questionRequired[responseMeta.QuestionID] = false
 		switch questionTypes[responseMeta.QuestionID] {
 		case "Text", "TextArea":
 			validation, ok := validationMap[responseMeta.QuestionID]
@@ -311,6 +314,13 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		default:
 			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+	}
+
+	for _, question := range questions {
+		if questionRequired[question.ID] {
+			ctx.Logger().Errorf("required question is not answered: %+v", question.ID)
+			return echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
 		}
 	}
 
