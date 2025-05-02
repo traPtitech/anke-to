@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,13 +23,14 @@ import (
 )
 
 var (
-	sampleResponseBodyText           = openapi.ResponseBody{}
-	sampleResponseBodyTextLong       = openapi.ResponseBody{}
-	sampleResponseBodyNumber         = openapi.ResponseBody{}
-	sampleResponseBodySingleChoice   = openapi.ResponseBody{}
-	sampleResponseBodyMultipleChoice = openapi.ResponseBody{}
-	sampleResponseBodyScale          = openapi.ResponseBody{}
-	sampleResponse                   = openapi.NewResponse{}
+	sampleResponseBodyText            = openapi.ResponseBody{}
+	sampleResponseBodyTextLong        = openapi.ResponseBody{}
+	sampleResponseBodyNumber          = openapi.ResponseBody{}
+	sampleResponseBodySingleChoice    = openapi.ResponseBody{}
+	sampleResponseBodyMultipleChoice  = openapi.ResponseBody{}
+	sampleResponseBodyScale           = openapi.ResponseBody{}
+	sampleResponse                    = openapi.NewResponse{}
+	AddQuestionID2SampleResponseMutex sync.Mutex
 )
 
 func setupSampleResponse() {
@@ -73,6 +75,8 @@ func setupSampleResponse() {
 }
 
 func AddQuestionID2SampleResponse(questionnaireID int) {
+	AddQuestionID2SampleResponseMutex.Lock()
+	defer AddQuestionID2SampleResponseMutex.Unlock()
 	questions, err := q.IQuestion.GetQuestions(context.Background(), questionnaireID)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get questions: %v", err))
