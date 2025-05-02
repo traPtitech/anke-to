@@ -213,6 +213,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 	oResponseBodies := []openapi.ResponseBody{}
 	for _, r := range respondentDetail.Responses {
 		oResponseBody := openapi.ResponseBody{}
+		oResponseBody.QuestionId = r.QuestionID
 		switch r.QuestionType {
 		case "Text":
 			if r.Body.Valid {
@@ -348,7 +349,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Questions) ([]*model.ResponseMeta, error) {
 	res := []*model.ResponseMeta{}
 
-	for i, b := range body {
+	var questionIDMap = make(map[int]int, len(questions))
+	for i, question := range questions {
+		questionIDMap[question.ID] = i
+	}
+	for _, b := range body {
+		i, ok := questionIDMap[b.QuestionId]
+		if !ok {
+			return nil, errors.New("question not found")
+		}
 		switch questions[i].Type {
 		case "Text":
 			bText, err := b.AsResponseBodyText()
