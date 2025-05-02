@@ -72,6 +72,33 @@ func setupSampleResponse() {
 	}
 }
 
+func AddQuestionID2SampleResponse(questionnaireID int) {
+	questions, err := q.IQuestion.GetQuestions(context.Background(), questionnaireID)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get questions: %v", err))
+	}
+	sampleResponseBodyText.QuestionId = questions[0].ID
+	sampleResponseBodyTextLong.QuestionId = questions[1].ID
+	sampleResponseBodyNumber.QuestionId = questions[2].ID
+	sampleResponseBodySingleChoice.QuestionId = questions[3].ID
+	sampleResponseBodyMultipleChoice.QuestionId = questions[4].ID
+	sampleResponseBodyScale.QuestionId = questions[5].ID
+	sampleResponse = openapi.NewResponse{
+		Body: []openapi.ResponseBody{
+			sampleResponseBodyText,
+			sampleResponseBodyTextLong,
+			sampleResponseBodyNumber,
+			sampleResponseBodySingleChoice,
+			sampleResponseBodyMultipleChoice,
+			sampleResponseBodyScale,
+		},
+		IsDraft: false,
+	}
+	for i := range sampleResponse.Body {
+		sampleResponse.Body[i].QuestionId = questions[i].ID
+	}
+}
+
 func TestGetMyResponses(t *testing.T) {
 	t.Parallel()
 
@@ -87,6 +114,8 @@ func TestGetMyResponses(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 
 	newResponse := sampleResponse
 	e = echo.New()
@@ -373,6 +402,8 @@ func TestGetResponse(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+
 	newResponse := sampleResponse
 	e = echo.New()
 	body, err = json.Marshal(newResponse)
@@ -395,6 +426,8 @@ func TestGetResponse(t *testing.T) {
 	ctx = e.NewContext(req, rec)
 	questionnaireAnonymousDetail, err := q.PostQuestionnaire(ctx, questionnaireAnonymous)
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(questionnaireAnonymousDetail.QuestionnaireId)
 
 	newResponse = sampleResponse
 	e = echo.New()
@@ -568,6 +601,7 @@ func TestDeleteResponse(t *testing.T) {
 		require.NoError(t, err)
 		var responseID int
 		if !testCase.args.invalidResponseID {
+			AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 			newResponse := sampleResponse
 			e := echo.New()
 			body, err := json.Marshal(questionnaire)
@@ -683,50 +717,48 @@ func TestEditResponse(t *testing.T) {
 	}
 
 	invalidResponseBodyText := openapi.ResponseBody{}
+	invalidResponseBodyText.QuestionId = *questionnaireDetail.Questions[0].QuestionId
 	invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "Text",
 	})
 	invalidResponseBodyTextLong := openapi.ResponseBody{}
+	invalidResponseBodyTextLong.QuestionId = *questionnaireDetail.Questions[1].QuestionId
 	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
 	invalidResponseBodyNumber := openapi.ResponseBody{}
+	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
 	invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
 		Answer:       101,
 		QuestionType: "Number",
 	})
 	invalidResponseBodySingleChoice := openapi.ResponseBody{}
+	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
 	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 		Answer:       5,
 		QuestionType: "SingleChoice",
 	})
 	invalidResponseBodyMultipleChoice := openapi.ResponseBody{}
+	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
 	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 		Answer:       []int{5},
 		QuestionType: "MultipleChoice",
 	})
 	invalidResponseBodyScale := openapi.ResponseBody{}
+	invalidResponseBodyScale.QuestionId = *questionnaireDetail.Questions[5].QuestionId
 	invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
 		Answer:       0,
 		QuestionType: "Scale",
 	})
 
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 	testCases := []test{
 		{
 			description: "valid",
 			args: args{
 				questionnaireDetail: questionnaireDetail,
-				params:              sampleResponse,
-				userID:              userOne,
-			},
-		},
-		{
-			description: "valid anonymous",
-			args: args{
-				questionnaireDetail: questionnaireDetailAnonymous,
-				isAnonymous:         true,
 				params:              sampleResponse,
 				userID:              userOne,
 			},
@@ -759,27 +791,6 @@ func TestEditResponse(t *testing.T) {
 				invalidResponseID:   true,
 				params:              sampleResponse,
 				userID:              userOne,
-			},
-			expect: expect{
-				isErr: true,
-			},
-		},
-		{
-			description: "question type not match",
-			args: args{
-				questionnaireDetail: questionnaireDetail,
-				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
-						sampleResponseBodyText,
-						sampleResponseBodyScale,
-						sampleResponseBodyNumber,
-						sampleResponseBodySingleChoice,
-						sampleResponseBodyMultipleChoice,
-						sampleResponseBodyTextLong,
-					},
-					IsDraft: false,
-				},
-				userID: userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -911,29 +922,68 @@ func TestEditResponse(t *testing.T) {
 				isErr: true,
 			},
 		},
-		{
-			description: "questionnaire no due",
-			args: args{
-				questionnaireDetail: questionnaireDetailNoDue,
-				params:              sampleResponse,
-				userID:              userOne,
+	}
+	tmp_testCase := test{
+		description: "question type not match",
+		args: args{
+			questionnaireDetail: questionnaireDetail,
+			params: openapi.PostQuestionnaireResponseJSONRequestBody{
+				Body: []openapi.ResponseBody{
+					sampleResponseBodyText,
+					sampleResponseBodyScale,
+					sampleResponseBodyNumber,
+					sampleResponseBodySingleChoice,
+					sampleResponseBodyMultipleChoice,
+					sampleResponseBodyTextLong,
+				},
+				IsDraft: false,
 			},
+			userID: userOne,
 		},
-		{
-			description: "is time after due (attention: need to be the last testCase)",
-			args: args{
-				questionnaireDetail: questionnaireDetail,
-				params:              sampleResponse,
-				userID:              userOne,
-				isTimeAfterDue:      true,
-			},
-			expect: expect{
-				isErr: true,
-			},
+		expect: expect{
+			isErr: true,
 		},
 	}
+	tmp_testCase.args.params.Body[1].QuestionId = sampleResponseBodyTextLong.QuestionId
+	tmp_testCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
+	testCases = append(testCases, tmp_testCase)
+
+	AddQuestionID2SampleResponse(questionnaireDetailAnonymous.QuestionnaireId)
+	testCases = append(testCases, test{
+		description: "valid anonymous",
+		args: args{
+			questionnaireDetail: questionnaireDetailAnonymous,
+			isAnonymous:         true,
+			params:              sampleResponse,
+			userID:              userOne,
+		},
+	})
+
+	AddQuestionID2SampleResponse(questionnaireDetailNoDue.QuestionnaireId)
+	testCases = append(testCases, test{
+		description: "questionnaire no due",
+		args: args{
+			questionnaireDetail: questionnaireDetailNoDue,
+			params:              sampleResponse,
+			userID:              userOne,
+		},
+	})
+
+	testCases = append(testCases, test{
+		description: "is time after due (attention: need to be the last testCase)",
+		args: args{
+			questionnaireDetail: questionnaireDetail,
+			params:              sampleResponse,
+			userID:              userOne,
+			isTimeAfterDue:      true,
+		},
+		expect: expect{
+			isErr: true,
+		},
+	})
 
 	for _, testCase := range testCases {
+		AddQuestionID2SampleResponse(testCase.args.questionnaireDetail.QuestionnaireId)
 		e = echo.New()
 		body, err = json.Marshal(sampleResponse)
 		require.NoError(t, err)
@@ -942,6 +992,12 @@ func TestEditResponse(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
 		response, err := q.PostQuestionnaireResponse(ctx, testCase.args.questionnaireDetail.QuestionnaireId, sampleResponse, testCase.args.userID)
+		if err != nil {
+			assertion.Equal(0, testCase.description)
+			assertion.Equal(0, testCase.args.questionnaireDetail)
+			assertion.Equal(0, sampleResponse)
+			assertion.Equal(0, err)
+		}
 		require.NoError(t, err)
 
 		var responseID int
