@@ -880,7 +880,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 }
 
 func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
-	status, err := q.GetTargetsRemindStatus(c.Request().Context(), questionnaireID, userID)
+	status, err := q.GetTargetRemindStatus(c.Request().Context(), questionnaireID, userID)
 	if err != nil {
 		c.Logger().Errorf("failed to check remind status: %+v", err)
 		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")

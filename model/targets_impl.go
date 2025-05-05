@@ -104,7 +104,7 @@ func (*Target) IsTargetingMe(ctx context.Context, questionnairID int, userID str
 	return false, nil
 }
 
-func (*Target) GetTargetsRemindStatus(ctx context.Context, questionnaireID int, target string) (bool, error) {
+func (*Target) GetTargetRemindStatus(ctx context.Context, questionnaireID int, target string) (bool, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get transaction: %w", err)

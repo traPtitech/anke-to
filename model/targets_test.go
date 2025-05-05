@@ -377,7 +377,7 @@ func TestIsTargetingMe(t *testing.T) {
 	}
 }
 
-func TestGetTargetsRemindStatus(t *testing.T) {
+func TestGetTargetRemindStatus(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -464,7 +464,7 @@ func TestGetTargetsRemindStatus(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			remindStatus, err := targetImpl.GetTargetsRemindStatus(ctx, questionnaire.ID, testCase.argTarget)
+			remindStatus, err := targetImpl.GetTargetRemindStatus(ctx, questionnaire.ID, testCase.argTarget)
 			if !testCase.isErr {
 				assertion.NoError(err, testCase.description, "no error")
 			} else if testCase.err != nil {
