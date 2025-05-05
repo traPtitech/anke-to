@@ -138,6 +138,24 @@ func (*Respondent) UpdateSubmittedAt(ctx context.Context, responseID int) error 
 	return nil
 }
 
+// UpdateModifiedAt 編集日時更新
+func (*Respondent) UpdateModifiedAt(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.
+		Model(&Respondents{}).
+		Where("response_id = ?", responseID).
+		Update("modified_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to update response's modified_at: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteRespondent 回答の削除
 func (*Respondent) DeleteRespondent(ctx context.Context, responseID int) error {
 	db, err := getTx(ctx)
@@ -441,7 +459,7 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 		return nil, fmt.Errorf("failed to set respondents order: %w", err)
 	}
 
-	err = query.Find(&responsesID).Error
+	err = query.Select("respondents.response_id").Find(&responsesID).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get responsesID: %w", err)
 	}
@@ -480,6 +498,10 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 		query = query.Order("submitted_at")
 	case "-submitted_at":
 		query = query.Order("submitted_at DESC")
+	case "modified_at":
+		query = query.Order("modified_at")
+	case "-modified_at":
+		query = query.Order("modified_at DESC")
 	case "":
 	default:
 		var err error

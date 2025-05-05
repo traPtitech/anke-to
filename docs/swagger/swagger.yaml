@@ -320,8 +320,8 @@ components:
       name: sort
       in: query
       description:
-        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title",
-        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid",
+        TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
         $ref: "#/components/schemas/ResponseSortType"
@@ -398,17 +398,17 @@ components:
       enum:
         - submitted_at
         - -submitted_at
-        - title
-        - -title
         - modified_at
         - -modified_at
+        - traqid
+        - -traqid
       x-enum-varnames:
         - SubmittedAtASC
         - SubmittedAtDESC
-        - TitleASC
-        - TitleDESC
         - ModifiedAtASC
         - ModifiedAtDESC
+        - TraqIdASC
+        - TraqIdDESC
     ResShareType:
       type: string
       example: anyone
