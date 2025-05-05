@@ -90,7 +90,7 @@ jobs:
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: error
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
