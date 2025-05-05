@@ -1960,12 +1960,12 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	}
 
 	sortInvalid := (openapi.ResponseSortInQuery)("abcde")
+	sortTraqID := (openapi.ResponseSortInQuery)("traqid")
+	sortTraqIDDesc := (openapi.ResponseSortInQuery)("-traqid")
 	sortSubmittedAt := (openapi.ResponseSortInQuery)("submitted_at")
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
-	// sortTitle := (openapi.ResponseSortInQuery)("title")
-	// sortTitleDesc := (openapi.ResponseSortInQuery)("-title")
-	// sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
-	// sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
+	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
 	constTrue := true
 
 	testCases := []test{
@@ -2017,46 +2017,46 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	description: "sort title",
-		// 	args: args{
-		// 		userID:          userOne,
-		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
-		// 		params: openapi.GetQuestionnaireResponsesParams{
-		// 			Sort: &sortTitle,
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	description: "sort -title",
-		// 	args: args{
-		// 		userID:          userOne,
-		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
-		// 		params: openapi.GetQuestionnaireResponsesParams{
-		// 			Sort: &sortTitleDesc,
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	description: "sort modified_at",
-		// 	args: args{
-		// 		userID:          userOne,
-		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
-		// 		params: openapi.GetQuestionnaireResponsesParams{
-		// 			Sort: &sortModifiedAt,
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	description: "sort -modified_at",
-		// 	args: args{
-		// 		userID:          userOne,
-		// 		questionnaireID: questionnaireDetail.QuestionnaireId,
-		// 		params: openapi.GetQuestionnaireResponsesParams{
-		// 			Sort: &sortModifiedAtDesc,
-		// 		},
-		// 	},
-		// },
+		{
+			description: "sort traqid",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					Sort: &sortTraqID,
+				},
+			},
+		},
+		{
+			description: "sort -traqid",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					Sort: &sortTraqIDDesc,
+				},
+			},
+		},
+		{
+			description: "sort modified_at",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					Sort: &sortModifiedAt,
+				},
+			},
+		},
+		{
+			description: "sort -modified_at",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					Sort: &sortModifiedAtDesc,
+				},
+			},
+		},
 		{
 			description: "only my response",
 			args: args{
@@ -2147,27 +2147,27 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preCreatedAt = response.SubmittedAt
 				}
-				// } else if *testCase.args.params.Sort == "title" {
-				// 	var preTitle string
-				// 	for _, response := range responseList {
-				// 		if preTitle != "" {
-				// 			assertion.True(preTitle > response.Title, testCase.description, "title")
-				// 		}
-				// 		preTitle = response.Title
-				// 	}
-				// } else if *testCase.args.params.Sort == "-title" {
-				// 	var preTitle string
-				// 	for _, response := range responseList {
-				// 		if preTitle != "" {
-				// 			assertion.True(preTitle < response.Title, testCase.description, "-title")
-				// 		}
-				// 		preTitle = response.Title
-				// 	}
+			} else if *testCase.args.params.Sort == "traqid" {
+				var preTraqID string
+				for _, response := range responseList {
+					if preTraqID != "" {
+						assertion.False(preTraqID > *response.Respondent, testCase.description, "traqid")
+					}
+					preTraqID = *response.Respondent
+				}
+			} else if *testCase.args.params.Sort == "-traqid" {
+				var preTraqID string
+				for _, response := range responseList {
+					if preTraqID != "" {
+						assertion.False(preTraqID < *response.Respondent, testCase.description, "-traqid")
+					}
+					preTraqID = *response.Respondent
+				}
 			} else if *testCase.args.params.Sort == "modified_at" {
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.Before(response.ModifiedAt), testCase.description, "modified_at")
+						assertion.False(preModifiedAt.After(response.ModifiedAt), testCase.description, "modified_at")
 					}
 					preModifiedAt = response.ModifiedAt
 				}
@@ -2175,7 +2175,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
-						assertion.True(preModifiedAt.After(response.ModifiedAt), testCase.description, "-modified_at")
+						assertion.False(preModifiedAt.Before(response.ModifiedAt), testCase.description, "-modified_at")
 					}
 					preModifiedAt = response.ModifiedAt
 				}
