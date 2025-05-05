@@ -138,6 +138,24 @@ func (*Respondent) UpdateSubmittedAt(ctx context.Context, responseID int) error 
 	return nil
 }
 
+// UpdateModifiedAt 編集日時更新
+func (*Respondent) UpdateModifiedAt(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.
+		Model(&Respondents{}).
+		Where("response_id = ?", responseID).
+		Update("modified_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to update response's modified_at: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteRespondent 回答の削除
 func (*Respondent) DeleteRespondent(ctx context.Context, responseID int) error {
 	db, err := getTx(ctx)

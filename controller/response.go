@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +24,7 @@ type Response struct {
 	model.IOption
 	model.IValidation
 	model.IScaleLabel
+	model.ITransaction
 }
 
 func NewResponse(
@@ -34,6 +36,7 @@ func NewResponse(
 	option model.IOption,
 	validation model.IValidation,
 	scaleLabel model.IScaleLabel,
+	transaction model.ITransaction,
 ) *Response {
 	return &Response{
 		IQuestionnaire: questionnaire,
@@ -44,6 +47,7 @@ func NewResponse(
 		IOption:        option,
 		IValidation:    validation,
 		IScaleLabel:    scaleLabel,
+		ITransaction:   transaction,
 	}
 }
 
@@ -316,27 +320,41 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 	}
-	if !respondentDetail.SubmittedAt.Valid {
-		if !req.IsDraft {
-			err = r.IRespondent.UpdateSubmittedAt(ctx.Request().Context(), responseID)
-			if err != nil {
-				ctx.Logger().Errorf("failed to update submitted at: %+v", err)
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update submitted at: %w", err))
+
+	err = r.ITransaction.Do(ctx.Request().Context(), nil, func(c context.Context) error {
+		if !respondentDetail.SubmittedAt.Valid {
+			if !req.IsDraft {
+				err := r.IRespondent.UpdateSubmittedAt(c, responseID)
+				if err != nil {
+					ctx.Logger().Errorf("failed to update submitted at: %+v", err)
+					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update submitted at: %w", err))
+				}
+			}
+		} else {
+			if req.IsDraft {
+				ctx.Logger().Errorf("unable to update the response to draft")
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("unable to update the response to draft"))
 			}
 		}
-	} else {
-		if req.IsDraft {
-			ctx.Logger().Errorf("unable to update the response to draft")
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("unable to update the response to draft"))
-		}
-	}
-
-	if len(responseMetas) > 0 {
-		err = r.IResponse.InsertResponses(ctx.Request().Context(), responseID, responseMetas)
+		err := r.IRespondent.UpdateModifiedAt(c, responseID)
 		if err != nil {
-			ctx.Logger().Errorf("failed to insert responses: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+			ctx.Logger().Errorf("failed to update modified at: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update modified at: %w", err))
 		}
+
+		if len(responseMetas) > 0 {
+			err = r.IResponse.InsertResponses(c, responseID, responseMetas)
+			if err != nil {
+				ctx.Logger().Errorf("failed to insert responses: %+v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert responses: %w", err))
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		ctx.Logger().Errorf("failed to update response: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update response: %w", err))
 	}
 
 	return nil

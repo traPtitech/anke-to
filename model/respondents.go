@@ -12,6 +12,7 @@ import (
 type IRespondent interface {
 	InsertRespondent(ctx context.Context, userID string, questionnaireID int, submittedAt null.Time) (int, error)
 	UpdateSubmittedAt(ctx context.Context, responseID int) error
+	UpdateModifiedAt(ctx context.Context, responseID int) error
 	DeleteRespondent(ctx context.Context, responseID int) error
 	GetRespondent(ctx context.Context, responseID int) (*Respondents, error)
 	GetRespondentInfos(ctx context.Context, userID string, questionnaireIDs ...int) ([]RespondentInfo, error)

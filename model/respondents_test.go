@@ -197,6 +197,78 @@ func TestUpdateSubmittedAt(t *testing.T) {
 	}
 }
 
+func TestUpdateModifiedAt(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
+	require.NoError(t, err)
+
+	err = administratorImpl.InsertAdministrators(ctx, questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		validresponseID bool
+		userID          string
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				validresponseID: true,
+				userID:          userTwo,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		responseID, err := respondentImpl.InsertRespondent(ctx, userTwo, questionnaireID, null.NewTime(time.Now(), false))
+		require.NoError(t, err)
+		if !testCase.args.validresponseID {
+			responseID = -1
+		}
+
+		err = respondentImpl.UpdateModifiedAt(ctx, responseID)
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else if testCase.expect.isErr {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		respondent := Respondents{}
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("response_id = ?", responseID).
+			First(&respondent).Error
+		assertion.NoError(err, testCase.description, "get respondent")
+
+		assertion.Equal(responseID, respondent.ResponseID, testCase.description, "responseID")
+		assertion.Equal(questionnaireID, respondent.QuestionnaireID, testCase.description, "questionnaireID")
+		assertion.Equal(testCase.args.userID, respondent.UserTraqid, testCase.description, "userID")
+		assertion.WithinDuration(null.NewTime(time.Now(), false).ValueOrZero(), respondent.SubmittedAt.ValueOrZero(), 2*time.Second, testCase.description, "submittedAt")
+		assertion.WithinDuration(time.Now(), respondent.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
+		assertion.WithinDuration(null.NewTime(time.Time{}, false).ValueOrZero(), respondent.DeletedAt.Time, 2*time.Second, testCase.description, "deleted_at")
+	}
+}
+
 func TestDeleteRespondent(t *testing.T) {
 	t.Parallel()
 
