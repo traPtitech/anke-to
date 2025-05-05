@@ -1014,12 +1014,6 @@ func TestEditResponse(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
 		response, err := q.PostQuestionnaireResponse(ctx, testCase.args.questionnaireDetail.QuestionnaireId, sampleResponse, testCase.args.userID)
-		if err != nil {
-			assertion.Equal(0, testCase.description)
-			assertion.Equal(0, testCase.args.questionnaireDetail)
-			assertion.Equal(0, sampleResponse)
-			assertion.Equal(0, err)
-		}
 		require.NoError(t, err)
 
 		AddQuestionID2SampleResponseMutex.Unlock()
