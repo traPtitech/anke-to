@@ -3,7 +3,6 @@ module github.com/traPtitech/anke-to
 go 1.24.1
 
 require (
-	github.com/golang/mock v1.6.0
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/google/wire v0.6.0
 	github.com/labstack/echo/v4 v4.13.3
@@ -73,6 +72,7 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
 	github.com/traPtitech/go-traq v0.0.0-20250411085910-749ba86cfa5b
+	go.uber.org/mock v0.5.2
 )
 
 require (
