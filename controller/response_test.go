@@ -76,8 +76,6 @@ func setupSampleResponse() {
 
 // sampleResponseのResponseBodyでquestionnaireIDに基づいてquestionIDを設定する
 func AddQuestionID2SampleResponse(questionnaireID int) {
-	AddQuestionID2SampleResponseMutex.Lock()
-	defer AddQuestionID2SampleResponseMutex.Unlock()
 	questions, err := q.IQuestion.GetQuestions(context.Background(), questionnaireID)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get questions: %v", err))
@@ -119,6 +117,8 @@ func TestGetMyResponses(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
 
 	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 
@@ -177,6 +177,8 @@ func TestGetMyResponses(t *testing.T) {
 	ctx = e.NewContext(req, rec)
 	response4, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "myResponsesSpecialUser")
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Unlock()
 
 	type args struct {
 		userID string
@@ -407,6 +409,8 @@ func TestGetResponse(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
+	AddQuestionID2SampleResponseMutex.Lock()
+
 	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 
 	newResponse := sampleResponse
@@ -444,6 +448,8 @@ func TestGetResponse(t *testing.T) {
 	ctx = e.NewContext(req, rec)
 	response1, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Unlock()
 
 	type args struct {
 		isAnonymousQuestionnaire bool
@@ -606,6 +612,8 @@ func TestDeleteResponse(t *testing.T) {
 		require.NoError(t, err)
 		var responseID int
 		if !testCase.args.invalidResponseID {
+			AddQuestionID2SampleResponseMutex.Lock()
+
 			AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 			newResponse := sampleResponse
 			e := echo.New()
@@ -617,6 +625,9 @@ func TestDeleteResponse(t *testing.T) {
 			ctx := e.NewContext(req, rec)
 			response, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "userOne")
 			require.NoError(t, err)
+
+			AddQuestionID2SampleResponseMutex.Unlock()
+
 			responseID = response.ResponseId
 		} else {
 			responseID = 10000
@@ -757,6 +768,8 @@ func TestEditResponse(t *testing.T) {
 		Answer:       0,
 		QuestionType: "Scale",
 	})
+
+	AddQuestionID2SampleResponseMutex.Lock()
 
 	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 	testCases := []test{
@@ -987,7 +1000,11 @@ func TestEditResponse(t *testing.T) {
 		},
 	})
 
+	AddQuestionID2SampleResponseMutex.Unlock()
+
 	for _, testCase := range testCases {
+		AddQuestionID2SampleResponseMutex.Lock()
+
 		AddQuestionID2SampleResponse(testCase.args.questionnaireDetail.QuestionnaireId)
 		e = echo.New()
 		body, err = json.Marshal(sampleResponse)
@@ -1004,6 +1021,8 @@ func TestEditResponse(t *testing.T) {
 			assertion.Equal(0, err)
 		}
 		require.NoError(t, err)
+
+		AddQuestionID2SampleResponseMutex.Unlock()
 
 		var responseID int
 		if !testCase.args.invalidResponseID {

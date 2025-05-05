@@ -1863,6 +1863,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
+	AddQuestionID2SampleResponseMutex.Lock()
+
 	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 
 	newResponse := sampleResponse
@@ -1945,6 +1947,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	ctx = e.NewContext(req, rec)
 	response11, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Unlock()
 
 	type args struct {
 		isAnonymousQuestionnaire bool
@@ -2328,6 +2332,8 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		QuestionType: "Scale",
 	})
 
+	AddQuestionID2SampleResponseMutex.Lock()
+
 	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
 
 	testCases := []test{
@@ -2587,6 +2593,8 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		},
 	})
 
+	AddQuestionID2SampleResponseMutex.Unlock()
+
 	for _, testCase := range testCases {
 		var questionnaireID int
 
@@ -2652,6 +2660,8 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			assertion.NotEqual(response.ModifiedAt, time.Time{}, testCase.description, "modified at")
 		}
 
+		AddQuestionID2SampleResponseMutex.Lock()
+
 		AddQuestionID2SampleResponse(questionnaireID)
 
 		e = echo.New()
@@ -2662,6 +2672,8 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
 		_, err = q.PostQuestionnaireResponse(ctx, questionnaireID, sampleResponse, testCase.args.userID)
+
+		AddQuestionID2SampleResponseMutex.Unlock()
 
 		if !testCase.args.isNoMultipleResponse {
 			assertion.NoError(err, testCase.description, "multiple response")
