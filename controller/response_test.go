@@ -74,6 +74,7 @@ func setupSampleResponse() {
 	}
 }
 
+// sampleResponseのResponseBodyでquestionnaireIDに基づいてquestionIDを設定する
 func AddQuestionID2SampleResponse(questionnaireID int) {
 	AddQuestionID2SampleResponseMutex.Lock()
 	defer AddQuestionID2SampleResponseMutex.Unlock()
