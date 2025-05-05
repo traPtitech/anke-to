@@ -188,7 +188,13 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
 	}
 
-	questions, err := r.IQuestion.GetQuestions(ctx.Request().Context(), req.QuestionnaireId)
+	respondentDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
+	}
+
+	questions, err := r.IQuestion.GetQuestions(ctx.Request().Context(), respondentDetail.QuestionnaireID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get questions: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questions: %w", err))
@@ -313,12 +319,6 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		}
-	}
-
-	respondentDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 	}
 
 	err = r.ITransaction.Do(ctx.Request().Context(), nil, func(c context.Context) error {
