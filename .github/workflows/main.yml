@@ -51,7 +51,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - run: go install github.com/golang/mock/mockgen@v1.5.0
+      - run: go install go.uber.org/mock/mockgen@latest
       - run: go generate ./...
       - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
         env:
