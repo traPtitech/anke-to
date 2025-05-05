@@ -975,7 +975,7 @@ func TestEditResponse(t *testing.T) {
 		var responseEditPost openapi.EditResponseJSONRequestBody
 		responseEditPost.Body = testCase.args.params.Body
 		responseEditPost.IsDraft = testCase.args.params.IsDraft
-		*responseEditPost.ResponseId = responseID
+		responseEditPost.ResponseId = &responseID
 
 		e = echo.New()
 		body, err = json.Marshal(responseEditPost)
