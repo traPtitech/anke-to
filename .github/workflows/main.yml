@@ -19,39 +19,16 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-          cache: false
-      - uses: actions/cache@v4.2.0
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
       - run: go mod download
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: [mod]
-    env:
-      GOCACHE: "/tmp/go/cache"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-          cache: false
-      - uses: actions/cache@v4.2.0
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - uses: actions/cache@v4.2.0
-        with:
-          path: /tmp/go/cache
-          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-${{ github.ref }}-
-            ${{ runner.os }}-go-build-
       - run: go build -o anke-to
       - uses: actions/upload-artifact@v4
         with:
@@ -74,13 +51,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-          cache: false
-      - uses: actions/cache@v4.2.0
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
       - run: go install github.com/golang/mock/mockgen@v1.5.0
       - run: go generate ./...
       - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
