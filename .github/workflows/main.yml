@@ -66,9 +66,10 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.1.2
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage-model.txt ./coverage-controller.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-model.txt
