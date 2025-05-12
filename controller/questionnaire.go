@@ -880,17 +880,17 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 }
 
 func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
-	status, err := q.GetTargetRemindStatus(c.Request().Context(), questionnaireID, userID)
+	status, err := q.GetTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID})
 	if err != nil {
 		c.Logger().Errorf("failed to check remind status: %+v", err)
 		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
 	}
 
-	return status, nil
+	return !status[0].IsCanceled, nil
 }
 
 func (q *Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string, isRemindEnabled bool) error {
-	err := q.UpdateTargetsRemindStatus(c.Request().Context(), questionnaireID, []string{userID}, isRemindEnabled)
+	err := q.UpdateTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID}, !isRemindEnabled)
 	if err != nil {
 		c.Logger().Errorf("failed to update remind status: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update remind status")

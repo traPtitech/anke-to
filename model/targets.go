@@ -10,6 +10,6 @@ type ITarget interface {
 	DeleteTargets(ctx context.Context, questionnaireID int) error
 	GetTargets(ctx context.Context, questionnaireIDs []int) ([]Targets, error)
 	IsTargetingMe(ctx context.Context, quesionnairID int, userID string) (bool, error)
-	GetTargetRemindStatus(ctx context.Context, questionnaireID int, target string) (bool, error)
-	UpdateTargetsRemindStatus(ctx context.Context, questionnaireID int, targets []string, remindStatus bool) error
+	GetTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string) ([]Targets, error)
+	UpdateTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string, remindStatus bool) error
 }

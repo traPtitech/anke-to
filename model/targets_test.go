@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"sort"
 	"testing"
 	"time"
 
@@ -377,7 +378,7 @@ func TestIsTargetingMe(t *testing.T) {
 	}
 }
 
-func TestGetTargetRemindStatus(t *testing.T) {
+func TestGetTargetsCancelStatus(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -385,56 +386,63 @@ func TestGetTargetRemindStatus(t *testing.T) {
 	ctx := context.Background()
 
 	type test struct {
-		description    string
-		validTargets   []string // is_canceled = false
-		invalidTargets []string // is_canceled = true
-		argTarget      string
-		argTargetValid bool
-		isErr          bool
-		err            error
+		description     string
+		validTargets    []string // is_canceled = false
+		invalidTargets  []string // is_canceled = true
+		argTargets      []string
+		argTargetsValid []bool
+		isErr           bool
+		err             error
 	}
 
 	testCases := []test{
 		{
-			description:    "all valid targets",
-			validTargets:   []string{"a", "b"},
-			invalidTargets: []string{},
-			argTarget:      "a",
-			argTargetValid: true,
+			description:     "all valid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{},
+			argTargets:      []string{"a"},
+			argTargetsValid: []bool{true},
 		},
 		{
-			description:    "all invalid targets",
-			validTargets:   []string{},
-			invalidTargets: []string{"a", "b"},
-			argTarget:      "b",
-			argTargetValid: false,
+			description:     "all invalid targets",
+			validTargets:    []string{},
+			invalidTargets:  []string{"a", "b"},
+			argTargets:      []string{"b"},
+			argTargetsValid: []bool{false},
 		},
 		{
-			description:    "both valid and invalid targets",
-			validTargets:   []string{"a", "b"},
-			invalidTargets: []string{"c", "d"},
-			argTarget:      "c",
-			argTargetValid: false,
+			description:     "both valid and invalid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"a", "c"},
+			argTargetsValid: []bool{true, false},
 		},
 		{
-			description:    "both valid and invalid targets changed order",
-			validTargets:   []string{"a", "b"},
-			invalidTargets: []string{"c", "d"},
-			argTarget:      "b",
-			argTargetValid: true,
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "a", "d"},
+			argTargetsValid: []bool{true, true, false},
 		},
 		{
-			description:    "both valid and invalid targets changed order duplicated arg targets",
-			validTargets:   []string{"a", "b"},
-			invalidTargets: []string{"c", "d"},
-			argTarget:      "c",
-			argTargetValid: false,
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "d", "a"},
+			argTargetsValid: []bool{true, false, true},
 		},
 		{
 			description:    "argTargets with target not in db",
 			validTargets:   []string{"a", "b"},
 			invalidTargets: []string{"c", "d"},
-			argTarget:      "e",
+			argTargets:     []string{"e"},
+			isErr:          true,
+		},
+		{
+			description:    "argTargets with some of target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"a", "e"},
 			isErr:          true,
 		},
 	}
@@ -464,7 +472,7 @@ func TestGetTargetRemindStatus(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			remindStatus, err := targetImpl.GetTargetRemindStatus(ctx, questionnaire.ID, testCase.argTarget)
+			cancelStatus, err := targetImpl.GetTargetsCancelStatus(ctx, questionnaire.ID, testCase.argTargets)
 			if !testCase.isErr {
 				assertion.NoError(err, testCase.description, "no error")
 			} else if testCase.err != nil {
@@ -476,12 +484,27 @@ func TestGetTargetRemindStatus(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, remindStatus, testCase.argTargetValid, testCase.description, "remindStatus")
+			var actualCancelStatus []Targets
+			for i := range testCase.argTargets {
+				actualCancelStatus = append(actualCancelStatus, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      testCase.argTargets[i],
+					IsCanceled:      !testCase.argTargetsValid[i],
+				})
+			}
+
+			sort.Slice(cancelStatus, func(i, j int) bool {
+				return cancelStatus[i].UserTraqid < cancelStatus[j].UserTraqid
+			})
+			sort.Slice(actualCancelStatus, func(i, j int) bool {
+				return actualCancelStatus[i].UserTraqid < actualCancelStatus[j].UserTraqid
+			})
+			assert.Equal(t, cancelStatus, actualCancelStatus, testCase.description, "cancelStatus")
 		})
 	}
 }
 
-func TestUpdateTargetsRemindStatus(t *testing.T) {
+func TestUpdateTargetsCancelStatus(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -495,7 +518,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 		afterValidTargets    []string
 		afterInvalidTargets  []string
 		argUpdateTargets     []string
-		argRemindStatus      bool
+		argCancelStatus      bool
 		isErr                bool
 		err                  error
 	}
@@ -508,7 +531,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a"},
 			argUpdateTargets:     []string{"a"},
-			argRemindStatus:      false,
+			argCancelStatus:      true,
 		},
 		{
 			description:          "キャンセルするtargetが複数でエラーなし",
@@ -517,7 +540,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a", "b"},
 			argUpdateTargets:     []string{"a", "b"},
-			argRemindStatus:      false,
+			argCancelStatus:      true,
 		},
 		{
 			description:          "キャンセルするtargetがないときエラーなし",
@@ -526,7 +549,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{},
-			argRemindStatus:      false,
+			argCancelStatus:      true,
 		},
 		{
 			description:          "キャンセルするtargetが見つからないときエラーなし",
@@ -535,7 +558,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{"b"},
-			argRemindStatus:      false,
+			argCancelStatus:      true,
 		},
 		{
 			description:          "再開するtargetが1人でエラーなし",
@@ -544,7 +567,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{"a", "b"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{"b"},
-			argRemindStatus:      true,
+			argCancelStatus:      false,
 		},
 		{
 			description:          "再開するtargetが複数でエラーなし",
@@ -553,7 +576,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{"a", "b"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{"a", "b"},
-			argRemindStatus:      true,
+			argCancelStatus:      false,
 		},
 		{
 			description:          "再開するtargetがないときエラーなし",
@@ -562,7 +585,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
 			argUpdateTargets:     []string{},
-			argRemindStatus:      true,
+			argCancelStatus:      false,
 		},
 	}
 
@@ -591,7 +614,7 @@ func TestUpdateTargetsRemindStatus(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			err = targetImpl.UpdateTargetsRemindStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argRemindStatus)
+			err = targetImpl.UpdateTargetsCancelStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argCancelStatus)
 			if !testCase.isErr {
 				assertion.NoError(err, testCase.description, "no error")
 			} else if testCase.err != nil {
