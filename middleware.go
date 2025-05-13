@@ -69,10 +69,9 @@ func (m *MiddlewareSwitcher) ApplyMiddlewares(next echo.HandlerFunc) echo.Handle
 
 		middlewares := m.FindMiddlewares(path, method)
 
-		for _, mw := range middlewares {
-			if err := mw(next)(c); err != nil {
-				return err
-			}
+		for i := len(middlewares) - 1; i >= 0; i-- {
+			mw := middlewares[i]
+			next = mw(next)
 		}
 
 		return next(c)
