@@ -63,8 +63,6 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetQuestionnaires(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQuestionnairesParams
 	// ------------- Optional query parameter "sort" -------------
@@ -111,8 +109,6 @@ func (w *ServerInterfaceWrapper) GetQuestionnaires(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) PostQuestionnaire(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.PostQuestionnaire(ctx)
 	return err
@@ -128,8 +124,6 @@ func (w *ServerInterfaceWrapper) DeleteQuestionnaire(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
-
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteQuestionnaire(ctx, questionnaireID)
@@ -147,8 +141,6 @@ func (w *ServerInterfaceWrapper) GetQuestionnaire(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetQuestionnaire(ctx, questionnaireID)
 	return err
@@ -164,8 +156,6 @@ func (w *ServerInterfaceWrapper) EditQuestionnaire(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
-
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EditQuestionnaire(ctx, questionnaireID)
@@ -183,8 +173,6 @@ func (w *ServerInterfaceWrapper) GetQuestionnaireMyRemindStatus(ctx echo.Context
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetQuestionnaireMyRemindStatus(ctx, questionnaireID)
 	return err
@@ -201,8 +189,6 @@ func (w *ServerInterfaceWrapper) EditQuestionnaireMyRemindStatus(ctx echo.Contex
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EditQuestionnaireMyRemindStatus(ctx, questionnaireID)
 	return err
@@ -218,8 +204,6 @@ func (w *ServerInterfaceWrapper) GetQuestionnaireResponses(ctx echo.Context) err
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
-
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQuestionnaireResponsesParams
@@ -253,8 +237,6 @@ func (w *ServerInterfaceWrapper) PostQuestionnaireResponse(ctx echo.Context) err
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.PostQuestionnaireResponse(ctx, questionnaireID)
 	return err
@@ -263,8 +245,6 @@ func (w *ServerInterfaceWrapper) PostQuestionnaireResponse(ctx echo.Context) err
 // GetMyResponses converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMyResponses(ctx echo.Context) error {
 	var err error
-
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetMyResponsesParams
@@ -291,8 +271,6 @@ func (w *ServerInterfaceWrapper) DeleteResponse(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter responseID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteResponse(ctx, responseID)
 	return err
@@ -309,8 +287,6 @@ func (w *ServerInterfaceWrapper) GetResponse(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter responseID: %s", err))
 	}
 
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetResponse(ctx, responseID)
 	return err
@@ -326,8 +302,6 @@ func (w *ServerInterfaceWrapper) EditResponse(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter responseID: %s", err))
 	}
-
-	ctx.Set(ApplicationScopes, []string{"read", "write"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EditResponse(ctx, responseID)
