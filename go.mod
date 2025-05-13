@@ -66,18 +66,15 @@ require (
 )
 
 require (
+	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/deepmap/oapi-codegen v1.16.2
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
+	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0
+	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
 )
 
 require (
-	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
-	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0 // indirect
-	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0 // indirect
-)
-
-require (
-	github.com/getkin/kin-openapi v0.124.0 // indirect
+	github.com/getkin/kin-openapi v0.124.0
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
@@ -94,6 +91,6 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/google/uuid v1.5.0 // indirect
-	github.com/oapi-codegen/runtime v1.1.1 // indirect
+	github.com/google/uuid v1.5.0
+	github.com/oapi-codegen/runtime v1.1.1
 )
