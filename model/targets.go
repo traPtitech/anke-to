@@ -11,5 +11,5 @@ type ITarget interface {
 	GetTargets(ctx context.Context, questionnaireIDs []int) ([]Targets, error)
 	IsTargetingMe(ctx context.Context, quesionnairID int, userID string) (bool, error)
 	GetTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string) ([]Targets, error)
-	UpdateTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string, remindStatus bool) error
+	UpdateTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string, cancelStatus bool) error
 }
