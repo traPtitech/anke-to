@@ -14,6 +14,7 @@ linters:
       - builtin$
       - examples$
       - tuning/openapi
+      - model/mock_model
 formatters:
   enable:
     - gofmt
@@ -24,3 +25,4 @@ formatters:
       - builtin$
       - examples$
       - tuning/openapi
+      - model/mock_model
