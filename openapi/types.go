@@ -164,6 +164,13 @@ type EditQuestionnaireTargetsAndAdmins struct {
 	Target *UsersAndGroups `json:"target,omitempty"`
 }
 
+// EditResponse defines model for EditResponse.
+type EditResponse struct {
+	Body       []ResponseBody `json:"body"`
+	IsDraft    bool           `json:"is_draft"`
+	ResponseId *int           `json:"response_id,omitempty"`
+}
+
 // Groups defines model for Groups.
 type Groups = []openapi_types.UUID
 
@@ -731,7 +738,7 @@ type EditQuestionnaireMyRemindStatusJSONRequestBody = QuestionnaireIsRemindEnabl
 type PostQuestionnaireResponseJSONRequestBody = NewResponse
 
 // EditResponseJSONRequestBody defines body for EditResponse for application/json ContentType.
-type EditResponseJSONRequestBody = Response
+type EditResponseJSONRequestBody = EditResponse
 
 // AsQuestionSettingsText returns the union data inside the NewQuestion as a QuestionSettingsText
 func (t NewQuestion) AsQuestionSettingsText() (QuestionSettingsText, error) {
