@@ -1,18 +1,28 @@
-run:
-  skip-dirs:
-    - tuning/openapi
-
+version: "2"
 linters:
   enable:
-    - govet
-    - errcheck
-    - staticcheck
-    - unused
-    - gosimple
-    - structcheck
-    - varcheck
-    - ineffassign
-    - deadcode
-    - typecheck
     - revive
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - tuning/openapi
+      - model/mock_model
+formatters:
+  enable:
     - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - tuning/openapi
+      - model/mock_model
