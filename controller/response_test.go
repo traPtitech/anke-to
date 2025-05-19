@@ -1046,9 +1046,10 @@ func TestEditResponse(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		responseEditPost := response
+		var responseEditPost openapi.EditResponseJSONRequestBody
 		responseEditPost.Body = testCase.args.params.Body
 		responseEditPost.IsDraft = testCase.args.params.IsDraft
+		responseEditPost.ResponseId = &responseID
 
 		e = echo.New()
 		body, err = json.Marshal(responseEditPost)

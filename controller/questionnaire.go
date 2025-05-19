@@ -879,49 +879,23 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 	return nil
 }
 
-func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int) (bool, error) {
-	status, err := q.CheckRemindStatus(questionnaireID)
+func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
+	status, err := q.GetTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID})
 	if err != nil {
 		c.Logger().Errorf("failed to check remind status: %+v", err)
 		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
 	}
 
-	return status, nil
+	return !status[0].IsCanceled, nil
 }
 
-func (q *Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, isRemindEnabled bool) error {
-	if isRemindEnabled {
-		status, err := q.CheckRemindStatus(questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to check remind status: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
-		}
-		if status {
-			return nil
-		}
-
-		questionnaire, _, _, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
-		if err != nil {
-			if errors.Is(err, model.ErrRecordNotFound) {
-				c.Logger().Info("questionnaire not found")
-				return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
-			}
-			c.Logger().Errorf("failed to get questionnaire: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire")
-		}
-
-		err = q.PushReminder(questionnaireID, &questionnaire.ResTimeLimit.Time)
-		if err != nil {
-			c.Logger().Errorf("failed to push reminder: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to push reminder")
-		}
-	} else {
-		err := q.DeleteReminder(questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete reminder: %+v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete reminder")
-		}
+func (q *Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string, isRemindEnabled bool) error {
+	err := q.UpdateTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID}, !isRemindEnabled)
+	if err != nil {
+		c.Logger().Errorf("failed to update remind status: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update remind status")
 	}
+
 	return nil
 }
 

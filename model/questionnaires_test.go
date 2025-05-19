@@ -50,8 +50,6 @@ var (
 )
 
 func TestQuestionnaires(t *testing.T) {
-	t.Parallel()
-
 	setupQuestionnairesTest(t)
 
 	t.Run("InsertQuestionnaire", insertQuestionnaireTest)

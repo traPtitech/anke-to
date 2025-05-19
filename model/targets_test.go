@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"sort"
 	"testing"
 	"time"
 
@@ -377,8 +378,136 @@ func TestIsTargetingMe(t *testing.T) {
 	}
 }
 
-func TestCancelTargets(t *testing.T) {
+func TestGetTargetsCancelStatus(t *testing.T) {
 	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctx := context.Background()
+
+	type test struct {
+		description     string
+		validTargets    []string // is_canceled = false
+		invalidTargets  []string // is_canceled = true
+		argTargets      []string
+		argTargetsValid []bool
+		isErr           bool
+		err             error
+	}
+
+	testCases := []test{
+		{
+			description:     "all valid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{},
+			argTargets:      []string{"a"},
+			argTargetsValid: []bool{true},
+		},
+		{
+			description:     "all invalid targets",
+			validTargets:    []string{},
+			invalidTargets:  []string{"a", "b"},
+			argTargets:      []string{"b"},
+			argTargetsValid: []bool{false},
+		},
+		{
+			description:     "both valid and invalid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"a", "c"},
+			argTargetsValid: []bool{true, false},
+		},
+		{
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "a", "d"},
+			argTargetsValid: []bool{true, true, false},
+		},
+		{
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "d", "a"},
+			argTargetsValid: []bool{true, false, true},
+		},
+		{
+			description:    "argTargets with target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"e"},
+			isErr:          true,
+		},
+		{
+			description:    "argTargets with some of target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"a", "e"},
+			isErr:          true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.validTargets)+len(testCase.invalidTargets))
+			for _, target := range testCase.validTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: false,
+				})
+			}
+			for _, target := range testCase.invalidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: true,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			cancelStatus, err := targetImpl.GetTargetsCancelStatus(ctx, questionnaire.ID, testCase.argTargets)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
+			if err != nil {
+				return
+			}
+
+			var actualCancelStatus []Targets
+			for i := range testCase.argTargets {
+				actualCancelStatus = append(actualCancelStatus, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      testCase.argTargets[i],
+					IsCanceled:      !testCase.argTargetsValid[i],
+				})
+			}
+
+			sort.Slice(cancelStatus, func(i, j int) bool {
+				return cancelStatus[i].UserTraqid < cancelStatus[j].UserTraqid
+			})
+			sort.Slice(actualCancelStatus, func(i, j int) bool {
+				return actualCancelStatus[i].UserTraqid < actualCancelStatus[j].UserTraqid
+			})
+			assert.Equal(t, cancelStatus, actualCancelStatus, testCase.description, "cancelStatus")
+		})
+	}
+}
+
+func TestUpdateTargetsCancelStatus(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
 
 	ctx := context.Background()
 
@@ -388,7 +517,8 @@ func TestCancelTargets(t *testing.T) {
 		beforeInvalidTargets []string
 		afterValidTargets    []string
 		afterInvalidTargets  []string
-		argCancelTargets     []string
+		argUpdateTargets     []string
+		argCancelStatus      bool
 		isErr                bool
 		err                  error
 	}
@@ -400,7 +530,8 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a"},
-			argCancelTargets:     []string{"a"},
+			argUpdateTargets:     []string{"a"},
+			argCancelStatus:      true,
 		},
 		{
 			description:          "キャンセルするtargetが複数でエラーなし",
@@ -408,7 +539,8 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{},
 			afterInvalidTargets:  []string{"a", "b"},
-			argCancelTargets:     []string{"a", "b"},
+			argUpdateTargets:     []string{"a", "b"},
+			argCancelStatus:      true,
 		},
 		{
 			description:          "キャンセルするtargetがないときエラーなし",
@@ -416,16 +548,44 @@ func TestCancelTargets(t *testing.T) {
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
-			argCancelTargets:     []string{},
+			argUpdateTargets:     []string{},
+			argCancelStatus:      true,
 		},
 		{
-			description:          "キャンセルするtargetが見つからないときエラー",
+			description:          "キャンセルするtargetが見つからないときエラーなし",
 			beforeValidTargets:   []string{"a"},
 			beforeInvalidTargets: []string{},
 			afterValidTargets:    []string{"a"},
 			afterInvalidTargets:  []string{},
-			argCancelTargets:     []string{"b"},
-			isErr:                true,
+			argUpdateTargets:     []string{"b"},
+			argCancelStatus:      true,
+		},
+		{
+			description:          "再開するtargetが1人でエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{"b"},
+			afterValidTargets:    []string{"a", "b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"b"},
+			argCancelStatus:      false,
+		},
+		{
+			description:          "再開するtargetが複数でエラーなし",
+			beforeValidTargets:   []string{},
+			beforeInvalidTargets: []string{"a", "b"},
+			afterValidTargets:    []string{"a", "b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"a", "b"},
+			argCancelStatus:      false,
+		},
+		{
+			description:          "再開するtargetがないときエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{},
+			argCancelStatus:      false,
 		},
 	}
 
@@ -454,13 +614,15 @@ func TestCancelTargets(t *testing.T) {
 				t.Errorf("failed to create questionnaire: %v", err)
 			}
 
-			err = targetImpl.CancelTargets(ctx, questionnaire.ID, testCase.argCancelTargets)
+			err = targetImpl.UpdateTargetsCancelStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argCancelStatus)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
 			if err != nil {
-				if !testCase.isErr {
-					t.Errorf("unexpected error: %v", err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("invalid error: expected: %+v, actual: %+v", testCase.err, err)
-				}
 				return
 			}
 
