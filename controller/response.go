@@ -209,9 +209,11 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	// validationでチェック
 	questionIDs := make([]int, len(questions))
 	questionTypes := make(map[int]string, len(questions))
+	questionRequired := make(map[int]bool, len(questions))
 	for i, question := range questions {
 		questionIDs[i] = question.ID
 		questionTypes[question.ID] = question.Type
+		questionRequired[question.ID] = question.IsRequired
 	}
 
 	validations, err := r.IValidation.GetValidations(ctx.Request().Context(), questionIDs)
@@ -244,14 +246,15 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		scaleLabelMap[scaleLabel.QuestionID] = scaleLabel
 	}
 
-	for i, question := range questions {
-		switch questionTypes[question.ID] {
+	for _, responseMeta := range responseMetas {
+		questionRequired[responseMeta.QuestionID] = false
+		switch questionTypes[responseMeta.QuestionID] {
 		case "Text", "TextArea":
-			validation, ok := validationMap[question.ID]
+			validation, ok := validationMap[responseMeta.QuestionID]
 			if !ok {
 				validation = model.Validations{}
 			}
-			err := r.IValidation.CheckTextValidation(validation, responseMetas[i].Data)
+			err := r.IValidation.CheckTextValidation(validation, responseMeta.Data)
 			if err != nil {
 				if errors.Is(err, model.ErrTextMatching) {
 					ctx.Logger().Errorf("invalid text: %+v", err)
@@ -261,11 +264,11 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Number":
-			validation, ok := validationMap[question.ID]
+			validation, ok := validationMap[responseMeta.QuestionID]
 			if !ok {
 				validation = model.Validations{}
 			}
-			err := r.IValidation.CheckNumberValidation(validation, responseMetas[i].Data)
+			err := r.IValidation.CheckNumberValidation(validation, responseMeta.Data)
 			if err != nil {
 				if errors.Is(err, model.ErrInvalidNumber) {
 					ctx.Logger().Errorf("invalid number: %+v", err)
@@ -275,17 +278,17 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Checkbox", "MultipleChoice":
-			option, ok := optionMap[question.ID]
+			option, ok := optionMap[responseMeta.QuestionID]
 			if !ok {
 				option = []model.Options{}
 			}
 			var selectedOptions []int
-			if questionTypes[question.ID] == "MultipleChoice" {
+			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
 				var selectedOption int
-				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOption)
+				json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
 				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[question.ID] == "Checkbox" {
-				json.Unmarshal([]byte(responseMetas[i].Data), &selectedOptions)
+			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
+				json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
 			}
 			ok = true
 			if len(selectedOptions) == 0 {
@@ -309,15 +312,25 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "LinearScale":
-			label, ok := scaleLabelMap[question.ID]
+			label, ok := scaleLabelMap[responseMeta.QuestionID]
 			if !ok {
 				label = model.ScaleLabels{}
 			}
-			err := r.IScaleLabel.CheckScaleLabel(label, responseMetas[i].Data)
+			err := r.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
 			if err != nil {
 				ctx.Logger().Errorf("invalid scale: %+v", err)
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
+		default:
+			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+		}
+	}
+
+	for _, question := range questions {
+		if questionRequired[question.ID] {
+			ctx.Logger().Errorf("required question is not answered: %+v", question.ID)
+			return echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
 		}
 	}
 

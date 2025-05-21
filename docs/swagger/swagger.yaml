@@ -876,13 +876,20 @@ components:
             questionnaire_info:
               $ref: "#/components/schemas/QuestionnaireInfo"
     ResponseBody:
-      oneOf:
-        - $ref: "#/components/schemas/ResponseBodyText"
-        - $ref: "#/components/schemas/ResponseBodyTextLong"
-        - $ref: "#/components/schemas/ResponseBodyNumber"
-        - $ref: "#/components/schemas/ResponseBodySingleChoice"
-        - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
-        - $ref: "#/components/schemas/ResponseBodyScale"
+      allOf:
+        - type: object
+          properties:
+            question_id:
+              type: integer
+          required:
+            - question_id
+        - oneOf:
+          - $ref: "#/components/schemas/ResponseBodyText"
+          - $ref: "#/components/schemas/ResponseBodyTextLong"
+          - $ref: "#/components/schemas/ResponseBodyNumber"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
