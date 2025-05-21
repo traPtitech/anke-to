@@ -1,7 +1,7 @@
 .PHONY: init
 init:
 	go mod download
-	go install github.com/golang/mock/mockgen
+	go install go.uber.org/mock/mockgen
 	go install github.com/google/wire/cmd/wire
 
 .PHONY: dev

@@ -16,7 +16,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go install github.com/golang/mock/mockgen  \
+RUN go install go.uber.org/mock/mockgen  \
  && go generate ./model ./traq
 
 ENTRYPOINT dockerize -timeout 10s -wait tcp://mysql:3306 go test ./model ./router -v cover

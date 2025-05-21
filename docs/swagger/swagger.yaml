@@ -248,7 +248,7 @@ paths: # TODO 変数の命名を確認する
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Response"
+              $ref: "#/components/schemas/EditResponse"
       responses:
         "200":
           description: 正常に回答を変更できました
@@ -842,6 +842,14 @@ components:
             - response_id
             - submitted_at
             - modified_at
+        - $ref: "#/components/schemas/NewResponse"
+    EditResponse:
+      allOf:
+        - type: object
+          properties:
+            response_id:
+              type: integer
+              example: 1
         - $ref: "#/components/schemas/NewResponse"
     Responses:
       type: array
