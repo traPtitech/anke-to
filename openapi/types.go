@@ -12,10 +12,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-const (
-	ApplicationScopes = "application.Scopes"
-)
-
 // Defines values for QuestionSettingsMultipleChoiceQuestionType.
 const (
 	QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice QuestionSettingsMultipleChoiceQuestionType = "MultipleChoice"

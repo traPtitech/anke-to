@@ -11,10 +11,6 @@ info:
   contact:
     name: traP
     url: "https://github.com/traPtitech/anke-to"
-security:
-  - application:
-      - read
-      - write
 tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
@@ -978,13 +974,4 @@ components:
         format: uuid
         description: |
           Group UUID
-  securitySchemes:
-    application:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: "https://q.trap.jp/api/v3/oauth2/authorize"
-          tokenUrl: "https://q.trap.jp/api/v3/oauth2/token"
-          scopes:
-            write: allows modifying resources
-            read: allows reading resources
+ 

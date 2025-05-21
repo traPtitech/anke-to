@@ -34,16 +34,10 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/dprotaso/go-yit v0.0.0-20240618133044-5a0af90af097 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
-	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
-	github.com/speakeasy-api/jsonpath v0.6.1 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.10.1 // indirect
-	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 )
 
 require (
@@ -68,17 +62,20 @@ require (
 )
 
 require (
-	github.com/deckarep/golang-set/v2 v2.8.0
-	github.com/go-gormigrate/gormigrate/v2 v2.1.4
-	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
-	github.com/traPtitech/go-traq v0.0.0-20250411085910-749ba86cfa5b
+	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/go-gormigrate/gormigrate/v2 v2.1.1
+	github.com/oapi-codegen/echo-middleware v1.0.2
+	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0
+	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
 	go.uber.org/mock v0.5.2
 )
 
 require (
-	github.com/getkin/kin-openapi v0.132.0
-	github.com/go-openapi/jsonpointer v0.21.1 // indirect
-	github.com/go-openapi/swag v0.23.1 // indirect
+	github.com/getkin/kin-openapi v0.124.0
+	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/swag v0.22.8 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -88,7 +85,7 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
-	github.com/google/uuid v1.6.0
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
+	github.com/google/uuid v1.5.0
 	github.com/oapi-codegen/runtime v1.1.1
 )
