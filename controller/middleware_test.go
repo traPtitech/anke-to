@@ -1,4 +1,4 @@
-package router
+package controller
 
 import (
 	"errors"
@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/model/mock_model"
+	"go.uber.org/mock/gomock"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -533,7 +533,6 @@ func TestCheckResponseReadPrivilege(t *testing.T) {
 	type expect struct {
 		haveReadPrivilege bool
 		isErr             bool
-		err               error
 	}
 	type test struct {
 		description string

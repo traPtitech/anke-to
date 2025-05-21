@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
@@ -19,13 +21,19 @@ const questionnairesTestUserID = "questionnairesUser"
 const questionnairesTestUserID2 = "questionnairesUser2"
 const invalidQuestionnairesTestUserID = "invalidQuestionnairesUser"
 
+var questionnairesTestGroupID, _ = uuid.Parse("bc6527d5-740b-4ee9-9e61-0a374ae005b5") // グループメンバーがquestionnairesTestUserIDのみであると仮定
+
 var questionnairesNow = time.Now()
 
 type QuestionnairesTestData struct {
-	questionnaire  *Questionnaires
-	targets        []string
-	administrators []string
-	respondents    []*QuestionnairesTestRespondent
+	questionnaire       *Questionnaires
+	targets             []string
+	targetUsers         []string
+	targetGroups        []uuid.UUID
+	administrators      []string
+	administratorUsers  []string
+	administratorGroups []uuid.UUID
+	respondents         []*QuestionnairesTestRespondent
 }
 
 type QuestionnairesTestRespondent struct {
@@ -42,8 +50,6 @@ var (
 )
 
 func TestQuestionnaires(t *testing.T) {
-	t.Parallel()
-
 	setupQuestionnairesTest(t)
 
 	t.Run("InsertQuestionnaire", insertQuestionnaireTest)
@@ -67,12 +73,17 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(questionnairesNow, true),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
-			targets:        []string{},
-			administrators: []string{},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: &Questionnaires{
@@ -80,12 +91,17 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "respondents",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
-			targets:        []string{questionnairesTestUserID},
-			administrators: []string{},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{questionnairesTestUserID},
+			targetUsers:         []string{questionnairesTestUserID},
+			targetGroups:        []uuid.UUID{questionnairesTestGroupID},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: &Questionnaires{
@@ -93,12 +109,17 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "administrators",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(time.Second),
 				ModifiedAt:   questionnairesNow.Add(2 * time.Second),
 			},
-			targets:        []string{},
-			administrators: []string{questionnairesTestUserID},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{questionnairesTestUserID},
+			administratorUsers:  []string{questionnairesTestUserID},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: &Questionnaires{
@@ -106,11 +127,16 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
-			targets:        []string{},
-			administrators: []string{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
 			respondents: []*QuestionnairesTestRespondent{
 				{
 					respondent: &Respondents{
@@ -126,11 +152,16 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 			},
-			targets:        []string{},
-			administrators: []string{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
 			respondents: []*QuestionnairesTestRespondent{
 				{
 					respondent: &Respondents{
@@ -145,12 +176,17 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(2 * time.Second),
 				ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 			},
-			targets:        []string{questionnairesTestUserID},
-			administrators: []string{questionnairesTestUserID},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{questionnairesTestUserID},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{questionnairesTestGroupID},
+			administrators:      []string{questionnairesTestUserID},
+			administratorUsers:  []string{questionnairesTestUserID},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		},
 		{
 			questionnaire: &Questionnaires{
@@ -158,6 +194,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow,
 				ModifiedAt:   questionnairesNow,
 				DeletedAt: gorm.DeletedAt{
@@ -165,9 +202,13 @@ func setupQuestionnairesTest(t *testing.T) {
 					Valid: true,
 				},
 			},
-			targets:        []string{},
-			administrators: []string{},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		},
 	}
 	for i := 0; i < 20; i++ {
@@ -177,12 +218,17 @@ func setupQuestionnairesTest(t *testing.T) {
 				Description:  "第1回集会らん☆ぷろ参加者募集",
 				ResTimeLimit: null.NewTime(time.Time{}, false),
 				ResSharedTo:  "public",
+				IsPublished:  true,
 				CreatedAt:    questionnairesNow.Add(time.Duration(len(datas)) * time.Second),
 				ModifiedAt:   questionnairesNow,
 			},
-			targets:        []string{},
-			administrators: []string{},
-			respondents:    []*QuestionnairesTestRespondent{},
+			targets:             []string{},
+			targetUsers:         []string{},
+			targetGroups:        []uuid.UUID{},
+			administrators:      []string{},
+			administratorUsers:  []string{},
+			administratorGroups: []uuid.UUID{},
+			respondents:         []*QuestionnairesTestRespondent{},
 		})
 	}
 	datas = append(datas, &QuestionnairesTestData{
@@ -191,23 +237,33 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow.Add(2 * time.Second),
 			ModifiedAt:   questionnairesNow.Add(3 * time.Second),
 		},
-		targets:        []string{questionnairesTestUserID},
-		administrators: []string{questionnairesTestUserID},
-		respondents:    []*QuestionnairesTestRespondent{},
+		targets:             []string{questionnairesTestUserID},
+		targetUsers:         []string{questionnairesTestUserID},
+		targetGroups:        []uuid.UUID{},
+		administrators:      []string{questionnairesTestUserID},
+		administratorUsers:  []string{questionnairesTestUserID},
+		administratorGroups: []uuid.UUID{},
+		respondents:         []*QuestionnairesTestRespondent{},
 	}, &QuestionnairesTestData{
 		questionnaire: &Questionnaires{
 			Title:        "第1回集会らん☆ぷろ募集アンケート",
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
-		targets:        []string{},
-		administrators: []string{questionnairesTestUserID, questionnairesTestUserID2},
+		targets:             []string{},
+		targetUsers:         []string{},
+		targetGroups:        []uuid.UUID{},
+		administrators:      []string{questionnairesTestUserID, questionnairesTestUserID2},
+		administratorUsers:  []string{questionnairesTestUserID, questionnairesTestUserID2},
+		administratorGroups: []uuid.UUID{questionnairesTestGroupID},
 		respondents: []*QuestionnairesTestRespondent{
 			{
 				respondent: &Respondents{
@@ -222,11 +278,16 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
-		targets:        []string{},
-		administrators: []string{},
+		targets:             []string{},
+		targetUsers:         []string{},
+		targetGroups:        []uuid.UUID{},
+		administrators:      []string{},
+		administratorUsers:  []string{},
+		administratorGroups: []uuid.UUID{},
 		respondents: []*QuestionnairesTestRespondent{
 			{
 				respondent: &Respondents{
@@ -240,11 +301,16 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(questionnairesNow, true),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
-		targets:        []string{},
-		administrators: []string{questionnairesTestUserID},
+		targets:             []string{},
+		targetUsers:         []string{},
+		targetGroups:        []uuid.UUID{},
+		administrators:      []string{questionnairesTestUserID},
+		administratorUsers:  []string{questionnairesTestUserID},
+		administratorGroups: []uuid.UUID{},
 		respondents: []*QuestionnairesTestRespondent{
 			{
 				respondent: &Respondents{
@@ -259,11 +325,16 @@ func setupQuestionnairesTest(t *testing.T) {
 			Description:  "第1回集会らん☆ぷろ参加者募集",
 			ResTimeLimit: null.NewTime(time.Time{}, false),
 			ResSharedTo:  "public",
+			IsPublished:  true,
 			CreatedAt:    questionnairesNow,
 			ModifiedAt:   questionnairesNow,
 		},
-		targets:        []string{},
-		administrators: []string{questionnairesTestUserID},
+		targets:             []string{},
+		targetUsers:         []string{},
+		targetGroups:        []uuid.UUID{},
+		administrators:      []string{questionnairesTestUserID},
+		administratorUsers:  []string{questionnairesTestUserID},
+		administratorGroups: []uuid.UUID{},
 		respondents: []*QuestionnairesTestRespondent{
 			{
 				respondent: &Respondents{
@@ -304,6 +375,20 @@ func setupQuestionnairesTest(t *testing.T) {
 			}
 		}
 
+		for _, targetUser := range data.targetUsers {
+			err := db.Session(&gorm.Session{NewDB: true}).Create(&TargetUsers{QuestionnaireID: datas[i].questionnaire.ID, UserTraqid: targetUser}).Error
+			if err != nil {
+				t.Errorf("failed to create target user: %v", err)
+			}
+		}
+
+		for _, targetGroup := range data.targetGroups {
+			err := db.Session(&gorm.Session{NewDB: true}).Create(&TargetGroups{QuestionnaireID: datas[i].questionnaire.ID, GroupID: targetGroup}).Error
+			if err != nil {
+				t.Errorf("failed to create target user: %v", err)
+			}
+		}
+
 		for _, administrator := range data.administrators {
 			questionnaires, ok := userAdministratorMap[administrator]
 			if !ok {
@@ -319,6 +404,20 @@ func setupQuestionnairesTest(t *testing.T) {
 				}).Error
 			if err != nil {
 				t.Errorf("failed to create target: %v", err)
+			}
+		}
+
+		for _, adminUser := range data.administratorUsers {
+			err := db.Session(&gorm.Session{NewDB: true}).Create(&AdministratorUsers{QuestionnaireID: datas[i].questionnaire.ID, UserTraqid: adminUser}).Error
+			if err != nil {
+				t.Errorf("failed to create target user: %v", err)
+			}
+		}
+
+		for _, adminGroup := range data.administratorGroups {
+			err := db.Session(&gorm.Session{NewDB: true}).Create(&AdministratorGroups{QuestionnaireID: datas[i].questionnaire.ID, GroupID: adminGroup}).Error
+			if err != nil {
+				t.Errorf("failed to create target user: %v", err)
 			}
 		}
 
@@ -339,7 +438,7 @@ func setupQuestionnairesTest(t *testing.T) {
 				Session(&gorm.Session{NewDB: true}).
 				Create(respondentData.respondent).Error
 			if err != nil {
-				t.Error("failed to create respondent: %w", err)
+				t.Errorf("failed to create respondent: %v", err)
 			}
 		}
 	}
@@ -351,10 +450,13 @@ func insertQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isAnonymous              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -375,6 +477,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -384,6 +488,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -393,6 +499,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -402,6 +510,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "administrators",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -411,6 +521,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -420,6 +532,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			expect: expect{
 				isErr: true,
@@ -432,6 +546,8 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  strings.Repeat("a", 2000),
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -441,9 +557,33 @@ func insertQuestionnaireTest(t *testing.T) {
 				description:  strings.Repeat("a", 200000),
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			expect: expect{
 				isErr: true,
+			},
+		},
+		{
+			description: "not published",
+			args: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  false,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "anonymous questionnaire",
+			args: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  true,
 			},
 		},
 	}
@@ -451,7 +591,7 @@ func insertQuestionnaireTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo)
+		questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, testCase.args.title, testCase.args.description, testCase.args.resTimeLimit, testCase.args.resSharedTo, testCase.args.isPublished, testCase.args.isAnonymous, testCase.args.isDuplicateAnswerAllowed)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -475,6 +615,8 @@ func insertQuestionnaireTest(t *testing.T) {
 		assertion.Equal(testCase.args.description, questionnaire.Description, testCase.description, "description")
 		assertion.WithinDuration(testCase.args.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(testCase.args.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
+		assertion.Equal(testCase.args.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
+		assertion.Equal(testCase.args.isDuplicateAnswerAllowed, questionnaire.IsDuplicateAnswerAllowed, testCase.description, "is_duplicate_answer_allowed")
 
 		assertion.WithinDuration(time.Now(), questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -487,10 +629,13 @@ func updateQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isAnonymous              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -512,12 +657,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -527,12 +676,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第2回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -542,12 +695,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第2回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -557,12 +714,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "respondents",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -572,12 +733,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第2回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -587,12 +752,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第2回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -602,12 +771,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -617,12 +790,16 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now().Add(time.Minute), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 		{
@@ -632,12 +809,54 @@ func updateQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Now(), true),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 			after: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "update is_published(false->true)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  false,
+				isAnonymous:  false,
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+		},
+		{
+			description: "update is_anonymous(false->true)",
+			before: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
+			},
+			after: args{
+				title:        "第1回集会らん☆ぷろ募集アンケート",
+				description:  "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit: null.NewTime(time.Time{}, false),
+				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  true,
 			},
 		},
 	}
@@ -647,10 +866,12 @@ func updateQuestionnaireTest(t *testing.T) {
 
 		before := &testCase.before
 		questionnaire := Questionnaires{
-			Title:        before.title,
-			Description:  before.description,
-			ResTimeLimit: before.resTimeLimit,
-			ResSharedTo:  before.resSharedTo,
+			Title:                    before.title,
+			Description:              before.description,
+			ResTimeLimit:             before.resTimeLimit,
+			ResSharedTo:              before.resSharedTo,
+			IsPublished:              before.isPublished,
+			IsDuplicateAnswerAllowed: before.isDuplicateAnswerAllowed,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -662,7 +883,7 @@ func updateQuestionnaireTest(t *testing.T) {
 		createdAt := questionnaire.CreatedAt
 		questionnaireID := questionnaire.ID
 		after := &testCase.after
-		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID)
+		err = questionnaireImpl.UpdateQuestionnaire(ctx, after.title, after.description, after.resTimeLimit, after.resSharedTo, questionnaireID, after.isPublished, after.isAnonymous, after.isDuplicateAnswerAllowed)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -686,6 +907,8 @@ func updateQuestionnaireTest(t *testing.T) {
 		assertion.Equal(after.description, questionnaire.Description, testCase.description, "description")
 		assertion.WithinDuration(after.resTimeLimit.ValueOrZero(), questionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "res_time_limit")
 		assertion.Equal(after.resSharedTo, questionnaire.ResSharedTo, testCase.description, "res_shared_to")
+		assertion.Equal(after.isPublished, questionnaire.IsPublished, testCase.description, "is_published")
+		assertion.Equal(after.isDuplicateAnswerAllowed, questionnaire.IsDuplicateAnswerAllowed, testCase.description, "is_duplicate_answer_allowed")
 
 		assertion.WithinDuration(createdAt, questionnaire.CreatedAt, 2*time.Second, testCase.description, "created_at")
 		assertion.WithinDuration(time.Now(), questionnaire.ModifiedAt, 2*time.Second, testCase.description, "modified_at")
@@ -714,19 +937,23 @@ func updateQuestionnaireTest(t *testing.T) {
 			description:  "第1回集会らん☆ぷろ参加者募集",
 			resTimeLimit: null.NewTime(time.Time{}, false),
 			resSharedTo:  "public",
+			isPublished:  true,
+			isAnonymous:  false,
 		},
 		{
 			title:        "第1回集会らん☆ぷろ募集アンケート",
 			description:  "第1回集会らん☆ぷろ参加者募集",
 			resTimeLimit: null.NewTime(time.Now(), true),
 			resSharedTo:  "public",
+			isPublished:  true,
+			isAnonymous:  false,
 		},
 	}
 
 	for _, arg := range invalidTestCases {
 		ctx := context.Background()
 
-		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID)
+		err := questionnaireImpl.UpdateQuestionnaire(ctx, arg.title, arg.description, arg.resTimeLimit, arg.resSharedTo, invalidQuestionnaireID, arg.isPublished, arg.isAnonymous, arg.isDuplicateAnswerAllowed)
 		if !errors.Is(err, ErrNoRecordUpdated) {
 			if err == nil {
 				t.Errorf("Succeeded with invalid questionnaireID")
@@ -743,10 +970,13 @@ func deleteQuestionnaireTest(t *testing.T) {
 	assertion := assert.New(t)
 
 	type args struct {
-		title        string
-		description  string
-		resTimeLimit null.Time
-		resSharedTo  string
+		title                    string
+		description              string
+		resTimeLimit             null.Time
+		resSharedTo              string
+		isPublished              bool
+		isAnonymous              bool
+		isDuplicateAnswerAllowed bool
 	}
 	type expect struct {
 		isErr bool
@@ -764,6 +994,8 @@ func deleteQuestionnaireTest(t *testing.T) {
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
+				isPublished:  true,
+				isAnonymous:  false,
 			},
 		},
 	}
@@ -772,10 +1004,13 @@ func deleteQuestionnaireTest(t *testing.T) {
 		ctx := context.Background()
 
 		questionnaire := Questionnaires{
-			Title:        testCase.args.title,
-			Description:  testCase.args.description,
-			ResTimeLimit: testCase.args.resTimeLimit,
-			ResSharedTo:  testCase.args.resSharedTo,
+			Title:                    testCase.args.title,
+			Description:              testCase.args.description,
+			ResTimeLimit:             testCase.args.resTimeLimit,
+			ResSharedTo:              testCase.args.resSharedTo,
+			IsPublished:              testCase.isPublished,
+			IsAnonymous:              testCase.args.isAnonymous,
+			IsDuplicateAnswerAllowed: testCase.args.isDuplicateAnswerAllowed,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
@@ -883,11 +1118,12 @@ func getQuestionnairesTest(t *testing.T) {
 	}
 
 	type args struct {
-		userID      string
-		sort        string
-		search      string
-		pageNum     int
-		nontargeted bool
+		userID                string
+		sort                  string
+		search                string
+		pageNum               int
+		onlyTargetingMe       bool
+		onlyAdministratedByMe bool
 	}
 	type expect struct {
 		isErr      bool
@@ -903,83 +1139,135 @@ func getQuestionnairesTest(t *testing.T) {
 
 	testCases := []test{
 		{
+			description: "userID:valid, sort:no, search:no, page:1, onlytargetted",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:1, onlytargetted, onlyadministrated",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: true,
+			},
+		},
+		{
 			description: "userID:valid, sort:no, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:no, search:no, page:1, onlytargetted",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       true,
+				onlyAdministratedByMe: false,
+			},
+		},
+		{
+			description: "userID:valid, sort:created_at, search:no, page:1, onlyadministrated",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
 			},
 		},
 		{
 			description: "userID:valid, sort:created_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "created_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:-created_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-created_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-created_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:title, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "title",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:-title, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-title",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-title",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:modified_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "modified_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:-modified_at, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "-modified_at",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "-modified_at",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "userID:valid, sort:no, search:GetQuestionnaireTest$, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "GetQuestionnaireTest$",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "GetQuestionnaireTest$",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 			expect: expect{
 				isCheckLen: true,
@@ -987,23 +1275,40 @@ func getQuestionnairesTest(t *testing.T) {
 			},
 		},
 		{
+			description: "userID:valid, sort:no, search:GetQuestionnaireTest$, page:1, onlyadministrated",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "GetQuestionnaireTest$",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: true,
+			},
+			expect: expect{
+				isCheckLen: true,
+				length:     2,
+			},
+		},
+		{
 			description: "userID:valid, sort:no, search:no, page:2",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     2,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               2,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 		},
 		{
 			description: "too large page",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     100000,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               100000,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 			expect: expect{
 				isErr: true,
@@ -1011,37 +1316,29 @@ func getQuestionnairesTest(t *testing.T) {
 			},
 		},
 		{
-			description: "userID:valid, sort:no, search:no, page:1, nontargetted",
-			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "",
-				pageNum:     1,
-				nontargeted: true,
-			},
-		},
-		{
 			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "",
-				search:      "notFoundQuestionnaire",
-				pageNum:     1,
-				nontargeted: true,
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "notFoundQuestionnaire",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 			expect: expect{
-				isCheckLen: false,
+				isCheckLen: true,
 				length:     0,
 			},
 		},
 		{
 			description: "userID:valid, sort:invalid, search:no, page:1",
 			args: args{
-				userID:      questionnairesTestUserID,
-				sort:        "hogehoge",
-				search:      "",
-				pageNum:     1,
-				nontargeted: false,
+				userID:                questionnairesTestUserID,
+				sort:                  "hogehoge",
+				search:                "",
+				pageNum:               1,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
 			},
 			expect: expect{
 				isErr: true,
@@ -1053,7 +1350,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.nontargeted)
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1070,7 +1367,7 @@ func getQuestionnairesTest(t *testing.T) {
 		err = db.
 			Session(&gorm.Session{NewDB: true}).
 			Model(&Questionnaires{}).
-			Where("deleted_at IS NULL").
+			Where("deleted_at IS NULL AND is_published IS TRUE").
 			Count(&questionnaireNum).Error
 		if err != nil {
 			t.Errorf("failed to count questionnaire(%s): %v", testCase.description, err)
@@ -1080,9 +1377,14 @@ func getQuestionnairesTest(t *testing.T) {
 		for _, questionnaire := range questionnaires {
 			actualQuestionnaireIDs = append(actualQuestionnaireIDs, questionnaire.ID)
 		}
-		if testCase.args.nontargeted {
-			for _, targettedQuestionnaireID := range userTargetMap[questionnairesTestUserID] {
-				assertion.NotContains(actualQuestionnaireIDs, targettedQuestionnaireID, testCase.description, "not contain(targetted)")
+		if testCase.args.onlyTargetingMe {
+			for _, actualQuestionnaireID := range actualQuestionnaireIDs {
+				assertion.Contains(userTargetMap[questionnairesTestUserID], actualQuestionnaireID, testCase.description, "contain(targetted)")
+			}
+		}
+		if testCase.args.onlyAdministratedByMe {
+			for _, actualQuestionnaireID := range actualQuestionnaireIDs {
+				assertion.Contains(userAdministratorMap[questionnairesTestUserID], actualQuestionnaireID, testCase.description, "contain(administrated)")
 			}
 		}
 		for _, deletedQuestionnaireID := range deletedQuestionnaireIDs {
@@ -1093,7 +1395,7 @@ func getQuestionnairesTest(t *testing.T) {
 			assertion.Regexp(testCase.args.search, questionnaire.Title, testCase.description, "regexp")
 		}
 
-		if len(testCase.args.search) == 0 && !testCase.args.nontargeted {
+		if len(testCase.args.search) == 0 && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
 			fmt.Println(testCase.description)
 			fmt.Println(questionnaireNum)
 			fmt.Println(pageMax)
@@ -1218,12 +1520,16 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		questionnaireID int
 	}
 	type expect struct {
-		questionnaire  Questionnaires
-		targets        []string
-		administrators []string
-		respondents    []string
-		isErr          bool
-		err            error
+		questionnaire       Questionnaires
+		targets             []string
+		targetUsers         []string
+		targetGroups        []uuid.UUID
+		administrators      []string
+		administratorUsers  []string
+		administratorGroups []uuid.UUID
+		respondents         []string
+		isErr               bool
+		err                 error
 	}
 	type test struct {
 		description string
@@ -1255,10 +1561,14 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[0].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  *datas[0].questionnaire,
-				targets:        []string{},
-				administrators: []string{},
-				respondents:    []string{},
+				questionnaire:       *datas[0].questionnaire,
+				targets:             []string{},
+				targetUsers:         datas[0].targetUsers,
+				targetGroups:        datas[0].targetGroups,
+				administrators:      []string{},
+				administratorUsers:  datas[0].administratorUsers,
+				administratorGroups: datas[0].administratorGroups,
+				respondents:         []string{},
 			},
 		},
 		{
@@ -1267,10 +1577,14 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[1].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  *datas[1].questionnaire,
-				targets:        []string{questionnairesTestUserID},
-				administrators: []string{},
-				respondents:    []string{},
+				questionnaire:       *datas[1].questionnaire,
+				targets:             []string{questionnairesTestUserID},
+				targetUsers:         datas[1].targetUsers,
+				targetGroups:        datas[1].targetGroups,
+				administrators:      []string{},
+				administratorUsers:  datas[1].administratorUsers,
+				administratorGroups: datas[1].administratorGroups,
+				respondents:         []string{},
 			},
 		},
 		{
@@ -1279,10 +1593,14 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[2].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  *datas[2].questionnaire,
-				targets:        []string{},
-				administrators: []string{questionnairesTestUserID},
-				respondents:    []string{},
+				questionnaire:       *datas[2].questionnaire,
+				targets:             []string{},
+				targetUsers:         datas[2].targetUsers,
+				targetGroups:        datas[2].targetGroups,
+				administrators:      []string{questionnairesTestUserID},
+				administratorUsers:  datas[2].administratorUsers,
+				administratorGroups: datas[2].administratorGroups,
+				respondents:         []string{},
 			},
 		},
 		{
@@ -1291,10 +1609,14 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[3].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  *datas[3].questionnaire,
-				targets:        []string{},
-				administrators: []string{},
-				respondents:    []string{questionnairesTestUserID},
+				questionnaire:       *datas[3].questionnaire,
+				targets:             []string{},
+				targetUsers:         datas[3].targetUsers,
+				targetGroups:        datas[3].targetGroups,
+				administrators:      []string{},
+				administratorUsers:  datas[3].administratorUsers,
+				administratorGroups: datas[3].administratorGroups,
+				respondents:         []string{questionnairesTestUserID},
 			},
 		},
 		{
@@ -1303,10 +1625,14 @@ func getQuestionnaireInfoTest(t *testing.T) {
 				questionnaireID: datas[4].questionnaire.ID,
 			},
 			expect: expect{
-				questionnaire:  *datas[4].questionnaire,
-				targets:        []string{},
-				administrators: []string{},
-				respondents:    []string{},
+				questionnaire:       *datas[4].questionnaire,
+				targets:             []string{},
+				targetUsers:         datas[4].targetUsers,
+				targetGroups:        datas[4].targetGroups,
+				administrators:      []string{},
+				administratorUsers:  datas[4].administratorUsers,
+				administratorGroups: datas[4].administratorGroups,
+				respondents:         []string{},
 			},
 		},
 		{
@@ -1324,7 +1650,7 @@ func getQuestionnaireInfoTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		actualQuestionnaire, actualTargets, actualAdministrators, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
+		actualQuestionnaire, actualTargets, actualTargetUsers, actualTargetGroups, actualAdministrators, actualAdministratorUsers, actualAdministratorGroups, actualRespondents, err := questionnaireImpl.GetQuestionnaireInfo(ctx, testCase.questionnaireID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1341,6 +1667,8 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		assertion.Equal(testCase.expect.questionnaire.Title, actualQuestionnaire.Title, testCase.description, "questionnaire(Title)")
 		assertion.Equal(testCase.expect.questionnaire.Description, actualQuestionnaire.Description, testCase.description, "questionnaire(Description)")
 		assertion.Equal(testCase.expect.questionnaire.ResSharedTo, actualQuestionnaire.ResSharedTo, testCase.description, "questionnaire(ResSharedTo)")
+		assertion.Equal(testCase.expect.questionnaire.IsPublished, actualQuestionnaire.IsPublished, testCase.description, "questionnaire(IsPublished)")
+		assertion.Equal(testCase.expect.questionnaire.IsDuplicateAnswerAllowed, actualQuestionnaire.IsDuplicateAnswerAllowed, testCase.description, "questionnaire(IsDuplicateAnswerAllowed)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ResTimeLimit.ValueOrZero(), actualQuestionnaire.ResTimeLimit.ValueOrZero(), 2*time.Second, testCase.description, "questionnaire(ResTimeLimit)")
 		assertion.WithinDuration(testCase.expect.questionnaire.CreatedAt, actualQuestionnaire.CreatedAt, 2*time.Second, testCase.description, "questionnaire(CreatedAt)")
 		assertion.WithinDuration(testCase.expect.questionnaire.ModifiedAt, actualQuestionnaire.ModifiedAt, 2*time.Second, testCase.description, "questionnaire(ModifiedAt)")
@@ -1350,9 +1678,29 @@ func getQuestionnaireInfoTest(t *testing.T) {
 		sort.Slice(actualTargets, func(i, j int) bool { return actualTargets[i] < actualTargets[j] })
 		assertion.Equal(testCase.targets, actualTargets, testCase.description, "targets")
 
+		sort.Slice(testCase.targetUsers, func(i, j int) bool { return testCase.targetUsers[i] < testCase.targetUsers[j] })
+		sort.Slice(actualTargetUsers, func(i, j int) bool { return actualTargetUsers[i] < actualTargetUsers[j] })
+		assertion.Equal(testCase.targetUsers, actualTargetUsers, testCase.description, "target users")
+
+		sort.Slice(testCase.targetGroups, func(i, j int) bool { return testCase.targetGroups[i].String() < testCase.targetGroups[j].String() })
+		sort.Slice(actualTargetGroups, func(i, j int) bool { return actualTargetGroups[i].String() < actualTargetGroups[j].String() })
+		assertion.Equal(testCase.targetGroups, actualTargetGroups, testCase.description, "target groups")
+
 		sort.Slice(testCase.administrators, func(i, j int) bool { return testCase.administrators[i] < testCase.administrators[j] })
 		sort.Slice(actualAdministrators, func(i, j int) bool { return actualAdministrators[i] < actualAdministrators[j] })
 		assertion.Equal(testCase.administrators, actualAdministrators, testCase.description, "administrators")
+
+		sort.Slice(testCase.administratorUsers, func(i, j int) bool { return testCase.administratorUsers[i] < testCase.administratorUsers[j] })
+		sort.Slice(actualAdministratorUsers, func(i, j int) bool { return actualAdministratorUsers[i] < actualAdministratorUsers[j] })
+		assertion.Equal(testCase.administratorUsers, actualAdministratorUsers, testCase.description, "administrator users")
+
+		sort.Slice(testCase.administratorGroups, func(i, j int) bool {
+			return testCase.administratorGroups[i].String() < testCase.administratorGroups[j].String()
+		})
+		sort.Slice(actualAdministratorGroups, func(i, j int) bool {
+			return actualAdministratorGroups[i].String() < actualAdministratorGroups[j].String()
+		})
+		assertion.Equal(testCase.administratorGroups, actualAdministratorGroups, testCase.description, "administrator groups")
 
 		sort.Slice(testCase.respondents, func(i, j int) bool { return testCase.respondents[i] < testCase.respondents[j] })
 		sort.Slice(actualRespondents, func(i, j int) bool { return actualRespondents[i] < actualRespondents[j] })

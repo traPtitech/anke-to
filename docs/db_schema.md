@@ -9,6 +9,24 @@
 | questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
 | user_traqid      | char(32) | NO   | PRI | _NULL_  |
 
+### administrator_groups
+
+アンケートの運営 (編集等ができるグループ)（実際の管理はadministratorsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| group_id         | char(36) | NO   | PRI | _NULL_  |
+
+### administrator_users
+
+アンケートの運営 (編集等ができるユーザー)（実際の管理はadministratorsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |
+
 ### options
 
 選択肢
@@ -48,8 +66,10 @@
 | res_time_limit | timestamp | YES  |     | _NULL_            |                | 回答の締切日時 (締切がない場合は NULL)                                                                                  |
 | deleted_at     | timestamp | YES  |     | _NULL_            |                | アンケートが削除された日時 (削除されていない場合は NULL)                                                                |
 | res_shared_to  | char(30)  | NO   |     | administrators    |                | アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public") |
+| is_anonymous   | boolean   | NO   |     | false             |                | アンケートが匿名解答かどうか                                                                                            |
 | created_at     | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                                                                                              |
 | modified_at    | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                                                                                              |
+| is_published   | boolean   | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
 
 ### respondents
 
@@ -102,6 +122,25 @@
 ### targets
 
 アンケートの対象者
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| user_traqid      | char(32) | NO   | PRI | _NULL_  |
+| is_canceled      | boolean  | NO   |     | false   |       | アンケートの対象者がキャンセルしたかどうか |
+
+### target_groups
+
+選択したアンケートの対象者（グループ）（実際の管理はtargetsで行い、これは前回選択した内容を提示するためのみに使用される）
+
+| Field            | Type     | Null | Key | Default | Extra | 説明など |
+| ---------------- | -------- | ---- | --- | ------- | ----- | -------- |
+| questionnaire_id | int(11)  | NO   | PRI | _NULL_  |
+| group_id         | char(36) | NO   | PRI | _NULL_  |
+
+### target_groups
+
+選択したアンケートの対象者（ユーザー）（実際の管理はtargetsで行い、これは前回選択した内容を提示するためのみに使用される）
 
 | Field            | Type     | Null | Key | Default | Extra | 説明など |
 | ---------------- | -------- | ---- | --- | ------- | ----- | -------- |

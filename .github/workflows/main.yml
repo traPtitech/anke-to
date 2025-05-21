@@ -16,40 +16,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
       - run: go mod download
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: [mod]
-    env:
-      GOCACHE: "/tmp/go/cache"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - uses: actions/cache@v3.3.2
-        with:
-          path: /tmp/go/cache
-          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-${{ github.ref }}-
-            ${{ runner.os }}-go-build-
       - run: go build -o anke-to
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: anke-to
           path: anke-to
@@ -67,53 +48,58 @@ jobs:
           MYSQL_DATABASE: anke-to
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - uses: actions/cache@v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - run: go install github.com/golang/mock/mockgen@v1.5.0
+      - run: go install go.uber.org/mock/mockgen@latest
       - run: go generate ./...
-      - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
+      - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
+        env:
+          MARIADB_USERNAME: root
+          MARIADB_PASSWORD: password
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_DATABASE: anke-to
+      - run: go test ./controller -v -coverprofile=coverage-controller.txt -race -vet=off
         env:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.txt
-          yml: ./codecov.yml
-      - uses: actions/upload-artifact@v3
+          files: ./coverage-model.txt ./coverage-controller.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: actions/upload-artifact@v4
         with:
-          name: coverage.txt
-          path: coverage.txt
+          name: coverage-model.txt
+          path: coverage-model.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-controller.txt
+          path: coverage-controller.txt
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
+      - run: go install go.uber.org/mock/mockgen@latest
+      - run: go generate ./...
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.3
+        uses: reviewdog/action-golangci-lint@v2
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: error
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.7
+        uses: stoplightio/spectral-action@latest
         with:
           file_glob: docs/swagger/*.yaml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}

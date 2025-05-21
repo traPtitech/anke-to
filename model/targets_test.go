@@ -3,9 +3,13 @@ package model
 import (
 	"context"
 	"errors"
+	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 
@@ -305,6 +309,350 @@ func TestGetTargets(t *testing.T) {
 			}
 
 			assert.ElementsMatchf(t, expectTargets, targets, testCase.description, "targets")
+		})
+	}
+}
+
+func TestIsTargetingMe(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	ctx := context.Background()
+
+	questionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "第1回集会らん☆ぷろ募集アンケート", "第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！", null.NewTime(time.Now(), false), "private", true, false, true)
+	require.NoError(t, err)
+
+	err = targetImpl.InsertTargets(ctx, questionnaireID, []string{userOne})
+	require.NoError(t, err)
+
+	type args struct {
+		userID string
+	}
+	type expect struct {
+		isErr      bool
+		err        error
+		isTargeted bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "is targeted",
+			args: args{
+				userID: userOne,
+			},
+			expect: expect{
+				isTargeted: true,
+			},
+		},
+		{
+			description: "not targeted",
+			args: args{
+				userID: userTwo,
+			},
+			expect: expect{
+				isTargeted: false,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		isTargeted, err := targetImpl.IsTargetingMe(ctx, questionnaireID, testCase.args.userID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		assertion.Equal(testCase.expect.isTargeted, isTargeted, testCase.description, "isTargeted")
+	}
+}
+
+func TestGetTargetsCancelStatus(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctx := context.Background()
+
+	type test struct {
+		description     string
+		validTargets    []string // is_canceled = false
+		invalidTargets  []string // is_canceled = true
+		argTargets      []string
+		argTargetsValid []bool
+		isErr           bool
+		err             error
+	}
+
+	testCases := []test{
+		{
+			description:     "all valid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{},
+			argTargets:      []string{"a"},
+			argTargetsValid: []bool{true},
+		},
+		{
+			description:     "all invalid targets",
+			validTargets:    []string{},
+			invalidTargets:  []string{"a", "b"},
+			argTargets:      []string{"b"},
+			argTargetsValid: []bool{false},
+		},
+		{
+			description:     "both valid and invalid targets",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"a", "c"},
+			argTargetsValid: []bool{true, false},
+		},
+		{
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "a", "d"},
+			argTargetsValid: []bool{true, true, false},
+		},
+		{
+			description:     "both valid and invalid targets changed order",
+			validTargets:    []string{"a", "b"},
+			invalidTargets:  []string{"c", "d"},
+			argTargets:      []string{"b", "d", "a"},
+			argTargetsValid: []bool{true, false, true},
+		},
+		{
+			description:    "argTargets with target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"e"},
+			isErr:          true,
+		},
+		{
+			description:    "argTargets with some of target not in db",
+			validTargets:   []string{"a", "b"},
+			invalidTargets: []string{"c", "d"},
+			argTargets:     []string{"a", "e"},
+			isErr:          true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.validTargets)+len(testCase.invalidTargets))
+			for _, target := range testCase.validTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: false,
+				})
+			}
+			for _, target := range testCase.invalidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: true,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			cancelStatus, err := targetImpl.GetTargetsCancelStatus(ctx, questionnaire.ID, testCase.argTargets)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
+			if err != nil {
+				return
+			}
+
+			var actualCancelStatus []Targets
+			for i := range testCase.argTargets {
+				actualCancelStatus = append(actualCancelStatus, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      testCase.argTargets[i],
+					IsCanceled:      !testCase.argTargetsValid[i],
+				})
+			}
+
+			sort.Slice(cancelStatus, func(i, j int) bool {
+				return cancelStatus[i].UserTraqid < cancelStatus[j].UserTraqid
+			})
+			sort.Slice(actualCancelStatus, func(i, j int) bool {
+				return actualCancelStatus[i].UserTraqid < actualCancelStatus[j].UserTraqid
+			})
+			assert.Equal(t, cancelStatus, actualCancelStatus, testCase.description, "cancelStatus")
+		})
+	}
+}
+
+func TestUpdateTargetsCancelStatus(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctx := context.Background()
+
+	type test struct {
+		description          string
+		beforeValidTargets   []string
+		beforeInvalidTargets []string
+		afterValidTargets    []string
+		afterInvalidTargets  []string
+		argUpdateTargets     []string
+		argCancelStatus      bool
+		isErr                bool
+		err                  error
+	}
+
+	testCases := []test{
+		{
+			description:          "キャンセルするtargetが1人でエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{},
+			afterInvalidTargets:  []string{"a"},
+			argUpdateTargets:     []string{"a"},
+			argCancelStatus:      true,
+		},
+		{
+			description:          "キャンセルするtargetが複数でエラーなし",
+			beforeValidTargets:   []string{"a", "b"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{},
+			afterInvalidTargets:  []string{"a", "b"},
+			argUpdateTargets:     []string{"a", "b"},
+			argCancelStatus:      true,
+		},
+		{
+			description:          "キャンセルするtargetがないときエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{},
+			argCancelStatus:      true,
+		},
+		{
+			description:          "キャンセルするtargetが見つからないときエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"b"},
+			argCancelStatus:      true,
+		},
+		{
+			description:          "再開するtargetが1人でエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{"b"},
+			afterValidTargets:    []string{"a", "b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"b"},
+			argCancelStatus:      false,
+		},
+		{
+			description:          "再開するtargetが複数でエラーなし",
+			beforeValidTargets:   []string{},
+			beforeInvalidTargets: []string{"a", "b"},
+			afterValidTargets:    []string{"a", "b"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{"a", "b"},
+			argCancelStatus:      false,
+		},
+		{
+			description:          "再開するtargetがないときエラーなし",
+			beforeValidTargets:   []string{"a"},
+			beforeInvalidTargets: []string{},
+			afterValidTargets:    []string{"a"},
+			afterInvalidTargets:  []string{},
+			argUpdateTargets:     []string{},
+			argCancelStatus:      false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			targets := make([]Targets, 0, len(testCase.beforeValidTargets)+len(testCase.beforeInvalidTargets))
+			for _, target := range testCase.beforeValidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: false,
+				})
+			}
+			for _, target := range testCase.beforeInvalidTargets {
+				targets = append(targets, Targets{
+					UserTraqid: target,
+					IsCanceled: true,
+				})
+			}
+			questionnaire := Questionnaires{
+				Targets: targets,
+			}
+			err := db.
+				Session(&gorm.Session{}).
+				Create(&questionnaire).Error
+			if err != nil {
+				t.Errorf("failed to create questionnaire: %v", err)
+			}
+
+			err = targetImpl.UpdateTargetsCancelStatus(ctx, questionnaire.ID, testCase.argUpdateTargets, testCase.argCancelStatus)
+			if !testCase.isErr {
+				assertion.NoError(err, testCase.description, "no error")
+			} else if testCase.err != nil {
+				assertion.Equal(true, errors.Is(err, testCase.err), testCase.description, "errorIs")
+			} else {
+				assertion.Error(err, testCase.description, "any error")
+			}
+			if err != nil {
+				return
+			}
+
+			afterTargets := make([]Targets, 0, len(testCase.afterValidTargets)+len(testCase.afterInvalidTargets))
+			for _, afterTarget := range testCase.afterInvalidTargets {
+				afterTargets = append(afterTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      true,
+				})
+			}
+			for _, afterTarget := range testCase.afterValidTargets {
+				afterTargets = append(afterTargets, Targets{
+					QuestionnaireID: questionnaire.ID,
+					UserTraqid:      afterTarget,
+					IsCanceled:      false,
+				})
+			}
+
+			actualTargets := make([]Targets, 0, len(testCase.afterValidTargets)+len(testCase.afterInvalidTargets))
+			err = db.
+				Session(&gorm.Session{}).
+				Model(&Targets{}).
+				Where("questionnaire_id = ?", questionnaire.ID).
+				Find(&actualTargets).Error
+			if err != nil {
+				t.Errorf("failed to get targets: %v", err)
+			}
+
+			assert.ElementsMatchf(t, afterTargets, actualTargets, "targets")
 		})
 	}
 }
