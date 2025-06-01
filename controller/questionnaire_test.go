@@ -59,59 +59,77 @@ func setupSampleQuestionnaire() {
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextMaxLength := 100
-	sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
+	err := sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
 		MaxLength:    &sampleQuestionSettingsTextMaxLength,
 		QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsText: %v", err))
+	}
 	sampleQuestionSettingsTextLong = openapi.NewQuestion{
 		Body:       "質問（ロングテキスト）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextLongMaxLength := 500
-	sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
+	err = sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
 		MaxLength:    &sampleQuestionSettingsTextLongMaxLength,
 		QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsTextLong: %v", err))
+	}
 	sampleQuestionSettingsNumber = openapi.NewQuestion{
 		Body:       "質問（数値）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsNumberMaxValue := 100
 	sampleQuestionSettingsNumberMinValue := 0
-	sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+	err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &sampleQuestionSettingsNumberMaxValue,
 		MinValue:     &sampleQuestionSettingsNumberMinValue,
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsNumber: %v", err))
+	}
 	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
 		Body:       "質問（単一選択）",
 		IsRequired: true,
 	}
-	sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
+	err = sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
 		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
 		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsSingleChoice: %v", err))
+	}
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
 		Body:       "質問（複数選択）",
 		IsRequired: true,
 	}
-	sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
+	err = sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
 		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
 		QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsMultipleChoice: %v", err))
+	}
 	sampleQeustionsettingsScale = openapi.NewQuestion{
 		Body:       "質問（スケール）",
 		IsRequired: true,
 	}
 	sampleQeustionsettingsScaleMaxLabel := "最大値"
 	sampleQeustionsettingsScaleMinLabel := "最小値"
-	sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+	err = sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
 		MaxLabel:     &sampleQeustionsettingsScaleMaxLabel,
 		MaxValue:     10,
 		MinLabel:     &sampleQeustionsettingsScaleMinLabel,
 		MinValue:     1,
 		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to setup sampleQeustionsettingsScale: %v", err))
+	}
 
 	sampleAdmin = openapi.UsersAndGroups{
 		Users:  []string{userOne},
@@ -144,7 +162,7 @@ func setupSampleQuestionnaire() {
 	}
 }
 
-func newQuestion2Question(questionId *int, createdAt *time.Time, newQuestion openapi.NewQuestion) (openapi.Question, error) {
+func newQuestion2Question(questionID *int, createdAt *time.Time, newQuestion openapi.NewQuestion) (openapi.Question, error) {
 	b, err := newQuestion.MarshalJSON()
 	if err != nil {
 		return openapi.Question{}, err
@@ -154,8 +172,8 @@ func newQuestion2Question(questionId *int, createdAt *time.Time, newQuestion ope
 	if err != nil {
 		return openapi.Question{}, err
 	}
-	if questionId != nil {
-		questionParsed["question_id"] = questionId
+	if questionID != nil {
+		questionParsed["question_id"] = questionID
 	}
 	if createdAt != nil {
 		questionParsed["created_at"] = createdAt
@@ -172,14 +190,14 @@ func newQuestion2Question(questionId *int, createdAt *time.Time, newQuestion ope
 	return question, nil
 }
 
-func postQuestionnaireParams2EditQuestionnaireParams(questionnaireId int, questions []openapi.Question, postQuestionnaireParams openapi.PostQuestionnaireJSONRequestBody) openapi.EditQuestionnaireJSONRequestBody {
+func postQuestionnaireParams2EditQuestionnaireParams(questionnaireID int, questions []openapi.Question, postQuestionnaireParams openapi.PostQuestionnaireJSONRequestBody) openapi.EditQuestionnaireJSONRequestBody {
 	editQuestionnaireParams := openapi.EditQuestionnaireJSONRequestBody{
 		Admin:                    &postQuestionnaireParams.Admin,
 		Description:              postQuestionnaireParams.Description,
 		IsDuplicateAnswerAllowed: postQuestionnaireParams.IsDuplicateAnswerAllowed,
 		IsAnonymous:              postQuestionnaireParams.IsAnonymous,
 		IsPublished:              postQuestionnaireParams.IsPublished,
-		QuestionnaireId:          questionnaireId,
+		QuestionnaireId:          questionnaireID,
 		Questions:                questions,
 		ResponseDueDateTime:      postQuestionnaireParams.ResponseDueDateTime,
 		ResponseViewableBy:       postQuestionnaireParams.ResponseViewableBy,
@@ -260,7 +278,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	type expect struct {
 		isErr               bool
 		err                 error
-		questionnaireIdList *[]int
+		questionnaireIDList *[]int
 	}
 	type test struct {
 		description string
@@ -374,7 +392,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 			expect: expect{
-				questionnaireIdList: &[]int{
+				questionnaireIDList: &[]int{
 					questionnairePosted1.QuestionnaireId,
 					questionnairePosted2.QuestionnaireId,
 				},
@@ -390,7 +408,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 			expect: expect{
-				questionnaireIdList: &[]int{
+				questionnaireIDList: &[]int{
 					questionnairePosted1.QuestionnaireId,
 					questionnairePosted2.QuestionnaireId,
 				},
@@ -423,7 +441,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 			expect: expect{
-				questionnaireIdList: &[]int{
+				questionnaireIDList: &[]int{
 					questionnairePosted4.QuestionnaireId,
 				},
 			},
@@ -536,16 +554,16 @@ func TestGetQuestionnaires(t *testing.T) {
 			}
 		}
 
-		if testCase.expect.questionnaireIdList != nil {
-			var questionnaireIdList []int
+		if testCase.expect.questionnaireIDList != nil {
+			var questionnaireIDList []int
 			for _, questionnairSummary := range questionnaireList.Questionnaires {
-				questionnaireIdList = append(questionnaireIdList, questionnairSummary.QuestionnaireId)
+				questionnaireIDList = append(questionnaireIDList, questionnairSummary.QuestionnaireId)
 			}
-			sort.Slice(*testCase.expect.questionnaireIdList, func(i, j int) bool {
-				return (*testCase.expect.questionnaireIdList)[i] < (*testCase.expect.questionnaireIdList)[j]
+			sort.Slice(*testCase.expect.questionnaireIDList, func(i, j int) bool {
+				return (*testCase.expect.questionnaireIDList)[i] < (*testCase.expect.questionnaireIDList)[j]
 			})
-			sort.Slice(questionnaireIdList, func(i, j int) bool { return questionnaireIdList[i] < questionnaireIdList[j] })
-			assertion.Equal(*testCase.expect.questionnaireIdList, questionnaireIdList, testCase.description, "questionnaireIdList")
+			sort.Slice(questionnaireIDList, func(i, j int) bool { return questionnaireIDList[i] < questionnaireIDList[j] })
+			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIdList")
 		}
 
 		if testCase.args.params.OnlyTargetingMe != nil || testCase.args.params.OnlyAdministratedByMe != nil {
@@ -598,24 +616,26 @@ func TestPostQuestionnaire(t *testing.T) {
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
 	invalidQuestionSettingsNumberMinValue := 100
-	invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+	err := invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &invalidQuestionSettingsNumberMaxValue,
 		MinValue:     &invalidQuestionSettingsNumberMinValue,
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
+	require.NoError(t, err)
 	invalidQeustionsettingsScale := openapi.NewQuestion{
 		Body:       "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"
 	invalidQeustionsettingsScaleMinLabel := "最小値"
-	invalidQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+	err = invalidQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
 		MaxLabel:     &invalidQeustionsettingsScaleMaxLabel,
 		MaxValue:     1,
 		MinLabel:     &invalidQeustionsettingsScaleMinLabel,
 		MinValue:     10,
 		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
 	})
+	require.NoError(t, err)
 
 	testCases := []test{
 		{
@@ -1169,24 +1189,26 @@ func TestEditQuestionnaire(t *testing.T) {
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
 	invalidQuestionSettingsNumberMinValue := 100
-	invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+	err := invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &invalidQuestionSettingsNumberMaxValue,
 		MinValue:     &invalidQuestionSettingsNumberMinValue,
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
+	require.NoError(t, err)
 	invalidQeustionsettingsScale := openapi.NewQuestion{
 		Body:       "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"
 	invalidQeustionsettingsScaleMinLabel := "最小値"
-	invalidQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+	err = invalidQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
 		MaxLabel:     &invalidQeustionsettingsScaleMaxLabel,
 		MaxValue:     1,
 		MinLabel:     &invalidQeustionsettingsScaleMinLabel,
 		MinValue:     10,
 		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
 	})
+	require.NoError(t, err)
 
 	testCases := []test{
 		{
@@ -1959,7 +1981,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	type expect struct {
 		isErr          bool
 		err            error
-		responseIdList *[]int
+		responseIDList *[]int
 	}
 	type test struct {
 		description string
@@ -1985,7 +2007,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				params:          openapi.GetQuestionnaireResponsesParams{},
 			},
 			expect: expect{
-				responseIdList: &[]int{
+				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
 					response03.ResponseId,
@@ -2075,7 +2097,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 			expect: expect{
-				responseIdList: &[]int{
+				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
 				},
@@ -2091,7 +2113,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 			expect: expect{
-				responseIdList: &[]int{},
+				responseIDList: &[]int{},
 			},
 		},
 		{
@@ -2103,7 +2125,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				params:                   openapi.GetQuestionnaireResponsesParams{},
 			},
 			expect: expect{
-				responseIdList: &[]int{
+				responseIDList: &[]int{
 					response10.ResponseId,
 					response11.ResponseId,
 				},
@@ -2190,16 +2212,16 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			}
 		}
 
-		if testCase.expect.responseIdList != nil {
-			responseIdList := []int{}
+		if testCase.expect.responseIDList != nil {
+			responseIDList := []int{}
 			for _, response := range responseList {
-				responseIdList = append(responseIdList, response.ResponseId)
+				responseIDList = append(responseIDList, response.ResponseId)
 			}
-			sort.Slice(*testCase.expect.responseIdList, func(i, j int) bool {
-				return (*testCase.expect.responseIdList)[i] < (*testCase.expect.responseIdList)[j]
+			sort.Slice(*testCase.expect.responseIDList, func(i, j int) bool {
+				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
-			sort.Slice(responseIdList, func(i, j int) bool { return responseIdList[i] < responseIdList[j] })
-			assertion.Equal(*testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
+			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
+			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIdList")
 		}
 
 		if testCase.args.params.OnlyMyResponse != nil {
@@ -2297,40 +2319,46 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 
 	invalidResponseBodyText := openapi.ResponseBody{}
 	invalidResponseBodyText.QuestionId = *questionnaireDetail.Questions[0].QuestionId
-	invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
+	err = invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "Text",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyTextLong := openapi.ResponseBody{}
 	invalidResponseBodyTextLong.QuestionId = *questionnaireDetail.Questions[1].QuestionId
-	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+	err = invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyNumber := openapi.ResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
-	invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
+	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
 		Answer:       101,
 		QuestionType: "Number",
 	})
+	require.NoError(t, err)
 	invalidResponseBodySingleChoice := openapi.ResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+	err = invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 		Answer:       5,
 		QuestionType: "SingleChoice",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyMultipleChoice := openapi.ResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+	err = invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 		Answer:       []int{5},
 		QuestionType: "MultipleChoice",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyScale := openapi.ResponseBody{}
 	invalidResponseBodyScale.QuestionId = *questionnaireDetail.Questions[5].QuestionId
-	invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
+	err = invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
 		Answer:       0,
 		QuestionType: "Scale",
 	})
+	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Lock()
 
@@ -2533,7 +2561,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			},
 		},
 	}
-	tmp_testCase := test{
+	tmpTestCase := test{
 		description: "question type not match",
 		args: args{
 			questionnaireDetail: questionnaireDetail,
@@ -2554,9 +2582,9 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			isErr: true,
 		},
 	}
-	tmp_testCase.args.params.Body[0].QuestionId = sampleResponseBodyText.QuestionId
-	tmp_testCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
-	testCases = append(testCases, tmp_testCase)
+	tmpTestCase.args.params.Body[0].QuestionId = sampleResponseBodyText.QuestionId
+	tmpTestCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
+	testCases = append(testCases, tmpTestCase)
 
 	AddQuestionID2SampleResponse(questionnaireDetailAnonymous.QuestionnaireId)
 

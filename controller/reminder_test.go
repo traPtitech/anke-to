@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPushReminder(t *testing.T) {
@@ -162,11 +163,14 @@ func TestDeleteReminder(t *testing.T) {
 		reminderLimit1 := time.Now().Add(2 * time.Hour)
 		reminderLimit2 := time.Now().Add(10 * time.Minute)
 		reminderLimit3 := time.Now().Add(25 * time.Hour)
-		re.PushReminder(1, &reminderLimit1)
-		re.PushReminder(2, &reminderLimit2)
-		re.PushReminder(3, &reminderLimit3)
+		err := re.PushReminder(1, &reminderLimit1)
+		require.NoError(t, err)
+		err = re.PushReminder(2, &reminderLimit2)
+		require.NoError(t, err)
+		err = re.PushReminder(3, &reminderLimit3)
+		require.NoError(t, err)
 		jobsNum := len(re.jobs)
-		err := re.DeleteReminder(testCase.args.questionnaireID)
+		err = re.DeleteReminder(testCase.args.questionnaireID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -234,9 +238,12 @@ func TestCheckRemindStatus(t *testing.T) {
 		reminderLimit1 := time.Now().Add(2 * time.Hour)
 		reminderLimit2 := time.Now().Add(10 * time.Minute)
 		reminderLimit3 := time.Now().Add(25 * time.Hour)
-		re.PushReminder(1, &reminderLimit1)
-		re.PushReminder(2, &reminderLimit2)
-		re.PushReminder(3, &reminderLimit3)
+		err := re.PushReminder(1, &reminderLimit1)
+		require.NoError(t, err)
+		err = re.PushReminder(2, &reminderLimit2)
+		require.NoError(t, err)
+		err = re.PushReminder(3, &reminderLimit3)
+		require.NoError(t, err)
 		status, err := re.CheckRemindStatus(testCase.args.questionnaireID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

@@ -1044,10 +1044,18 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 			var selectedOptions []int
 			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
 				var selectedOption int
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
+				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
+				if err != nil {
+					c.Logger().Errorf("invalid option: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 				selectedOptions = append(selectedOptions, selectedOption)
 			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
+				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
+				if err != nil {
+					c.Logger().Errorf("invalid option: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 			}
 			ok = true
 			if len(selectedOptions) == 0 {
@@ -1082,7 +1090,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 			}
 		default:
 			c.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
-			return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+			return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %d", responseMeta.QuestionID))
 		}
 	}
 
