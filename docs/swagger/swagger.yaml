@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
-  - url: "http://localhost:8080/api"
+  - url: "http://localhost:1323"
     description: local
 info:
   title: anke-to API
@@ -11,10 +11,6 @@ info:
   contact:
     name: traP
     url: "https://github.com/traPtitech/anke-to"
-security:
-  - application:
-      - read
-      - write
 tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
@@ -91,7 +87,7 @@ paths: # TODO 変数の命名を確認する
       operationId: editQuestionnaire
       tags:
         - questionnaire
-      description: アンケートの情報を変更します。
+      description: アンケートの情報を変更します。匿名のアンケートを非匿名アンケートに変更することができません。admin/targetがnullの場合は管理者/対象者を変更しません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
       requestBody:
@@ -99,12 +95,14 @@ paths: # TODO 変数の命名を確認する
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QuestionnaireDetail"
+              $ref: "#/components/schemas/EditQuestionnaire"
       responses:
         "200":
           description: 正常にアンケートを変更できました。
         "400":
           description: アンケートのIDが無効です
+        "405":
+          description: 匿名のアンケートを非匿名アンケートに変更することができません
         "500":
           description: 正常にアンケートを変更できませんでした
     delete:
@@ -250,7 +248,7 @@ paths: # TODO 変数の命名を確認する
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Response"
+              $ref: "#/components/schemas/EditResponse"
       responses:
         "200":
           description: 正常に回答を変更できました
@@ -305,12 +303,6 @@ paths: # TODO 変数の命名を確認する
           description: 自分の回答のリストを取得できませんでした
 components:
   parameters:
-    answeredInQuery:
-      name: answered
-      in: query
-      description: 回答したもの(answered)か未回答のもの(unanswered)かを選別
-      schema:
-        $ref: "#/components/schemas/AnsweredType"
     sortInQuery:
       name: sort
       in: query
@@ -324,8 +316,8 @@ components:
       name: sort
       in: query
       description:
-        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", タイトルの昇順 "title",
-        タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+        並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid",
+        TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い
         "-modified_at" )
       schema:
         $ref: "#/components/schemas/ResponseSortType"
@@ -370,14 +362,6 @@ components:
         アンケートID
       schema:
         type: integer
-    questionIDInPath:
-      name: questionID
-      in: path
-      required: true
-      description: |
-        質問ID
-      schema:
-        type: integer
     responseIDInPath:
       name: responseID
       in: path
@@ -386,24 +370,7 @@ components:
         回答ID
       schema:
         type: integer
-    traQIDInPath:
-      name: traQID
-      in: path
-      required: true
-      description: |
-        traQ ID(ex:mazrean)
-      schema:
-        type: string
   schemas: # TODO: description, exampleを確認する
-    AnsweredType:
-      type: string
-      description: アンケート検索時に回答済みかの状態での絞り込み
-      enum:
-        - answered
-        - unanswered
-      x-enum-varnames:
-        - Answered
-        - Unanswered
     SortType:
       type: string
       description: question、questionnaire用のソートの種類
@@ -427,17 +394,17 @@ components:
       enum:
         - submitted_at
         - -submitted_at
-        - title
-        - -title
         - modified_at
         - -modified_at
+        - traqid
+        - -traqid
       x-enum-varnames:
         - SubmittedAtASC
         - SubmittedAtDESC
-        - TitleASC
-        - TitleDESC
         - ModifiedAtASC
         - ModifiedAtDESC
+        - TraqIdASC
+        - TraqIdDESC
     ResShareType:
       type: string
       example: anyone
@@ -455,17 +422,31 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsDuplicateAnswerAllowed"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
-        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
     NewQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireBase"
+        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
         - properties:
             questions:
               type: array
               items:
                 $ref: "#/components/schemas/NewQuestion"
+          required:
+            - questions
+            - targets
+            - admins
+    EditQuestionnaire:
+      allOf:
+        - $ref: "#/components/schemas/QuestionnaireID"
+        - $ref: "#/components/schemas/QuestionnaireBase"
+        - $ref: "#/components/schemas/EditQuestionnaireTargetsAndAdmins"
+        - properties:
+            questions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Question"
           required:
             - questions
     QuestionnaireDetail:
@@ -474,18 +455,35 @@ components:
         - $ref: "#/components/schemas/QuestionnaireBase"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
         - $ref: "#/components/schemas/QuestionnaireModifiedAt"
+        - $ref: "#/components/schemas/QuestionnaireTargetsAndAdmins"
         - properties:
             questions:
               type: array
               items:
                 $ref: "#/components/schemas/Question"
             respondents:
-              $ref: "#/components/schemas/Users"
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
               description: |
                 回答者の一覧。匿名回答の場合はnull。
+            targets:
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
+              description: |
+                対象者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
+            admins:
+              type: array
+              items:
+                $ref: "#/components/schemas/TraqId"
+              description: |
+                管理者の一覧。（前回対象者を編集した時点で解析したグループ情報に基づいて作成されたもの）
           required:
             - questions
             - respondents
+            - targets
+            - admins
     QuestionnaireSummary: # ResponseCountとRespondentCountを入れてもいいかも
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -494,7 +492,7 @@ components:
         - $ref: "#/components/schemas/QuestionnaireResponseDueDateTime"
         - $ref: "#/components/schemas/QuestionnaireResponseViewableBy"
         - $ref: "#/components/schemas/QuestionnaireIsAnonymous"
-        - $ref: "#/components/schemas/QuestionnaireIsAllowingMultipleResponses"
+        - $ref: "#/components/schemas/QuestionnaireIsDuplicateAnswerAllowed"
         - $ref: "#/components/schemas/QuestionnaireIsPublished"
         - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
         - $ref: "#/components/schemas/QuestionnaireCreatedAt"
@@ -583,16 +581,16 @@ components:
             匿名回答かどうか
       required:
         - is_anonymous
-    QuestionnaireIsAllowingMultipleResponses:
+    QuestionnaireIsDuplicateAnswerAllowed:
       type: object
       properties:
-        is_allowing_multiple_responses:
+        is_duplicate_answer_allowed:
           type: boolean
           example: true
           description: |
             一人が複数回回答できるかどうか
       required:
-        - is_allowing_multiple_responses
+        - is_duplicate_answer_allowed
     QuestionnaireIsPublished:
       type: object
       properties:
@@ -634,21 +632,20 @@ components:
     QuestionnaireTargetsAndAdmins:
       type: object
       properties:
-        targets:
+        target:
           $ref: "#/components/schemas/UsersAndGroups"
-        admins:
+        admin:
           $ref: "#/components/schemas/UsersAndGroups"
       required:
-        - targets
-        - admins
-    QuestionnaireHasMyResponse:
+        - target
+        - admin
+    EditQuestionnaireTargetsAndAdmins:
       type: object
       properties:
-        has_response:
-          type: boolean
-          description: 回答済みあるいは下書きが存在する
-      required:
-        - has_response
+        target:
+          $ref: "#/components/schemas/UsersAndGroups"
+        admin:
+          $ref: "#/components/schemas/UsersAndGroups"
     QuestionnaireIsRemindEnabled:
       type: object
       properties:
@@ -669,32 +666,26 @@ components:
         - properties:
             question_id:
               type: integer
+              description: |
+                質問を追加する場合はnull。
               example: 1
             created_at:
               type: string
               format: date-time
               example: 2020-01-01T00:00:00+09:00
-          required:
-            - question_id
-            - created_at
+              description: |
+                質問を追加または編集する場合はnull。
     QuestionBase:
       type: object
       properties:
-        questionnaire_id:
-          type: integer
-          example: 1
-        title:
-          type: string
-        description:
+        body:
           type: string
         is_required:
           type: boolean
           description: |
             回答必須かどうか
       required:
-        - questionnaire_id
-        - title
-        - description
+        - body
         - is_required
     QuestionSettingsByType:
       oneOf:
@@ -717,7 +708,7 @@ components:
         - type: object
           properties:
             max_length:
-              type: number
+              type: integer
     QuestionSettingsNumber:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
@@ -852,6 +843,14 @@ components:
             - submitted_at
             - modified_at
         - $ref: "#/components/schemas/NewResponse"
+    EditResponse:
+      allOf:
+        - type: object
+          properties:
+            response_id:
+              type: integer
+              example: 1
+        - $ref: "#/components/schemas/NewResponse"
     Responses:
       type: array
       items:
@@ -877,13 +876,20 @@ components:
             questionnaire_info:
               $ref: "#/components/schemas/QuestionnaireInfo"
     ResponseBody:
-      oneOf:
-        - $ref: "#/components/schemas/ResponseBodyText"
-        - $ref: "#/components/schemas/ResponseBodyTextLong"
-        - $ref: "#/components/schemas/ResponseBodyNumber"
-        - $ref: "#/components/schemas/ResponseBodySingleChoice"
-        - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
-        - $ref: "#/components/schemas/ResponseBodyScale"
+      allOf:
+        - type: object
+          properties:
+            question_id:
+              type: integer
+          required:
+            - question_id
+        - oneOf:
+          - $ref: "#/components/schemas/ResponseBodyText"
+          - $ref: "#/components/schemas/ResponseBodyTextLong"
+          - $ref: "#/components/schemas/ResponseBodyNumber"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
@@ -954,6 +960,8 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/TraqId"
+      description: |
+        回答者の一覧。匿名回答の場合はnull。
     TraqId:
       type: string
       example: cp20
@@ -963,16 +971,7 @@ components:
       type: array
       items:
         type: string
-        example: 1
+        format: uuid
         description: |
           Group UUID
-  securitySchemes:
-    application:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: "https://q.trap.jp/api/v3/oauth2/authorize"
-          tokenUrl: "https://q.trap.jp/api/v3/oauth2/token"
-          scopes:
-            write: allows modifying resources
-            read: allows reading resources
+ 
