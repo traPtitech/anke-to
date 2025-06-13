@@ -27,6 +27,9 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/pageInQuery"
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
+        - $ref: "#/components/parameters/notOverDueInQuery"
+        - $ref: "#/components/parameters/hasMyResponseInQuery"
+        - $ref: "#/components/parameters/hasMyDraftInQuery"
       responses:
         "200":
           description: 正常に取得できました。アンケートの配列を返します。
@@ -352,6 +355,27 @@ components:
       in: query
       description: |
         自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
+      schema:
+        type: boolean
+    notOverDueInQuery:
+      name: notOverDue
+      in: query
+      description: |
+        回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
+      schema:
+        type: boolean
+    hasMyResponseInQuery:
+      name: hasMyResponse
+      in: query
+      description: |
+        自分の回答があるもののみ取得 (true), 自分の回答がないものも含めてすべて取得 (false)。デフォルトはfalse。
+      schema:
+        type: boolean
+    hasMyDraftInQuery:
+      name: hasMyDraft
+      in: query
+      description: |
+        自分の下書きがあるもののみ取得 (true), 自分の下書きがないものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
     questionnaireIDInPath:
