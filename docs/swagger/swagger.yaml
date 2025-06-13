@@ -896,12 +896,13 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
     ResponseWithQuestionnaireInfoItem:
       type: object
-      allOf:
-        - $ref: "#/components/schemas/Response"
-        - type: object
-          properties:
-            questionnaire_info:
-              $ref: "#/components/schemas/QuestionnaireInfo"
+      properties:
+        questionnaire_info:
+          $ref: "#/components/schemas/QuestionnaireInfo"
+        responses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Response"
     ResponseBody:
       allOf:
         - type: object
