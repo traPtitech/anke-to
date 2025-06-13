@@ -175,6 +175,7 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
         - $ref: "#/components/parameters/onlyMyResponseInQuery"
+        - $ref: "#/components/parameters/hasDraftInQuery"
       responses:
         "200":
           description: 正常に取得できました。
@@ -355,6 +356,13 @@ components:
       in: query
       description: |
         自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
+      schema:
+        type: boolean
+    hasDraftInQuery:
+      name: hasDraft
+      in: query
+      description: |
+        下書きのものも取得 (true), 下書きのものは取得しない (false)。デフォルトはfalse。
       schema:
         type: boolean
     notOverDueInQuery:
