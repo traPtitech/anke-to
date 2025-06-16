@@ -102,7 +102,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.3
+        uses: reviewdog/action-golangci-lint@v2.8
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
