@@ -1861,13 +1861,13 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	}
 }
 
-func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
-	// todo
-}
+// func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
+// 	// todo
+// }
 
-func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
-	// todo
-}
+// func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
+// 	// todo
+// }
 
 func TestGetQuestionnaireResponses(t *testing.T) {
 	t.Parallel()
