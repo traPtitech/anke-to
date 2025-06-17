@@ -15,6 +15,11 @@ linters:
       - examples$
       - tuning/openapi
       - model/mock_model
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - -QF1008 # ignore embedded field check
 formatters:
   enable:
     - gofmt
