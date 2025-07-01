@@ -294,6 +294,7 @@ paths: # TODO 変数の命名を確認する
       description: 自分のすべての回答のリストを取得します。
       parameters:
         - $ref: "#/components/parameters/responseSortInQuery"
+        - $ref: "#/components/parameters/questionnaireIDInQuery"
       responses:
         "200":
           description: 正常に取得できました。回答の配列を返します。
@@ -386,6 +387,15 @@ components:
         自分の下書きがあるもののみ取得 (true), 自分の下書きがないものも含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
+    questionnaireIDInQuery:
+      name: questionnaireID
+      in: query
+      description: |
+        取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
+      schema:
+        type: array
+        items:
+          type: integer
     questionnaireIDInPath:
       name: questionnaireID
       in: path
