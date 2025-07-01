@@ -379,14 +379,18 @@ components:
       name: hasMyResponse
       in: query
       description: |
-        自分の回答があるもののみ取得 (true), 自分の回答がないものも含めてすべて取得 (false)。デフォルトはfalse。
+        trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
+        falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
+        存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
     hasMyDraftInQuery:
       name: hasMyDraft
       in: query
       description: |
-        自分の下書きがあるもののみ取得 (true), 自分の下書きがないものも含めてすべて取得 (false)。デフォルトはfalse。
+        trueの場合、自分の回答の下書きが存在するアンケートのみを取得する。
+        falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
+        存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
     questionnaireIDInQuery:
