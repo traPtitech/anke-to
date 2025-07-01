@@ -536,6 +536,9 @@ components:
             has_my_response:
               type: boolean
               description: 回答が存在する
+            is_administrated_by_me:
+              type: boolean
+              description: 自分が管理者になっているかどうか
             responded_date_time_by_me:
               type: string
               format: date-time
@@ -547,6 +550,7 @@ components:
           required:
             - has_my_draft
             - has_my_response
+            - is_administrated_by_me
             - all_responded
     QuestionnaireList:
       type: object
