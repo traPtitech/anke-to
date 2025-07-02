@@ -282,7 +282,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
-			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 			if err != nil {
 				c.Logger().Errorf("failed to insert question: %+v", err)
 				return err
@@ -590,7 +590,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				return errors.New("invalid question type")
 			}
 			if question.QuestionId == nil {
-				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 				if err != nil {
 					c.Logger().Errorf("failed to insert question: %+v", err)
 					return err
@@ -697,7 +697,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				}
 			} else {
 				ifQuestionExist[*question.QuestionId] = true
-				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
+				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired, *question.QuestionId)
 				if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 					c.Logger().Errorf("failed to update question: %+v", err)
 					return err
