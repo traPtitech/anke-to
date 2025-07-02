@@ -102,7 +102,7 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		pageNum = 1
 	}
 
-	var onlyTargetingMe, onlyAdministratedByMe bool
+	var onlyTargetingMe, onlyAdministratedByMe, notOverDue bool
 	if params.OnlyTargetingMe == nil {
 		onlyTargetingMe = false
 	} else {
@@ -113,7 +113,18 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	} else {
 		onlyAdministratedByMe = *params.OnlyAdministratedByMe
 	}
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe)
+	if params.NotOverDue == nil {
+		notOverDue = false
+	} else {
+		notOverDue = *params.NotOverDue
+	}
+
+	var isDraft, hasMyResponse, hasMyDraft *bool
+	isDraft = params.IsDraft
+	hasMyResponse = params.HasMyResponse
+	hasMyDraft = params.HasMyDraft
+
+	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, isDraft, hasMyResponse, hasMyDraft)
 	if err != nil {
 		return res, err
 	}
