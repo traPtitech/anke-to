@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -258,24 +257,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 			}
 		case "Checkbox":
 			if len(r.OptionResponse) > 0 {
-				if len(r.OptionResponse) > 1 {
-					return openapi.Response{}, errors.New("too many responses")
-				}
-				answer := []int{}
-				for _, o := range r.OptionResponse {
-					err := json.Unmarshal([]byte(o), &answer)
-					if err != nil {
-						return openapi.Response{}, err
-					}
-					err = oResponseBody.FromResponseBodyMultipleChoice(
-						openapi.ResponseBodyMultipleChoice{
-							Answer:       answer,
-							QuestionType: "MultipleChoice",
-						},
-					)
-					if err != nil {
-						return openapi.Response{}, err
-					}
+				options := r.OptionResponse
+				err := oResponseBody.FromResponseBodyMultipleChoice(
+					openapi.ResponseBodyMultipleChoice{
+						Answer:       options,
+						QuestionType: "MultipleChoice",
+					},
+				)
+				if err != nil {
+					return openapi.Response{}, err
 				}
 			}
 		case "MultipleChoice":
@@ -283,21 +273,15 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if len(r.OptionResponse) > 1 {
 					return openapi.Response{}, errors.New("too many responses")
 				}
-				for _, o := range r.OptionResponse {
-					var option int
-					err := json.Unmarshal([]byte(o), &option)
-					if err != nil {
-						return openapi.Response{}, err
-					}
-					err = oResponseBody.FromResponseBodySingleChoice(
-						openapi.ResponseBodySingleChoice{
-							Answer:       option,
-							QuestionType: "SingleChoice",
-						},
-					)
-					if err != nil {
-						return openapi.Response{}, err
-					}
+				option := r.OptionResponse[0]
+				err := oResponseBody.FromResponseBodySingleChoice(
+					openapi.ResponseBodySingleChoice{
+						Answer:       option,
+						QuestionType: "SingleChoice",
+					},
+				)
+				if err != nil {
+					return openapi.Response{}, err
 				}
 			}
 		case "LinearScale":
@@ -346,7 +330,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 	return res, nil
 }
 
-func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Questions) ([]*model.ResponseMeta, error) {
+func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []model.Questions) ([]*model.ResponseMeta, error) {
 	res := []*model.ResponseMeta{}
 
 	var questionIDMap = make(map[int]int, len(questions))
@@ -387,7 +371,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
 			})
 		case "MultipleChoice":
-			bSingleChoice, err := b.AsResponseBodySingleChoice()
+			bSingleChoice, err := b.AsNewResponseBodySingleChoice()
 			if err != nil {
 				return nil, err
 			}
@@ -403,7 +387,7 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 				Data:       options[bSingleChoice.Answer-1].Body,
 			})
 		case "Checkbox":
-			bMultipleChoices, err := b.AsResponseBodyMultipleChoice()
+			bMultipleChoices, err := b.AsNewResponseBodyMultipleChoice()
 			if err != nil {
 				return nil, err
 			}

@@ -1059,14 +1059,12 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		}
 	}
 
-	var submittedAt, modifiedAt time.Time
+	var submittedAt time.Time
 	//一時保存のときはnull
 	if params.IsDraft {
 		submittedAt = time.Time{}
-		modifiedAt = time.Time{}
 	} else {
 		submittedAt = time.Now()
-		modifiedAt = time.Now()
 	}
 
 	var responseID int
@@ -1093,24 +1091,13 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert response: %w", err))
 	}
 
-	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	response, err := q.GetResponse(c, responseID)
 	if err != nil {
-		c.Logger().Errorf("failed to get response isanonymous by questionnaire id: %+v", err)
-		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		c.Logger().Errorf("failed to get response: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %w", err))
 	}
 
-	res = openapi.Response{
-		QuestionnaireId: questionnaireID,
-		ResponseId:      responseID,
-		Respondent:      &userID,
-		SubmittedAt:     submittedAt,
-		ModifiedAt:      modifiedAt,
-		IsDraft:         params.IsDraft,
-		IsAnonymous:     &isAnonymous,
-		Body:            params.Body,
-	}
-
-	return res, nil
+	return response, nil
 }
 
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
