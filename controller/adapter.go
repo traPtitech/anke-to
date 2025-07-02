@@ -391,27 +391,35 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 			if err != nil {
 				return nil, err
 			}
-			data, err := json.Marshal(bSingleChoice.Answer)
+			options, err := model.NewOption().GetOptions(context.Background(), []int{questions[i].ID})
 			if err != nil {
 				return nil, err
 			}
+			if bSingleChoice.Answer < 1 || bSingleChoice.Answer > len(options) {
+				return nil, errors.New("invalid single choice answer")
+			}
 			res = append(res, &model.ResponseMeta{
 				QuestionID: questions[i].ID,
-				Data:       string(data),
+				Data:       options[bSingleChoice.Answer-1].Body,
 			})
 		case "Checkbox":
-			bMultipleChoice, err := b.AsResponseBodyMultipleChoice()
+			bMultipleChoices, err := b.AsResponseBodyMultipleChoice()
 			if err != nil {
 				return nil, err
 			}
-			data, err := json.Marshal(bMultipleChoice.Answer)
+			options, err := model.NewOption().GetOptions(context.Background(), []int{questions[i].ID})
 			if err != nil {
 				return nil, err
 			}
-			res = append(res, &model.ResponseMeta{
-				QuestionID: questions[i].ID,
-				Data:       string(data),
-			})
+			for bMultipleChoice := range bMultipleChoices.Answer {
+				if bMultipleChoice < 1 || bMultipleChoice > len(options) {
+					return nil, errors.New("invalid multiple choice answer")
+				}
+				res = append(res, &model.ResponseMeta{
+					QuestionID: questions[i].ID,
+					Data:       options[bMultipleChoice-1].Body,
+				})
+			}
 		case "LinearScale":
 			bScale, err := b.AsResponseBodyScale()
 			if err != nil {
