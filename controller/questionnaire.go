@@ -1082,7 +1082,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 			}
 		default:
 			c.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
-			return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+			return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %d", responseMeta.QuestionID))
 		}
 	}
 

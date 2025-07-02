@@ -323,7 +323,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 			}
 		default:
 			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %d", responseMeta.QuestionID))
 		}
 	}
 
