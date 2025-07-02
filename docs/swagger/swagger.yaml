@@ -295,7 +295,7 @@ paths: # TODO 変数の命名を確認する
       description: 自分のすべての回答のリストを取得します。
       parameters:
         - $ref: "#/components/parameters/responseSortInQuery"
-        - $ref: "#/components/parameters/questionnaireIDInQuery"
+        - $ref: "#/components/parameters/questionnaireIDsInQuery"
         - $ref: "#/components/parameters/isDraftInQuery"
       responses:
         "200":
@@ -393,8 +393,8 @@ components:
         存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
-    questionnaireIDInQuery:
-      name: questionnaireID
+    questionnaireIDsInQuery:
+      name: questionnaireIDs
       in: query
       description: |
         取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
@@ -402,6 +402,7 @@ components:
         type: array
         items:
           type: integer
+      explode: false
     questionnaireIDInPath:
       name: questionnaireID
       in: path
