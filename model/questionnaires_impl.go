@@ -62,7 +62,8 @@ func (questionnaire *Questionnaires) BeforeUpdate(_ *gorm.DB) error {
 // QuestionnaireInfo Questionnaireにtargetかの情報追加
 type QuestionnaireInfo struct {
 	Questionnaires
-	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
+	IsTargeted          bool `json:"is_targeted" gorm:"type:boolean"`
+	IsAdministratedByMe bool `json:"is_administrated_by_me" gorm:"type:boolean"`
 }
 
 // QuestionnaireDetail Questionnaireの詳細
@@ -287,8 +288,10 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	err = query.
 		Limit(20).
 		Offset(offset).
-		Group("questionnaires.id, targets.user_traqid").
-		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
+		Joins("LEFT JOIN targets ON targets.questionnaire_id = questionnaires.id AND (targets.user_traqid = ? OR targets.user_traqid = 'traP')", userID).
+		Joins("LEFT JOIN administrators ON administrators.questionnaire_id = questionnaires.id AND (administrators.user_traqid = ? OR administrators.user_traqid = 'traP')", userID).
+		Select("questionnaires.*, MAX(targets.user_traqid IS NOT NULL) AS is_targeted, MAX(administrators.user_traqid is not NULL) AS is_administrated_by_me").
+		Group("questionnaires.id").
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
 		return nil, 0, ErrDeadlineExceeded
