@@ -49,7 +49,8 @@
 | page_num         | int(11)    | NO   |      | _NULL_            |                | アンケートの何ページ目の質問か                               |
 | question_num     | int(11)    | NO   |      | _NULL_            |                | アンケートの質問のうち、何問目か                             |
 | type             | char(20)   | NO   |      | _NULL_            |                | どのタイプの質問か ("Text","TextArea",  "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time") |
-| body             | text       | YES  |      | _NULL_            |                | 質問の内容                                                   |
+| body             | text       | YES  |      | _NULL_            |                | 質問の内容(title)(v1との互換性のためfield nameはbodyのまま)                                               |
+| description      | text       | YES  |      | _NULL_            |                | 質問の内容(description)                                        |
 | is_required      | tinyint(4) | NO   |      | 0                 |                | 回答が必須である (1) , ない(0)                               |
 | deleted_at       | timestamp  | YES  |      | _NULL_            |                | 質問が削除された日時 (削除されていない場合は NULL)           |
 | created_at       | timestamp  | NO   |      | CURRENT_TIMESTAMP |                | 質問が作成された日時                                         |
