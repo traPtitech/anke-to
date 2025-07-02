@@ -502,6 +502,9 @@ func updateQuestionTest(t *testing.T) {
 					IsRequired:      false,
 				},
 			},
+			expect: expect{
+				isErr: true,
+			},
 		},
 		{
 			description: "questionnaireID: valid->invalid",

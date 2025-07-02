@@ -92,6 +92,15 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 		"is_required":  isRequired,
 	}
 
+	var questionTypeNow string
+	db.Model(&Questions{}).
+		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
+		Select("type").
+		Scan(&questionTypeNow)
+	if questionTypeNow != questionType {
+		return fmt.Errorf("question type cannot be changed: %s -> %s", questionTypeNow, questionType)
+	}
+
 	result := db.
 		Model(&Questions{}).
 		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
