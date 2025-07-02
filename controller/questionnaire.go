@@ -924,7 +924,7 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 	} else {
 		onlyMyResponse = false
 	}
-	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID)
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
