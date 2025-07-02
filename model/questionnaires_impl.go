@@ -236,19 +236,17 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 
 	if hasMyResponse != nil {
 		if *hasMyResponse {
-			query = query.Joins("INNER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL", userID)
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
 		} else {
-			query = query.Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.dsubmitted_at IS NOT NULL", userID).
-				Where("respondents.response_id IS NULL")
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
 		}
 	}
 
 	if hasMyDraft != nil {
-		if *hasMyResponse {
-			query = query.Joins("INNER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL", userID)
+		if *hasMyDraft {
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
 		} else {
-			query = query.Joins("LEFT OUTER JOIN respondents ON questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.dsubmitted_at IS NULL", userID).
-				Where("respondents.response_id IS NULL")
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
 		}
 	}
 
