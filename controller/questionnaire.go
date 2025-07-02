@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1036,40 +1035,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 				c.Logger().Errorf("invalid number: %+v", err)
 				return res, echo.NewHTTPError(http.StatusBadRequest, err)
 			}
-		case "Checkbox", "MultipleChoice":
-			option, ok := optionMap[responseMeta.QuestionID]
-			if !ok {
-				option = []model.Options{}
-			}
-			var selectedOptions []int
-			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
-				var selectedOption int
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
-				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
-			}
-			ok = true
-			if len(selectedOptions) == 0 {
-				ok = false
-			}
-			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
-			var preOption *int
-			for _, selectedOption := range selectedOptions {
-				if preOption != nil && *preOption == selectedOption {
-					ok = false
-					break
-				}
-				if selectedOption < 1 || selectedOption > len(option) {
-					ok = false
-					break
-				}
-				preOption = &selectedOption
-			}
-			if !ok {
-				c.Logger().Errorf("invalid option: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
-			}
+		case "MultipleChoice", "Checkbox":
 		case "LinearScale":
 			label, ok := scaleLabelMap[responseMeta.QuestionID]
 			if !ok {

@@ -411,7 +411,10 @@ func responseBody2ResponseMetas(body []openapi.ResponseBody, questions []model.Q
 			if err != nil {
 				return nil, err
 			}
-			for bMultipleChoice := range bMultipleChoices.Answer {
+			if len(bMultipleChoices.Answer) == 0 {
+				return nil, errors.New("no multiple choice answers provided")
+			}
+			for _, bMultipleChoice := range bMultipleChoices.Answer {
 				if bMultipleChoice < 1 || bMultipleChoice > len(options) {
 					return nil, errors.New("invalid multiple choice answer")
 				}
