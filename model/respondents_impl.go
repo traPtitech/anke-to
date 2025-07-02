@@ -443,7 +443,7 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 }
 
 // GetMyResponses 自分のすべての回答を取得
-func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string) ([]int, error) {
+func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string, questionnaireIDs []int) ([]int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
@@ -457,6 +457,10 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 	query, _, err = setRespondentsOrder(query, sort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set respondents order: %w", err)
+	}
+
+	if questionnaireIDs != nil {
+		query = query.Where("questionnaire_id IN (?)", questionnaireIDs)
 	}
 
 	err = query.Select("respondents.response_id").Find(&responsesID).Error
