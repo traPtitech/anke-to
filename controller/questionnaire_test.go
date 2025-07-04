@@ -616,6 +616,14 @@ func TestPostQuestionnaire(t *testing.T) {
 		MinValue:     10,
 		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
 	})
+	invalidQuestionSettingsSingleChoice := openapi.NewQuestion{
+		Body:       "質問（ラジオボタン）",
+		IsRequired: true,
+	}
+	invalidQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
+		Options:      []string{"選択肢A", "選択肢A", "選択肢C", "選択肢D"},
+		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
+	})
 
 	testCases := []test{
 		{
@@ -943,6 +951,33 @@ func TestPostQuestionnaire(t *testing.T) {
 						sampleQuestionSettingsSingleChoice,
 						sampleQuestionSettingsMultipleChoice,
 						invalidQeustionsettingsScale,
+					},
+					ResponseDueDateTime: nil,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "duplicate options",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						invalidQuestionSettingsSingleChoice,
 					},
 					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
