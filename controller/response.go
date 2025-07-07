@@ -335,7 +335,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		}
 	}
 
-	if(!req.IsDraft) {
+	if !req.IsDraft {
 		for _, question := range questions {
 			if questionRequired[question.ID] {
 				ctx.Logger().Errorf("required question is not answered: %+v", question.ID)
