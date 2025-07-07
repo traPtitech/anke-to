@@ -250,76 +250,84 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		questionRequired[responseMeta.QuestionID] = false
 		switch questionTypes[responseMeta.QuestionID] {
 		case "Text", "TextArea":
-			validation, ok := validationMap[responseMeta.QuestionID]
-			if !ok {
-				validation = model.Validations{}
-			}
-			err := r.IValidation.CheckTextValidation(validation, responseMeta.Data)
-			if err != nil {
-				if errors.Is(err, model.ErrTextMatching) {
+			if !req.IsDraft {
+				validation, ok := validationMap[responseMeta.QuestionID]
+				if !ok {
+					validation = model.Validations{}
+				}
+				err := r.IValidation.CheckTextValidation(validation, responseMeta.Data)
+				if err != nil {
+					if errors.Is(err, model.ErrTextMatching) {
+						ctx.Logger().Errorf("invalid text: %+v", err)
+						return echo.NewHTTPError(http.StatusBadRequest, err)
+					}
 					ctx.Logger().Errorf("invalid text: %+v", err)
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
-				ctx.Logger().Errorf("invalid text: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Number":
-			validation, ok := validationMap[responseMeta.QuestionID]
-			if !ok {
-				validation = model.Validations{}
-			}
-			err := r.IValidation.CheckNumberValidation(validation, responseMeta.Data)
-			if err != nil {
-				if errors.Is(err, model.ErrInvalidNumber) {
+			if !req.IsDraft {
+				validation, ok := validationMap[responseMeta.QuestionID]
+				if !ok {
+					validation = model.Validations{}
+				}
+				err := r.IValidation.CheckNumberValidation(validation, responseMeta.Data)
+				if err != nil {
+					if errors.Is(err, model.ErrInvalidNumber) {
+						ctx.Logger().Errorf("invalid number: %+v", err)
+						return echo.NewHTTPError(http.StatusBadRequest, err)
+					}
 					ctx.Logger().Errorf("invalid number: %+v", err)
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
-				ctx.Logger().Errorf("invalid number: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Checkbox", "MultipleChoice":
-			option, ok := optionMap[responseMeta.QuestionID]
-			if !ok {
-				option = []model.Options{}
-			}
-			var selectedOptions []int
-			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
-				var selectedOption int
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
-				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
-			}
-			ok = true
-			if len(selectedOptions) == 0 {
-				ok = false
-			}
-			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
-			var preOption *int
-			for _, selectedOption := range selectedOptions {
-				if preOption != nil && *preOption == selectedOption {
-					ok = false
-					break
+			if !req.IsDraft {
+				option, ok := optionMap[responseMeta.QuestionID]
+				if !ok {
+					option = []model.Options{}
 				}
-				if selectedOption < 1 || selectedOption > len(option) {
-					ok = false
-					break
+				var selectedOptions []int
+				if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
+					var selectedOption int
+					json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
+					selectedOptions = append(selectedOptions, selectedOption)
+				} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
+					json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
 				}
-				preOption = &selectedOption
-			}
-			if !ok {
-				ctx.Logger().Errorf("invalid option: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, err)
+				ok = true
+				if len(selectedOptions) == 0 {
+					ok = false
+				}
+				sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
+				var preOption *int
+				for _, selectedOption := range selectedOptions {
+					if preOption != nil && *preOption == selectedOption {
+						ok = false
+						break
+					}
+					if selectedOption < 1 || selectedOption > len(option) {
+						ok = false
+						break
+					}
+					preOption = &selectedOption
+				}
+				if !ok {
+					ctx.Logger().Errorf("invalid option: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 			}
 		case "LinearScale":
-			label, ok := scaleLabelMap[responseMeta.QuestionID]
-			if !ok {
-				label = model.ScaleLabels{}
-			}
-			err := r.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
-			if err != nil {
-				ctx.Logger().Errorf("invalid scale: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, err)
+			if !req.IsDraft {
+				label, ok := scaleLabelMap[responseMeta.QuestionID]
+				if !ok {
+					label = model.ScaleLabels{}
+				}
+				err := r.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
+				if err != nil {
+					ctx.Logger().Errorf("invalid scale: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 			}
 		default:
 			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
@@ -327,10 +335,12 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		}
 	}
 
-	for _, question := range questions {
-		if questionRequired[question.ID] {
-			ctx.Logger().Errorf("required question is not answered: %+v", question.ID)
-			return echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
+	if(!req.IsDraft) {
+		for _, question := range questions {
+			if questionRequired[question.ID] {
+				ctx.Logger().Errorf("required question is not answered: %+v", question.ID)
+				return echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
+			}
 		}
 	}
 
