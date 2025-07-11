@@ -727,6 +727,7 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
           required:
             - options
     QuestionSettingsMultipleChoice:
@@ -738,6 +739,7 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
           required:
             - options
     QuestionSettingsScale:
@@ -884,12 +886,12 @@ components:
           required:
             - question_id
         - oneOf:
-          - $ref: "#/components/schemas/ResponseBodyText"
-          - $ref: "#/components/schemas/ResponseBodyTextLong"
-          - $ref: "#/components/schemas/ResponseBodyNumber"
-          - $ref: "#/components/schemas/ResponseBodySingleChoice"
-          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
-          - $ref: "#/components/schemas/ResponseBodyScale"
+            - $ref: "#/components/schemas/ResponseBodyText"
+            - $ref: "#/components/schemas/ResponseBodyTextLong"
+            - $ref: "#/components/schemas/ResponseBodyNumber"
+            - $ref: "#/components/schemas/ResponseBodySingleChoice"
+            - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+            - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
@@ -974,4 +976,3 @@ components:
         format: uuid
         description: |
           Group UUID
- 
