@@ -285,10 +285,18 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 			var selectedOptions []int
 			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
 				var selectedOption int
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
+				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
+				if err != nil {
+					ctx.Logger().Errorf("invalid option: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 				selectedOptions = append(selectedOptions, selectedOption)
 			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
-				json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
+				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
+				if err != nil {
+					ctx.Logger().Errorf("invalid option: %+v", err)
+					return echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 			}
 			ok = true
 			if len(selectedOptions) == 0 {
@@ -323,7 +331,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 			}
 		default:
 			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %d", responseMeta.QuestionID))
 		}
 	}
 

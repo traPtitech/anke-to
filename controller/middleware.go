@@ -339,7 +339,6 @@ func (m Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-
 // GetValidator Validatorを設定する
 func (m *Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
 	rowValidate := c.Get(validatorKey)
