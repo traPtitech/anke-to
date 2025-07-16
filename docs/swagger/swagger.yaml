@@ -28,6 +28,7 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
         - $ref: "#/components/parameters/notOverDueInQuery"
+        - $ref: "#/components/parameters/isDraftInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
       responses:
@@ -175,6 +176,7 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
         - $ref: "#/components/parameters/onlyMyResponseInQuery"
+        - $ref: "#/components/parameters/isDraftInQuery"
       responses:
         "200":
           description: 正常に取得できました。
@@ -293,6 +295,8 @@ paths: # TODO 変数の命名を確認する
       description: 自分のすべての回答のリストを取得します。
       parameters:
         - $ref: "#/components/parameters/responseSortInQuery"
+        - $ref: "#/components/parameters/questionnaireIDsInQuery"
+        - $ref: "#/components/parameters/isDraftInQuery"
       responses:
         "200":
           description: 正常に取得できました。回答の配列を返します。
@@ -357,6 +361,13 @@ components:
         自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
       schema:
         type: boolean
+    isDraftInQuery:
+      name: isDraft
+      in: query
+      description: |
+        trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+      schema:
+        type: boolean
     notOverDueInQuery:
       name: notOverDue
       in: query
@@ -368,16 +379,30 @@ components:
       name: hasMyResponse
       in: query
       description: |
-        自分の回答があるもののみ取得 (true), 自分の回答がないものも含めてすべて取得 (false)。デフォルトはfalse。
+        trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
+        falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
+        存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
     hasMyDraftInQuery:
       name: hasMyDraft
       in: query
       description: |
-        自分の下書きがあるもののみ取得 (true), 自分の下書きがないものも含めてすべて取得 (false)。デフォルトはfalse。
+        trueの場合、自分の回答の下書きが存在するアンケートのみを取得する。
+        falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
+        存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
+    questionnaireIDsInQuery:
+      name: questionnaireIDs
+      in: query
+      description: |
+        取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
+      schema:
+        type: array
+        items:
+          type: integer
+      explode: false
     questionnaireIDInPath:
       name: questionnaireID
       in: path
@@ -528,6 +553,9 @@ components:
             has_my_response:
               type: boolean
               description: 回答が存在する
+            is_administrated_by_me:
+              type: boolean
+              description: 自分が管理者になっているかどうか
             responded_date_time_by_me:
               type: string
               format: date-time
@@ -539,6 +567,7 @@ components:
           required:
             - has_my_draft
             - has_my_response
+            - is_administrated_by_me
             - all_responded
     QuestionnaireList:
       type: object
@@ -896,12 +925,15 @@ components:
         - $ref: "#/components/schemas/QuestionnaireIsTargetingMe"
     ResponseWithQuestionnaireInfoItem:
       type: object
-      allOf:
-        - $ref: "#/components/schemas/Response"
-        - type: object
-          properties:
-            questionnaire_info:
-              $ref: "#/components/schemas/QuestionnaireInfo"
+      properties:
+        questionnaire_info:
+          $ref: "#/components/schemas/QuestionnaireInfo"
+        responses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Response"
+      description: |
+        同じアンケートの回答情報をまとめて返す。
     ResponseBody:
       allOf:
         - type: object
