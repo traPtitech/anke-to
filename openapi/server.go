@@ -100,6 +100,34 @@ func (w *ServerInterfaceWrapper) GetQuestionnaires(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter onlyAdministratedByMe: %s", err))
 	}
 
+	// ------------- Optional query parameter "notOverDue" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "notOverDue", ctx.QueryParams(), &params.NotOverDue)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter notOverDue: %s", err))
+	}
+
+	// ------------- Optional query parameter "isDraft" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "isDraft", ctx.QueryParams(), &params.IsDraft)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter isDraft: %s", err))
+	}
+
+	// ------------- Optional query parameter "hasMyResponse" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "hasMyResponse", ctx.QueryParams(), &params.HasMyResponse)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter hasMyResponse: %s", err))
+	}
+
+	// ------------- Optional query parameter "hasMyDraft" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "hasMyDraft", ctx.QueryParams(), &params.HasMyDraft)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter hasMyDraft: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetQuestionnaires(ctx, params)
 	return err
@@ -221,6 +249,13 @@ func (w *ServerInterfaceWrapper) GetQuestionnaireResponses(ctx echo.Context) err
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter onlyMyResponse: %s", err))
 	}
 
+	// ------------- Optional query parameter "isDraft" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "isDraft", ctx.QueryParams(), &params.IsDraft)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter isDraft: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetQuestionnaireResponses(ctx, questionnaireID, params)
 	return err
@@ -253,6 +288,20 @@ func (w *ServerInterfaceWrapper) GetMyResponses(ctx echo.Context) error {
 	err = runtime.BindQueryParameter("form", true, false, "sort", ctx.QueryParams(), &params.Sort)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter sort: %s", err))
+	}
+
+	// ------------- Optional query parameter "questionnaireIDs" -------------
+
+	err = runtime.BindQueryParameter("form", false, false, "questionnaireIDs", ctx.QueryParams(), &params.QuestionnaireIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireIDs: %s", err))
+	}
+
+	// ------------- Optional query parameter "isDraft" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "isDraft", ctx.QueryParams(), &params.IsDraft)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter isDraft: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
