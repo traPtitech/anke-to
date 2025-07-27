@@ -11,8 +11,6 @@ import (
 	netUrl "net/url"
 	"os"
 	"strings"
-
-	"github.com/labstack/echo/v4"
 )
 
 // Webhook Webhookの構造体
@@ -33,7 +31,7 @@ func (*Webhook) PostMessage(message string) error {
 		return err
 	}
 
-	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
+	req.Header.Set("Content-Type", "text/plain; charset=UTF-8")
 	req.Header.Set("X-TRAQ-Signature", calcHMACSHA1(message))
 
 	query := netUrl.Values{}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/labstack/echo-contrib/prometheus"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 

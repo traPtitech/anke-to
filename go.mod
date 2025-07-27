@@ -65,4 +65,4 @@ require (
 	gorm.io/plugin/prometheus v0.0.0-20210820101226-2a49866f83ee
 )
 
-require github.com/go-gormigrate/gormigrate/v2 v2.1.1 // indirect
+require github.com/go-gormigrate/gormigrate/v2 v2.1.1
