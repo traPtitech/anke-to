@@ -288,9 +288,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	err = query.
 		Limit(20).
 		Offset(offset).
-		Joins("LEFT JOIN targets ON targets.questionnaire_id = questionnaires.id AND (targets.user_traqid = ? OR targets.user_traqid = 'traP')", userID).
-		Joins("LEFT JOIN administrators ON administrators.questionnaire_id = questionnaires.id AND (administrators.user_traqid = ? OR administrators.user_traqid = 'traP')", userID).
-		Select("questionnaires.*, MAX(targets.user_traqid IS NOT NULL) AS is_targeted, MAX(administrators.user_traqid is not NULL) AS is_administrated_by_me").
+		Select("questionnaires.*, EXISTS(SELECT 1 FROM targets WHERE targets.questionnaire_id = questionnaires.id AND (targets.user_traqid = ? OR targets.user_traqid = 'traP')) AS is_targeted, EXISTS(SELECT 1 FROM administrators WHERE administrators.questionnaire_id = questionnaires.id AND (administrators.user_traqid = ? OR administrators.user_traqid = 'traP')) AS is_administrated_by_me", userID, userID).
 		Group("questionnaires.id").
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
