@@ -310,7 +310,7 @@ func TestGetMyResponses(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		ctx = e.NewContext(req, rec)
 
-		responseList, err := r.GetMyResponses(ctx, testCase.args.params, testCase.args.userID)
+		responseLists, err := r.GetMyResponses(ctx, testCase.args.params, testCase.args.userID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -323,62 +323,66 @@ func TestGetMyResponses(t *testing.T) {
 			continue
 		}
 
-		if testCase.args.params.Sort != nil {
-			if *testCase.args.params.Sort == "submitted_at" {
-				var preCreatedAt time.Time
-				for _, response := range responseList {
-					if !preCreatedAt.IsZero() {
-						assertion.False(preCreatedAt.After(response.SubmittedAt), testCase.description, "submitted_at")
+		for _, responseList := range responseLists {
+			if testCase.args.params.Sort != nil {
+				if *testCase.args.params.Sort == "submitted_at" {
+					var preCreatedAt time.Time
+					for _, response := range *responseList.Responses {
+						if !preCreatedAt.IsZero() {
+							assertion.False(preCreatedAt.After(response.SubmittedAt), testCase.description, "submitted_at")
+						}
+						preCreatedAt = response.SubmittedAt
 					}
-					preCreatedAt = response.SubmittedAt
-				}
-			} else if *testCase.args.params.Sort == "-submitted_at" {
-				var preCreatedAt time.Time
-				for _, response := range responseList {
-					if !preCreatedAt.IsZero() {
-						assertion.False(preCreatedAt.Before(response.SubmittedAt), testCase.description, "-submitted_at")
+				} else if *testCase.args.params.Sort == "-submitted_at" {
+					var preCreatedAt time.Time
+					for _, response := range *responseList.Responses {
+						if !preCreatedAt.IsZero() {
+							assertion.False(preCreatedAt.Before(response.SubmittedAt), testCase.description, "-submitted_at")
+						}
+						preCreatedAt = response.SubmittedAt
 					}
-					preCreatedAt = response.SubmittedAt
-				}
-			} else if *testCase.args.params.Sort == "traqid" {
-				var preTraqID string
-				for _, response := range responseList {
-					if preTraqID != "" {
-						assertion.False(preTraqID > *response.Respondent, testCase.description, "traqid")
+				} else if *testCase.args.params.Sort == "traqid" {
+					var preTraqID string
+					for _, response := range *responseList.Responses {
+						if preTraqID != "" {
+							assertion.False(preTraqID > *response.Respondent, testCase.description, "traqid")
+						}
+						preTraqID = *response.Respondent
 					}
-					preTraqID = *response.Respondent
-				}
-			} else if *testCase.args.params.Sort == "-traqid" {
-				var preTraqID string
-				for _, response := range responseList {
-					if preTraqID != "" {
-						assertion.False(preTraqID < *response.Respondent, testCase.description, "-traqid")
+				} else if *testCase.args.params.Sort == "-traqid" {
+					var preTraqID string
+					for _, response := range *responseList.Responses {
+						if preTraqID != "" {
+							assertion.False(preTraqID < *response.Respondent, testCase.description, "-traqid")
+						}
+						preTraqID = *response.Respondent
 					}
-					preTraqID = *response.Respondent
-				}
-			} else if *testCase.args.params.Sort == "modified_at" {
-				var preModifiedAt time.Time
-				for _, response := range responseList {
-					if !preModifiedAt.IsZero() {
-						assertion.False(preModifiedAt.After(response.ModifiedAt), testCase.description, "modified_at")
+				} else if *testCase.args.params.Sort == "modified_at" {
+					var preModifiedAt time.Time
+					for _, response := range *responseList.Responses {
+						if !preModifiedAt.IsZero() {
+							assertion.False(preModifiedAt.After(response.ModifiedAt), testCase.description, "modified_at")
+						}
+						preModifiedAt = response.ModifiedAt
 					}
-					preModifiedAt = response.ModifiedAt
-				}
-			} else if *testCase.args.params.Sort == "-modified_at" {
-				var preModifiedAt time.Time
-				for _, response := range responseList {
-					if !preModifiedAt.IsZero() {
-						assertion.False(preModifiedAt.Before(response.ModifiedAt), testCase.description, "-modified_at")
+				} else if *testCase.args.params.Sort == "-modified_at" {
+					var preModifiedAt time.Time
+					for _, response := range *responseList.Responses {
+						if !preModifiedAt.IsZero() {
+							assertion.False(preModifiedAt.Before(response.ModifiedAt), testCase.description, "-modified_at")
+						}
+						preModifiedAt = response.ModifiedAt
 					}
-					preModifiedAt = response.ModifiedAt
 				}
 			}
 		}
 
 		if testCase.expect.responseIdList != nil {
 			responseIdList := []int{}
-			for _, response := range responseList {
-				responseIdList = append(responseIdList, response.ResponseId)
+			for _, responseList := range responseLists {
+				for _, response := range *responseList.Responses {
+					responseIdList = append(responseIdList, response.ResponseId)
+				}
 			}
 			sort.Slice(*testCase.expect.responseIdList, func(i, j int) bool {
 				return (*testCase.expect.responseIdList)[i] < (*testCase.expect.responseIdList)[j]
@@ -387,8 +391,10 @@ func TestGetMyResponses(t *testing.T) {
 			assertion.Equal(*testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
 		}
 
-		for _, response := range responseList {
-			assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response with no respondent")
+		for _, responseList := range responseLists {
+			for _, response := range *responseList.Responses {
+				assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response with no respondent")
+			}
 		}
 	}
 }
