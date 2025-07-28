@@ -94,6 +94,7 @@ jobs:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_level: error
+          cache: false
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
