@@ -1126,7 +1126,7 @@ func TestEditResponse(t *testing.T) {
 				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
 				require.NoError(t, err)
 				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
-					Answer:       options[int(responseParsed["answer"].(float64))].Body,
+					Answer:       options[int(responseParsed["answer"].(float64))-1].Body,
 					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
 				})
 			case "MultipleChoice":
@@ -1134,7 +1134,7 @@ func TestEditResponse(t *testing.T) {
 				require.NoError(t, err)
 				answers := make([]string, len(responseParsed["answer"].([]interface{})))
 				for j, answer := range responseParsed["answer"].([]interface{}) {
-					answers[j] = options[int(answer.(float64))].Body
+					answers[j] = options[int(answer.(float64))-1].Body
 				}
 				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 					Answer:       answers,
