@@ -342,7 +342,8 @@ func TestGetMyResponses(t *testing.T) {
 		}
 
 		if testCase.args.params.Sort != nil {
-			if *testCase.args.params.Sort == "submitted_at" {
+			switch *testCase.args.params.Sort {
+			case "submitted_at":
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
@@ -350,7 +351,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 					preCreatedAt = response.SubmittedAt
 				}
-			} else if *testCase.args.params.Sort == "-submitted_at" {
+			case "-submitted_at":
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
@@ -358,7 +359,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 					preCreatedAt = response.SubmittedAt
 				}
-			} else if *testCase.args.params.Sort == "traqid" {
+			case "traqid":
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
@@ -366,7 +367,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 					preTraqID = *response.Respondent
 				}
-			} else if *testCase.args.params.Sort == "-traqid" {
+			case "-traqid":
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
@@ -374,7 +375,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 					preTraqID = *response.Respondent
 				}
-			} else if *testCase.args.params.Sort == "modified_at" {
+			case "modified_at":
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
@@ -382,7 +383,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 					preModifiedAt = response.ModifiedAt
 				}
-			} else if *testCase.args.params.Sort == "-modified_at" {
+			case "-modified_at":
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {

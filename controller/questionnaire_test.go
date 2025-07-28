@@ -503,7 +503,9 @@ func TestGetQuestionnaires(t *testing.T) {
 		}
 
 		if testCase.args.params.Sort != nil {
-			if *testCase.args.params.Sort == "created_at" {
+			switch *testCase.args.params.Sort {
+
+			case "created_at":
 				var preCreatedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preCreatedAt.IsZero() {
@@ -511,7 +513,7 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preCreatedAt = questionnaire.CreatedAt
 				}
-			} else if *testCase.args.params.Sort == "-created_at" {
+			case "-created_at":
 				var preCreatedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preCreatedAt.IsZero() {
@@ -519,7 +521,7 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preCreatedAt = questionnaire.CreatedAt
 				}
-			} else if *testCase.args.params.Sort == "title" {
+			case "title":
 				var preTitle string
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if preTitle != "" {
@@ -527,7 +529,7 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preTitle = questionnaire.Title
 				}
-			} else if *testCase.args.params.Sort == "-title" {
+			case "-title":
 				var preTitle string
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if preTitle != "" {
@@ -535,7 +537,7 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preTitle = questionnaire.Title
 				}
-			} else if *testCase.args.params.Sort == "modified_at" {
+			case "modified_at":
 				var preModifiedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preModifiedAt.IsZero() {
@@ -543,7 +545,7 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preModifiedAt = questionnaire.ModifiedAt
 				}
-			} else if *testCase.args.params.Sort == "-modified_at" {
+			case "-modified_at":
 				var preModifiedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
 					if !preModifiedAt.IsZero() {
@@ -551,6 +553,8 @@ func TestGetQuestionnaires(t *testing.T) {
 					}
 					preModifiedAt = questionnaire.ModifiedAt
 				}
+			default:
+				assertion.Fail("invalid sort parameter", *testCase.args.params.Sort, testCase.description)
 			}
 		}
 
@@ -2161,7 +2165,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 		}
 
 		if testCase.args.params.Sort != nil {
-			if *testCase.args.params.Sort == "submitted_at" {
+			switch *testCase.args.params.Sort {
+			case "submitted_at":
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
@@ -2169,7 +2174,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preCreatedAt = response.SubmittedAt
 				}
-			} else if *testCase.args.params.Sort == "-submitted_at" {
+			case "-submitted_at":
 				var preCreatedAt time.Time
 				for _, response := range responseList {
 					if !preCreatedAt.IsZero() {
@@ -2177,7 +2182,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preCreatedAt = response.SubmittedAt
 				}
-			} else if *testCase.args.params.Sort == "traqid" {
+			case "traqid":
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
@@ -2185,7 +2190,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preTraqID = *response.Respondent
 				}
-			} else if *testCase.args.params.Sort == "-traqid" {
+			case "-traqid":
 				var preTraqID string
 				for _, response := range responseList {
 					if preTraqID != "" {
@@ -2193,7 +2198,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preTraqID = *response.Respondent
 				}
-			} else if *testCase.args.params.Sort == "modified_at" {
+			case "modified_at":
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
@@ -2201,7 +2206,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preModifiedAt = response.ModifiedAt
 				}
-			} else if *testCase.args.params.Sort == "-modified_at" {
+			case "-modified_at":
 				var preModifiedAt time.Time
 				for _, response := range responseList {
 					if !preModifiedAt.IsZero() {
@@ -2209,6 +2214,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					}
 					preModifiedAt = response.ModifiedAt
 				}
+			default:
+				assertion.Fail("invalid sort parameter", testCase.description)
 			}
 		}
 

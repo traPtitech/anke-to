@@ -283,7 +283,8 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				option = []model.Options{}
 			}
 			var selectedOptions []int
-			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
+			switch questionTypes[responseMeta.QuestionID] {
+			case "MultipleChoice":
 				var selectedOption int
 				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
 				if err != nil {
@@ -291,12 +292,15 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
 				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
+			case "Checkbox":
 				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
 				if err != nil {
 					ctx.Logger().Errorf("invalid option: %+v", err)
 					return echo.NewHTTPError(http.StatusBadRequest, err)
 				}
+			default:
+				ctx.Logger().Errorf("invalid question type: %+v", questionTypes[responseMeta.QuestionID])
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question type: %s", questionTypes[responseMeta.QuestionID]))
 			}
 			ok = true
 			if len(selectedOptions) == 0 {

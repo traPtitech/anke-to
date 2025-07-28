@@ -255,19 +255,20 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
-			if questionType == "Text" {
+			switch questionType {
+			case "Text":
 				questionType = "Text"
-			} else if questionType == "TextLong" {
+			case "TextLong":
 				questionType = "TextArea"
-			} else if questionType == "Number" {
+			case "Number":
 				questionType = "Number"
-			} else if questionType == "SingleChoice" {
+			case "SingleChoice":
 				questionType = "MultipleChoice"
-			} else if questionType == "MultipleChoice" {
+			case "MultipleChoice":
 				questionType = "Checkbox"
-			} else if questionType == "Scale" {
+			case "Scale":
 				questionType = "LinearScale"
-			} else {
+			default:
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
@@ -562,19 +563,20 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
-			if questionType == "Text" {
+			switch questionType {
+			case "Text":
 				questionType = "Text"
-			} else if questionType == "TextLong" {
+			case "TextLong":
 				questionType = "TextArea"
-			} else if questionType == "Number" {
+			case "Number":
 				questionType = "Number"
-			} else if questionType == "SingleChoice" {
+			case "SingleChoice":
 				questionType = "MultipleChoice"
-			} else if questionType == "MultipleChoice" {
+			case "MultipleChoice":
 				questionType = "Checkbox"
-			} else if questionType == "Scale" {
+			case "Scale":
 				questionType = "LinearScale"
-			} else {
+			default:
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
@@ -1042,7 +1044,8 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 				option = []model.Options{}
 			}
 			var selectedOptions []int
-			if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
+			switch questionTypes[responseMeta.QuestionID] {
+			case "MultipleChoice":
 				var selectedOption int
 				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
 				if err != nil {
@@ -1050,12 +1053,14 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 					return res, echo.NewHTTPError(http.StatusBadRequest, err)
 				}
 				selectedOptions = append(selectedOptions, selectedOption)
-			} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
+			case "Checkbox":
 				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
 				if err != nil {
 					c.Logger().Errorf("invalid option: %+v", err)
 					return res, echo.NewHTTPError(http.StatusBadRequest, err)
 				}
+			default:
+				c.Logger().Errorf("invalid question type: %+v", questionTypes[responseMeta.QuestionID])
 			}
 			ok = true
 			if len(selectedOptions) == 0 {
