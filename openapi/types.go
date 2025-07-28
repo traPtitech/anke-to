@@ -182,10 +182,11 @@ type Groups = []openapi_types.UUID
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 	union      json.RawMessage
 }
 
@@ -245,25 +246,26 @@ type NewResponseBodySingleChoiceQuestionType string
 
 // Question defines model for Question.
 type Question struct {
-	Body string `json:"body"`
-
 	// CreatedAt 質問を追加または編集する場合はnull。
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	CreatedAt   *time.Time `json:"created_at,omitempty"`
+	Description string     `json:"description"`
 
 	// IsRequired 回答必須かどうか
 	IsRequired bool `json:"is_required"`
 
 	// QuestionId 質問を追加する場合はnull。
-	QuestionId *int `json:"question_id,omitempty"`
+	QuestionId *int   `json:"question_id,omitempty"`
+	Title      string `json:"title"`
 	union      json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
 type QuestionBase struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 }
 
 // QuestionSettingsByType defines model for QuestionSettingsByType.
@@ -529,6 +531,9 @@ type QuestionnaireSummary struct {
 	// HasMyResponse 回答が存在する
 	HasMyResponse bool `json:"has_my_response"`
 
+	// IsAdministratedByMe 自分が管理者になっているかどうか
+	IsAdministratedByMe bool `json:"is_administrated_by_me"`
+
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
 
@@ -658,19 +663,10 @@ type ResponseBodyTextLongQuestionType string
 // ResponseSortType response用のsortの種類
 type ResponseSortType string
 
-// ResponseWithQuestionnaireInfoItem defines model for ResponseWithQuestionnaireInfoItem.
+// ResponseWithQuestionnaireInfoItem 同じアンケートの回答情報をまとめて返す。
 type ResponseWithQuestionnaireInfoItem struct {
-	Body              []ResponseBody     `json:"body"`
-	IsAnonymous       *bool              `json:"is_anonymous,omitempty"`
-	IsDraft           bool               `json:"is_draft"`
-	ModifiedAt        time.Time          `json:"modified_at"`
-	QuestionnaireId   int                `json:"questionnaire_id"`
 	QuestionnaireInfo *QuestionnaireInfo `json:"questionnaire_info,omitempty"`
-
-	// Respondent traQ ID
-	Respondent  *TraqId   `json:"respondent,omitempty"`
-	ResponseId  int       `json:"response_id"`
-	SubmittedAt time.Time `json:"submitted_at"`
+	Responses         *[]Response        `json:"responses,omitempty"`
 }
 
 // Responses defines model for Responses.
@@ -696,6 +692,18 @@ type UsersAndGroups struct {
 	Users Users `json:"users"`
 }
 
+// HasMyDraftInQuery defines model for hasMyDraftInQuery.
+type HasMyDraftInQuery = bool
+
+// HasMyResponseInQuery defines model for hasMyResponseInQuery.
+type HasMyResponseInQuery = bool
+
+// IsDraftInQuery defines model for isDraftInQuery.
+type IsDraftInQuery = bool
+
+// NotOverDueInQuery defines model for notOverDueInQuery.
+type NotOverDueInQuery = bool
+
 // OnlyAdministratedByMeInQuery defines model for onlyAdministratedByMeInQuery.
 type OnlyAdministratedByMeInQuery = bool
 
@@ -710,6 +718,9 @@ type PageInQuery = int
 
 // QuestionnaireIDInPath defines model for questionnaireIDInPath.
 type QuestionnaireIDInPath = int
+
+// QuestionnaireIDsInQuery defines model for questionnaireIDsInQuery.
+type QuestionnaireIDsInQuery = []int
 
 // ResponseIDInPath defines model for responseIDInPath.
 type ResponseIDInPath = int
@@ -739,6 +750,22 @@ type GetQuestionnairesParams struct {
 
 	// OnlyAdministratedByMe 自分が管理者になっていないもののみ取得 (true), 管理者になっているものも含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyAdministratedByMe *OnlyAdministratedByMeInQuery `form:"onlyAdministratedByMe,omitempty" json:"onlyAdministratedByMe,omitempty"`
+
+	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
+	NotOverDue *NotOverDueInQuery `form:"notOverDue,omitempty" json:"notOverDue,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
+
+	// HasMyResponse trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
+	// falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
+	// 存在しない場合、すべてのアンケートを取得する。
+	HasMyResponse *HasMyResponseInQuery `form:"hasMyResponse,omitempty" json:"hasMyResponse,omitempty"`
+
+	// HasMyDraft trueの場合、自分の回答の下書きが存在するアンケートのみを取得する。
+	// falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
+	// 存在しない場合、すべてのアンケートを取得する。
+	HasMyDraft *HasMyDraftInQuery `form:"hasMyDraft,omitempty" json:"hasMyDraft,omitempty"`
 }
 
 // GetQuestionnaireResponsesParams defines parameters for GetQuestionnaireResponses.
@@ -748,12 +775,21 @@ type GetQuestionnaireResponsesParams struct {
 
 	// OnlyMyResponse 自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyMyResponse *OnlyMyResponseInQuery `form:"onlyMyResponse,omitempty" json:"onlyMyResponse,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
 // GetMyResponsesParams defines parameters for GetMyResponses.
 type GetMyResponsesParams struct {
 	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid", TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
 	Sort *ResponseSortInQuery `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// QuestionnaireIDs 取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
+	QuestionnaireIDs *QuestionnaireIDsInQuery `form:"questionnaireIDs,omitempty" json:"questionnaireIDs,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
 // PostQuestionnaireJSONRequestBody defines body for PostQuestionnaire for application/json ContentType.
@@ -940,14 +976,19 @@ func (t NewQuestion) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
+	object["description"], err = json.Marshal(t.Description)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
+	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -965,10 +1006,10 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
 		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -976,6 +1017,13 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.IsRequired)
 		if err != nil {
 			return fmt.Errorf("error reading 'is_required': %w", err)
+		}
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 
@@ -1350,16 +1398,16 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
-	}
-
 	if t.CreatedAt != nil {
 		object["created_at"], err = json.Marshal(t.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
 		}
+	}
+
+	object["description"], err = json.Marshal(t.Description)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1373,6 +1421,12 @@ func (t Question) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 		}
 	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -1388,17 +1442,17 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
-		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
-		}
-	}
-
 	if raw, found := object["created_at"]; found {
 		err = json.Unmarshal(raw, &t.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("error reading 'created_at': %w", err)
+		}
+	}
+
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
+		if err != nil {
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -1413,6 +1467,13 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionId)
 		if err != nil {
 			return fmt.Errorf("error reading 'question_id': %w", err)
+		}
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 
