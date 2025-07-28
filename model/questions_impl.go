@@ -25,7 +25,7 @@ type Questions struct {
 	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);not null"`
 	Type            string         `json:"type"                gorm:"type:char(20);size:20;not null"`
 	Body            string         `json:"body"                gorm:"type:text;default:NULL"`
-	Description     string         `json:"body"                gorm:"type:text;default:NULL"`
+	Description     string         `json:"description"         gorm:"type:text;default:NULL"`
 	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);size:4;not null;default:0"`
 	DeletedAt       gorm.DeletedAt `json:"-"          gorm:"type:TIMESTAMP NULL;default:NULL"`
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
