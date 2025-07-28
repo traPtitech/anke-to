@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
 	"time"
 
@@ -72,6 +73,9 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}
 
+	responseLists := make(map[int][]openapi.Response)
+	var responseQuestionnaireIDs []int
+
 	for _, responseID := range responsesID {
 		responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
 		if err != nil {
@@ -79,13 +83,39 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 		}
 
-		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), responseDetail.QuestionnaireID)
+		response, err := respondentDetail2Response(ctx, responseDetail)
+		if err != nil {
+			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
+		}
+
+		tmp := openapi.Response{
+			Body:            response.Body,
+			IsDraft:         response.IsDraft,
+			ModifiedAt:      response.ModifiedAt,
+			QuestionnaireId: response.QuestionnaireId,
+			Respondent:      &userID,
+			ResponseId:      response.ResponseId,
+			SubmittedAt:     response.SubmittedAt,
+			IsAnonymous:     response.IsAnonymous,
+		}
+		responseLists[responseDetail.QuestionnaireID] = append(responseLists[responseDetail.QuestionnaireID], tmp)
+		responseQuestionnaireIDs = append(responseQuestionnaireIDs, responseDetail.QuestionnaireID)
+	}
+
+	slices.Sort(responseQuestionnaireIDs)
+	for i, questionnaireID := range responseQuestionnaireIDs {
+		if i != 0 && responseQuestionnaireIDs[i-1] == questionnaireID {
+			continue
+		}
+
+		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire info: %w", err))
 		}
 
-		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), responseDetail.QuestionnaireID, userID)
+		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), questionnaireID, userID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get target info: %+v", err)
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %w", err))
@@ -99,24 +129,11 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 			Title:               questionnaire.Title,
 		}
 
-		response, err := respondentDetail2Response(ctx, responseDetail)
-		if err != nil {
-			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
-		}
-
-		tmp := openapi.ResponseWithQuestionnaireInfoItem{
-			Body:              response.Body,
-			IsDraft:           response.IsDraft,
-			ModifiedAt:        response.ModifiedAt,
-			QuestionnaireId:   response.QuestionnaireId,
+		responses := responseLists[questionnaireID]
+		res = append(res, openapi.ResponseWithQuestionnaireInfoItem{
 			QuestionnaireInfo: &questionnaireInfo,
-			Respondent:        &userID,
-			ResponseId:        response.ResponseId,
-			SubmittedAt:       response.SubmittedAt,
-			IsAnonymous:       response.IsAnonymous,
-		}
-		res = append(res, tmp)
+			Responses:         &responses,
+		})
 	}
 
 	return res, nil
