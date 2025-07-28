@@ -101,7 +101,7 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		pageNum = 1
 	}
 
-	var onlyTargetingMe, onlyAdministratedByMe bool
+	var onlyTargetingMe, onlyAdministratedByMe, notOverDue bool
 	if params.OnlyTargetingMe == nil {
 		onlyTargetingMe = false
 	} else {
@@ -112,7 +112,18 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	} else {
 		onlyAdministratedByMe = *params.OnlyAdministratedByMe
 	}
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe)
+	if params.NotOverDue == nil {
+		notOverDue = false
+	} else {
+		notOverDue = *params.NotOverDue
+	}
+
+	var isDraft, hasMyResponse, hasMyDraft *bool
+	isDraft = params.IsDraft
+	hasMyResponse = params.HasMyResponse
+	hasMyDraft = params.HasMyDraft
+
+	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, isDraft, hasMyResponse, hasMyDraft)
 	if err != nil {
 		return res, err
 	}
@@ -270,7 +281,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
-			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 			if err != nil {
 				c.Logger().Errorf("failed to insert question: %+v", err)
 				return err
@@ -578,7 +589,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				return errors.New("invalid question type")
 			}
 			if question.QuestionId == nil {
-				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 				if err != nil {
 					c.Logger().Errorf("failed to insert question: %+v", err)
 					return err
@@ -685,7 +696,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				}
 			} else {
 				ifQuestionExist[*question.QuestionId] = true
-				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
+				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired, *question.QuestionId)
 				if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 					c.Logger().Errorf("failed to update question: %+v", err)
 					return err
@@ -912,7 +923,7 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 	} else {
 		onlyMyResponse = false
 	}
-	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID)
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")

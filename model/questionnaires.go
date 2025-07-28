@@ -14,7 +14,7 @@ type IQuestionnaire interface {
 	InsertQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, isPublished bool, isAnonymous bool, isDuplicateAnswerAllowed bool) (int, error)
 	UpdateQuestionnaire(ctx context.Context, title string, description string, resTimeLimit null.Time, resSharedTo string, questionnaireID int, isPublished bool, isAnonymous bool, isDuplicateAnswerAllowed bool) error
 	DeleteQuestionnaire(ctx context.Context, questionnaireID int) error
-	GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool) ([]QuestionnaireInfo, int, error)
+	GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, isDraft *bool, hasMyResponse *bool, hasMyDraft *bool) ([]QuestionnaireInfo, int, error)
 	GetAdminQuestionnaires(ctx context.Context, userID string) ([]Questionnaires, error)
 	GetQuestionnaireInfo(ctx context.Context, questionnaireID int) (*Questionnaires, []string, []string, []uuid.UUID, []string, []string, []uuid.UUID, []string, error)
 	GetTargettedQuestionnaires(ctx context.Context, userID string, answered string, sort string) ([]TargettedQuestionnaire, error)
