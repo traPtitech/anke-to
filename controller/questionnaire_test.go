@@ -2645,7 +2645,59 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			continue
 		}
 
-		// assertion.Equal(testCase.args.params.Body, response.Body, testCase.description, "response body")
+		actualResponseBody := make([]openapi.ResponseBody, len(testCase.args.params.Body))
+		for i, body := range testCase.args.params.Body {
+			actualResponseBody[i].QuestionId = body.QuestionId
+			b, err := body.MarshalJSON()
+			require.NoError(t, err)
+			var responseParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &responseParsed)
+			require.NoError(t, err)
+			questionType := responseParsed["question_type"].(string)
+			switch questionType {
+			case "Text":
+				actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextQuestionType(questionType),
+				})
+			case "TextLong":
+				actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextLongQuestionType(questionType),
+				})
+			case "Number":
+				actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
+					Answer:       responseParsed["answer"].(float32),
+					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
+				})
+			case "SingleChoice":
+				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
+				require.NoError(t, err)
+				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+					Answer:       options[int(responseParsed["answer"].(float32))].Body,
+					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
+				})
+			case "MultipleChoice":
+				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
+				require.NoError(t, err)
+				answers := make([]string, len(responseParsed["answer"].([]interface{})))
+				for j, answer := range responseParsed["answer"].([]interface{}) {
+					answers[j] = options[int(answer.(float64))].Body
+				}
+				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+					Answer:       answers,
+					QuestionType: openapi.ResponseBodyMultipleChoiceQuestionType(questionType),
+				})
+			case "Scale":
+				actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
+					Answer:       int(responseParsed["answer"].(float64)),
+					QuestionType: openapi.ResponseBodyScaleQuestionType(questionType),
+				})
+			default:
+				assertion.Fail("unknown question type", "question type: %s", questionType)
+			}
+		}
+		assertion.Equal(actualResponseBody, response.Body, testCase.description, "response body")
 		assertion.Equal(testCase.args.params.IsDraft, response.IsDraft, testCase.description, "is draft")
 
 		assertion.Equal(testCase.args.questionnaireDetail.QuestionnaireId, response.QuestionnaireId, testCase.description, "questionnaire id")
