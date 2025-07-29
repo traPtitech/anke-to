@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"sort"
 	"time"
 
@@ -103,11 +102,12 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 		responseQuestionnaireIDs = append(responseQuestionnaireIDs, responseDetail.QuestionnaireID)
 	}
 
-	slices.Sort(responseQuestionnaireIDs)
-	for i, questionnaireID := range responseQuestionnaireIDs {
-		if i != 0 && responseQuestionnaireIDs[i-1] == questionnaireID {
+	questionnaireIDExists := make(map[int]bool, len(responseQuestionnaireIDs))
+	for _, questionnaireID := range responseQuestionnaireIDs {
+		if questionnaireIDExists[questionnaireID] {
 			continue
 		}
+		questionnaireIDExists[questionnaireID] = true
 
 		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
 		if err != nil {
