@@ -62,7 +62,8 @@ func (questionnaire *Questionnaires) BeforeUpdate(_ *gorm.DB) error {
 // QuestionnaireInfo Questionnaireにtargetかの情報追加
 type QuestionnaireInfo struct {
 	Questionnaires
-	IsTargeted bool `json:"is_targeted" gorm:"type:boolean"`
+	IsTargeted          bool `json:"is_targeted" gorm:"type:boolean"`
+	IsAdministratedByMe bool `json:"is_administrated_by_me" gorm:"type:boolean"`
 }
 
 // QuestionnaireDetail Questionnaireの詳細
@@ -191,7 +192,7 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool) ([]QuestionnaireInfo, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, isDraft *bool, hasMyResponse *bool, hasMyDraft *bool) ([]QuestionnaireInfo, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -220,6 +221,34 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		query = query.
 			Joins("INNER JOIN administrators ON questionnaires.id = administrators.questionnaire_id").
 			Where("administrators.user_traqid = ?", userID)
+	}
+
+	if notOverDue {
+		query = query.Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now())
+	}
+
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("questionnaires.res_time_limit IS NULL")
+		} else {
+			query = query.Where("questionnaires.res_time_limit IS NOT NULL")
+		}
+	}
+
+	if hasMyResponse != nil {
+		if *hasMyResponse {
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+		} else {
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+		}
+	}
+
+	if hasMyDraft != nil {
+		if *hasMyDraft {
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+		} else {
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+		}
 	}
 
 	if len(search) != 0 {
@@ -259,8 +288,8 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	err = query.
 		Limit(20).
 		Offset(offset).
-		Group("questionnaires.id, targets.user_traqid").
-		Select("questionnaires.*, (targets.user_traqid = ? OR targets.user_traqid = 'traP') AS is_targeted", userID).
+		Select("questionnaires.*, EXISTS(SELECT 1 FROM targets WHERE targets.questionnaire_id = questionnaires.id AND (targets.user_traqid = ? OR targets.user_traqid = 'traP')) AS is_targeted, EXISTS(SELECT 1 FROM administrators WHERE administrators.questionnaire_id = questionnaires.id AND (administrators.user_traqid = ? OR administrators.user_traqid = 'traP')) AS is_administrated_by_me", userID, userID).
+		Group("questionnaires.id").
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
 		return nil, 0, ErrDeadlineExceeded

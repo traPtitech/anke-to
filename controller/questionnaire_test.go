@@ -55,7 +55,7 @@ func setupSampleQuestionnaire() {
 		return
 	}
 	sampleQuestionSettingsText = openapi.NewQuestion{
-		Body:       "質問（テキスト）",
+		Title:       "質問（テキスト）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextMaxLength := 100
@@ -64,7 +64,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
 	})
 	sampleQuestionSettingsTextLong = openapi.NewQuestion{
-		Body:       "質問（ロングテキスト）",
+		Title:       "質問（ロングテキスト）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextLongMaxLength := 500
@@ -73,7 +73,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
 	})
 	sampleQuestionSettingsNumber = openapi.NewQuestion{
-		Body:       "質問（数値）",
+		Title:       "質問（数値）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsNumberMaxValue := 100
@@ -84,7 +84,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
-		Body:       "質問（単一選択）",
+		Title:       "質問（単一選択）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
@@ -92,7 +92,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
 	})
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
-		Body:       "質問（複数選択）",
+		Title:       "質問（複数選択）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
@@ -100,7 +100,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
 	})
 	sampleQeustionsettingsScale = openapi.NewQuestion{
-		Body:       "質問（スケール）",
+		Title:       "質問（スケール）",
 		IsRequired: true,
 	}
 	sampleQeustionsettingsScaleMaxLabel := "最大値"
@@ -593,7 +593,7 @@ func TestPostQuestionnaire(t *testing.T) {
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
 	invalidQuestionSettingsNumber := openapi.NewQuestion{
-		Body:       "質問（数値）",
+		Title:       "質問（数値）",
 		IsRequired: true,
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
@@ -604,7 +604,7 @@ func TestPostQuestionnaire(t *testing.T) {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	invalidQeustionsettingsScale := openapi.NewQuestion{
-		Body:       "質問（スケール）",
+		Title:       "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"
@@ -1164,7 +1164,7 @@ func TestEditQuestionnaire(t *testing.T) {
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
 	invalidQuestionSettingsNumber := openapi.NewQuestion{
-		Body:       "質問（数値）",
+		Title:       "質問（数値）",
 		IsRequired: true,
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
@@ -1175,7 +1175,7 @@ func TestEditQuestionnaire(t *testing.T) {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	invalidQeustionsettingsScale := openapi.NewQuestion{
-		Body:       "質問（スケール）",
+		Title:       "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"

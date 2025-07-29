@@ -25,6 +25,7 @@ type Questions struct {
 	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);not null"`
 	Type            string         `json:"type"                gorm:"type:char(20);size:20;not null"`
 	Body            string         `json:"body"                gorm:"type:text;default:NULL"`
+	Description     string         `json:"description"         gorm:"type:text;default:NULL"`
 	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);size:4;not null;default:0"`
 	DeletedAt       gorm.DeletedAt `json:"-"          gorm:"type:TIMESTAMP NULL;default:NULL"`
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
@@ -53,7 +54,7 @@ type QuestionIDType struct {
 }
 
 // InsertQuestion 質問の追加
-func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool) (int, error) {
+func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, title string, description string, isRequired bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get transaction: %w", err)
@@ -64,7 +65,8 @@ func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNu
 		PageNum:         pageNum,
 		QuestionNum:     questionNum,
 		Type:            questionType,
-		Body:            body,
+		Body:            title,
+		Description:     description,
 		IsRequired:      isRequired,
 	}
 
@@ -78,7 +80,7 @@ func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNu
 }
 
 // UpdateQuestion 質問の修正
-func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool, questionID int) error {
+func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, title string, description string, isRequired bool, questionID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get transaction: %w", err)
@@ -88,7 +90,8 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 		"page_num":     pageNum,
 		"question_num": questionNum,
 		"type":         questionType,
-		"body":         body,
+		"body":         title,
+		"description":  description,
 		"is_required":  isRequired,
 	}
 

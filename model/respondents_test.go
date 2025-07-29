@@ -625,11 +625,11 @@ func TestGetRespondentDetail(t *testing.T) {
 
 	questionIDs := make([]int, 0, 2)
 
-	questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "質問文", true)
+	questionID, err := questionImpl.InsertQuestion(ctx, questionnaireID, 1, 1, "Text", "質問文", "", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
-	questionID, err = questionImpl.InsertQuestion(ctx, questionnaireID, 1, 3, "MultipleChoice", "radio", true)
+	questionID, err = questionImpl.InsertQuestion(ctx, questionnaireID, 1, 3, "MultipleChoice", "radio", "", true)
 	require.NoError(t, err)
 	questionIDs = append(questionIDs, questionID)
 
@@ -754,7 +754,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	questionIDs := make([]int, 0, questionLength)
 
 	for _, question := range questions {
-		questionID, err := questionImpl.InsertQuestion(ctx, question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, question.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(ctx, question.QuestionnaireID, question.PageNum, question.QuestionNum, question.Type, question.Body, "", question.IsRequired)
 		require.NoError(t, err)
 		questionIDs = append(questionIDs, questionID)
 	}
@@ -1105,7 +1105,7 @@ func TestGetRespondentDetails(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		respondentDetails, err := respondentImpl.GetRespondentDetails(ctx, testCase.args.questionnaireID, testCase.args.sort, testCase.args.onlyMyResponse, testCase.args.userID)
+		respondentDetails, err := respondentImpl.GetRespondentDetails(ctx, testCase.args.questionnaireID, testCase.args.sort, testCase.args.onlyMyResponse, testCase.args.userID, nil)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
 		} else if testCase.expect.err != nil {
@@ -1310,7 +1310,7 @@ func TestGetMyResponseIDs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID)
+		MyResponseIDs, err := respondentImpl.GetMyResponseIDs(ctx, testCase.args.sort, testCase.args.userID, nil, nil)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
