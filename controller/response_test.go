@@ -37,30 +37,48 @@ func setupSampleResponse() {
 	if len(sampleResponse.Body) > 0 {
 		return
 	}
-	sampleResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
+	err := sampleResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "テキスト",
 		QuestionType: "Text",
 	})
-	sampleResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyText: %v", err))
+	}
+	err = sampleResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 		Answer:       "ロングテキスト",
 		QuestionType: "TextLong",
 	})
-	sampleResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyTextLong: %v", err))
+	}
+	err = sampleResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
 		Answer:       0,
 		QuestionType: "Number",
 	})
-	sampleResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyNumber: %v", err))
+	}
+	err = sampleResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
 		Answer:       1,
 		QuestionType: "SingleChoice",
 	})
-	sampleResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodySingleChoice: %v", err))
+	}
+	err = sampleResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
 		Answer:       []int{1, 2},
 		QuestionType: "MultipleChoice",
 	})
-	sampleResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyMultipleChoice: %v", err))
+	}
+	err = sampleResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
 		Answer:       1,
 		QuestionType: "Scale",
 	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyScale: %v", err))
+	}
 	sampleResponse = openapi.NewResponse{
 		Body: []openapi.NewResponseBody{
 			sampleResponseBodyText,
@@ -187,7 +205,7 @@ func TestGetMyResponses(t *testing.T) {
 	type expect struct {
 		isErr          bool
 		err            error
-		responseIdList *[]int
+		responseIDList *[]int
 	}
 	type test struct {
 		description string
@@ -284,7 +302,7 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{},
 			},
 			expect: expect{
-				responseIdList: &[]int{response4.ResponseId},
+				responseIDList: &[]int{response4.ResponseId},
 			},
 		},
 		{
@@ -294,7 +312,7 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{},
 			},
 			expect: expect{
-				responseIdList: &[]int{},
+				responseIDList: &[]int{},
 			},
 		},
 	}
@@ -325,7 +343,8 @@ func TestGetMyResponses(t *testing.T) {
 
 		for _, responseList := range responseLists {
 			if testCase.args.params.Sort != nil {
-				if *testCase.args.params.Sort == "submitted_at" {
+				switch *testCase.args.params.Sort {
+				case "submitted_at":
 					var preCreatedAt time.Time
 					for _, response := range *responseList.Responses {
 						if !preCreatedAt.IsZero() {
@@ -333,7 +352,7 @@ func TestGetMyResponses(t *testing.T) {
 						}
 						preCreatedAt = response.SubmittedAt
 					}
-				} else if *testCase.args.params.Sort == "-submitted_at" {
+				case "-submitted_at":
 					var preCreatedAt time.Time
 					for _, response := range *responseList.Responses {
 						if !preCreatedAt.IsZero() {
@@ -341,7 +360,7 @@ func TestGetMyResponses(t *testing.T) {
 						}
 						preCreatedAt = response.SubmittedAt
 					}
-				} else if *testCase.args.params.Sort == "traqid" {
+				case "traqid":
 					var preTraqID string
 					for _, response := range *responseList.Responses {
 						if preTraqID != "" {
@@ -349,7 +368,7 @@ func TestGetMyResponses(t *testing.T) {
 						}
 						preTraqID = *response.Respondent
 					}
-				} else if *testCase.args.params.Sort == "-traqid" {
+				case "-traqid":
 					var preTraqID string
 					for _, response := range *responseList.Responses {
 						if preTraqID != "" {
@@ -357,7 +376,7 @@ func TestGetMyResponses(t *testing.T) {
 						}
 						preTraqID = *response.Respondent
 					}
-				} else if *testCase.args.params.Sort == "modified_at" {
+				case "modified_at":
 					var preModifiedAt time.Time
 					for _, response := range *responseList.Responses {
 						if !preModifiedAt.IsZero() {
@@ -365,7 +384,7 @@ func TestGetMyResponses(t *testing.T) {
 						}
 						preModifiedAt = response.ModifiedAt
 					}
-				} else if *testCase.args.params.Sort == "-modified_at" {
+				case "-modified_at":
 					var preModifiedAt time.Time
 					for _, response := range *responseList.Responses {
 						if !preModifiedAt.IsZero() {
@@ -377,18 +396,18 @@ func TestGetMyResponses(t *testing.T) {
 			}
 		}
 
-		if testCase.expect.responseIdList != nil {
-			responseIdList := []int{}
+		if testCase.expect.responseIDList != nil {
+			responseIDList := []int{}
 			for _, responseList := range responseLists {
 				for _, response := range *responseList.Responses {
-					responseIdList = append(responseIdList, response.ResponseId)
+					responseIDList = append(responseIDList, response.ResponseId)
 				}
 			}
-			sort.Slice(*testCase.expect.responseIdList, func(i, j int) bool {
-				return (*testCase.expect.responseIdList)[i] < (*testCase.expect.responseIdList)[j]
+			sort.Slice(*testCase.expect.responseIDList, func(i, j int) bool {
+				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
-			sort.Slice(responseIdList, func(i, j int) bool { return responseIdList[i] < responseIdList[j] })
-			assertion.Equal(*testCase.expect.responseIdList, responseIdList, testCase.description, "responseIdList")
+			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
+			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIdList")
 		}
 
 		for _, responseList := range responseLists {
@@ -740,40 +759,46 @@ func TestEditResponse(t *testing.T) {
 
 	invalidResponseBodyText := openapi.NewResponseBody{}
 	invalidResponseBodyText.QuestionId = *questionnaireDetail.Questions[0].QuestionId
-	invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
+	err = invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "Text",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyTextLong := openapi.NewResponseBody{}
 	invalidResponseBodyTextLong.QuestionId = *questionnaireDetail.Questions[1].QuestionId
-	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+	err = invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyNumber := openapi.NewResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
-	invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
+	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
 		Answer:       101,
 		QuestionType: "Number",
 	})
+	require.NoError(t, err)
 	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	invalidResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
+	err = invalidResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
 		Answer:       5,
 		QuestionType: "SingleChoice",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	invalidResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
+	err = invalidResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
 		Answer:       []int{5},
 		QuestionType: "MultipleChoice",
 	})
+	require.NoError(t, err)
 	invalidResponseBodyScale := openapi.NewResponseBody{}
 	invalidResponseBodyScale.QuestionId = *questionnaireDetail.Questions[5].QuestionId
-	invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
+	err = invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
 		Answer:       0,
 		QuestionType: "Scale",
 	})
+	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Lock()
 
@@ -947,7 +972,7 @@ func TestEditResponse(t *testing.T) {
 			},
 		},
 	}
-	tmp_testCase := test{
+	tmpTestCase := test{
 		description: "question type not match",
 		args: args{
 			questionnaireDetail: questionnaireDetail,
@@ -968,9 +993,9 @@ func TestEditResponse(t *testing.T) {
 			isErr: true,
 		},
 	}
-	tmp_testCase.args.params.Body[1].QuestionId = sampleResponseBodyTextLong.QuestionId
-	tmp_testCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
-	testCases = append(testCases, tmp_testCase)
+	tmpTestCase.args.params.Body[1].QuestionId = sampleResponseBodyTextLong.QuestionId
+	tmpTestCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
+	testCases = append(testCases, tmpTestCase)
 
 	AddQuestionID2SampleResponse(questionnaireDetailAnonymous.QuestionnaireId)
 	testCases = append(testCases, test{
@@ -1108,27 +1133,31 @@ func TestEditResponse(t *testing.T) {
 			questionType := responseParsed["question_type"].(string)
 			switch questionType {
 			case "Text":
-				actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
+				err = actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
 					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodyTextQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "TextLong":
-				actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+				err = actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodyTextLongQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "Number":
-				actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
+				err = actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
 					Answer:       float32(responseParsed["answer"].(float64)),
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "SingleChoice":
 				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
 				require.NoError(t, err)
-				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+				err = actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 					Answer:       options[int(responseParsed["answer"].(float64))-1].Body,
 					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "MultipleChoice":
 				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
 				require.NoError(t, err)
@@ -1136,15 +1165,17 @@ func TestEditResponse(t *testing.T) {
 				for j, answer := range responseParsed["answer"].([]interface{}) {
 					answers[j] = options[int(answer.(float64))-1].Body
 				}
-				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+				err = actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 					Answer:       answers,
 					QuestionType: openapi.ResponseBodyMultipleChoiceQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "Scale":
-				actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
+				err = actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
 					Answer:       int(responseParsed["answer"].(float64)),
 					QuestionType: openapi.ResponseBodyScaleQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			default:
 				assertion.Fail("unknown question type", "question type: %s", questionType)
 			}
