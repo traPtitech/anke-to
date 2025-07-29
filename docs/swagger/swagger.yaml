@@ -783,6 +783,7 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
           required:
             - options
     QuestionSettingsMultipleChoice:
@@ -794,6 +795,7 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
           required:
             - options
     QuestionSettingsScale:
@@ -869,7 +871,7 @@ components:
         body:
           type: array
           items:
-            $ref: "#/components/schemas/ResponseBody"
+            $ref: "#/components/schemas/NewResponseBody"
       required:
         - is_draft
         - body
@@ -894,11 +896,19 @@ components:
               type: string
               format: date-time
               example: 2020-01-01T00:00:00+09:00
+            is_draft:
+              type: boolean
+              example: true
+            body:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResponseBody"
           required:
             - response_id
             - submitted_at
             - modified_at
-        - $ref: "#/components/schemas/NewResponse"
+            - is_draft
+            - body
     EditResponse:
       allOf:
         - type: object
@@ -934,7 +944,13 @@ components:
             $ref: "#/components/schemas/Response"
       description: |
         同じアンケートの回答情報をまとめて返す。
-    ResponseBody:
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            questionnaire_info:
+              $ref: "#/components/schemas/QuestionnaireInfo"
+    NewResponseBody:
       allOf:
         - type: object
           properties:
@@ -946,9 +962,24 @@ components:
           - $ref: "#/components/schemas/ResponseBodyText"
           - $ref: "#/components/schemas/ResponseBodyTextLong"
           - $ref: "#/components/schemas/ResponseBodyNumber"
-          - $ref: "#/components/schemas/ResponseBodySingleChoice"
-          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/NewResponseBodySingleChoice"
+          - $ref: "#/components/schemas/NewResponseBodyMultipleChoice"
           - $ref: "#/components/schemas/ResponseBodyScale"
+    ResponseBody:
+      allOf:
+        - type: object
+          properties:
+            question_id:
+              type: integer
+          required:
+            - question_id
+        - oneOf:
+            - $ref: "#/components/schemas/ResponseBodyText"
+            - $ref: "#/components/schemas/ResponseBodyTextLong"
+            - $ref: "#/components/schemas/ResponseBodyNumber"
+            - $ref: "#/components/schemas/ResponseBodySingleChoice"
+            - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+            - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
@@ -961,13 +992,19 @@ components:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
         - $ref: "#/components/schemas/ResponseBodyBaseNumber"
-    ResponseBodySingleChoice:
+    NewResponseBodySingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
         - $ref: "#/components/schemas/ResponseBodyBaseInteger"
         - description: |
             選択肢のインデックス
-    ResponseBodyMultipleChoice:
+    ResponseBodySingleChoice:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
+        - $ref: "#/components/schemas/ResponseBodyBaseString"
+        - description: |
+            選択した選択肢の内容
+    NewResponseBodyMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
         - type: object
@@ -978,6 +1015,19 @@ components:
                 type: integer
           description: |
             選択肢のインデックスの配列
+          required:
+            - answer
+    ResponseBodyMultipleChoice:
+      allOf:
+        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
+        - type: object
+          properties:
+            answer:
+              type: array
+              items:
+                type: string
+          description: |
+            選択した選択肢の内容の配列
           required:
             - answer
     ResponseBodyScale:
@@ -1033,4 +1083,3 @@ components:
         format: uuid
         description: |
           Group UUID
- 
