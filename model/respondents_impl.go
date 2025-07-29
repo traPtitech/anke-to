@@ -302,7 +302,7 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string) ([]RespondentDetail, error) {
+func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string, isDraft *bool) ([]RespondentDetail, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tx: %w", err)
@@ -317,6 +317,13 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
 	if onlyMyResponse {
 		query = query.Where("user_traqid = ?", userID)
+	}
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("submitted_at IS NULL")
+		} else {
+			query = query.Where("submitted_at IS NOT NULL")
+		}
 	}
 
 	query, sortNum, err := setRespondentsOrder(query, sort)
@@ -443,7 +450,7 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 }
 
 // GetMyResponses 自分のすべての回答を取得
-func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string) ([]int, error) {
+func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string, questionnaireIDs []int, isDraft *bool) ([]int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
@@ -453,6 +460,18 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 	query := db.Model(&Respondents{}).
 		Where("user_traqid = ?", userID).
 		Select("response_id")
+
+	if questionnaireIDs != nil {
+		query = query.Where("questionnaire_id IN (?)", questionnaireIDs)
+	}
+
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("submitted_at IS NULL")
+		} else {
+			query = query.Where("submitted_at IS NOT NULL")
+		}
+	}
 
 	query, _, err = setRespondentsOrder(query, sort)
 	if err != nil {

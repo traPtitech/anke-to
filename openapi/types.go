@@ -12,6 +12,16 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for NewResponseBodyMultipleChoiceQuestionType.
+const (
+	NewResponseBodyMultipleChoiceQuestionTypeMultipleChoice NewResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
+)
+
+// Defines values for NewResponseBodySingleChoiceQuestionType.
+const (
+	NewResponseBodySingleChoiceQuestionTypeSingleChoice NewResponseBodySingleChoiceQuestionType = "SingleChoice"
+)
+
 // Defines values for QuestionSettingsMultipleChoiceQuestionType.
 const (
 	QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice QuestionSettingsMultipleChoiceQuestionType = "MultipleChoice"
@@ -81,7 +91,7 @@ const (
 
 // Defines values for ResponseBodyMultipleChoiceQuestionType.
 const (
-	MultipleChoice ResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
+	ResponseBodyMultipleChoiceQuestionTypeMultipleChoice ResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
 )
 
 // Defines values for ResponseBodyNumberQuestionType.
@@ -96,7 +106,7 @@ const (
 
 // Defines values for ResponseBodySingleChoiceQuestionType.
 const (
-	SingleChoice ResponseBodySingleChoiceQuestionType = "SingleChoice"
+	ResponseBodySingleChoiceQuestionTypeSingleChoice ResponseBodySingleChoiceQuestionType = "SingleChoice"
 )
 
 // Defines values for ResponseBodyTextQuestionType.
@@ -162,9 +172,9 @@ type EditQuestionnaireTargetsAndAdmins struct {
 
 // EditResponse defines model for EditResponse.
 type EditResponse struct {
-	Body       []ResponseBody `json:"body"`
-	IsDraft    bool           `json:"is_draft"`
-	ResponseId *int           `json:"response_id,omitempty"`
+	Body       []NewResponseBody `json:"body"`
+	IsDraft    bool              `json:"is_draft"`
+	ResponseId *int              `json:"response_id,omitempty"`
 }
 
 // Groups defines model for Groups.
@@ -172,10 +182,11 @@ type Groups = []openapi_types.UUID
 
 // NewQuestion defines model for NewQuestion.
 type NewQuestion struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 	union      json.RawMessage
 }
 
@@ -205,31 +216,56 @@ type NewQuestionnaire struct {
 
 // NewResponse defines model for NewResponse.
 type NewResponse struct {
-	Body    []ResponseBody `json:"body"`
-	IsDraft bool           `json:"is_draft"`
+	Body    []NewResponseBody `json:"body"`
+	IsDraft bool              `json:"is_draft"`
 }
+
+// NewResponseBody defines model for NewResponseBody.
+type NewResponseBody struct {
+	QuestionId int `json:"question_id"`
+	union      json.RawMessage
+}
+
+// NewResponseBodyMultipleChoice defines model for NewResponseBodyMultipleChoice.
+type NewResponseBodyMultipleChoice struct {
+	Answer       []int                                     `json:"answer"`
+	QuestionType NewResponseBodyMultipleChoiceQuestionType `json:"question_type"`
+}
+
+// NewResponseBodyMultipleChoiceQuestionType defines model for NewResponseBodyMultipleChoice.QuestionType.
+type NewResponseBodyMultipleChoiceQuestionType string
+
+// NewResponseBodySingleChoice defines model for NewResponseBodySingleChoice.
+type NewResponseBodySingleChoice struct {
+	Answer       int                                     `json:"answer"`
+	QuestionType NewResponseBodySingleChoiceQuestionType `json:"question_type"`
+}
+
+// NewResponseBodySingleChoiceQuestionType defines model for NewResponseBodySingleChoice.QuestionType.
+type NewResponseBodySingleChoiceQuestionType string
 
 // Question defines model for Question.
 type Question struct {
-	Body string `json:"body"`
-
 	// CreatedAt 質問を追加または編集する場合はnull。
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	CreatedAt   *time.Time `json:"created_at,omitempty"`
+	Description string     `json:"description"`
 
 	// IsRequired 回答必須かどうか
 	IsRequired bool `json:"is_required"`
 
 	// QuestionId 質問を追加する場合はnull。
-	QuestionId *int `json:"question_id,omitempty"`
+	QuestionId *int   `json:"question_id,omitempty"`
+	Title      string `json:"title"`
 	union      json.RawMessage
 }
 
 // QuestionBase defines model for QuestionBase.
 type QuestionBase struct {
-	Body string `json:"body"`
+	Description string `json:"description"`
 
 	// IsRequired 回答必須かどうか
-	IsRequired bool `json:"is_required"`
+	IsRequired bool   `json:"is_required"`
+	Title      string `json:"title"`
 }
 
 // QuestionSettingsByType defines model for QuestionSettingsByType.
@@ -495,6 +531,9 @@ type QuestionnaireSummary struct {
 	// HasMyResponse 回答が存在する
 	HasMyResponse bool `json:"has_my_response"`
 
+	// IsAdministratedByMe 自分が管理者になっているかどうか
+	IsAdministratedByMe bool `json:"is_administrated_by_me"`
+
 	// IsAnonymous 匿名回答かどうか
 	IsAnonymous bool `json:"is_anonymous"`
 
@@ -569,7 +608,7 @@ type ResponseBodyBaseString struct {
 
 // ResponseBodyMultipleChoice defines model for ResponseBodyMultipleChoice.
 type ResponseBodyMultipleChoice struct {
-	Answer       []int                                  `json:"answer"`
+	Answer       []string                               `json:"answer"`
 	QuestionType ResponseBodyMultipleChoiceQuestionType `json:"question_type"`
 }
 
@@ -596,7 +635,7 @@ type ResponseBodyScaleQuestionType string
 
 // ResponseBodySingleChoice defines model for ResponseBodySingleChoice.
 type ResponseBodySingleChoice struct {
-	Answer       int                                  `json:"answer"`
+	Answer       string                               `json:"answer"`
 	QuestionType ResponseBodySingleChoiceQuestionType `json:"question_type"`
 }
 
@@ -624,19 +663,10 @@ type ResponseBodyTextLongQuestionType string
 // ResponseSortType response用のsortの種類
 type ResponseSortType string
 
-// ResponseWithQuestionnaireInfoItem defines model for ResponseWithQuestionnaireInfoItem.
+// ResponseWithQuestionnaireInfoItem 同じアンケートの回答情報をまとめて返す。
 type ResponseWithQuestionnaireInfoItem struct {
-	Body              []ResponseBody     `json:"body"`
-	IsAnonymous       *bool              `json:"is_anonymous,omitempty"`
-	IsDraft           bool               `json:"is_draft"`
-	ModifiedAt        time.Time          `json:"modified_at"`
-	QuestionnaireId   int                `json:"questionnaire_id"`
 	QuestionnaireInfo *QuestionnaireInfo `json:"questionnaire_info,omitempty"`
-
-	// Respondent traQ ID
-	Respondent  *TraqId   `json:"respondent,omitempty"`
-	ResponseId  int       `json:"response_id"`
-	SubmittedAt time.Time `json:"submitted_at"`
+	Responses         *[]Response        `json:"responses,omitempty"`
 }
 
 // Responses defines model for Responses.
@@ -662,6 +692,18 @@ type UsersAndGroups struct {
 	Users Users `json:"users"`
 }
 
+// HasMyDraftInQuery defines model for hasMyDraftInQuery.
+type HasMyDraftInQuery = bool
+
+// HasMyResponseInQuery defines model for hasMyResponseInQuery.
+type HasMyResponseInQuery = bool
+
+// IsDraftInQuery defines model for isDraftInQuery.
+type IsDraftInQuery = bool
+
+// NotOverDueInQuery defines model for notOverDueInQuery.
+type NotOverDueInQuery = bool
+
 // OnlyAdministratedByMeInQuery defines model for onlyAdministratedByMeInQuery.
 type OnlyAdministratedByMeInQuery = bool
 
@@ -676,6 +718,9 @@ type PageInQuery = int
 
 // QuestionnaireIDInPath defines model for questionnaireIDInPath.
 type QuestionnaireIDInPath = int
+
+// QuestionnaireIDsInQuery defines model for questionnaireIDsInQuery.
+type QuestionnaireIDsInQuery = []int
 
 // ResponseIDInPath defines model for responseIDInPath.
 type ResponseIDInPath = int
@@ -705,6 +750,22 @@ type GetQuestionnairesParams struct {
 
 	// OnlyAdministratedByMe 自分が管理者になっていないもののみ取得 (true), 管理者になっているものも含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyAdministratedByMe *OnlyAdministratedByMeInQuery `form:"onlyAdministratedByMe,omitempty" json:"onlyAdministratedByMe,omitempty"`
+
+	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
+	NotOverDue *NotOverDueInQuery `form:"notOverDue,omitempty" json:"notOverDue,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
+
+	// HasMyResponse trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
+	// falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
+	// 存在しない場合、すべてのアンケートを取得する。
+	HasMyResponse *HasMyResponseInQuery `form:"hasMyResponse,omitempty" json:"hasMyResponse,omitempty"`
+
+	// HasMyDraft trueの場合、自分の回答の下書きが存在するアンケートのみを取得する。
+	// falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
+	// 存在しない場合、すべてのアンケートを取得する。
+	HasMyDraft *HasMyDraftInQuery `form:"hasMyDraft,omitempty" json:"hasMyDraft,omitempty"`
 }
 
 // GetQuestionnaireResponsesParams defines parameters for GetQuestionnaireResponses.
@@ -714,12 +775,21 @@ type GetQuestionnaireResponsesParams struct {
 
 	// OnlyMyResponse 自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyMyResponse *OnlyMyResponseInQuery `form:"onlyMyResponse,omitempty" json:"onlyMyResponse,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
 // GetMyResponsesParams defines parameters for GetMyResponses.
 type GetMyResponsesParams struct {
 	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid", TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
 	Sort *ResponseSortInQuery `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// QuestionnaireIDs 取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
+	QuestionnaireIDs *QuestionnaireIDsInQuery `form:"questionnaireIDs,omitempty" json:"questionnaireIDs,omitempty"`
+
+	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
 // PostQuestionnaireJSONRequestBody defines body for PostQuestionnaire for application/json ContentType.
@@ -906,14 +976,19 @@ func (t NewQuestion) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
+	object["description"], err = json.Marshal(t.Description)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'is_required': %w", err)
+	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
 	}
 
 	b, err = json.Marshal(object)
@@ -931,10 +1006,10 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
 		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -942,6 +1017,212 @@ func (t *NewQuestion) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.IsRequired)
 		if err != nil {
 			return fmt.Errorf("error reading 'is_required': %w", err)
+		}
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsResponseBodyText returns the union data inside the NewResponseBody as a ResponseBodyText
+func (t NewResponseBody) AsResponseBodyText() (ResponseBodyText, error) {
+	var body ResponseBodyText
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResponseBodyText overwrites any union data inside the NewResponseBody as the provided ResponseBodyText
+func (t *NewResponseBody) FromResponseBodyText(v ResponseBodyText) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResponseBodyText performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodyText
+func (t *NewResponseBody) MergeResponseBodyText(v ResponseBodyText) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsResponseBodyTextLong returns the union data inside the NewResponseBody as a ResponseBodyTextLong
+func (t NewResponseBody) AsResponseBodyTextLong() (ResponseBodyTextLong, error) {
+	var body ResponseBodyTextLong
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResponseBodyTextLong overwrites any union data inside the NewResponseBody as the provided ResponseBodyTextLong
+func (t *NewResponseBody) FromResponseBodyTextLong(v ResponseBodyTextLong) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResponseBodyTextLong performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodyTextLong
+func (t *NewResponseBody) MergeResponseBodyTextLong(v ResponseBodyTextLong) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsResponseBodyNumber returns the union data inside the NewResponseBody as a ResponseBodyNumber
+func (t NewResponseBody) AsResponseBodyNumber() (ResponseBodyNumber, error) {
+	var body ResponseBodyNumber
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResponseBodyNumber overwrites any union data inside the NewResponseBody as the provided ResponseBodyNumber
+func (t *NewResponseBody) FromResponseBodyNumber(v ResponseBodyNumber) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResponseBodyNumber performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodyNumber
+func (t *NewResponseBody) MergeResponseBodyNumber(v ResponseBodyNumber) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNewResponseBodySingleChoice returns the union data inside the NewResponseBody as a NewResponseBodySingleChoice
+func (t NewResponseBody) AsNewResponseBodySingleChoice() (NewResponseBodySingleChoice, error) {
+	var body NewResponseBodySingleChoice
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNewResponseBodySingleChoice overwrites any union data inside the NewResponseBody as the provided NewResponseBodySingleChoice
+func (t *NewResponseBody) FromNewResponseBodySingleChoice(v NewResponseBodySingleChoice) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNewResponseBodySingleChoice performs a merge with any union data inside the NewResponseBody, using the provided NewResponseBodySingleChoice
+func (t *NewResponseBody) MergeNewResponseBodySingleChoice(v NewResponseBodySingleChoice) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNewResponseBodyMultipleChoice returns the union data inside the NewResponseBody as a NewResponseBodyMultipleChoice
+func (t NewResponseBody) AsNewResponseBodyMultipleChoice() (NewResponseBodyMultipleChoice, error) {
+	var body NewResponseBodyMultipleChoice
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNewResponseBodyMultipleChoice overwrites any union data inside the NewResponseBody as the provided NewResponseBodyMultipleChoice
+func (t *NewResponseBody) FromNewResponseBodyMultipleChoice(v NewResponseBodyMultipleChoice) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNewResponseBodyMultipleChoice performs a merge with any union data inside the NewResponseBody, using the provided NewResponseBodyMultipleChoice
+func (t *NewResponseBody) MergeNewResponseBodyMultipleChoice(v NewResponseBodyMultipleChoice) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsResponseBodyScale returns the union data inside the NewResponseBody as a ResponseBodyScale
+func (t NewResponseBody) AsResponseBodyScale() (ResponseBodyScale, error) {
+	var body ResponseBodyScale
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResponseBodyScale overwrites any union data inside the NewResponseBody as the provided ResponseBodyScale
+func (t *NewResponseBody) FromResponseBodyScale(v ResponseBodyScale) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResponseBodyScale performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodyScale
+func (t *NewResponseBody) MergeResponseBodyScale(v ResponseBodyScale) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NewResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["question_id"], err = json.Marshal(t.QuestionId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *NewResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["question_id"]; found {
+		err = json.Unmarshal(raw, &t.QuestionId)
+		if err != nil {
+			return fmt.Errorf("error reading 'question_id': %w", err)
 		}
 	}
 
@@ -1117,16 +1398,16 @@ func (t Question) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["body"], err = json.Marshal(t.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'body': %w", err)
-	}
-
 	if t.CreatedAt != nil {
 		object["created_at"], err = json.Marshal(t.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'created_at': %w", err)
 		}
+	}
+
+	object["description"], err = json.Marshal(t.Description)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'description': %w", err)
 	}
 
 	object["is_required"], err = json.Marshal(t.IsRequired)
@@ -1140,6 +1421,12 @@ func (t Question) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("error marshaling 'question_id': %w", err)
 		}
 	}
+
+	object["title"], err = json.Marshal(t.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -1155,17 +1442,17 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["body"]; found {
-		err = json.Unmarshal(raw, &t.Body)
-		if err != nil {
-			return fmt.Errorf("error reading 'body': %w", err)
-		}
-	}
-
 	if raw, found := object["created_at"]; found {
 		err = json.Unmarshal(raw, &t.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("error reading 'created_at': %w", err)
+		}
+	}
+
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &t.Description)
+		if err != nil {
+			return fmt.Errorf("error reading 'description': %w", err)
 		}
 	}
 
@@ -1180,6 +1467,13 @@ func (t *Question) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.QuestionId)
 		if err != nil {
 			return fmt.Errorf("error reading 'question_id': %w", err)
+		}
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &t.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
 		}
 	}
 

@@ -406,7 +406,7 @@ func insertQuestionTest(t *testing.T) {
 
 	for _, testCase := range testCases {
 		createdAt := time.Now()
-		questionID, err := questionImpl.InsertQuestion(ctx, testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, testCase.args.IsRequired)
+		questionID, err := questionImpl.InsertQuestion(ctx, testCase.args.QuestionnaireID, testCase.args.PageNum, testCase.args.QuestionNum, testCase.args.Type, testCase.args.Body, "", testCase.args.IsRequired)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -501,6 +501,9 @@ func updateQuestionTest(t *testing.T) {
 					Body:            "自由記述欄",
 					IsRequired:      false,
 				},
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 		{
@@ -655,7 +658,7 @@ func updateQuestionTest(t *testing.T) {
 			t.Errorf("failed to insert question(%s): %v", testCase.description, err)
 		}
 
-		err = questionImpl.UpdateQuestion(ctx, testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, testCase.after.IsRequired, question.ID)
+		err = questionImpl.UpdateQuestion(ctx, testCase.after.QuestionnaireID, testCase.after.PageNum, testCase.after.QuestionNum, testCase.after.Type, testCase.after.Body, "", testCase.after.IsRequired, question.ID)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

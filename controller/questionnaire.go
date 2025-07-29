@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -102,7 +101,7 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		pageNum = 1
 	}
 
-	var onlyTargetingMe, onlyAdministratedByMe bool
+	var onlyTargetingMe, onlyAdministratedByMe, notOverDue bool
 	if params.OnlyTargetingMe == nil {
 		onlyTargetingMe = false
 	} else {
@@ -113,7 +112,18 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	} else {
 		onlyAdministratedByMe = *params.OnlyAdministratedByMe
 	}
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe)
+	if params.NotOverDue == nil {
+		notOverDue = false
+	} else {
+		notOverDue = *params.NotOverDue
+	}
+
+	var isDraft, hasMyResponse, hasMyDraft *bool
+	isDraft = params.IsDraft
+	hasMyResponse = params.HasMyResponse
+	hasMyDraft = params.HasMyDraft
+
+	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, isDraft, hasMyResponse, hasMyDraft)
 	if err != nil {
 		return res, err
 	}
@@ -272,7 +282,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
-			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+			questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 			if err != nil {
 				c.Logger().Errorf("failed to insert question: %+v", err)
 				return err
@@ -581,7 +591,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				return errors.New("invalid question type")
 			}
 			if question.QuestionId == nil {
-				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired)
+				questionID, err := q.InsertQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired)
 				if err != nil {
 					c.Logger().Errorf("failed to insert question: %+v", err)
 					return err
@@ -688,7 +698,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				}
 			} else {
 				ifQuestionExist[*question.QuestionId] = true
-				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Body, question.IsRequired, *question.QuestionId)
+				err = q.UpdateQuestion(ctx, questionnaireID, 1, questoinNum+1, questionType, question.Title, question.Description, question.IsRequired, *question.QuestionId)
 				if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 					c.Logger().Errorf("failed to update question: %+v", err)
 					return err
@@ -915,7 +925,7 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 	} else {
 		onlyMyResponse = false
 	}
-	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID)
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
@@ -1039,50 +1049,6 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 				return res, echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Checkbox", "MultipleChoice":
-			option, ok := optionMap[responseMeta.QuestionID]
-			if !ok {
-				option = []model.Options{}
-			}
-			var selectedOptions []int
-			switch questionTypes[responseMeta.QuestionID] {
-			case "MultipleChoice":
-				var selectedOption int
-				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
-				if err != nil {
-					c.Logger().Errorf("invalid option: %+v", err)
-					return res, echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				selectedOptions = append(selectedOptions, selectedOption)
-			case "Checkbox":
-				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
-				if err != nil {
-					c.Logger().Errorf("invalid option: %+v", err)
-					return res, echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-			default:
-				c.Logger().Errorf("invalid question type: %+v", questionTypes[responseMeta.QuestionID])
-			}
-			ok = true
-			if len(selectedOptions) == 0 {
-				ok = false
-			}
-			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
-			var preOption *int
-			for _, selectedOption := range selectedOptions {
-				if preOption != nil && *preOption == selectedOption {
-					ok = false
-					break
-				}
-				if selectedOption < 1 || selectedOption > len(option) {
-					ok = false
-					break
-				}
-				preOption = &selectedOption
-			}
-			if !ok {
-				c.Logger().Errorf("invalid option: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
-			}
 		case "LinearScale":
 			label, ok := scaleLabelMap[responseMeta.QuestionID]
 			if !ok {
@@ -1106,14 +1072,12 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		}
 	}
 
-	var submittedAt, modifiedAt time.Time
+	var submittedAt time.Time
 	//一時保存のときはnull
 	if params.IsDraft {
 		submittedAt = time.Time{}
-		modifiedAt = time.Time{}
 	} else {
 		submittedAt = time.Now()
-		modifiedAt = time.Now()
 	}
 
 	var responseID int
@@ -1140,24 +1104,13 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to insert response: %w", err))
 	}
 
-	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
+	response, err := q.GetResponse(c, responseID)
 	if err != nil {
-		c.Logger().Errorf("failed to get response isanonymous by questionnaire id: %+v", err)
-		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		c.Logger().Errorf("failed to get response: %+v", err)
+		return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get response: %w", err))
 	}
 
-	res = openapi.Response{
-		QuestionnaireId: questionnaireID,
-		ResponseId:      responseID,
-		Respondent:      &userID,
-		SubmittedAt:     submittedAt,
-		ModifiedAt:      modifiedAt,
-		IsDraft:         params.IsDraft,
-		IsAnonymous:     &isAnonymous,
-		Body:            params.Body,
-	}
-
-	return res, nil
+	return response, nil
 }
 
 func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {

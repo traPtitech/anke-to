@@ -2,11 +2,10 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -60,11 +59,20 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 	} else {
 		sort = string(*params.Sort)
 	}
-	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID)
+	var questionnaireIDs []int
+	if params.QuestionnaireIDs == nil {
+		questionnaireIDs = nil
+	} else {
+		questionnaireIDs = *params.QuestionnaireIDs
+	}
+	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID, questionnaireIDs, params.IsDraft)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
 		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}
+
+	responseLists := make(map[int][]openapi.Response)
+	var responseQuestionnaireIDs []int
 
 	for _, responseID := range responsesID {
 		responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
@@ -73,13 +81,39 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
 		}
 
-		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), responseDetail.QuestionnaireID)
+		response, err := respondentDetail2Response(ctx, responseDetail)
+		if err != nil {
+			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
+		}
+
+		tmp := openapi.Response{
+			Body:            response.Body,
+			IsDraft:         response.IsDraft,
+			ModifiedAt:      response.ModifiedAt,
+			QuestionnaireId: response.QuestionnaireId,
+			Respondent:      &userID,
+			ResponseId:      response.ResponseId,
+			SubmittedAt:     response.SubmittedAt,
+			IsAnonymous:     response.IsAnonymous,
+		}
+		responseLists[responseDetail.QuestionnaireID] = append(responseLists[responseDetail.QuestionnaireID], tmp)
+		responseQuestionnaireIDs = append(responseQuestionnaireIDs, responseDetail.QuestionnaireID)
+	}
+
+	slices.Sort(responseQuestionnaireIDs)
+	for i, questionnaireID := range responseQuestionnaireIDs {
+		if i != 0 && responseQuestionnaireIDs[i-1] == questionnaireID {
+			continue
+		}
+
+		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire info: %w", err))
 		}
 
-		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), responseDetail.QuestionnaireID, userID)
+		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), questionnaireID, userID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to get target info: %+v", err)
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %w", err))
@@ -93,24 +127,11 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 			Title:               questionnaire.Title,
 		}
 
-		response, err := respondentDetail2Response(ctx, responseDetail)
-		if err != nil {
-			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
-		}
-
-		tmp := openapi.ResponseWithQuestionnaireInfoItem{
-			Body:              response.Body,
-			IsDraft:           response.IsDraft,
-			ModifiedAt:        response.ModifiedAt,
-			QuestionnaireId:   response.QuestionnaireId,
+		responses := responseLists[questionnaireID]
+		res = append(res, openapi.ResponseWithQuestionnaireInfoItem{
 			QuestionnaireInfo: &questionnaireInfo,
-			Respondent:        &userID,
-			ResponseId:        response.ResponseId,
-			SubmittedAt:       response.SubmittedAt,
-			IsAnonymous:       response.IsAnonymous,
-		}
-		res = append(res, tmp)
+			Responses:         &responses,
+		})
 	}
 
 	return res, nil
@@ -278,51 +299,6 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Checkbox", "MultipleChoice":
-			option, ok := optionMap[responseMeta.QuestionID]
-			if !ok {
-				option = []model.Options{}
-			}
-			var selectedOptions []int
-			switch questionTypes[responseMeta.QuestionID] {
-			case "MultipleChoice":
-				var selectedOption int
-				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
-				if err != nil {
-					ctx.Logger().Errorf("invalid option: %+v", err)
-					return echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-				selectedOptions = append(selectedOptions, selectedOption)
-			case "Checkbox":
-				err = json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
-				if err != nil {
-					ctx.Logger().Errorf("invalid option: %+v", err)
-					return echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-			default:
-				ctx.Logger().Errorf("invalid question type: %+v", questionTypes[responseMeta.QuestionID])
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question type: %s", questionTypes[responseMeta.QuestionID]))
-			}
-			ok = true
-			if len(selectedOptions) == 0 {
-				ok = false
-			}
-			sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
-			var preOption *int
-			for _, selectedOption := range selectedOptions {
-				if preOption != nil && *preOption == selectedOption {
-					ok = false
-					break
-				}
-				if selectedOption < 1 || selectedOption > len(option) {
-					ok = false
-					break
-				}
-				preOption = &selectedOption
-			}
-			if !ok {
-				ctx.Logger().Errorf("invalid option: %+v", err)
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
 		case "LinearScale":
 			label, ok := scaleLabelMap[responseMeta.QuestionID]
 			if !ok {
