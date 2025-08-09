@@ -403,19 +403,10 @@ jobs:
       # 2) Claude Code（Base Action）で実行する
       #    ※ 自動コンテキスト注入なし
       # =========================================
-      - name: Invoke Claude Code (base)
+      - name: Invoke Claude Code (base via LiteLLM)
         uses: anthropics/claude-code-base-action@beta
-        env:
-          # あなたのプロキシ（Litellm等）に合わせて
-          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-          ANTHROPIC_API_KEY:  ${{ secrets.LITELLM_API_KEY }}
-          # GitHub API (MCP) 用
-          GH_TOKEN: ${{ github.token }}
         with:
-          # さっき作ったプロンプトをそのまま渡す
           prompt_file: ${{ steps.build_prompt.outputs.prompt_file }}
-
-          # Claude が使えるツールを “レビューに必要最小限” に限定
           allowed_tools: >
             mcp__github__create_pending_pull_request_review,
             mcp__github__add_pull_request_review_comment_to_pending_review,
@@ -423,6 +414,11 @@ jobs:
             mcp__github__get_pull_request_diff,
             mcp__github__get_issue,
             mcp__github__get_issue_comments
-
-          # 使用モデル（プロキシ側でマッピングしているなら省略可）
           model: "claude-3.7-sonnet"
+          anthropic_api_key: "dummy"  # ← 入力必須なのでダミーでOK
+          claude_env: |
+            ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+            ANTHROPIC_API_KEY:  ${{ secrets.LITELLM_API_KEY }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
