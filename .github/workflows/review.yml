@@ -22,14 +22,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Create GitHub App installation token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.GH_APP_ID }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
 
       # ------------------------------------------------------------
       # 事前処理：PR目的・関連Issue抽出、レビュー対象ファイルのフィルタリング
@@ -321,10 +313,16 @@ jobs:
             {
               "mcpServers": {
                 "github": {
-                  "type": "http",
-                  "url": "https://api.githubcopilot.com/mcp/",
-                  "headers": {
-                    "Authorization": "Bearer ${env:GITHUB_MCP_TOKEN}"
+                  "command": "docker",
+                  "args": [
+                    "run","-i","--rm",
+                    "-e","GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "-e","GITHUB_TOOLSETS",
+                    "ghcr.io/github/github-mcp-server"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GH_TOKEN}",
+                    "GITHUB_TOOLSETS": "repos,issues,pull_requests,actions"
                   }
                 }
               }
@@ -338,7 +336,4 @@ jobs:
             ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
             ANTHROPIC_API_KEY:  ${{ secrets.LITELLM_API_KEY }}
         env:
-          # GitHub MCP 用のアクセストークン（App の installation token を使用）
-          GITHUB_MCP_TOKEN: ${{ steps.app-token.outputs.token }}
-          # 既存の GH_TOKEN も保持（gh CLI 等用）
           GH_TOKEN: ${{ github.token }}
