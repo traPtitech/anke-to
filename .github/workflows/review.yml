@@ -1,0 +1,81 @@
+name: Claude PR Action
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-pr:
+    if: |
+      github.event.issue.pull_request != '' &&
+      contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@beta
+        with:
+          trigger_phrase: "@claude"
+          timeout_minutes: "60"
+          github_token: ${{ github.token }}
+          model: "claude-3.7-sonnet"
+
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments"
+
+          direct_prompt: |
+            **【レビュー依頼の場合】**
+            このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
+            0. **関連Issueの抽出と取得（重要・最初に実施）**
+               * `mcp__github__get_pull_request` で PR 本体情報を取得し、PR本文・タイトル・コミットメッセージから
+                 `#123` や `owner/repo#123` 形式の参照を抽出してください。
+               * 見つかった各Issue番号について `mcp__github__get_issue` と `mcp__github__get_issue_comments` を使って
+                 タイトル・本文・主要コメント（要件/再現手順/受け入れ条件など）を取得してください。
+               * Issueの要件・受け入れ条件（Acceptance Criteria）を要約し、**レビューの評価軸**としてメモしておいてください。
+            1. **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って保留中レビューを開始。
+            2. **変更内容を確認する:** `mcp__github__get_pull_request_diff` で差分を把握。
+            3. **Issue整合性チェック（インラインコメント可）**
+               * 取得したIssue要件とPR差分の実装の対応を検証。
+               * 充足、不足、過剰実装、要件の読み違いがあれば、該当行にインラインコメントで
+                 **「要件との対応関係（満たす/不足/過剰/要再確認）」→「理由」→「修正提案」** の順で残してください。
+            4. **通常のコードレビュー観点**
+               * バグリスク/セキュリティ/パフォーマンス/保守性/設計など（従来どおり）。
+            5. **レビュー提出:** `mcp__github__submit_pending_pull_request_review` を「COMMENT」タイプで提出。
+               * まとめコメントの冒頭に、**Issue対応状況のサマリ（満たした点/不足点/要フォローアップ）** を箇条書きで明記。
+               * 「REQUEST_CHANGES」は使わないでください。
+
+            **コメントの書き方に関する重要事項**
+
+            * **インラインコメントの構成:**
+                * **結論を先に:** 各インラインコメントの冒頭で、指摘内容の要点を一行で簡潔に述べてください。
+                * **理由と提案:** 結論の後に、そのように判断した理由や背景、具体的な修正案を詳しく説明してください。
+                * **指摘中心に:** インラインコメントは、修正提案、バグの可能性、可読性の問題など、具体的な改善点に焦点を当ててください。
+
+            * **ポジティブなフィードバックについて:**
+                * **インラインでは控えめに:** インラインで言及するのは、特に優れた設計や他の開発者の参考になるような独創的な実装など、特筆すべき点に限定します。
+                * **まとめコメントで言及:** 全体的に良かった点や、PR全体に対するポジティブな感想は、レビュー提出時の「まとめコメント」に集約して記述してください。
+
+            **レビューの観点**
+
+            レビューでは以下の点に注目してください：
+            * コードの品質やベストプラクティスに沿っているか
+            * バグやセキュリティリスクがないか
+            * パフォーマンス上の懸念がないか
+            * 保守性や可読性は十分か
+            * 設計やアーキテクチャに妥当性があるか
+
+            **その他**
+
+            * 日本語でのフィードバックをお願いします。
+            * 具体的で実行可能なフィードバックをお願いします。
+            * **重要:** レビューの提出は必ず「COMMENT」タイプで行い、PR をブロックしないようにしてください。
+
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
