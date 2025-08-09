@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-      ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.LITELLM_API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
