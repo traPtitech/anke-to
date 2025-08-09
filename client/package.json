@@ -9,8 +9,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@traptitech/traq": "^3.4.5-1",
-    "axios": "^0.21.2",
+    "@traptitech/traq": "^3.24.14-0",
+    "axios": "^1.11.0",
     "bulma": "^0.9.1",
     "caniuse-lite": "^1.0.30001239",
     "js-sha256": "^0.9.0",
