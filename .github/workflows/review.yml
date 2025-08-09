@@ -26,6 +26,8 @@ jobs:
           timeout_minutes: "60"
           github_token: ${{ github.token }}
           model: "claude-3.7-sonnet"
+          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
 
           allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments"
 
@@ -75,7 +77,5 @@ jobs:
             * 日本語でのフィードバックをお願いします。
             * 具体的で実行可能なフィードバックをお願いします。
             * **重要:** レビューの提出は必ず「COMMENT」タイプで行い、PR をブロックしないようにしてください。
-        env:
-          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-          ANTHROPIC_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+
 
