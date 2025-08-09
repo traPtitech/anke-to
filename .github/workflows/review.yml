@@ -17,6 +17,10 @@ jobs:
       contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
     steps:
+      - name: Debug env
+        run: |
+          echo "BASE_URL length: ${#ANTHROPIC_BASE_URL}"
+          echo "AUTH_TOKEN length: ${#ANTHROPIC_AUTH_TOKEN}"
       - name: Checkout repository
         uses: actions/checkout@v4
 
