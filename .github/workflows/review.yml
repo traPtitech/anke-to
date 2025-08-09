@@ -16,9 +16,6 @@ jobs:
       github.event.issue.pull_request != '' &&
       contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
-    env:
-      ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-      ANTHROPIC_API_KEY: ${{ secrets.LITELLM_API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -78,5 +75,7 @@ jobs:
             * 日本語でのフィードバックをお願いします。
             * 具体的で実行可能なフィードバックをお願いします。
             * **重要:** レビューの提出は必ず「COMMENT」タイプで行い、PR をブロックしないようにしてください。
-
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.LITELLM_API_KEY }}
 
