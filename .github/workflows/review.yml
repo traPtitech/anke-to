@@ -26,8 +26,10 @@ jobs:
           timeout_minutes: "60"
           github_token: ${{ github.token }}
           model: "claude-3.7-sonnet"
-          ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
+          claude_env: |
+            ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+            ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
+          anthropic_api_key: ${{ secrets.LITELLM_API_KEY }}
 
           allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments"
 
