@@ -245,6 +245,10 @@ jobs:
             total_bytes=$((total_bytes + part_bytes))
           done
 
+          if [ ! -s "$filtered_diff_file" ]; then
+            echo "# NOTE: No review-eligible files (likely auto-generated/excluded)." > "$filtered_diff_file"
+          fi
+
           # サマリ
           summary="$(printf "PR Purpose: %s\n\n%s\n" "$pr_title" "$related_block")"
           if [ -n "$big_files_note" ]; then
@@ -403,22 +407,48 @@ jobs:
       # 2) Claude Code（Base Action）で実行する
       #    ※ 自動コンテキスト注入なし
       # =========================================
-      - name: Invoke Claude Code (base via LiteLLM)
+      - name: Invoke Claude Code (via LiteLLM + GitHub MCP)
         uses: anthropics/claude-code-base-action@beta
         with:
           prompt_file: ${{ steps.build_prompt.outputs.prompt_file }}
-          allowed_tools: >
-            mcp__github__create_pending_pull_request_review,
-            mcp__github__add_pull_request_review_comment_to_pending_review,
-            mcp__github__submit_pending_pull_request_review,
-            mcp__github__get_pull_request_diff,
-            mcp__github__get_issue,
-            mcp__github__get_issue_comments
+
+          # Base Action は "with:" の anthropic_api_key が必須
+          anthropic_api_key: ${{ secrets.LITELLM_API_KEY }}
           model: "claude-3.7-sonnet"
-          anthropic_api_key: "dummy"  # ← 入力必須なのでダミーでOK
+
+          # GitHub MCP Server を起動
+          mcp_config: |
+            {
+              "servers": {
+                "github": {
+                  "command": "docker",
+                  "args": [
+                    "run","-i","--rm",
+                    "-e","GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "-e","GITHUB_TOOLSETS",
+                    "-e","GITHUB_READ_ONLY",
+                    "ghcr.io/github/github-mcp-server"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ secrets.GH_MCP_PAT }}",
+                    "GITHUB_TOOLSETS": "pull_requests,issues,repos",
+                    "GITHUB_READ_ONLY": "0"
+                  }
+                }
+              }
+            }
+
+          # Claude が使えるツール
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments"
+
+          # 会話/時間の上限
+          max_turns: "8"
+          timeout_minutes: "20"
+
+          # LiteLLM 先を渡す（実際の接続はこちらを使用）
           claude_env: |
             ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
             ANTHROPIC_API_KEY:  ${{ secrets.LITELLM_API_KEY }}
+
         env:
           GH_TOKEN: ${{ github.token }}
-
