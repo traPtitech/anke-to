@@ -1,4 +1,4 @@
-name: Claude PR Preflight (debug)
+name: Claude PR review
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ on:
     types: [created]
 
 jobs:
-  preflight:
+  review:
     # PR へのコメント かつ @claude を含む場合のみ
     if: >
       github.event.issue.pull_request != '' &&
@@ -37,57 +37,44 @@ jobs:
         run: |
           set -euo pipefail
 
-          OWNER="${REPO%%/*}"
-          REPO_NAME="${REPO##*/}"
+          REPO="${REPO}"
+          ISSUE_NUMBER="${ISSUE_NUMBER}"
 
-          # PRメタ情報取得
+          # PRメタ情報
           pr_json="$(gh api repos/${REPO}/pulls/${ISSUE_NUMBER})"
           pr_title="$(echo "$pr_json" | jq -r .title)"
           pr_body="$(echo "$pr_json" | jq -r .body)"
+          head_sha="$(echo "$pr_json" | jq -r .head.sha)"
 
-          # PR本文・タイトルから #123 / owner/repo#123 を抽出
+          # 参照 Issue 抽出
           combined="$(printf "%s\n\n%s" "$pr_title" "$pr_body")"
-
-          # 自リポ参照: #123
           mapfile -t local_refs < <(printf "%s" "$combined" | grep -oE '#[0-9]+' | sed 's/#//' | sort -u || true)
-          # クロスリポ参照: owner/repo#123
           mapfile -t cross_refs < <(printf "%s" "$combined" | grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+' | sort -u || true)
 
           summarize_issue () {
-            local repo_full="$1"
-            local num="$2"
+            local repo_full="$1"; local num="$2"
             if out="$(gh api "repos/${repo_full}/issues/${num}" 2>/dev/null)"; then
-              local title state
-              title="$(echo "$out" | jq -r .title)"
-              state="$(echo "$out" | jq -r .state)"
-              printf "  - %s#%s: %s (%s)\n" "$repo_full" "$num" "$title" "$state"
+              printf "  - %s#%s: %s (%s)\n" "$repo_full" "$num" "$(echo "$out" | jq -r .title)" "$(echo "$out" | jq -r .state)"
             fi
           }
 
-          # 関連Issueの要約行
           related_summaries=""
-
           for n in "${local_refs[@]:-}"; do
-            line="$(summarize_issue "$REPO" "$n" || true)"
-            [ -n "$line" ] && related_summaries+="$line"
+            line="$(summarize_issue "$REPO" "$n" || true)"; [ -n "$line" ] && related_summaries+="$line"
           done
-
           for ref in "${cross_refs[@]:-}"; do
-            repo_full="${ref%%#*}"
-            num="${ref##*#}"
-            line="$(summarize_issue "$repo_full" "$num" || true)"
-            [ -n "$line" ] && related_summaries+="$line"
+            repo_full="${ref%%#*}"; num="${ref##*#}"
+            line="$(summarize_issue "$repo_full" "$num" || true)"; [ -n "$line" ] && related_summaries+="$line"
           done
-
           if [ -z "${related_summaries:-}" ]; then
             related_block="Related Issues: None"
           else
             related_block="Related Issues:\n${related_summaries%$'\n'}"
           fi
 
-          # ----------------------------------------------
-          # 変更ファイル一覧（PR API）を取得し、除外ルールでフィルタ
-          # ----------------------------------------------
+          # ----------------------------
+          # 除外ルール（ファイル名・パス）
+          # ----------------------------
           cat > /tmp/default_ignore.txt <<'EOF'
           **/package-lock.json
           **/npm-shrinkwrap.json
@@ -100,52 +87,140 @@ jobs:
           **/dist/**
           **/build/**
           **/vendor/**
+          # 自動生成系（サイズ無関係で除外）
+          **/__generated__/**
+          **/generated/**
+          **/gen/**
+          **/*.generated.*
+          **/*generated*/**
+          **/*.g.dart
+          **/*.g.cs
+          **/*.Designer.cs
+          **/*.designer.cs
+          **/*.Designer.vb
+          **/*.designer.vb
+          **/*.pb.go
+          **/*_pb2.py
+          **/*_pb2.pyi
+          **/*_grpc*.py
+          **/*.d.ts
+          **/*.swagger.*           # よくある swagger 生成物
+          **/graphql.ts            # codegen で出がち
+          **/schema.ts             # codegen で出がち
           EOF
 
           IGNORE_FILE=".pr-review-ignore"
+          ALLOWLIST_FILE=".pr-review-allowlist"
           IGNORE_PATTERNS="$(cat /tmp/default_ignore.txt 2>/dev/null || true)"
-          if [ -f "$IGNORE_FILE" ]; then
-            IGNORE_PATTERNS="$(printf "%s\n%s" "$IGNORE_PATTERNS" "$(cat "$IGNORE_FILE")")"
-          fi
+          [ -f "$IGNORE_FILE" ] && IGNORE_PATTERNS="$(printf "%s\n%s" "$IGNORE_PATTERNS" "$(cat "$IGNORE_FILE")")"
 
           # PRファイル（複数ページ対応）
-          files_json="[]"
-          page=1
+          files_json="[]"; page=1
           while :; do
             page_json="$(gh api "repos/${REPO}/pulls/${ISSUE_NUMBER}/files?per_page=100&page=${page}")"
-            count="$(echo "$page_json" | jq 'length')"
             files_json="$(jq -s 'add' <(echo "$files_json") <(echo "$page_json"))"
-            [ "$count" -lt 100 ] && break
+            [ "$(echo "$page_json" | jq 'length')" -lt 100 ] && break
             page=$((page+1))
           done
 
-          mapfile -t all_paths < <(echo "$files_json" | jq -r '.[].filename')
+          # allowlist 読み込み
+          allow_globs=""
+          if [ -f "$ALLOWLIST_FILE" ]; then
+            allow_globs="$(cat "$ALLOWLIST_FILE")"
+          fi
 
           shopt -s globstar nullglob extglob
-          is_ignored () {
+          path_matches () { # $1=path, patterns from stdin
             local path="$1"
             while IFS= read -r pat; do
-              pat="${pat//$'\r'/}"
-              [ -z "$pat" ] && continue
-              if [[ "$path" == $pat ]]; then
-                return 0
-              fi
-            done <<< "$IGNORE_PATTERNS"
+              pat="${pat//$'\r'/}"; [ -z "$pat" ] && continue
+              [[ "$path" == $pat ]] && return 0
+            done
             return 1
           }
 
-          included_files=()
-          excluded_files=()
+          mapfile -t all_paths < <(echo "$files_json" | jq -r '.[].filename')
 
+          # まずはパスパターンで除外
+          pre_excluded=(); candidates=()
           for p in "${all_paths[@]:-}"; do
-            if is_ignored "$p"; then
-              excluded_files+=("$p")
+            if path_matches "$p" <<< "$IGNORE_PATTERNS"; then
+              # ただし allowlist に該当するものは残す
+              if [ -n "$allow_globs" ] && path_matches "$p" <<< "$allow_globs"; then
+                candidates+=("$p")
+              else
+                pre_excluded+=("$p")
+              fi
             else
-              included_files+=("$p")
+              candidates+=("$p")
             fi
           done
 
-          # 大きいだけのファイルは除外しないが、注意喚起を作る
+          # ----------------------------
+          # 内容ヒューリスティクスで自動生成を追加判定
+          # ----------------------------
+          # キーワード（先頭数百行に出たら自動生成扱い）
+          AUTOGEN_REGEX='(?i)(do not edit|do not modify|auto[- ]?generated|autogenerated|generated by|code generated|@generated|THIS FILE WAS GENERATED|tool:|swiftlint:disable all)'
+          # 疑似ミニファイ判定：行数が極端に少ない＆超長行あり（JS/CSS限定）
+          is_minified_like () { # $1=path $2=tmpfile
+            case "$1" in
+              *.js|*.css)
+                awk 'NR<=200{ if(length>500) big++ } END{ if (NR<10 && big>=1) exit 0; else exit 1 }' "$2"
+                ;;
+              *) return 1 ;;
+            esac
+          }
+
+          autogen_excluded=(); included_files=()
+
+          # filename -> blob sha の辞書を作る
+          # （PR files API から sha を取る）
+          get_blob_sha () { # $1=path
+            echo "$files_json" | jq -r --arg f "$1" '.[] | select(.filename==$f) | .sha'
+          }
+
+          for p in "${candidates[@]:-}"; do
+            sha="$(get_blob_sha "$p")"
+            # 取得できない or バイナリっぽい拡張子はスキップ（ここではレビュー対象外に倒す）
+            case "$p" in
+              *.png|*.jpg|*.jpeg|*.gif|*.webp|*.ico|*.pdf|*.zip|*.gz|*.woff|*.woff2|*.ttf|*.otf)
+                autogen_excluded+=("$p"); continue;;
+            esac
+
+            # blob 取得（base64）。最大40KBだけ見る
+            b64="$(gh api "repos/${REPO}/git/blobs/${sha}" --jq .content 2>/dev/null || echo "")"
+            if [ -z "$b64" ]; then
+              # 取れない（巨大/バイナリ等）は除外に倒す
+              autogen_excluded+=("$p"); continue
+            fi
+            tmp="$(mktemp)"; printf "%s" "$b64" | base64 -d 2>/dev/null | head -c 40960 > "$tmp" || true
+
+            # 先頭200行で自動生成キーワード探索
+            if head -n 200 "$tmp" | grep -E -q "$AUTOGEN_REGEX"; then
+              # allowlist で明示許可なら含める
+              if [ -n "$allow_globs" ] && path_matches "$p" <<< "$allow_globs"; then
+                included_files+=("$p")
+              else
+                autogen_excluded+=("$p")
+                rm -f "$tmp"; continue
+              fi
+            fi
+
+            # ミニファイっぽいもの（JS/CSS）は除外
+            if is_minified_like "$p" "$tmp"; then
+              if [ -n "$allow_globs" ] && path_matches "$p" <<< "$allow_globs"; then
+                included_files+=("$p")
+              else
+                autogen_excluded+=("$p")
+                rm -f "$tmp"; continue
+              fi
+            fi
+
+            included_files+=("$p")
+            rm -f "$tmp"
+          done
+
+          # 変更量が極端に大きいファイルを注意喚起（除外はしない）
           big_files_note=""
           while IFS= read -r row; do
             filename="$(echo "$row" | jq -r .filename)"
@@ -156,11 +231,8 @@ jobs:
           done < <(echo "$files_json" | jq -c '.[]')
 
           # フィルタ済み unified diff を最大 ~200KB に整形
-          filtered_diff_file="filtered.diff"
-          : > "$filtered_diff_file"
-          total_bytes=0
-          limit_bytes=$((200 * 1024))
-
+          filtered_diff_file="filtered.diff"; : > "$filtered_diff_file"
+          total_bytes=0; limit_bytes=$((200 * 1024))
           for f in "${included_files[@]:-}"; do
             part="$(gh pr diff "${ISSUE_NUMBER}" --patch --path "$f" || true)"
             [ -z "$part" ] && continue
@@ -173,23 +245,24 @@ jobs:
             total_bytes=$((total_bytes + part_bytes))
           done
 
-          # まとめサマリ
+          # サマリ
           summary="$(printf "PR Purpose: %s\n\n%s\n" "$pr_title" "$related_block")"
           if [ -n "$big_files_note" ]; then
             summary="$(printf "%s\nPotentially large changes (not auto-excluded):\n%s" "$summary" "$big_files_note")"
           fi
 
-          # 出力（後続ステップで利用）
-          echo "summary<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$summary" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
+          # 出力
+          echo "summary<<EOF" >> "$GITHUB_OUTPUT"; echo "$summary" >> "$GITHUB_OUTPUT"; echo "EOF" >> "$GITHUB_OUTPUT"
           printf "%s\n" "$(printf "%s" "${included_files[*]:-}" | tr ' ' $'\n')" > included_files.txt
-          printf "%s\n" "$(printf "%s" "${excluded_files[*]:-}" | tr ' ' $'\n')" > excluded_files.txt
+          # 2種類の除外を分けて出す（見やすく）
+          printf "%s\n" "$(printf "%s" "${pre_excluded[*]:-}" | tr ' ' $'\n')" > excluded_by_path.txt
+          printf "%s\n" "$(printf "%s" "${autogen_excluded[*]:-}" | tr ' ' $'\n')" > excluded_by_autogen_heuristics.txt
 
           echo "filtered_diff_path=$filtered_diff_file" >> "$GITHUB_OUTPUT"
           echo "included_files_path=included_files.txt" >> "$GITHUB_OUTPUT"
-          echo "excluded_files_path=excluded_files.txt" >> "$GITHUB_OUTPUT"
+          echo "excluded_files_by_path=excluded_by_path.txt" >> "$GITHUB_OUTPUT"
+          echo "excluded_files_by_heuristics=excluded_by_autogen_heuristics.txt" >> "$GITHUB_OUTPUT"
+
 
       # 可視化（ログ）
       - name: Show summary (log)
@@ -200,36 +273,98 @@ jobs:
           echo "Included files:"
           cat "${{ steps.preprocess.outputs.included_files_path }}" || true
           echo "--------------------------------------------"
-          echo "Excluded files:"
-          cat "${{ steps.preprocess.outputs.excluded_files_path }}" || true
+          echo "Excluded by path patterns:"
+          cat "${{ steps.preprocess.outputs.excluded_files_by_path }}" || true
+          echo "--------------------------------------------"
+          echo "Excluded by AUTOGEN heuristics:"
+          cat "${{ steps.preprocess.outputs.excluded_files_by_heuristics }}" || true
           echo "--------------------------------------------"
           echo "Filtered diff (first 400 lines):"
           head -n 400 "${{ steps.preprocess.outputs.filtered_diff_path }}" || true
           echo "--------------------------------------------"
 
-      # 作成された「Claude 直前プロンプト」のプレビューをファイルにして保存
-      - name: Build prompt preview file
-        run: |
-          {
-            echo "**【レビュー依頼（デバッグプレビュー）】**"
-            echo
-            echo "---"
-            echo "# PR SUMMARY"
-            echo "${{ steps.preprocess.outputs.summary }}"
-            echo
-            echo "---"
-            echo "# REVIEW FILES POLICY - Included"
-            cat "${{ steps.preprocess.outputs.included_files_path }}" || true
-            echo
-            echo "---"
-            echo "# REVIEW FILES POLICY - Excluded"
-            cat "${{ steps.preprocess.outputs.excluded_files_path }}" || true
-            echo
-            echo "---"
-            echo "# FILTERED DIFF (truncated ~200KB)"
-            echo
-            head -n 200 "${{ steps.preprocess.outputs.filtered_diff_path }}" || true
-            echo
-            echo "_(truncated for preview in logs/artifacts)_"
-          } > prompt_preview.md
-          echo "prompt_preview_path=prompt_preview.md" >> "$GITHUB_OUTPUT"
+      - name: Invoke Claude for review
+        uses: anthropics/claude-code-action@beta
+        with:
+          trigger_phrase: "@claude"
+          timeout_minutes: "60"
+          github_token: ${{ github.token }}
+          model: "claude-3.7-sonnet"
+          claude_env: |
+            ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+            ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
+          anthropic_api_key: ${{ secrets.LITELLM_API_KEY }}
+
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments"
+
+          # ✅ 元のプロンプトを最大限維持。手順のみ前処理/除外に合わせて最小変更。
+          direct_prompt: |
+            **【レビュー依頼の場合】**
+            このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
+
+            0. **関連Issueの抽出と取得（重要・最初に実施）**
+               * すでにこのワークフローの事前処理で抽出されたPRサマリー（下記 "PR SUMMARY"）を最優先で参照してください。
+               * 必要に応じて、`mcp__github__get_issue` と `mcp__github__get_issue_comments` のみを使い、Issueの詳細を補足してください。
+
+            1. **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って保留中レビューを開始。
+
+            2. **変更内容を確認する:**  
+               * まずはこの事前処理で生成された **フィルタ済み差分（FILTERED DIFF）** を参照してください。  
+               * レビュー対象は「REVIEW FILES POLICY」の Included に記載されたファイルのみです。  
+               * 除外（自動生成やビルド生成物）はレビュー不要です。  
+               * 必要な場合のみ、`mcp__github__get_pull_request_diff` で追加取得してください。
+
+            3. **Issue整合性チェック（インラインコメント可）**
+               * 取得したIssue要件とPR差分の実装の対応を検証。
+               * 充足、不足、過剰実装、要件の読み違いがあれば、該当行にインラインコメントで
+                 **「要件との対応関係（満たす/不足/過剰/要再確認）」→「理由」→「修正提案」** の順で残してください。
+
+            4. **通常のコードレビュー観点**
+               * バグリスク/セキュリティ/パフォーマンス/保守性/設計など（従来どおり）。
+
+            5. **レビュー提出:** `mcp__github__submit_pending_pull_request_review` を「COMMENT」タイプで提出。
+               * まとめコメントの冒頭に、**Issue対応状況のサマリ（満たした点/不足点/要フォローアップ）** を箇条書きで明記。
+               * 「REQUEST_CHANGES」は使わないでください。
+
+            **コメントの書き方に関する重要事項**
+
+            * **インラインコメントの構成:**
+                * **結論を先に:** 各インラインコメントの冒頭で、指摘内容の要点を一行で簡潔に述べてください。
+                * **理由と提案:** 結論の後に、そのように判断した理由や背景、具体的な修正案を詳しく説明してください。
+                * **指摘中心に:** インラインコメントは、修正提案、バグの可能性、可読性の問題など、具体的な改善点に焦点を当ててください。
+
+            * **ポジティブなフィードバックについて:**
+                * **インラインでは控えめに:** インラインで言及するのは、特に優れた設計や他の開発者の参考になるような独創的な実装など、特筆すべき点に限定します。
+                * **まとめコメントで言及:** 全体的に良かった点や、PR全体に対するポジティブな感想は、レビュー提出時の「まとめコメント」に集約して記述してください。
+
+            **レビューの観点**
+            * コードの品質やベストプラクティスに沿っているか
+            * バグやセキュリティリスクがないか
+            * パフォーマンス上の懸念がないか
+            * 保守性や可読性は十分か
+            * 設計やアーキテクチャに妥当性があるか
+
+            **その他**
+            * 日本語でのフィードバックをお願いします。
+            * 具体的で実行可能なフィードバックをお願いします。
+            * **重要:** レビューの提出は必ず「COMMENT」タイプで行い、PR をブロックしないようにしてください。
+
+            ---
+            # PR SUMMARY
+            ${{ steps.preprocess.outputs.summary }}
+
+            ---
+            # REVIEW FILES POLICY - Included
+            ${{ steps.preprocess.outputs.included_files }}
+
+            ---
+            # REVIEW FILES POLICY - Excluded (path patterns)
+            ${{ steps.preprocess.outputs.excluded_by_path }}
+
+            ---
+            # REVIEW FILES POLICY - Excluded (autogen heuristics)
+            ${{ steps.preprocess.outputs.excluded_by_autogen }}
+
+            ---
+            # FILTERED DIFF (truncated ~200KB)
+            ${{ steps.preprocess.outputs.filtered_diff }}
