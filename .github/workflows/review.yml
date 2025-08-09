@@ -1,4 +1,4 @@
-name: Claude PR Action
+name: Claude PR Preflight (debug)
 
 permissions:
   contents: write
@@ -11,73 +11,229 @@ on:
     types: [created]
 
 jobs:
-  claude-pr:
-    if: |
+  preflight:
+    # PR へのコメント かつ @claude を含む場合のみ
+    if: >
       github.event.issue.pull_request != '' &&
       contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - uses: anthropics/claude-code-action@beta
-        with:
-          trigger_phrase: "@claude"
-          timeout_minutes: "60"
-          github_token: ${{ github.token }}
-          model: "claude-3.7-sonnet"
-          claude_env: |
-            ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
-            ANTHROPIC_AUTH_TOKEN: ${{ secrets.LITELLM_API_KEY }}
-          anthropic_api_key: ${{ secrets.LITELLM_API_KEY }}
+      - name: Set up gh auth
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
 
-          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__get_pull_request"
+      # ------------------------------------------------------------
+      # 事前処理：PR目的・関連Issue抽出、レビュー対象ファイルのフィルタリング
+      # （Claude は呼ばない。ここまでの結果を可視化する）
+      # ------------------------------------------------------------
+      - name: Pre-process PR data (purpose, issues, files)
+        id: preprocess
+        env:
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
 
-          direct_prompt: |
-            **【レビュー依頼の場合】**
-            このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
-            0. **関連Issueの抽出と取得（重要・最初に実施）**
-               * `mcp__github__get_pull_request` で PR 本体情報を取得し、PR本文・タイトル・コミットメッセージから
-                 `#123` や `owner/repo#123` 形式の参照を抽出してください。
-               * 見つかった各Issue番号について `mcp__github__get_issue` と `mcp__github__get_issue_comments` を使って
-                 タイトル・本文・主要コメント（要件/再現手順/受け入れ条件など）を取得してください。
-               * Issueの要件・受け入れ条件（Acceptance Criteria）を要約し、**レビューの評価軸**としてメモしておいてください。
-            1. **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って保留中レビューを開始。
-            2. **変更内容を確認する:** `mcp__github__get_pull_request_diff` で差分を把握。
-            3. **Issue整合性チェック（インラインコメント可）**
-               * 取得したIssue要件とPR差分の実装の対応を検証。
-               * 充足、不足、過剰実装、要件の読み違いがあれば、該当行にインラインコメントで
-                 **「要件との対応関係（満たす/不足/過剰/要再確認）」→「理由」→「修正提案」** の順で残してください。
-            4. **通常のコードレビュー観点**
-               * バグリスク/セキュリティ/パフォーマンス/保守性/設計など（従来どおり）。
-            5. **レビュー提出:** `mcp__github__submit_pending_pull_request_review` を「COMMENT」タイプで提出。
-               * まとめコメントの冒頭に、**Issue対応状況のサマリ（満たした点/不足点/要フォローアップ）** を箇条書きで明記。
-               * 「REQUEST_CHANGES」は使わないでください。
+          OWNER="${REPO%%/*}"
+          REPO_NAME="${REPO##*/}"
 
-            **コメントの書き方に関する重要事項**
+          # PRメタ情報取得
+          pr_json="$(gh api repos/${REPO}/pulls/${ISSUE_NUMBER})"
+          pr_title="$(echo "$pr_json" | jq -r .title)"
+          pr_body="$(echo "$pr_json" | jq -r .body)"
 
-            * **インラインコメントの構成:**
-                * **結論を先に:** 各インラインコメントの冒頭で、指摘内容の要点を一行で簡潔に述べてください。
-                * **理由と提案:** 結論の後に、そのように判断した理由や背景、具体的な修正案を詳しく説明してください。
-                * **指摘中心に:** インラインコメントは、修正提案、バグの可能性、可読性の問題など、具体的な改善点に焦点を当ててください。
+          # PR本文・タイトルから #123 / owner/repo#123 を抽出
+          combined="$(printf "%s\n\n%s" "$pr_title" "$pr_body")"
 
-            * **ポジティブなフィードバックについて:**
-                * **インラインでは控えめに:** インラインで言及するのは、特に優れた設計や他の開発者の参考になるような独創的な実装など、特筆すべき点に限定します。
-                * **まとめコメントで言及:** 全体的に良かった点や、PR全体に対するポジティブな感想は、レビュー提出時の「まとめコメント」に集約して記述してください。
+          # 自リポ参照: #123
+          mapfile -t local_refs < <(printf "%s" "$combined" | grep -oE '#[0-9]+' | sed 's/#//' | sort -u || true)
+          # クロスリポ参照: owner/repo#123
+          mapfile -t cross_refs < <(printf "%s" "$combined" | grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+' | sort -u || true)
 
-            **レビューの観点**
+          summarize_issue () {
+            local repo_full="$1"
+            local num="$2"
+            if out="$(gh api "repos/${repo_full}/issues/${num}" 2>/dev/null)"; then
+              local title state
+              title="$(echo "$out" | jq -r .title)"
+              state="$(echo "$out" | jq -r .state)"
+              printf "  - %s#%s: %s (%s)\n" "$repo_full" "$num" "$title" "$state"
+            fi
+          }
 
-            レビューでは以下の点に注目してください：
-            * コードの品質やベストプラクティスに沿っているか
-            * バグやセキュリティリスクがないか
-            * パフォーマンス上の懸念がないか
-            * 保守性や可読性は十分か
-            * 設計やアーキテクチャに妥当性があるか
+          # 関連Issueの要約行
+          related_summaries=""
 
-            **その他**
+          for n in "${local_refs[@]:-}"; do
+            line="$(summarize_issue "$REPO" "$n" || true)"
+            [ -n "$line" ] && related_summaries+="$line"
+          done
 
-            * 日本語でのフィードバックをお願いします。
-            * 具体的で実行可能なフィードバックをお願いします。
-            * **重要:** レビューの提出は必ず「COMMENT」タイプで行い、PR をブロックしないようにしてください。
+          for ref in "${cross_refs[@]:-}"; do
+            repo_full="${ref%%#*}"
+            num="${ref##*#}"
+            line="$(summarize_issue "$repo_full" "$num" || true)"
+            [ -n "$line" ] && related_summaries+="$line"
+          done
 
+          if [ -z "${related_summaries:-}" ]; then
+            related_block="Related Issues: None"
+          else
+            related_block="Related Issues:\n${related_summaries%$'\n'}"
+          fi
 
+          # ----------------------------------------------
+          # 変更ファイル一覧（PR API）を取得し、除外ルールでフィルタ
+          # ----------------------------------------------
+          cat > /tmp/default_ignore.txt <<'EOF'
+          **/package-lock.json
+          **/npm-shrinkwrap.json
+          **/yarn.lock
+          **/pnpm-lock.yaml
+          **/composer.lock
+          **/Cargo.lock
+          **/*.min.js
+          **/*.map
+          **/dist/**
+          **/build/**
+          **/vendor/**
+          EOF
+
+          IGNORE_FILE=".pr-review-ignore"
+          IGNORE_PATTERNS="$(cat /tmp/default_ignore.txt 2>/dev/null || true)"
+          if [ -f "$IGNORE_FILE" ]; then
+            IGNORE_PATTERNS="$(printf "%s\n%s" "$IGNORE_PATTERNS" "$(cat "$IGNORE_FILE")")"
+          fi
+
+          # PRファイル（複数ページ対応）
+          files_json="[]"
+          page=1
+          while :; do
+            page_json="$(gh api "repos/${REPO}/pulls/${ISSUE_NUMBER}/files?per_page=100&page=${page}")"
+            count="$(echo "$page_json" | jq 'length')"
+            files_json="$(jq -s 'add' <(echo "$files_json") <(echo "$page_json"))"
+            [ "$count" -lt 100 ] && break
+            page=$((page+1))
+          done
+
+          mapfile -t all_paths < <(echo "$files_json" | jq -r '.[].filename')
+
+          shopt -s globstar nullglob extglob
+          is_ignored () {
+            local path="$1"
+            while IFS= read -r pat; do
+              pat="${pat//$'\r'/}"
+              [ -z "$pat" ] && continue
+              if [[ "$path" == $pat ]]; then
+                return 0
+              fi
+            done <<< "$IGNORE_PATTERNS"
+            return 1
+          }
+
+          included_files=()
+          excluded_files=()
+
+          for p in "${all_paths[@]:-}"; do
+            if is_ignored "$p"; then
+              excluded_files+=("$p")
+            else
+              included_files+=("$p")
+            fi
+          done
+
+          # 大きいだけのファイルは除外しないが、注意喚起を作る
+          big_files_note=""
+          while IFS= read -r row; do
+            filename="$(echo "$row" | jq -r .filename)"
+            changes="$(echo "$row" | jq -r .changes)"
+            if [ "$changes" -gt 3000 ]; then
+              big_files_note+="  - ${filename} (changes: ${changes})\n"
+            fi
+          done < <(echo "$files_json" | jq -c '.[]')
+
+          # フィルタ済み unified diff を最大 ~200KB に整形
+          filtered_diff_file="filtered.diff"
+          : > "$filtered_diff_file"
+          total_bytes=0
+          limit_bytes=$((200 * 1024))
+
+          for f in "${included_files[@]:-}"; do
+            part="$(gh pr diff "${ISSUE_NUMBER}" --patch --path "$f" || true)"
+            [ -z "$part" ] && continue
+            part_bytes=$(printf "%s" "$part" | wc -c | tr -d ' ')
+            if [ $((total_bytes + part_bytes)) -gt $limit_bytes ]; then
+              echo -e "\n---\n# NOTE: diff size limit reached; remaining files omitted." >> "$filtered_diff_file"
+              break
+            fi
+            printf "%s\n" "$part" >> "$filtered_diff_file"
+            total_bytes=$((total_bytes + part_bytes))
+          done
+
+          # まとめサマリ
+          summary="$(printf "PR Purpose: %s\n\n%s\n" "$pr_title" "$related_block")"
+          if [ -n "$big_files_note" ]; then
+            summary="$(printf "%s\nPotentially large changes (not auto-excluded):\n%s" "$summary" "$big_files_note")"
+          fi
+
+          # 出力（後続ステップで利用）
+          echo "summary<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$summary" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          printf "%s\n" "$(printf "%s" "${included_files[*]:-}" | tr ' ' $'\n')" > included_files.txt
+          printf "%s\n" "$(printf "%s" "${excluded_files[*]:-}" | tr ' ' $'\n')" > excluded_files.txt
+
+          echo "filtered_diff_path=$filtered_diff_file" >> "$GITHUB_OUTPUT"
+          echo "included_files_path=included_files.txt" >> "$GITHUB_OUTPUT"
+          echo "excluded_files_path=excluded_files.txt" >> "$GITHUB_OUTPUT"
+
+      # 可視化（ログ）
+      - name: Show summary (log)
+        run: |
+          echo "---------------- PR SUMMARY ----------------"
+          echo "${{ steps.preprocess.outputs.summary }}"
+          echo "--------------------------------------------"
+          echo "Included files:"
+          cat "${{ steps.preprocess.outputs.included_files_path }}" || true
+          echo "--------------------------------------------"
+          echo "Excluded files:"
+          cat "${{ steps.preprocess.outputs.excluded_files_path }}" || true
+          echo "--------------------------------------------"
+          echo "Filtered diff (first 400 lines):"
+          head -n 400 "${{ steps.preprocess.outputs.filtered_diff_path }}" || true
+          echo "--------------------------------------------"
+
+      # 作成された「Claude 直前プロンプト」のプレビューをファイルにして保存
+      - name: Build prompt preview file
+        run: |
+          {
+            echo "**【レビュー依頼（デバッグプレビュー）】**"
+            echo
+            echo "---"
+            echo "# PR SUMMARY"
+            echo "${{ steps.preprocess.outputs.summary }}"
+            echo
+            echo "---"
+            echo "# REVIEW FILES POLICY - Included"
+            cat "${{ steps.preprocess.outputs.included_files_path }}" || true
+            echo
+            echo "---"
+            echo "# REVIEW FILES POLICY - Excluded"
+            cat "${{ steps.preprocess.outputs.excluded_files_path }}" || true
+            echo
+            echo "---"
+            echo "# FILTERED DIFF (truncated ~200KB)"
+            echo
+            head -n 200 "${{ steps.preprocess.outputs.filtered_diff_path }}" || true
+            echo
+            echo "_(truncated for preview in logs/artifacts)_"
+          } > prompt_preview.md
+          echo "prompt_preview_path=prompt_preview.md" >> "$GITHUB_OUTPUT"
