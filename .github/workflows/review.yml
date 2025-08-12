@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # ------------------------------------------------------------
       # 事前処理：PR目的・関連Issue抽出、レビュー対象ファイルのフィルタリング
