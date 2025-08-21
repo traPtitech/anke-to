@@ -96,9 +96,6 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 	}
 
 	var questionTypeNow string
-	db.Model(&Questions{}).
-		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
-		Select("type").
 	result := db.Model(&Questions{}).
 		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
 		Select("type").
