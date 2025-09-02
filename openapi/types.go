@@ -663,9 +663,10 @@ type ResponseBodyTextLongQuestionType string
 // ResponseSortType response用のsortの種類
 type ResponseSortType string
 
-// ResponseWithQuestionnaireInfoItem defines model for ResponseWithQuestionnaireInfoItem.
+// ResponseWithQuestionnaireInfoItem 同じアンケートの回答情報をまとめて返す。
 type ResponseWithQuestionnaireInfoItem struct {
 	QuestionnaireInfo *QuestionnaireInfo `json:"questionnaire_info,omitempty"`
+	Responses         *[]Response        `json:"responses,omitempty"`
 }
 
 // Responses defines model for Responses.

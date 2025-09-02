@@ -944,11 +944,6 @@ components:
             $ref: "#/components/schemas/Response"
       description: |
         同じアンケートの回答情報をまとめて返す。
-      allOf:
-        - type: object
-          properties:
-            questionnaire_info:
-              $ref: "#/components/schemas/QuestionnaireInfo"
     NewResponseBody:
       allOf:
         - type: object
@@ -973,12 +968,12 @@ components:
           required:
             - question_id
         - oneOf:
-            - $ref: "#/components/schemas/ResponseBodyText"
-            - $ref: "#/components/schemas/ResponseBodyTextLong"
-            - $ref: "#/components/schemas/ResponseBodyNumber"
-            - $ref: "#/components/schemas/ResponseBodySingleChoice"
-            - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
-            - $ref: "#/components/schemas/ResponseBodyScale"
+          - $ref: "#/components/schemas/ResponseBodyText"
+          - $ref: "#/components/schemas/ResponseBodyTextLong"
+          - $ref: "#/components/schemas/ResponseBodyNumber"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"
