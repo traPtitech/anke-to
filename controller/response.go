@@ -2,11 +2,9 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -305,41 +303,6 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				}
 			}
 		case "Checkbox", "MultipleChoice":
-			if !req.IsDraft {
-				option, ok := optionMap[responseMeta.QuestionID]
-				if !ok {
-					option = []model.Options{}
-				}
-				var selectedOptions []int
-				if questionTypes[responseMeta.QuestionID] == "MultipleChoice" {
-					var selectedOption int
-					json.Unmarshal([]byte(responseMeta.Data), &selectedOption)
-					selectedOptions = append(selectedOptions, selectedOption)
-				} else if questionTypes[responseMeta.QuestionID] == "Checkbox" {
-					json.Unmarshal([]byte(responseMeta.Data), &selectedOptions)
-				}
-				ok = true
-				if len(selectedOptions) == 0 {
-					ok = false
-				}
-				sort.Slice(selectedOptions, func(i, j int) bool { return selectedOptions[i] < selectedOptions[j] })
-				var preOption *int
-				for _, selectedOption := range selectedOptions {
-					if preOption != nil && *preOption == selectedOption {
-						ok = false
-						break
-					}
-					if selectedOption < 1 || selectedOption > len(option) {
-						ok = false
-						break
-					}
-					preOption = &selectedOption
-				}
-				if !ok {
-					ctx.Logger().Errorf("invalid option: %+v", err)
-					return echo.NewHTTPError(http.StatusBadRequest, err)
-				}
-			}
 		case "LinearScale":
 			if !req.IsDraft {
 				label, ok := scaleLabelMap[responseMeta.QuestionID]
@@ -354,7 +317,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 			}
 		default:
 			ctx.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %w", responseMeta.QuestionID))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid question id: %d", responseMeta.QuestionID))
 		}
 	}
 

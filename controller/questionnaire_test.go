@@ -55,7 +55,7 @@ func setupSampleQuestionnaire() {
 		return
 	}
 	sampleQuestionSettingsText = openapi.NewQuestion{
-		Title:       "質問（テキスト）",
+		Title:      "質問（テキスト）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextMaxLength := 100
@@ -64,7 +64,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
 	})
 	sampleQuestionSettingsTextLong = openapi.NewQuestion{
-		Title:       "質問（ロングテキスト）",
+		Title:      "質問（ロングテキスト）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsTextLongMaxLength := 500
@@ -73,7 +73,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
 	})
 	sampleQuestionSettingsNumber = openapi.NewQuestion{
-		Title:       "質問（数値）",
+		Title:      "質問（数値）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsNumberMaxValue := 100
@@ -84,7 +84,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
-		Title:       "質問（単一選択）",
+		Title:      "質問（単一選択）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
@@ -92,7 +92,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
 	})
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
-		Title:       "質問（複数選択）",
+		Title:      "質問（複数選択）",
 		IsRequired: true,
 	}
 	sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
@@ -100,7 +100,7 @@ func setupSampleQuestionnaire() {
 		QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
 	})
 	sampleQeustionsettingsScale = openapi.NewQuestion{
-		Title:       "質問（スケール）",
+		Title:      "質問（スケール）",
 		IsRequired: true,
 	}
 	sampleQeustionsettingsScaleMaxLabel := "最大値"
@@ -593,7 +593,7 @@ func TestPostQuestionnaire(t *testing.T) {
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
 	invalidQuestionSettingsNumber := openapi.NewQuestion{
-		Title:       "質問（数値）",
+		Title:      "質問（数値）",
 		IsRequired: true,
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
@@ -604,7 +604,7 @@ func TestPostQuestionnaire(t *testing.T) {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	invalidQeustionsettingsScale := openapi.NewQuestion{
-		Title:       "質問（スケール）",
+		Title:      "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"
@@ -1164,7 +1164,7 @@ func TestEditQuestionnaire(t *testing.T) {
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
 	invalidQuestionSettingsNumber := openapi.NewQuestion{
-		Title:       "質問（数値）",
+		Title:      "質問（数値）",
 		IsRequired: true,
 	}
 	invalidQuestionSettingsNumberMaxValue := 0
@@ -1175,7 +1175,7 @@ func TestEditQuestionnaire(t *testing.T) {
 		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
 	})
 	invalidQeustionsettingsScale := openapi.NewQuestion{
-		Title:       "質問（スケール）",
+		Title:      "質問（スケール）",
 		IsRequired: true,
 	}
 	invalidQeustionsettingsScaleMaxLabel := "最大値"
@@ -2295,37 +2295,37 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		expect
 	}
 
-	invalidResponseBodyText := openapi.ResponseBody{}
+	invalidResponseBodyText := openapi.NewResponseBody{}
 	invalidResponseBodyText.QuestionId = *questionnaireDetail.Questions[0].QuestionId
 	invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "Text",
 	})
-	invalidResponseBodyTextLong := openapi.ResponseBody{}
+	invalidResponseBodyTextLong := openapi.NewResponseBody{}
 	invalidResponseBodyTextLong.QuestionId = *questionnaireDetail.Questions[1].QuestionId
 	invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		QuestionType: "TextLong",
 	})
-	invalidResponseBodyNumber := openapi.ResponseBody{}
+	invalidResponseBodyNumber := openapi.NewResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
 	invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
 		Answer:       101,
 		QuestionType: "Number",
 	})
-	invalidResponseBodySingleChoice := openapi.ResponseBody{}
+	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+	invalidResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
 		Answer:       5,
 		QuestionType: "SingleChoice",
 	})
-	invalidResponseBodyMultipleChoice := openapi.ResponseBody{}
+	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+	invalidResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
 		Answer:       []int{5},
 		QuestionType: "MultipleChoice",
 	})
-	invalidResponseBodyScale := openapi.ResponseBody{}
+	invalidResponseBodyScale := openapi.NewResponseBody{}
 	invalidResponseBodyScale.QuestionId = *questionnaireDetail.Questions[5].QuestionId
 	invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
 		Answer:       0,
@@ -2350,7 +2350,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2379,7 +2379,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyScale,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2399,7 +2399,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						invalidResponseBodyText,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2420,7 +2420,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						invalidResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2441,7 +2441,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						sampleResponseBodyTextLong,
 						invalidResponseBodyNumber,
@@ -2462,7 +2462,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2483,7 +2483,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2504,7 +2504,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			args: args{
 				questionnaireDetail: questionnaireDetail,
 				params: openapi.PostQuestionnaireResponseJSONRequestBody{
-					Body: []openapi.ResponseBody{
+					Body: []openapi.NewResponseBody{
 						sampleResponseBodyText,
 						sampleResponseBodyTextLong,
 						sampleResponseBodyNumber,
@@ -2538,7 +2538,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		args: args{
 			questionnaireDetail: questionnaireDetail,
 			params: openapi.PostQuestionnaireResponseJSONRequestBody{
-				Body: []openapi.ResponseBody{
+				Body: []openapi.NewResponseBody{
 					sampleResponseBodyScale,
 					sampleResponseBodyTextLong,
 					sampleResponseBodyNumber,
@@ -2645,16 +2645,71 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 			continue
 		}
 
-		assertion.Equal(testCase.args.params.Body, response.Body, testCase.description, "response body")
+		actualResponseBody := make([]openapi.ResponseBody, len(testCase.args.params.Body))
+		for i, body := range testCase.args.params.Body {
+			actualResponseBody[i].QuestionId = body.QuestionId
+			b, err := body.MarshalJSON()
+			require.NoError(t, err)
+			var responseParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &responseParsed)
+			require.NoError(t, err)
+			questionType := responseParsed["question_type"].(string)
+			switch questionType {
+			case "Text":
+				actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextQuestionType(questionType),
+				})
+			case "TextLong":
+				actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextLongQuestionType(questionType),
+				})
+			case "Number":
+				actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
+					Answer:       float32(responseParsed["answer"].(float64)),
+					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
+				})
+			case "SingleChoice":
+				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
+				require.NoError(t, err)
+				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+					Answer:       options[int(responseParsed["answer"].(float64))-1].Body,
+					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
+				})
+			case "MultipleChoice":
+				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
+				require.NoError(t, err)
+				answers := make([]string, len(responseParsed["answer"].([]interface{})))
+				for j, answer := range responseParsed["answer"].([]interface{}) {
+					answers[j] = options[int(answer.(float64))-1].Body
+				}
+				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+					Answer:       answers,
+					QuestionType: openapi.ResponseBodyMultipleChoiceQuestionType(questionType),
+				})
+			case "Scale":
+				actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
+					Answer:       int(responseParsed["answer"].(float64)),
+					QuestionType: openapi.ResponseBodyScaleQuestionType(questionType),
+				})
+			default:
+				assertion.Fail("unknown question type", "question type: %s", questionType)
+			}
+		}
+		assertion.Equal(actualResponseBody, response.Body, testCase.description, "response body")
 		assertion.Equal(testCase.args.params.IsDraft, response.IsDraft, testCase.description, "is draft")
 
 		assertion.Equal(testCase.args.questionnaireDetail.QuestionnaireId, response.QuestionnaireId, testCase.description, "questionnaire id")
-		assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "respondent")
+		if !testCase.args.isAnonymous {
+			assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "respondent")
+		} else {
+			assertion.Nil(response.Respondent, testCase.description, "respondent")
+		}
 		assertion.Equal(testCase.args.isAnonymous, *response.IsAnonymous, testCase.description, "is anonymous")
 
 		if testCase.args.params.IsDraft {
 			assertion.Equal(response.SubmittedAt, time.Time{}, testCase.description, "submitted at")
-			assertion.Equal(response.ModifiedAt, time.Time{}, testCase.description, "modified at")
 		} else {
 			assertion.NotEqual(response.SubmittedAt, time.Time{}, testCase.description, "submitted at")
 			assertion.NotEqual(response.ModifiedAt, time.Time{}, testCase.description, "modified at")

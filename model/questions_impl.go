@@ -95,7 +95,22 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 		"is_required":  isRequired,
 	}
 
-	result := db.
+	var questionTypeNow string
+	result := db.Model(&Questions{}).
+		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
+		Select("type").
+		Scan(&questionTypeNow)
+	if result.Error != nil {
+		return fmt.Errorf("failed to get current question type: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to get find a valid question")
+	}
+	if questionTypeNow != questionType {
+		return fmt.Errorf("question type cannot be changed: %s -> %s", questionTypeNow, questionType)
+	}
+
+	result = db.
 		Model(&Questions{}).
 		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
 		Updates(question)
