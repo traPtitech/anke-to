@@ -1,0 +1,339 @@
+name: Claude PR review
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: >
+      github.event.issue.pull_request != '' &&
+      contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------
+      # 事前処理：PR目的・関連Issue抽出、レビュー対象ファイルのフィルタリング
+      # （Claude は呼ばない）
+      # ------------------------------------------------------------
+      - name: Pre-process PR data (purpose, issues, files)
+        id: preprocess
+        env:
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REPO="${REPO}"
+          ISSUE_NUMBER="${ISSUE_NUMBER}"
+
+          pr_json="$(gh api repos/${REPO}/pulls/${ISSUE_NUMBER})"
+          pr_title="$(echo "$pr_json" | jq -r .title)"
+          pr_body="$(echo "$pr_json" | jq -r .body)"
+
+          combined="$(printf "%s\n\n%s" "$pr_title" "$pr_body")"
+          mapfile -t local_refs < <(printf "%s" "$combined" | grep -oE '#[0-9]+' | sed 's/#//' | sort -u || true)
+          mapfile -t cross_refs < <(printf "%s" "$combined" | grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+' | sort -u || true)
+
+          summarize_issue () {
+            local repo_full="$1"; local num="$2"
+            if out="$(gh api "repos/${repo_full}/issues/${num}" 2>/dev/null)"; then
+              printf "  - %s#%s: %s (%s)\n" "$repo_full" "$num" "$(echo "$out" | jq -r .title)" "$(echo "$out" | jq -r .state)"
+            fi
+          }
+
+          related_summaries=""
+          for n in "${local_refs[@]:-}"; do
+            line="$(summarize_issue "$REPO" "$n" || true)"; [ -n "$line" ] && related_summaries+="$line"
+          done
+          for ref in "${cross_refs[@]:-}"; do
+            repo_full="${ref%%#*}"; num="${ref##*#}"
+            line="$(summarize_issue "$repo_full" "$num" || true)"; [ -n "$line" ] && related_summaries+="$line"
+          done
+          if [ -z "${related_summaries:-}" ]; then
+            related_block="Related Issues: None"
+          else
+            related_block="Related Issues:\n${related_summaries%$'\n'}"
+          fi
+
+          # ----------------------------
+          # パスで除外（自動生成・ビルド生成物）
+          # ----------------------------
+          cat > /tmp/default_ignore.txt <<'EOF'
+          **/package-lock.json
+          **/npm-shrinkwrap.json
+          **/yarn.lock
+          **/pnpm-lock.yaml
+          **/composer.lock
+          **/Cargo.lock
+          **/*.min.js
+          **/*.map
+          **/dist/**
+          **/build/**
+          **/vendor/**
+          **/__generated__/**
+          **/generated/**
+          **/gen/**
+          **/*.generated.*
+          **/*generated*/**
+          **/*.g.dart
+          **/*.g.cs
+          **/*.Designer.cs
+          **/*.designer.cs
+          **/*.Designer.vb
+          **/*.designer.vb
+          **/*.pb.go
+          **/*_pb2.py
+          **/*_pb2.pyi
+          **/*_grpc*.py
+          **/*.d.ts
+          **/*.swagger.*
+          **/graphql.ts
+          **/schema.ts
+          EOF
+
+          IGNORE_FILE=".pr-review-ignore"
+          ALLOWLIST_FILE=".pr-review-allowlist"
+          IGNORE_PATTERNS="$(cat /tmp/default_ignore.txt 2>/dev/null || true)"
+          [ -f "$IGNORE_FILE" ] && IGNORE_PATTERNS="$(printf "%s\n%s" "$IGNORE_PATTERNS" "$(cat "$IGNORE_FILE")")"
+
+          files_json="[]"; page=1
+          while :; do
+            page_json="$(gh api "repos/${REPO}/pulls/${ISSUE_NUMBER}/files?per_page=100&page=${page}")"
+            files_json="$(jq -s 'add' <(echo "$files_json") <(echo "$page_json"))"
+            [ "$(echo "$page_json" | jq 'length')" -lt 100 ] && break
+            page=$((page+1))
+          done
+          mapfile -t all_paths < <(echo "$files_json" | jq -r '.[].filename')
+
+          shopt -s globstar nullglob extglob
+          path_matches () {
+            local path="$1"
+            while IFS= read -r pat; do
+              pat="${pat//$'\r'/}"; [ -z "$pat" ] && continue
+              [[ "$path" == $pat ]] && return 0
+            done
+            return 1
+          }
+
+          pre_excluded=(); candidates=()
+          for p in "${all_paths[@]:-}"; do
+            if path_matches "$p" <<< "$IGNORE_PATTERNS"; then
+              if [ -f "$ALLOWLIST_FILE" ] && path_matches "$p" < "$ALLOWLIST_FILE"; then
+                candidates+=("$p")
+              else
+                pre_excluded+=("$p")
+              fi
+            else
+              candidates+=("$p")
+            fi
+          done
+
+          # ----------------------------
+          # 内容ヒューリスティクス（自動生成/ミニファイ）で追加除外
+          # ----------------------------
+          AUTOGEN_REGEX='(do not edit|do not modify|auto[- ]?generated|autogenerated|generated by|code generated|@generated|this file was generated|tool:|swiftlint:disable all)'
+
+          is_minified_like () { # $1=path $2=tmpfile
+            case "$1" in
+              *.js|*.css) awk 'NR<=200{ if(length>500) big++ } END{ exit !(NR<10 && big>=1) }' "$2";;
+              *) return 1 ;;
+            esac
+          }
+
+          get_blob_sha () { echo "$files_json" | jq -r --arg f "$1" '.[] | select(.filename==$f) | .sha'; }
+
+          autogen_excluded=(); included_files=()
+          for p in "${candidates[@]:-}"; do
+            case "$p" in
+              *.png|*.jpg|*.jpeg|*.gif|*.webp|*.ico|*.pdf|*.zip|*.gz|*.woff|*.woff2|*.ttf|*.otf)
+                autogen_excluded+=("$p"); continue;;
+            esac
+            sha="$(get_blob_sha "$p")"
+            b64="$(gh api "repos/${REPO}/git/blobs/${sha}" --jq .content 2>/dev/null || echo "")"
+            if [ -z "$b64" ]; then autogen_excluded+=("$p"); continue; fi
+            tmp="$(mktemp)"; printf "%s" "$b64" | base64 -d 2>/dev/null | head -c 40960 > "$tmp" || true
+
+            if head -n 200 "$tmp" | grep -Ei -q "$AUTOGEN_REGEX"; then
+              if [ -f "$ALLOWLIST_FILE" ] && path_matches "$p" < "$ALLOWLIST_FILE"; then
+                :
+              else
+                autogen_excluded+=("$p"); rm -f "$tmp"; continue
+              fi
+            fi
+
+            if is_minified_like "$p" "$tmp"; then
+              if [ -f "$ALLOWLIST_FILE" ] && path_matches "$p" < "$ALLOWLIST_FILE"; then
+                :
+              else
+                autogen_excluded+=("$p"); rm -f "$tmp"; continue
+              fi
+            fi
+
+            included_files+=("$p")
+            rm -f "$tmp"
+          done
+
+          big_files_note=""
+          while IFS= read -r row; do
+            filename="$(echo "$row" | jq -r .filename)"
+            changes="$(echo "$row" | jq -r .changes)"
+            [ "$changes" -gt 3000 ] && big_files_note+="  - ${filename} (changes: ${changes})\n"
+          done < <(echo "$files_json" | jq -c '.[]')
+
+          filtered_diff_file="filtered.diff"
+          : > "$filtered_diff_file"
+          total_bytes=0; limit_bytes=$((200 * 1024))
+          for f in "${included_files[@]:-}"; do
+            part="$(gh pr diff "${ISSUE_NUMBER}" --patch --path "$f" || true)"
+            [ -z "$part" ] && continue
+            part_bytes=$(printf "%s" "$part" | wc -c | tr -d ' ')
+            if [ $((total_bytes + part_bytes)) -gt $limit_bytes ]; then
+              echo -e "\n---\n# NOTE: diff size limit reached; remaining files omitted." >> "$filtered_diff_file"
+              break
+            fi
+            printf "%s\n" "$part" >> "$filtered_diff_file"
+            total_bytes=$((total_bytes + part_bytes))
+          done
+          # ← 空ファイル対策：必ず1行入れておく
+          if [ ! -s "$filtered_diff_file" ]; then
+            echo "# EMPTY: no included diffs (likely all auto-generated or excluded)" > "$filtered_diff_file"
+          fi
+
+          summary="$(printf "PR Purpose: %s\n\n%s\n" "$pr_title" "$related_block")"
+          [ -n "$big_files_note" ] && summary="$(printf "%s\nPotentially large changes (not auto-excluded):\n%s" "$summary" "$big_files_note")"
+
+          echo "summary<<EOF" >> "$GITHUB_OUTPUT"; echo "$summary" >> "$GITHUB_OUTPUT"; echo "EOF" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$(printf "%s" "${included_files[*]:-}" | tr ' ' $'\n')" > included_files.txt
+          printf "%s\n" "$(printf "%s" "${pre_excluded[*]:-}" | tr ' ' $'\n')" > excluded_by_path.txt
+          printf "%s\n" "$(printf "%s" "${autogen_excluded[*]:-}" | tr ' ' $'\n')" > excluded_by_autogen_heuristics.txt
+
+          echo "filtered_diff_path=$filtered_diff_file" >> "$GITHUB_OUTPUT"
+          echo "included_files_path=included_files.txt" >> "$GITHUB_OUTPUT"
+          echo "excluded_files_by_path=excluded_by_path.txt" >> "$GITHUB_OUTPUT"
+          echo "excluded_files_by_heuristics=excluded_by_autogen_heuristics.txt" >> "$GITHUB_OUTPUT"
+
+      - name: Build prompt for Claude
+        id: build_prompt
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          get_or_cat () { local ml="$1"; local fp="$2"; if [ -n "$ml" ]; then printf "%s\n" "$ml"; elif [ -n "$fp" ] && [ -f "$fp" ]; then cat "$fp"; else echo ""; fi; }
+
+          SUMMARY_CONTENT="${{ steps.preprocess.outputs.summary }}"
+          INCLUDED_CONTENT="$(get_or_cat "${{ steps.preprocess.outputs.included_files }}" "${{ steps.preprocess.outputs.included_files_path }}")"
+          EXCL_PATH_CONTENT="$(get_or_cat "${{ steps.preprocess.outputs.excluded_by_path }}" "${{ steps.preprocess.outputs.excluded_files_by_path }}")"
+          EXCL_AUTOGEN_CONTENT="$(get_or_cat "${{ steps.preprocess.outputs.excluded_by_autogen }}" "${{ steps.preprocess.outputs.excluded_files_by_heuristics }}")"
+          DIFF_CONTENT="$(get_or_cat "${{ steps.preprocess.outputs.filtered_diff }}" "${{ steps.preprocess.outputs.filtered_diff_path }}")"
+
+          SKIP_NOTE=""
+          [ -z "$INCLUDED_CONTENT" ] && SKIP_NOTE="※レビュー対象ファイル（Included）が空です。自動生成/除外対象のみと判断されるため、概要コメントのみをお願いします。"
+
+          cat > prompt.txt <<'PROMPT'
+          **【レビュー依頼の場合】**
+          このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
+          0. **関連Issueの抽出と取得（重要・最初に実施）**
+             * すでにこのワークフローの事前処理で抽出されたPRサマリー（下記 "PR SUMMARY"）を最優先で参照してください。
+             * 必要に応じて、`mcp__github__get_issue` と `mcp__github__get_issue_comments` のみを使い、Issueの詳細を補足してください。
+             * `mcp__github__get_pull_request` のようにPR全体を取得する呼び出しは不要です（トークン節約）。
+          1. **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って保留中レビューを開始。
+          2. **変更内容を確認する:**
+             * まずはこの事前処理で生成された **フィルタ済み差分（FILTERED DIFF）** を参照してください。
+             * レビュー対象は「REVIEW FILES POLICY」の Included に記載されたファイルのみです。
+             * 除外（自動生成やビルド生成物）はレビュー不要です。
+             * 必要な場合のみ、`mcp__github__get_pull_request_diff` で追加取得してください。
+          3. **Issue整合性チェック（インラインコメント可）**
+             * …（元のレビュー観点・コメント規約は変更なし）…
+          4. **通常のコードレビュー観点**
+          5. **レビュー提出:** `mcp__github__submit_pending_pull_request_review` を「COMMENT」タイプで提出。
+          ---
+          PROMPT
+
+          {
+            echo "${SKIP_NOTE}"
+            echo "---"
+            echo "# PR SUMMARY"
+            printf "%s\n" "$SUMMARY_CONTENT"
+
+            echo
+            echo "---"
+            echo "# REVIEW FILES POLICY - Included"
+            printf "%s\n" "$INCLUDED_CONTENT"
+
+            echo
+            echo "---"
+            echo "# REVIEW FILES POLICY - Excluded (path patterns)"
+            printf "%s\n" "$EXCL_PATH_CONTENT"
+
+            echo
+            echo "---"
+            echo "# REVIEW FILES POLICY - Excluded (autogen heuristics)"
+            printf "%s\n" "$EXCL_AUTOGEN_CONTENT"
+
+            echo
+            echo "---"
+            echo "# FILTERED DIFF (truncated ~200KB)"
+            printf "%s\n" "$DIFF_CONTENT"
+          } >> prompt.txt
+
+          echo "prompt_file=prompt.txt" >> "$GITHUB_OUTPUT"
+
+      # =========================================
+      # Claude Code（Base Action）を LiteLLM で呼ぶ
+      #  - Anthropic APIキーは input に渡す（envのダブり回避）
+      #  - GitHub MCP を mcp_config で有効化（GITHUB_TOKEN をPAT代替に）
+      # =========================================
+      - name: Invoke Claude Code (base via LiteLLM + GitHub MCP App token)
+        uses: anthropics/claude-code-base-action@beta
+        with:
+          prompt_file: ${{ steps.build_prompt.outputs.prompt_file }}
+          # 必要最小限のGitHub MCPツール
+          allowed_tools: >
+            mcp__github__create_pending_pull_request_review,
+            mcp__github__add_pull_request_review_comment_to_pending_review,
+            mcp__github__submit_pending_pull_request_review,
+            mcp__github__get_pull_request_diff,
+            mcp__github__get_issue,
+            mcp__github__get_issue_comments
+          # リモート GitHub MCP サーバ（Authorization ヘッダで App トークンを付与）
+          mcp_config: |
+            {
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": [
+                    "run","-i","--rm",
+                    "-e","GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "-e","GITHUB_TOOLSETS",
+                    "ghcr.io/github/github-mcp-server"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GH_TOKEN}",
+                    "GITHUB_TOOLSETS": "repos,issues,pull_requests,actions"
+                  }
+                }
+              }
+            }
+          # （LiteLLM を使う場合でも）バリデーション回避のため key を渡す
+          anthropic_api_key: ${{ secrets.LITELLM_API_KEY }}
+          model: "claude-3.7-sonnet"
+          timeout_minutes: "15"
+          max_turns: "16"
+          claude_env: |
+            ANTHROPIC_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+            ANTHROPIC_API_KEY:  ${{ secrets.LITELLM_API_KEY }}
+        env:
+          GH_TOKEN: ${{ github.token }}
