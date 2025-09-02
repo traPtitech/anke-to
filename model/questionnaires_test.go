@@ -1350,7 +1350,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe)
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil, nil)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
