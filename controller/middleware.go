@@ -59,6 +59,8 @@ func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		c.Set(userIDKey, userID)
 
+		c.Logger().Infof("Request host: %s", c.Request().Host)
+
 		return next(c)
 	}
 }
