@@ -6,7 +6,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime"
-	"runtime/debug"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -76,7 +75,7 @@ func main() {
 			return func(c echo.Context) error {
 				err := validator(next)(c)
 				if err != nil {
-					c.Logger().Errorf("OapiRequestValidator error: %+v\nStack: %s", err, string(debug.Stack()))
+					panic(err)
 				}
 				return err
 			}
