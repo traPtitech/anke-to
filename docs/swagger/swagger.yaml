@@ -486,8 +486,6 @@ components:
                 $ref: "#/components/schemas/NewQuestion"
           required:
             - questions
-            - targets
-            - admins
     EditQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
