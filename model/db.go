@@ -15,7 +15,7 @@ var db *gorm.DB
 
 // EstablishConnection DBと接続
 func EstablishConnection(isProduction bool) error {
-	user, ok := os.LookupEnv("NS_MARIADB_USERNAME")
+	user, ok := os.LookupEnv("NS_MARIADB_USER")
 	if !ok {
 		user = "root"
 	}
