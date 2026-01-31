@@ -2315,14 +2315,14 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	})
 	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	invalidResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
-		Answer:       5,
+	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+		Answer:       "選択肢が存在しない",
 		QuestionType: "SingleChoice",
 	})
 	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	invalidResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
-		Answer:       []int{5},
+	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+		Answer:       []string{"選択肢が存在しない"},
 		QuestionType: "MultipleChoice",
 	})
 	invalidResponseBodyScale := openapi.NewResponseBody{}
