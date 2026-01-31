@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -70,7 +71,16 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
+		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			validator := oapiMiddleware.OapiRequestValidator(swagger)
+			return func(c echo.Context) error {
+				err := validator(next)(c)
+				if err != nil {
+					c.Logger().Errorf("OapiRequestValidator error: %+v\nStack: %s", err, string(debug.Stack()))
+				}
+				return err
+			}
+		})
 
 		e.Use(api.Middleware.SetUserIDMiddleware)
 
