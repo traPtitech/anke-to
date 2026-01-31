@@ -53,19 +53,7 @@ func (h Handler) EditResponse(ctx echo.Context, responseID openapi.ResponseIDInP
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind Responses: %w", err))
 	}
 
-	validate, err := h.Middleware.GetValidator(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get validator: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
-	}
-
-	err = validate.Struct(req)
-	if err != nil {
-		ctx.Logger().Errorf("failed to validate request body: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
-	}
-
-	err = h.Response.EditResponse(ctx, responseID, req)
+	err := h.Response.EditResponse(ctx, responseID, req)
 	if err != nil {
 		ctx.Logger().Errorf("failed to edit response: %+v", err)
 		return err

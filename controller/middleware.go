@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/traPtitech/anke-to/model"
@@ -337,17 +336,6 @@ func (m Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
-}
-
-// GetValidator Validatorを設定する
-func (m *Middleware) GetValidator(c echo.Context) (*validator.Validate, error) {
-	rowValidate := c.Get(validatorKey)
-	validate, ok := rowValidate.(*validator.Validate)
-	if !ok {
-		return nil, fmt.Errorf("failed to get validator")
-	}
-
-	return validate, nil
 }
 
 // GetUserID ユーザーIDを取得する

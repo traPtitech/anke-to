@@ -34,17 +34,6 @@ func (h Handler) PostQuestionnaire(ctx echo.Context) error {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
 	}
-	validate, err := h.Middleware.GetValidator(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get validator: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
-	}
-
-	err = validate.StructCtx(ctx.Request().Context(), params)
-	if err != nil {
-		ctx.Logger().Errorf("failed to validate request body: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
-	}
 
 	res, err := h.Questionnaire.PostQuestionnaire(ctx, params)
 	if err != nil {
@@ -165,17 +154,6 @@ func (h Handler) PostQuestionnaireResponse(ctx echo.Context, questionnaireID ope
 	if err := ctx.Bind(&params); err != nil {
 		ctx.Logger().Errorf("failed to bind request body: %+v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body: %w", err))
-	}
-	validate, err := h.Middleware.GetValidator(ctx)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get validator: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get validator: %w", err))
-	}
-
-	err = validate.StructCtx(ctx.Request().Context(), params)
-	if err != nil {
-		ctx.Logger().Errorf("failed to validate request body: %+v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
 	res, err := h.Questionnaire.PostQuestionnaireResponse(ctx, questionnaireID, params, userID)
