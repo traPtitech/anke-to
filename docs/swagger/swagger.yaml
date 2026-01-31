@@ -2,6 +2,8 @@ openapi: 3.0.0
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
+  - url: "https://anke-to-dev.trapti.tech/api"
+    description: development
   - url: "http://localhost:1323"
     description: local
 info:
@@ -484,8 +486,6 @@ components:
                 $ref: "#/components/schemas/NewQuestion"
           required:
             - questions
-            - targets
-            - admins
     EditQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -944,12 +944,6 @@ components:
             $ref: "#/components/schemas/Response"
       description: |
         同じアンケートの回答情報をまとめて返す。
-      allOf:
-        - $ref: "#/components/schemas/Response"
-        - type: object
-          properties:
-            questionnaire_info:
-              $ref: "#/components/schemas/QuestionnaireInfo"
     NewResponseBody:
       allOf:
         - type: object
@@ -974,12 +968,12 @@ components:
           required:
             - question_id
         - oneOf:
-            - $ref: "#/components/schemas/ResponseBodyText"
-            - $ref: "#/components/schemas/ResponseBodyTextLong"
-            - $ref: "#/components/schemas/ResponseBodyNumber"
-            - $ref: "#/components/schemas/ResponseBodySingleChoice"
-            - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
-            - $ref: "#/components/schemas/ResponseBodyScale"
+          - $ref: "#/components/schemas/ResponseBodyText"
+          - $ref: "#/components/schemas/ResponseBodyTextLong"
+          - $ref: "#/components/schemas/ResponseBodyNumber"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBodyText:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeText"

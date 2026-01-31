@@ -1021,43 +1021,49 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		questionRequired[responseMeta.QuestionID] = false
 		switch questionTypes[responseMeta.QuestionID] {
 		case "Text", "TextArea":
-			validation, ok := validationMap[responseMeta.QuestionID]
-			if !ok {
-				validation = model.Validations{}
-			}
-			err := q.IValidation.CheckTextValidation(validation, responseMeta.Data)
-			if err != nil {
-				if errors.Is(err, model.ErrTextMatching) {
+			if !params.IsDraft {
+				validation, ok := validationMap[responseMeta.QuestionID]
+				if !ok {
+					validation = model.Validations{}
+				}
+				err := q.IValidation.CheckTextValidation(validation, responseMeta.Data)
+				if err != nil {
+					if errors.Is(err, model.ErrTextMatching) {
+						c.Logger().Errorf("invalid text: %+v", err)
+						return res, echo.NewHTTPError(http.StatusBadRequest, err)
+					}
 					c.Logger().Errorf("invalid text: %+v", err)
 					return res, echo.NewHTTPError(http.StatusBadRequest, err)
 				}
-				c.Logger().Errorf("invalid text: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Number":
-			validation, ok := validationMap[responseMeta.QuestionID]
-			if !ok {
-				validation = model.Validations{}
-			}
-			err := q.IValidation.CheckNumberValidation(validation, responseMeta.Data)
-			if err != nil {
-				if errors.Is(err, model.ErrInvalidNumber) {
+			if !params.IsDraft {
+				validation, ok := validationMap[responseMeta.QuestionID]
+				if !ok {
+					validation = model.Validations{}
+				}
+				err := q.IValidation.CheckNumberValidation(validation, responseMeta.Data)
+				if err != nil {
+					if errors.Is(err, model.ErrInvalidNumber) {
+						c.Logger().Errorf("invalid number: %+v", err)
+						return res, echo.NewHTTPError(http.StatusBadRequest, err)
+					}
 					c.Logger().Errorf("invalid number: %+v", err)
 					return res, echo.NewHTTPError(http.StatusBadRequest, err)
 				}
-				c.Logger().Errorf("invalid number: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
 			}
 		case "Checkbox", "MultipleChoice":
 		case "LinearScale":
-			label, ok := scaleLabelMap[responseMeta.QuestionID]
-			if !ok {
-				label = model.ScaleLabels{}
-			}
-			err := q.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
-			if err != nil {
-				c.Logger().Errorf("invalid scale: %+v", err)
-				return res, echo.NewHTTPError(http.StatusBadRequest, err)
+			if !params.IsDraft {
+				label, ok := scaleLabelMap[responseMeta.QuestionID]
+				if !ok {
+					label = model.ScaleLabels{}
+				}
+				err := q.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
+				if err != nil {
+					c.Logger().Errorf("invalid scale: %+v", err)
+					return res, echo.NewHTTPError(http.StatusBadRequest, err)
+				}
 			}
 		default:
 			c.Logger().Errorf("invalid question id: %+v", responseMeta.QuestionID)
@@ -1065,10 +1071,12 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 		}
 	}
 
-	for _, question := range questions {
-		if questionRequired[question.ID] {
-			c.Logger().Errorf("required question is not answered: %+v", question.ID)
-			return res, echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
+	if !params.IsDraft {
+		for _, question := range questions {
+			if questionRequired[question.ID] {
+				c.Logger().Errorf("required question is not answered: %+v", question.ID)
+				return res, echo.NewHTTPError(http.StatusBadRequest, "required question is not answered")
+			}
 		}
 	}
 
