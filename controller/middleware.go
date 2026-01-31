@@ -52,7 +52,7 @@ var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeo
 func (m *Middleware) Debug(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := c.Request()
-		c.Logger().Errorf("Received %s request for %s with host %s", req.Method, req.URL, req.Host)
+		c.Logger().Errorf("Received %s request for %s", req.Method, req.URL)
 		return next(c)
 	}
 }
