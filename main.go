@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
 
@@ -63,11 +64,11 @@ func main() {
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
 
-		// swagger, err := openapi.GetSwagger()
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// e.Use(oapiMiddleware.OapiRequestValidator(swagger))
+		swagger, err := openapi.GetSwagger()
+		if err != nil {
+			panic(err)
+		}
+		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
 
 		e.Use(api.Middleware.SetUserIDMiddleware)
 
