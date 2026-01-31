@@ -215,6 +215,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 	for _, r := range respondentDetail.Responses {
 		oResponseBody := openapi.ResponseBody{}
 		oResponseBody.QuestionId = r.QuestionID
+		isResponseExists := false
 		switch r.QuestionType {
 		case "Text":
 			if r.Body.Valid {
@@ -227,6 +228,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
 		case "TextArea":
 			if r.Body.Valid {
@@ -239,6 +241,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
 		case "Number":
 			if r.Body.Valid {
@@ -256,6 +259,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
 		case "Checkbox":
 			if len(r.OptionResponse) > 0 {
@@ -269,6 +273,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
 		case "MultipleChoice":
 			if len(r.OptionResponse) > 0 {
@@ -285,6 +290,7 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
 		case "LinearScale":
 			if r.Body.Valid {
@@ -302,7 +308,11 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 				if err != nil {
 					return openapi.Response{}, err
 				}
+				isResponseExists = true
 			}
+		}
+		if !isResponseExists {
+			continue
 		}
 		oResponseBodies = append(oResponseBodies, oResponseBody)
 	}
