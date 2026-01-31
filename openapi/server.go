@@ -14,10 +14,10 @@ import (
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /questionnaires)
+	// (GET /api/questionnaires)
 	GetQuestionnaires(ctx echo.Context, params GetQuestionnairesParams) error
 
-	// (POST /questionnaires)
+	// (POST /api/questionnaires)
 	PostQuestionnaire(ctx echo.Context) error
 
 	// (DELETE /questionnaires/{questionnaireID})
@@ -385,8 +385,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/questionnaires", wrapper.GetQuestionnaires)
-	router.POST(baseURL+"/questionnaires", wrapper.PostQuestionnaire)
+	router.GET(baseURL+"/api/questionnaires", wrapper.GetQuestionnaires)
+	router.POST(baseURL+"/api/questionnaires", wrapper.PostQuestionnaire)
 	router.DELETE(baseURL+"/questionnaires/:questionnaireID", wrapper.DeleteQuestionnaire)
 	router.GET(baseURL+"/questionnaires/:questionnaireID", wrapper.GetQuestionnaire)
 	router.PATCH(baseURL+"/questionnaires/:questionnaireID", wrapper.EditQuestionnaire)
