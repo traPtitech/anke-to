@@ -68,14 +68,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		e.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
-			ErrorHandler: func(c echo.Context, err *echo.HTTPError) error {
-				c.Logger().Error(err)
-				return c.JSON(err.Code, map[string]interface{}{
-					"message": err.Message,
-				})
-			},
-		}))
+		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
 
 		e.Use(api.Middleware.SetUserIDMiddleware)
 
