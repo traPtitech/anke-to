@@ -379,15 +379,22 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 					return errors.New("failed to get question settings")
 				}
 				// 数字かどうか，min<=maxになっているかどうか
-				err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+				minValueStr, maxValueStr := "", ""
+				if b.MinValue != nil {
+					minValueStr = strconv.Itoa(*b.MinValue)
+				}
+				if b.MaxValue != nil {
+					maxValueStr = strconv.Itoa(*b.MaxValue)
+				}
+				err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 				if err != nil {
 					c.Logger().Errorf("invalid number: %+v", err)
 					return errors.New("invalid number")
 				}
 				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
-						MinBound: strconv.Itoa(*b.MinValue),
-						MaxBound: strconv.Itoa(*b.MaxValue),
+						MinBound: minValueStr,
+						MaxBound: maxValueStr,
 					})
 				if err != nil {
 					c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -688,15 +695,22 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+					minValueStr, maxValueStr := "", ""
+					if b.MinValue != nil {
+						minValueStr = strconv.Itoa(*b.MinValue)
+					}
+					if b.MaxValue != nil {
+						maxValueStr = strconv.Itoa(*b.MaxValue)
+					}
+					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)
 						return errors.New("invalid number")
 					}
 					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
-							MinBound: strconv.Itoa(*b.MinValue),
-							MaxBound: strconv.Itoa(*b.MaxValue),
+							MinBound: minValueStr,
+							MaxBound: maxValueStr,
 						})
 					if err != nil {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -790,15 +804,22 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					err = q.IValidation.CheckNumberValid(strconv.Itoa(*b.MinValue), strconv.Itoa(*b.MaxValue))
+					minValueStr, maxValueStr := "", ""
+					if b.MinValue != nil {
+						minValueStr = strconv.Itoa(*b.MinValue)
+					}
+					if b.MaxValue != nil {
+						maxValueStr = strconv.Itoa(*b.MaxValue)
+					}
+					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)
 						return errors.New("invalid number")
 					}
 					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
-							MinBound: strconv.Itoa(*b.MinValue),
-							MaxBound: strconv.Itoa(*b.MaxValue),
+							MinBound: minValueStr,
+							MaxBound: maxValueStr,
 						})
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
