@@ -796,6 +796,7 @@ components:
               items:
                 type: string
               uniqueItems: true
+              minItems: 1
           required:
             - options
     QuestionSettingsScale:
@@ -872,6 +873,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NewResponseBody"
+          minItems: 1
       required:
         - is_draft
         - body
