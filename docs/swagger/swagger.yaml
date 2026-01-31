@@ -19,7 +19,7 @@ tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
 paths: # TODO 変数の命名を確認する
-  /api/questionnaires: # TODO: 取得個数可変でもいいかも
+  /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
       operationId: getQuestionnaires
       tags:
