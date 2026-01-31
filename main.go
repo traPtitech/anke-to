@@ -88,7 +88,7 @@ func main() {
 
 		e.Use(mws.ApplyMiddlewares)
 
-		openapi.RegisterHandlers(e, api)
+		openapi.RegisterHandlersWithBaseURL(e, api, "/api")
 
 		e.Logger.Fatal(e.Start(port))
 
