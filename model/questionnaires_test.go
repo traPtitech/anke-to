@@ -859,6 +859,27 @@ func updateQuestionnaireTest(t *testing.T) {
 				isAnonymous:  true,
 			},
 		},
+		{
+			description: "update is_duplicate_answer_allowed(true->false) (res_time_limit is valid)",
+			before: args{
+				title:                    "第1回集会らん☆ぷろ募集アンケート",
+				description:              "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit:             null.NewTime(time.Now(), true),
+				resSharedTo:              "public",
+				isPublished:              true,
+				isAnonymous:              false,
+				isDuplicateAnswerAllowed: true,
+			},
+			after: args{
+				title:                    "第1回集会らん☆ぷろ募集アンケート",
+				description:              "第1回集会らん☆ぷろ参加者募集",
+				resTimeLimit:             null.NewTime(time.Now(), true),
+				resSharedTo:              "public",
+				isPublished:              true,
+				isAnonymous:              false,
+				isDuplicateAnswerAllowed: false,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
