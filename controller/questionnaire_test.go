@@ -2671,18 +2671,16 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
 			case "SingleChoice":
-				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
 				require.NoError(t, err)
 				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
-					Answer:       options[int(responseParsed["answer"].(float64))-1].Body,
+					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
 				})
 			case "MultipleChoice":
-				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
 				require.NoError(t, err)
 				answers := make([]string, len(responseParsed["answer"].([]interface{})))
 				for j, answer := range responseParsed["answer"].([]interface{}) {
-					answers[j] = options[int(answer.(float64))-1].Body
+					answers[j] = answer.(string)
 				}
 				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 					Answer:       answers,
