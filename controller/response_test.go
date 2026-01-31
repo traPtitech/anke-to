@@ -55,11 +55,17 @@ func setupSampleResponse() {
 		Answer:       0,
 		QuestionType: "Number",
 	})
-	sampleResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyNumber: %v", err))
+	}
+	err = sampleResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 		Answer:       "選択肢B",
 		QuestionType: "SingleChoice",
 	})
-	sampleResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodySingleChoice: %v", err))
+	}
+	err = sampleResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 		Answer:       []string{"選択肢B", "選択肢C"},
 		QuestionType: "MultipleChoice",
 	})
