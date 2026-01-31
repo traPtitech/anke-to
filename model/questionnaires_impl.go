@@ -131,27 +131,18 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 		return fmt.Errorf("failed to get tx: %w", err)
 	}
 
-	var questionnaire interface{}
+	questionnaire := map[string]interface{}{
+		"title":                       title,
+		"description":                 description,
+		"res_shared_to":               resSharedTo,
+		"is_published":                isPublished,
+		"is_anonymous":                isAnonymous,
+		"is_duplicate_answer_allowed": isDuplicateAnswerAllowed,
+	}
 	if resTimeLimit.Valid {
-		questionnaire = Questionnaires{
-			Title:                    title,
-			Description:              description,
-			ResTimeLimit:             resTimeLimit,
-			ResSharedTo:              resSharedTo,
-			IsPublished:              isPublished,
-			IsAnonymous:              isAnonymous,
-			IsDuplicateAnswerAllowed: isDuplicateAnswerAllowed,
-		}
+		questionnaire["res_time_limit"] = resTimeLimit
 	} else {
-		questionnaire = map[string]interface{}{
-			"title":                       title,
-			"description":                 description,
-			"res_time_limit":              gorm.Expr("NULL"),
-			"res_shared_to":               resSharedTo,
-			"is_published":                isPublished,
-			"is_anonymous":                isAnonymous,
-			"is_duplicate_answer_allowed": isDuplicateAnswerAllowed,
-		}
+		questionnaire["res_time_limit"] = gorm.Expr("NULL")
 	}
 
 	result := db.
