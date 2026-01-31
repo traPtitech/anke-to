@@ -2,6 +2,8 @@ openapi: 3.0.0
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
+  - url: "https://anke-to-dev.trapti.tech/api"
+    description: development
   - url: "http://localhost:1323"
     description: local
 info:
