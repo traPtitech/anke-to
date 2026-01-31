@@ -64,13 +64,13 @@ func main() {
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
 
+		e.Use(api.Middleware.SetUserIDMiddleware)
+
 		swagger, err := openapi.GetSwagger()
 		if err != nil {
 			panic(err)
 		}
 		e.Use(oapiMiddleware.OapiRequestValidator(swagger))
-
-		e.Use(api.Middleware.SetUserIDMiddleware)
 
 		mws := NewMiddlewareSwitcher()
 		mws.AddGroupConfig("", api.Middleware.TraPMemberAuthenticate)
