@@ -407,7 +407,7 @@ func TestGetMyResponses(t *testing.T) {
 				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
 			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
-			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIdList")
+			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
 		}
 
 		for _, responseList := range responseLists {

@@ -504,7 +504,6 @@ func TestGetQuestionnaires(t *testing.T) {
 
 		if testCase.args.params.Sort != nil {
 			switch *testCase.args.params.Sort {
-
 			case "created_at":
 				var preCreatedAt time.Time
 				for _, questionnaire := range questionnaireList.Questionnaires {
@@ -567,7 +566,7 @@ func TestGetQuestionnaires(t *testing.T) {
 				return (*testCase.expect.questionnaireIDList)[i] < (*testCase.expect.questionnaireIDList)[j]
 			})
 			sort.Slice(questionnaireIDList, func(i, j int) bool { return questionnaireIDList[i] < questionnaireIDList[j] })
-			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIdList")
+			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIDList")
 		}
 
 		if testCase.args.params.OnlyTargetingMe != nil || testCase.args.params.OnlyAdministratedByMe != nil {
@@ -2228,7 +2227,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
 			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
-			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIdList")
+			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
 		}
 
 		if testCase.args.params.OnlyMyResponse != nil {
