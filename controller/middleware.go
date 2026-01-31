@@ -59,7 +59,7 @@ func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		c.Set(userIDKey, userID)
 
-		c.Logger().Errorf("Request host: %s", c.Request().Host)
+		c.Logger().Errorf("Request: %s", c.Request())
 
 		return next(c)
 	}
