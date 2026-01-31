@@ -272,19 +272,20 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
-			if questionType == "Text" {
+			switch questionType {
+			case "Text":
 				questionType = "Text"
-			} else if questionType == "TextLong" {
+			case "TextLong":
 				questionType = "TextArea"
-			} else if questionType == "Number" {
+			case "Number":
 				questionType = "Number"
-			} else if questionType == "SingleChoice" {
+			case "SingleChoice":
 				questionType = "MultipleChoice"
-			} else if questionType == "MultipleChoice" {
+			case "MultipleChoice":
 				questionType = "Checkbox"
-			} else if questionType == "Scale" {
+			case "Scale":
 				questionType = "LinearScale"
-			} else {
+			default:
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
@@ -579,19 +580,20 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				return err
 			}
 			questionType := questionParsed["question_type"].(string)
-			if questionType == "Text" {
+			switch questionType {
+			case "Text":
 				questionType = "Text"
-			} else if questionType == "TextLong" {
+			case "TextLong":
 				questionType = "TextArea"
-			} else if questionType == "Number" {
+			case "Number":
 				questionType = "Number"
-			} else if questionType == "SingleChoice" {
+			case "SingleChoice":
 				questionType = "MultipleChoice"
-			} else if questionType == "MultipleChoice" {
+			case "MultipleChoice":
 				questionType = "Checkbox"
-			} else if questionType == "Scale" {
+			case "Scale":
 				questionType = "LinearScale"
-			} else {
+			default:
 				c.Logger().Errorf("invalid question type")
 				return errors.New("invalid question type")
 			}
@@ -1057,7 +1059,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 					return res, echo.NewHTTPError(http.StatusBadRequest, err)
 				}
 			}
-		case "MultipleChoice", "Checkbox":
+		case "Checkbox", "MultipleChoice":
 		case "LinearScale":
 			if !params.IsDraft {
 				label, ok := scaleLabelMap[responseMeta.QuestionID]
