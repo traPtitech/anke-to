@@ -15,26 +15,26 @@ var db *gorm.DB
 
 // EstablishConnection DBと接続
 func EstablishConnection(isProduction bool) error {
-	user, ok := os.LookupEnv("NB_MARIADB_USERNAME")
+	user, ok := os.LookupEnv("NS_MARIADB_USERNAME")
 	if !ok {
 		user = "root"
 	}
 
-	pass, ok := os.LookupEnv("NB_MARIADB_PASSWORD")
+	pass, ok := os.LookupEnv("NS_MARIADB_PASSWORD")
 	if !ok {
 		pass = "password"
 	}
 
-	host, ok := os.LookupEnv("NB_MARIADB_HOSTNAME")
+	host, ok := os.LookupEnv("NS_MARIADB_HOSTNAME")
 	if !ok {
 		host = "localhost"
 	}
-	port, ok := os.LookupEnv("NB_MARIADB_PORT")
+	port, ok := os.LookupEnv("NS_MARIADB_PORT")
 	if !ok {
 		port = "3306"
 	}
 
-	dbname, ok := os.LookupEnv("NB_MARIADB_DATABASE")
+	dbname, ok := os.LookupEnv("NS_MARIADB_DATABASE")
 	if !ok {
 		dbname = "anke-to"
 	}
