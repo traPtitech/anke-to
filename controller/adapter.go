@@ -381,14 +381,14 @@ func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []mode
 			if err != nil {
 				return nil, err
 			}
-			ifOptionExists := false
+			isOptionExists := false
 			for _, option := range options {
 				if option.Body == bSingleChoice.Answer {
-					ifOptionExists = true
+					isOptionExists = true
 					break
 				}
 			}
-			if !ifOptionExists {
+			if !isOptionExists {
 				return nil, errors.New("invalid single choice answer")
 			}
 			res = append(res, &model.ResponseMeta{
