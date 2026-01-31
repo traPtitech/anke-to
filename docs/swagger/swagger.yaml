@@ -4,7 +4,7 @@ servers:
     description: production
   - url: "https://anke-to-dev.trapti.tech/api"
     description: development
-  - url: "http://anke-to-v3-openbeta.trap.show"
+  - url: "https://anke-to-v3-openbeta.trap.show"
     description: open beta
   - url: "http://localhost:1323"
     description: local
