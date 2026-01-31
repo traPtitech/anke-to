@@ -64,8 +64,6 @@ func main() {
 		e.Use(middleware.Logger())
 		e.Use(middleware.Recover())
 
-		e.Use(api.Middleware.Debug)
-
 		swagger, err := openapi.GetSwagger()
 		if err != nil {
 			panic(err)

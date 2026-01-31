@@ -49,14 +49,6 @@ const (
 */
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
-func (m *Middleware) Debug(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := c.Request()
-		c.Logger().Errorf("Received %s request for %s", req.Method, req.URL)
-		return next(c)
-	}
-}
-
 // SetUserIDMiddleware X-Forwarded-UserからユーザーIDを取得しセットする
 func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
