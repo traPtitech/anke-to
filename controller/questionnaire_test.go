@@ -2347,15 +2347,15 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	require.NoError(t, err)
 	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	err = invalidResponseBodySingleChoice.FromNewResponseBodySingleChoice(openapi.NewResponseBodySingleChoice{
-		Answer:       5,
+	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+		Answer:       "選択肢が存在しない",
 		QuestionType: "SingleChoice",
 	})
 	require.NoError(t, err)
 	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	err = invalidResponseBodyMultipleChoice.FromNewResponseBodyMultipleChoice(openapi.NewResponseBodyMultipleChoice{
-		Answer:       []int{5},
+	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+		Answer:       []string{"選択肢が存在しない"},
 		QuestionType: "MultipleChoice",
 	})
 	require.NoError(t, err)
@@ -2706,18 +2706,14 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
 			case "SingleChoice":
-				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
-				require.NoError(t, err)
 				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
-					Answer:       options[int(responseParsed["answer"].(float64))-1].Body,
+					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
 				})
 			case "MultipleChoice":
-				options, err := q.IOption.GetOptions(context.Background(), []int{body.QuestionId})
-				require.NoError(t, err)
 				answers := make([]string, len(responseParsed["answer"].([]interface{})))
 				for j, answer := range responseParsed["answer"].([]interface{}) {
-					answers[j] = options[int(answer.(float64))-1].Body
+					answers[j] = answer.(string)
 				}
 				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 					Answer:       answers,

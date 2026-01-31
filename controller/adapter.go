@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"sort"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -372,7 +373,7 @@ func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []mode
 				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
 			})
 		case "MultipleChoice":
-			bSingleChoice, err := b.AsNewResponseBodySingleChoice()
+			bSingleChoice, err := b.AsResponseBodySingleChoice()
 			if err != nil {
 				return nil, err
 			}
@@ -380,15 +381,22 @@ func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []mode
 			if err != nil {
 				return nil, err
 			}
-			if bSingleChoice.Answer < 1 || bSingleChoice.Answer > len(options) {
+			isOptionExists := false
+			for _, option := range options {
+				if option.Body == bSingleChoice.Answer {
+					isOptionExists = true
+					break
+				}
+			}
+			if !isOptionExists {
 				return nil, errors.New("invalid single choice answer")
 			}
 			res = append(res, &model.ResponseMeta{
 				QuestionID: questions[i].ID,
-				Data:       options[bSingleChoice.Answer-1].Body,
+				Data:       bSingleChoice.Answer,
 			})
 		case "Checkbox":
-			bMultipleChoices, err := b.AsNewResponseBodyMultipleChoice()
+			bMultipleChoices, err := b.AsResponseBodyMultipleChoice()
 			if err != nil {
 				return nil, err
 			}
@@ -399,13 +407,35 @@ func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []mode
 			if len(bMultipleChoices.Answer) == 0 {
 				return nil, errors.New("no multiple choice answers provided")
 			}
-			for _, bMultipleChoice := range bMultipleChoices.Answer {
-				if bMultipleChoice < 1 || bMultipleChoice > len(options) {
+
+			optionBodies := make([]string, len(options))
+			for j, option := range options {
+				optionBodies[j] = option.Body
+			}
+			sort.Strings(optionBodies)
+
+			sortedAnswers := make([]string, len(bMultipleChoices.Answer))
+			copy(sortedAnswers, bMultipleChoices.Answer)
+			sort.Strings(sortedAnswers)
+
+			optionIdx, answerIdx := 0, 0
+			for answerIdx < len(sortedAnswers) {
+				if optionIdx >= len(optionBodies) {
 					return nil, errors.New("invalid multiple choice answer")
 				}
+				if sortedAnswers[answerIdx] == optionBodies[optionIdx] {
+					answerIdx++
+				} else if sortedAnswers[answerIdx] > optionBodies[optionIdx] {
+					optionIdx++
+				} else {
+					return nil, errors.New("invalid multiple choice answer")
+				}
+			}
+
+			for _, bMultipleChoice := range bMultipleChoices.Answer {
 				res = append(res, &model.ResponseMeta{
 					QuestionID: questions[i].ID,
-					Data:       options[bMultipleChoice-1].Body,
+					Data:       bMultipleChoice,
 				})
 			}
 		case "LinearScale":

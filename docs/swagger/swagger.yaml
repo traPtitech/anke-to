@@ -796,6 +796,7 @@ components:
               items:
                 type: string
               uniqueItems: true
+              minItems: 1
           required:
             - options
     QuestionSettingsScale:
@@ -872,6 +873,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NewResponseBody"
+          minItems: 1
       required:
         - is_draft
         - body
@@ -956,8 +958,8 @@ components:
           - $ref: "#/components/schemas/ResponseBodyText"
           - $ref: "#/components/schemas/ResponseBodyTextLong"
           - $ref: "#/components/schemas/ResponseBodyNumber"
-          - $ref: "#/components/schemas/NewResponseBodySingleChoice"
-          - $ref: "#/components/schemas/NewResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
           - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBody:
       allOf:
@@ -986,31 +988,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeNumber"
         - $ref: "#/components/schemas/ResponseBodyBaseNumber"
-    NewResponseBodySingleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResponseBodyBaseInteger"
-        - description: |
-            選択肢のインデックス
     ResponseBodySingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
         - $ref: "#/components/schemas/ResponseBodyBaseString"
-        - description: |
-            選択した選択肢の内容
-    NewResponseBodyMultipleChoice:
-      allOf:
-        - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
-        - type: object
-          properties:
-            answer:
-              type: array
-              items:
-                type: integer
-          description: |
-            選択肢のインデックスの配列
-          required:
-            - answer
     ResponseBodyMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
@@ -1020,8 +1001,7 @@ components:
               type: array
               items:
                 type: string
-          description: |
-            選択した選択肢の内容の配列
+              uniqueItems: true
           required:
             - answer
     ResponseBodyScale:

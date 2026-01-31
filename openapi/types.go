@@ -12,16 +12,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for NewResponseBodyMultipleChoiceQuestionType.
-const (
-	NewResponseBodyMultipleChoiceQuestionTypeMultipleChoice NewResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
-)
-
-// Defines values for NewResponseBodySingleChoiceQuestionType.
-const (
-	NewResponseBodySingleChoiceQuestionTypeSingleChoice NewResponseBodySingleChoiceQuestionType = "SingleChoice"
-)
-
 // Defines values for QuestionSettingsMultipleChoiceQuestionType.
 const (
 	QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice QuestionSettingsMultipleChoiceQuestionType = "MultipleChoice"
@@ -91,7 +81,7 @@ const (
 
 // Defines values for ResponseBodyMultipleChoiceQuestionType.
 const (
-	ResponseBodyMultipleChoiceQuestionTypeMultipleChoice ResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
+	MultipleChoice ResponseBodyMultipleChoiceQuestionType = "MultipleChoice"
 )
 
 // Defines values for ResponseBodyNumberQuestionType.
@@ -106,7 +96,7 @@ const (
 
 // Defines values for ResponseBodySingleChoiceQuestionType.
 const (
-	ResponseBodySingleChoiceQuestionTypeSingleChoice ResponseBodySingleChoiceQuestionType = "SingleChoice"
+	SingleChoice ResponseBodySingleChoiceQuestionType = "SingleChoice"
 )
 
 // Defines values for ResponseBodyTextQuestionType.
@@ -225,24 +215,6 @@ type NewResponseBody struct {
 	QuestionId int `json:"question_id"`
 	union      json.RawMessage
 }
-
-// NewResponseBodyMultipleChoice defines model for NewResponseBodyMultipleChoice.
-type NewResponseBodyMultipleChoice struct {
-	Answer       []int                                     `json:"answer"`
-	QuestionType NewResponseBodyMultipleChoiceQuestionType `json:"question_type"`
-}
-
-// NewResponseBodyMultipleChoiceQuestionType defines model for NewResponseBodyMultipleChoice.QuestionType.
-type NewResponseBodyMultipleChoiceQuestionType string
-
-// NewResponseBodySingleChoice defines model for NewResponseBodySingleChoice.
-type NewResponseBodySingleChoice struct {
-	Answer       int                                     `json:"answer"`
-	QuestionType NewResponseBodySingleChoiceQuestionType `json:"question_type"`
-}
-
-// NewResponseBodySingleChoiceQuestionType defines model for NewResponseBodySingleChoice.QuestionType.
-type NewResponseBodySingleChoiceQuestionType string
 
 // Question defines model for Question.
 type Question struct {
@@ -1108,22 +1080,22 @@ func (t *NewResponseBody) MergeResponseBodyNumber(v ResponseBodyNumber) error {
 	return err
 }
 
-// AsNewResponseBodySingleChoice returns the union data inside the NewResponseBody as a NewResponseBodySingleChoice
-func (t NewResponseBody) AsNewResponseBodySingleChoice() (NewResponseBodySingleChoice, error) {
-	var body NewResponseBodySingleChoice
+// AsResponseBodySingleChoice returns the union data inside the NewResponseBody as a ResponseBodySingleChoice
+func (t NewResponseBody) AsResponseBodySingleChoice() (ResponseBodySingleChoice, error) {
+	var body ResponseBodySingleChoice
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNewResponseBodySingleChoice overwrites any union data inside the NewResponseBody as the provided NewResponseBodySingleChoice
-func (t *NewResponseBody) FromNewResponseBodySingleChoice(v NewResponseBodySingleChoice) error {
+// FromResponseBodySingleChoice overwrites any union data inside the NewResponseBody as the provided ResponseBodySingleChoice
+func (t *NewResponseBody) FromResponseBodySingleChoice(v ResponseBodySingleChoice) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNewResponseBodySingleChoice performs a merge with any union data inside the NewResponseBody, using the provided NewResponseBodySingleChoice
-func (t *NewResponseBody) MergeNewResponseBodySingleChoice(v NewResponseBodySingleChoice) error {
+// MergeResponseBodySingleChoice performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodySingleChoice
+func (t *NewResponseBody) MergeResponseBodySingleChoice(v ResponseBodySingleChoice) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1134,22 +1106,22 @@ func (t *NewResponseBody) MergeNewResponseBodySingleChoice(v NewResponseBodySing
 	return err
 }
 
-// AsNewResponseBodyMultipleChoice returns the union data inside the NewResponseBody as a NewResponseBodyMultipleChoice
-func (t NewResponseBody) AsNewResponseBodyMultipleChoice() (NewResponseBodyMultipleChoice, error) {
-	var body NewResponseBodyMultipleChoice
+// AsResponseBodyMultipleChoice returns the union data inside the NewResponseBody as a ResponseBodyMultipleChoice
+func (t NewResponseBody) AsResponseBodyMultipleChoice() (ResponseBodyMultipleChoice, error) {
+	var body ResponseBodyMultipleChoice
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNewResponseBodyMultipleChoice overwrites any union data inside the NewResponseBody as the provided NewResponseBodyMultipleChoice
-func (t *NewResponseBody) FromNewResponseBodyMultipleChoice(v NewResponseBodyMultipleChoice) error {
+// FromResponseBodyMultipleChoice overwrites any union data inside the NewResponseBody as the provided ResponseBodyMultipleChoice
+func (t *NewResponseBody) FromResponseBodyMultipleChoice(v ResponseBodyMultipleChoice) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNewResponseBodyMultipleChoice performs a merge with any union data inside the NewResponseBody, using the provided NewResponseBodyMultipleChoice
-func (t *NewResponseBody) MergeNewResponseBodyMultipleChoice(v NewResponseBodyMultipleChoice) error {
+// MergeResponseBodyMultipleChoice performs a merge with any union data inside the NewResponseBody, using the provided ResponseBodyMultipleChoice
+func (t *NewResponseBody) MergeResponseBodyMultipleChoice(v ResponseBodyMultipleChoice) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err

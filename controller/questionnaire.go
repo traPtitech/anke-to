@@ -77,6 +77,13 @@ func NewQuestionnaire(
 
 const MaxTitleLength = 50
 
+func maxLengthPattern(maxLength *int) string {
+	if maxLength == nil {
+		return ""
+	}
+	return "^.{0," + strconv.Itoa(*maxLength) + "}$"
+}
+
 func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
 	res := openapi.QuestionnaireList{}
 	var sort string
@@ -345,7 +352,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				}
 				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
-						RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
+						RegexPattern: maxLengthPattern(b.MaxLength),
 					})
 				if err != nil {
 					c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -359,7 +366,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				}
 				err = q.IValidation.InsertValidation(ctx, questionID,
 					model.Validations{
-						RegexPattern: "^.{0," + fmt.Sprintf("%d", *b.MaxLength) + "}$",
+						RegexPattern: maxLengthPattern(b.MaxLength),
 					})
 				if err != nil {
 					c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -654,7 +661,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 					}
 					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
-							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
+							RegexPattern: maxLengthPattern(b.MaxLength),
 						})
 					if err != nil {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -668,7 +675,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 					}
 					err = q.IValidation.InsertValidation(ctx, questionID,
 						model.Validations{
-							RegexPattern: "^.{0," + fmt.Sprintf("%d", *b.MaxLength) + "}$",
+							RegexPattern: maxLengthPattern(b.MaxLength),
 						})
 					if err != nil {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -756,7 +763,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 					}
 					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
-							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
+							RegexPattern: maxLengthPattern(b.MaxLength),
 						})
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
@@ -770,7 +777,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 					}
 					err = q.IValidation.UpdateValidation(ctx, *question.QuestionId,
 						model.Validations{
-							RegexPattern: "^.{0," + strconv.Itoa(*b.MaxLength) + "}$",
+							RegexPattern: maxLengthPattern(b.MaxLength),
 						})
 					if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 						c.Logger().Errorf("failed to insert validation: %+v", err)
