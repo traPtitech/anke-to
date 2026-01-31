@@ -90,7 +90,7 @@ func TestSetUserIDMiddleware(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		req.Header.Set("X-Showcase-User", testCase.args.userID)
+		req.Header.Set("X-Forwarded-User", testCase.args.userID)
 
 		e.HTTPErrorHandler(middleware.SetUserIDMiddleware(func(c echo.Context) error {
 			assertion.Equal(testCase.expect.userID, c.Get(userIDKey), testCase.description, "userID")

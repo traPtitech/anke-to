@@ -49,10 +49,10 @@ const (
 */
 var adminUserIDs = []string{"ryoha", "xxarupakaxx", "kaitoyama", "cp20", "itzmeowww"}
 
-// SetUserIDMiddleware X-Showcase-UserからユーザーIDを取得しセットする
+// SetUserIDMiddleware X-Forwarded-UserからユーザーIDを取得しセットする
 func (m *Middleware) SetUserIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Request().Header.Get("X-Showcase-User")
+		userID := c.Request().Header.Get("X-Forwarded-User")
 		if userID == "" {
 			userID = "mds_boy"
 		}
