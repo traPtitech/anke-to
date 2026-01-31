@@ -780,14 +780,14 @@ func TestEditResponse(t *testing.T) {
 	require.NoError(t, err)
 	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
 	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
-	invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+	err = invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 		Answer:       "選択肢が存在しない",
 		QuestionType: "SingleChoice",
 	})
 	require.NoError(t, err)
 	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
 	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
-	invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+	err = invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 		Answer:       []string{"選択肢が存在しない"},
 		QuestionType: "MultipleChoice",
 	})
@@ -1133,39 +1133,45 @@ func TestEditResponse(t *testing.T) {
 			questionType := responseParsed["question_type"].(string)
 			switch questionType {
 			case "Text":
-				actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
+				err = actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
 					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodyTextQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "TextLong":
-				actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+				err = actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
 					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodyTextLongQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "Number":
-				actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
+				err = actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
 					Answer:       float32(responseParsed["answer"].(float64)),
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "SingleChoice":
-				actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+				err = actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
 					Answer:       responseParsed["answer"].(string),
 					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "MultipleChoice":
 				answers := make([]string, len(responseParsed["answer"].([]interface{})))
 				for j, answer := range responseParsed["answer"].([]interface{}) {
 					answers[j] = answer.(string)
 				}
-				actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+				err = actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
 					Answer:       answers,
 					QuestionType: openapi.ResponseBodyMultipleChoiceQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			case "Scale":
-				actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
+				err = actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
 					Answer:       int(responseParsed["answer"].(float64)),
 					QuestionType: openapi.ResponseBodyScaleQuestionType(questionType),
 				})
+				require.NoError(t, err)
 			default:
 				assertion.Fail("unknown question type", "question type: %s", questionType)
 			}
