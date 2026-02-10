@@ -67,6 +67,7 @@ jobs:
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
           TRAQ_AUTH_TOKEN: ""
           TRAQ_WEBHOOK_ID: ""
           TRAQ_WEBHOOK_SECRET: ""
@@ -78,6 +79,7 @@ jobs:
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
           TRAQ_AUTH_TOKEN: ""
           TRAQ_WEBHOOK_ID: ""
           TRAQ_WEBHOOK_SECRET: ""
