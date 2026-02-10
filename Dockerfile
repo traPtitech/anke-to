@@ -1,7 +1,7 @@
-# syntax = docker/dockerfile:1.3.0
+# syntax = docker/dockerfile:1.21.0
 
 # build backend
-FROM golang:1.24.1-alpine as server-build
+FROM golang:1.25.7-alpine as server-build
 RUN --mount=type=cache,target=/var/cache/apk \
   apk add --update git
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o /anke-to -ldflags "-s -w"
 
 # run
-FROM alpine:3.18.2
+FROM alpine:3.23.3
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \

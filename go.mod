@@ -1,6 +1,6 @@
 module github.com/traPtitech/anke-to
 
-go 1.24.1
+go 1.25.7
 
 require (
 	github.com/google/subcommands v1.2.0 // indirect
