@@ -51,6 +51,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
+      - run: go install go.uber.org/mock/mockgen@v0.6.0
+      - run: go generate ./model ./traq
       - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
         env:
           ENV: test
