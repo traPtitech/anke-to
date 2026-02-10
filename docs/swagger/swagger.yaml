@@ -4,6 +4,8 @@ servers:
     description: production
   - url: "https://anke-to-dev.trapti.tech/api"
     description: development
+  - url: "https://anke-to-beta.trap.show/api"
+    description: beta (deployed on noeshowcase)
   - url: "http://localhost:1323/api"
     description: local
 info:
