@@ -44,16 +44,8 @@ jobs:
         ports:
           - 3306:3306
         env:
-          ENV: dev
-          PORT: :1323
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
-          MARIADB_HOSTNAME: mysql
-          MARIADB_DATABASE: anke-to
-          MARIADB_PORT: 3306
-          TRAQ_AUTH_TOKEN: ""
-          TRAQ_WEBHOOK_ID: ""
-          TRAQ_WEBHOOK_SECRET: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
