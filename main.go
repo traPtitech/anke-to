@@ -12,8 +12,6 @@ import (
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
-
-	"github.com/traPtitech/anke-to/tuning"
 )
 
 func main() {
@@ -21,18 +19,7 @@ func main() {
 	if !ok {
 		env = "production"
 	}
-	logOn := env == "pprof" || env == "dev"
-
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "init":
-			tuning.Inititial()
-			return
-		case "bench":
-			tuning.Bench()
-			return
-		}
-	}
+	logOn := env == "dev"
 
 	err := model.EstablishConnection(!logOn)
 	if err != nil {
