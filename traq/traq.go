@@ -2,11 +2,10 @@ package traq
 
 import (
 	"context"
+	"os"
 
 	traq "github.com/traPtitech/go-traq"
 )
-
-const TOKEN = "/* your token */"
 
 type APIClient struct {
 	client *traq.APIClient
@@ -16,7 +15,7 @@ type APIClient struct {
 func NewTraqAPIClient() *APIClient {
 	return &APIClient{
 		client: traq.NewAPIClient(traq.NewConfiguration()),
-		auth:   context.WithValue(context.Background(), traq.ContextAccessToken, TOKEN),
+		auth:   context.WithValue(context.Background(), traq.ContextAccessToken, os.Getenv("TRAQ_AUTH_TOKEN")),
 	}
 }
 
