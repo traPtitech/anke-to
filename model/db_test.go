@@ -37,7 +37,7 @@ var (
 
 // TestMain テストのmain
 func TestMain(m *testing.M) {
-	err := EstablishConnection(true)
+	err := EstablishConnection("production")
 	if err != nil {
 		panic(err)
 	}

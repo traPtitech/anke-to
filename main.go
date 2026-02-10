@@ -1,11 +1,9 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -15,13 +13,12 @@ import (
 )
 
 func main() {
-	env, ok := os.LookupEnv("ANKE-TO_ENV")
+	env, ok := os.LookupEnv("ENV")
 	if !ok {
-		env = "production"
+		panic("no ENV")
 	}
-	logOn := env == "dev"
 
-	err := model.EstablishConnection(!logOn)
+	err := model.EstablishConnection(env)
 	if err != nil {
 		panic(err)
 	}
@@ -29,13 +26,6 @@ func main() {
 	_, err = model.Migrate()
 	if err != nil {
 		panic(err)
-	}
-
-	if env == "pprof" {
-		runtime.SetBlockProfileRate(1)
-		go func() {
-			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-		}()
 	}
 
 	port, ok := os.LookupEnv("PORT")
@@ -89,6 +79,4 @@ func main() {
 	}()
 
 	api.Reminder.Wg.Wait()
-
-	// SetRouting(port)
 }
