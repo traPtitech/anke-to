@@ -28,10 +28,12 @@ func (h Handler) GetTraqUsers(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq user uuid: %w", err))
 		}
 
-		traqUsers = append(traqUsers, openapi.TraqUser{
-			Id:   userUUID,
-			Name: user.Name,
-		})
+		if !user.Bot {
+			traqUsers = append(traqUsers, openapi.TraqUser{
+				Id:   userUUID,
+				Name: user.Name,
+			})
+		}
 	}
 
 	return ctx.JSON(http.StatusOK, traqUsers)
