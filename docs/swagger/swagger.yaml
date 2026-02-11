@@ -305,9 +305,7 @@ paths: # TODO 変数の命名を確認する
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
+                $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
         "500":
           description: 自分の回答のリストを取得できませんでした
 components:
