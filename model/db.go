@@ -68,7 +68,7 @@ func EstablishConnection(env string) error {
 	}
 
 	var logLevel logger.LogLevel
-	if env == "production" {
+	if env == "production" || env == "test" {
 		logLevel = logger.Silent
 	} else {
 		logLevel = logger.Info

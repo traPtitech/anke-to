@@ -39,7 +39,7 @@ TRAQ_WEBHOOK_SECRET: ""
 ```
 
 ### 環境変数
-- `ENV`：実行環境。`ENV == production` のときはログレベルが異なります。`ENV == neoshowcase` のときは NeoShowcase でデプロイするため、DB 関連の変数名が変わります
+- `ENV`：実行環境。`ENV == production` と `ENV == test` のときはログレベルが異なります。`ENV == neoshowcase` のときは NeoShowcase でデプロイするため、DB 関連の変数名が変わります
 - `PORT`：サービスのポート（例：`:1323`）
 - `MARIADB_USERNAME`：データベースのユーザー名。`ENV == neoshowcase` のときは `NS_MARIADB_USER`
 - `MARIADB_PASSWORD`：データベースのパスワード。`ENV == neoshowcase` のときは `NS_MARIADB_PASSWORD`
