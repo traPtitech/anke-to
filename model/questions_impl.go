@@ -115,7 +115,7 @@ func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNu
 		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
 		Updates(question)
 	if result.Error != nil {
-		return fmt.Errorf("failed to update a question record: %w", err)
+		return fmt.Errorf("failed to update a question record: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return ErrNoRecordUpdated
