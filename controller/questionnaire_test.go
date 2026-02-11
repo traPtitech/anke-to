@@ -601,8 +601,9 @@ func TestPostQuestionnaire(t *testing.T) {
 		params openapi.PostQuestionnaireJSONRequestBody
 	}
 	type expect struct {
-		isErr bool
-		err   error
+		isErr             bool
+		err               error
+		normalizedDueDate bool
 	}
 	type test struct {
 		description string
@@ -611,6 +612,7 @@ func TestPostQuestionnaire(t *testing.T) {
 	}
 
 	responseDueDateTimeMinus := time.Now().Add(-24 * time.Hour)
+	responseDueDateTimeNearlyNowPast := time.Now().Add(-3 * time.Second)
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
 	invalidQuestionSettingsNumber := openapi.NewQuestion{
@@ -696,6 +698,33 @@ func TestPostQuestionnaire(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
+			},
+		},
+		{
+			description: "valid response due date time within tolerance",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              true,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &responseDueDateTimeNearlyNowPast,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+			expect: expect{
+				normalizedDueDate: true,
 			},
 		},
 		{
@@ -1044,7 +1073,13 @@ func TestPostQuestionnaire(t *testing.T) {
 		}
 
 		if testCase.args.params.ResponseDueDateTime != nil {
-			assertion.WithinDuration(testCase.args.params.ResponseDueDateTime.UTC().Truncate(time.Second), questionnaireDetail.ResponseDueDateTime.UTC(), time.Second, testCase.description, "response due date time not equal")
+			if testCase.expect.normalizedDueDate {
+				if assertion.NotNil(questionnaireDetail.ResponseDueDateTime, testCase.description, "response due date time should not be nil") {
+					assertion.WithinDuration(time.Now().UTC(), questionnaireDetail.ResponseDueDateTime.UTC(), 3*time.Second, testCase.description, "response due date time should be normalized to server current time")
+				}
+			} else {
+				assertion.WithinDuration(testCase.args.params.ResponseDueDateTime.UTC().Truncate(time.Second), questionnaireDetail.ResponseDueDateTime.UTC(), time.Second, testCase.description, "response due date time not equal")
+			}
 		} else {
 			assertion.Nil(questionnaireDetail.ResponseDueDateTime, testCase.description, "response due date time not equal")
 		}
