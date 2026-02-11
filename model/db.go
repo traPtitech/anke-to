@@ -14,33 +14,61 @@ import (
 var db *gorm.DB
 
 // EstablishConnection DBと接続
-func EstablishConnection(isProduction bool) error {
-	user, ok := os.LookupEnv("MARIADB_USERNAME")
+func EstablishConnection(env string) error {
+	var ok bool
+
+	var user string
+	if env == "neoshowcase" {
+		user, ok = os.LookupEnv("NS_MARIADB_USER")
+	} else {
+		user, ok = os.LookupEnv("MARIADB_USERNAME")
+	}
 	if !ok {
-		user = "root"
+		panic("no db user")
 	}
 
-	pass, ok := os.LookupEnv("MARIADB_PASSWORD")
+	var pass string
+	if env == "neoshowcase" {
+		pass, ok = os.LookupEnv("NS_MARIADB_PASSWORD")
+	} else {
+		pass, ok = os.LookupEnv("MARIADB_PASSWORD")
+	}
 	if !ok {
-		pass = "password"
+		panic("no db password")
 	}
 
-	host, ok := os.LookupEnv("MARIADB_HOSTNAME")
-	if !ok {
-		host = "localhost"
+	var host string
+	if env == "neoshowcase" {
+		host, ok = os.LookupEnv("NS_MARIADB_HOSTNAME")
+	} else {
+		host, ok = os.LookupEnv("MARIADB_HOSTNAME")
 	}
-	port, ok := os.LookupEnv("MARIADB_PORT")
 	if !ok {
-		port = "3306"
+		panic("no db host")
 	}
 
-	dbname, ok := os.LookupEnv("MARIADB_DATABASE")
+	var port string
+	if env == "neoshowcase" {
+		port, ok = os.LookupEnv("NS_MARIADB_PORT")
+	} else {
+		port, ok = os.LookupEnv("MARIADB_PORT")
+	}
 	if !ok {
-		dbname = "anke-to"
+		panic("no db port")
+	}
+
+	var dbname string
+	if env == "neoshowcase" {
+		dbname, ok = os.LookupEnv("NS_MARIADB_DATABASE")
+	} else {
+		dbname, ok = os.LookupEnv("MARIADB_DATABASE")
+	}
+	if !ok {
+		panic("no db name")
 	}
 
 	var logLevel logger.LogLevel
-	if isProduction {
+	if env == "production" {
 		logLevel = logger.Silent
 	} else {
 		logLevel = logger.Info

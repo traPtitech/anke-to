@@ -1,14 +1,16 @@
-openapi: 3.0.0
+openapi: 3.0.4
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
   - url: "https://anke-to-dev.trapti.tech/api"
     description: development
-  - url: "http://localhost:1323"
+  - url: "http://anke-to-beta.trap.show/api"
+    description: beta (deployed on noeshowcase; actual url is https)
+  - url: "http://localhost:1323/api"
     description: local
 info:
   title: anke-to API
-  version: 1.0.0-oas3
+  version: v3
   description: anke-to API
   contact:
     name: traP
