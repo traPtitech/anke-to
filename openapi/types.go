@@ -687,6 +687,7 @@ type TraqStamps = []TraqStamp
 type TraqUser struct {
 	IconFileId openapi_types.UUID `json:"icon_file_id"`
 	Id         openapi_types.UUID `json:"id"`
+	IsBot      bool               `json:"is_bot"`
 
 	// Name traQ ID
 	Name string `json:"name"`

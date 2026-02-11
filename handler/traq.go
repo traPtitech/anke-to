@@ -28,12 +28,18 @@ func (h Handler) GetTraqUsers(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq user uuid: %w", err))
 		}
 
-		if !user.Bot {
-			traqUsers = append(traqUsers, openapi.TraqUser{
-				Id:   userUUID,
-				Name: user.Name,
-			})
+		userIconFileUUID, err := parseOpenAPIUUID(user.IconFileId)
+		if err != nil {
+			ctx.Logger().Errorf("invalid user icon file uuid: %s", user.IconFileId)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user icon file uuid: %w", err))
 		}
+
+		traqUsers = append(traqUsers, openapi.TraqUser{
+			IconFileId: userIconFileUUID,
+			Id:         userUUID,
+			IsBot:      user.Bot,
+			Name:       user.Name,
+		})
 	}
 
 	return ctx.JSON(http.StatusOK, traqUsers)
@@ -73,6 +79,7 @@ func (h Handler) GetTraqUsersMe(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, openapi.TraqUser{
 		IconFileId: userIconFileUUID,
 		Id:         userUUID,
+		IsBot:      user.Bot,
 		Name:       user.Name,
 	})
 }

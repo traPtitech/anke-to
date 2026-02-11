@@ -1155,10 +1155,13 @@ components:
         icon_file_id:
           type: string
           format: uuid
+        is_bot:
+          type: boolean
       required:
         - id
         - name
         - icon_file_id
+        - is_bot
     TraqUserGroupMember:
       type: object
       properties:
