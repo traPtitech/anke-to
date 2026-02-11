@@ -147,19 +147,21 @@ func (t *etagCacheTransport) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	if resp.StatusCode == http.StatusNotModified {
-		resp.Body.Close()
 		// 304のときは保存済みボディを200として返す。
 		if cachedResp, ok := t.buildCachedResponse(req, cacheKey); ok {
+			resp.Body.Close()
 			return cachedResp, nil
 		}
+		// キャッシュがない場合はそのまま返す（異常系）
 		return resp, nil
 	}
 
 	if resp.StatusCode >= http.StatusInternalServerError {
-		resp.Body.Close()
 		if cachedResp, ok := t.buildCachedResponse(req, cacheKey); ok {
+			resp.Body.Close()
 			return cachedResp, nil
 		}
+		// キャッシュがない場合はそのまま返す
 		return resp, nil
 	}
 

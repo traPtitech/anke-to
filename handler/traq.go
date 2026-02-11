@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/traPtitech/anke-to/openapi"
 	traqAPI "github.com/traPtitech/anke-to/traq"
 )
 
@@ -38,17 +41,17 @@ func (h Handler) GetTraqUsersMe(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "traq user not found")
 	}
 
-	userUUID := users[0].Id
-	for _, user := range users {
-		if user.Name == userID {
-			userUUID = user.Id
-			break
-		}
+	// 最初のユーザーを使用（GetUsersByNameは名前でフィルタリング済み）
+	user := users[0]
+	userUUID, err := uuid.Parse(user.Id)
+	if err != nil {
+		ctx.Logger().Errorf("invalid user uuid: %s", user.Id)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user uuid: %w", err))
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]string{
-		"id":   userID,
-		"uuid": userUUID,
+	return ctx.JSON(http.StatusOK, openapi.TraqMe{
+		Id:   userID,
+		Uuid: openapi_types.UUID(userUUID),
 	})
 }
 
