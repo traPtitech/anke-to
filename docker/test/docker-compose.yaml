@@ -13,7 +13,7 @@ services:
       MARIADB_HOSTNAME: mysql
       MARIADB_PORT: 3306
       MARIADB_DATABASE: anke-to
-      TRAQ_AUTH_TOKEN:
+      TRAQ_BOT_TOKEN:
       TRAQ_WEBHOOK_ID:
       TRAQ_WEBHOOK_SECRET:
       TZ: Asia/Tokyo

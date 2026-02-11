@@ -18,6 +18,7 @@ info:
 tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
+  - name: traq
 paths: # TODO 変数の命名を確認する
   /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
@@ -310,6 +311,83 @@ paths: # TODO 変数の命名を確認する
                 $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
         "500":
           description: 自分の回答のリストを取得できませんでした
+  /traq/users:
+    get:
+      operationId: getTraqUsers
+      tags:
+        - traq
+      description: traQのユーザー一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。ユーザーの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqUsers"
+        "500":
+          description: ユーザー一覧を正常に取得できませんでした
+  /traq/users/me:
+    get:
+      operationId: getTraqUsersMe
+      tags:
+        - traq
+      description: リクエストユーザーのtraQ情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqMe"
+        "404":
+          description: 対象ユーザーが見つかりませんでした
+        "500":
+          description: ユーザー情報を正常に取得できませんでした
+  /traq/groups:
+    get:
+      operationId: getTraqGroups
+      tags:
+        - traq
+      description: traQのグループ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。グループの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqGroups"
+        "500":
+          description: グループ一覧を正常に取得できませんでした
+  /traq/stamps:
+    get:
+      operationId: getTraqStamps
+      tags:
+        - traq
+      description: traQのスタンプ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。スタンプの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqStamps"
+        "500":
+          description: スタンプ一覧を正常に取得できませんでした
+  /traq/channels:
+    get:
+      operationId: getTraqChannels
+      tags:
+        - traq
+      description: traQのチャンネル一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。チャンネルの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqChannels"
+        "500":
+          description: チャンネル一覧を正常に取得できませんでした
 components:
   parameters:
     sortInQuery:
@@ -1057,3 +1135,78 @@ components:
         format: uuid
         description: |
           Group UUID
+    TraqUsers:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqUser"
+    TraqUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: traQ ID
+      required:
+        - id
+        - name
+    TraqMe:
+      type: object
+      properties:
+        id:
+          type: string
+          description: traQ ID
+        uuid:
+          type: string
+          format: uuid
+      required:
+        - id
+        - uuid
+    TraqGroups:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqGroup"
+    TraqGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - id
+        - name
+    TraqStamps:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqStamp"
+    TraqStamp:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - id
+        - name
+    TraqChannels:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqChannel"
+    TraqChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        path:
+          type: string
+      required:
+        - id
+        - name

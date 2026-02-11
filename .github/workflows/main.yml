@@ -62,7 +62,7 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
           MARIADB_PORT: 3306
-          TRAQ_AUTH_TOKEN: ""
+          TRAQ_BOT_TOKEN: ""
           TRAQ_WEBHOOK_ID: ""
           TRAQ_WEBHOOK_SECRET: ""
       - run: go test ./controller -v -coverprofile=coverage-controller.txt -race -vet=off
@@ -74,7 +74,7 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
           MARIADB_PORT: 3306
-          TRAQ_AUTH_TOKEN: ""
+          TRAQ_BOT_TOKEN: ""
           TRAQ_WEBHOOK_ID: ""
           TRAQ_WEBHOOK_SECRET: ""
       - name: Upload coverage data

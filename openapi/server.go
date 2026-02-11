@@ -52,6 +52,21 @@ type ServerInterface interface {
 
 	// (PATCH /responses/{responseID})
 	EditResponse(ctx echo.Context, responseID ResponseIDInPath) error
+
+	// (GET /traq/channels)
+	GetTraqChannels(ctx echo.Context) error
+
+	// (GET /traq/groups)
+	GetTraqGroups(ctx echo.Context) error
+
+	// (GET /traq/stamps)
+	GetTraqStamps(ctx echo.Context) error
+
+	// (GET /traq/users)
+	GetTraqUsers(ctx echo.Context) error
+
+	// (GET /traq/users/me)
+	GetTraqUsersMe(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -357,6 +372,51 @@ func (w *ServerInterfaceWrapper) EditResponse(ctx echo.Context) error {
 	return err
 }
 
+// GetTraqChannels converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTraqChannels(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTraqChannels(ctx)
+	return err
+}
+
+// GetTraqGroups converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTraqGroups(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTraqGroups(ctx)
+	return err
+}
+
+// GetTraqStamps converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTraqStamps(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTraqStamps(ctx)
+	return err
+}
+
+// GetTraqUsers converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTraqUsers(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTraqUsers(ctx)
+	return err
+}
+
+// GetTraqUsersMe converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTraqUsersMe(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTraqUsersMe(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -398,5 +458,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/responses/:responseID", wrapper.DeleteResponse)
 	router.GET(baseURL+"/responses/:responseID", wrapper.GetResponse)
 	router.PATCH(baseURL+"/responses/:responseID", wrapper.EditResponse)
+	router.GET(baseURL+"/traq/channels", wrapper.GetTraqChannels)
+	router.GET(baseURL+"/traq/groups", wrapper.GetTraqGroups)
+	router.GET(baseURL+"/traq/stamps", wrapper.GetTraqStamps)
+	router.GET(baseURL+"/traq/users", wrapper.GetTraqUsers)
+	router.GET(baseURL+"/traq/users/me", wrapper.GetTraqUsersMe)
 
 }

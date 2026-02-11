@@ -33,7 +33,7 @@ MARIADB_PASSWORD: password
 MARIADB_HOSTNAME: 127.0.0.1
 MARIADB_DATABASE: anke-to
 MARIADB_PORT: 3306
-TRAQ_AUTH_TOKEN: ""
+TRAQ_BOT_TOKEN: ""
 TRAQ_WEBHOOK_ID: ""
 TRAQ_WEBHOOK_SECRET: ""
 ```
@@ -46,6 +46,6 @@ TRAQ_WEBHOOK_SECRET: ""
 - `MARIADB_HOSTNAME`：データベースのホスト名または IP。`ENV == neoshowcase` のときは `NS_MARIADB_HOSTNAME`
 - `MARIADB_PORT`：データベースのポート。`ENV == neoshowcase` のときは `NS_MARIADB_PORT`
 - `MARIADB_DATABASE`：データベース名。`ENV == neoshowcase` のときは `NS_MARIADB_DATABASE`
-- `TRAQ_AUTH_TOKEN`：traQ API の認証トークン（未使用時は空で可）
+- `TRAQ_BOT_TOKEN`：traQ API の認証トークン（未使用時は空で可）
 - `TRAQ_WEBHOOK_ID`：traQ Webhook の Client ID（未使用時は空で可）
 - `TRAQ_WEBHOOK_SECRET`：traQ Webhook の Client Secret（未使用時は空で可）
