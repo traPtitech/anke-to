@@ -62,9 +62,9 @@ func (h Handler) GetTraqUsersMe(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user uuid: %w", err))
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.TraqMe{
-		Id:   userID,
-		Uuid: openapi_types.UUID(userUUID),
+	return ctx.JSON(http.StatusOK, openapi.TraqUser{
+		Id:   userUUID,
+		Name: user.Name,
 	})
 }
 
