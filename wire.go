@@ -50,6 +50,7 @@ func InjectAPIServer() *handler.Handler {
 		model.NewTargetUser,
 		model.NewValidation,
 		model.NewTransaction,
+		traq.NewTraqAPIClient,
 		traq.NewWebhook,
 		administratorBind,
 		administratorGroupBind,

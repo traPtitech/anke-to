@@ -650,8 +650,54 @@ type ResponsesWithQuestionnaireInfo = []ResponseWithQuestionnaireInfoItem
 // SortType question、questionnaire用のソートの種類
 type SortType string
 
+// TraqChannel defines model for TraqChannel.
+type TraqChannel struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+	Path *string            `json:"path,omitempty"`
+}
+
+// TraqChannels defines model for TraqChannels.
+type TraqChannels = []TraqChannel
+
+// TraqGroup defines model for TraqGroup.
+type TraqGroup struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+}
+
+// TraqGroups defines model for TraqGroups.
+type TraqGroups = []TraqGroup
+
 // TraqId traQ ID
 type TraqId = string
+
+// TraqMe defines model for TraqMe.
+type TraqMe struct {
+	// Id traQ ID
+	Id   string             `json:"id"`
+	Uuid openapi_types.UUID `json:"uuid"`
+}
+
+// TraqStamp defines model for TraqStamp.
+type TraqStamp struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+}
+
+// TraqStamps defines model for TraqStamps.
+type TraqStamps = []TraqStamp
+
+// TraqUser defines model for TraqUser.
+type TraqUser struct {
+	Id openapi_types.UUID `json:"id"`
+
+	// Name traQ ID
+	Name string `json:"name"`
+}
+
+// TraqUsers defines model for TraqUsers.
+type TraqUsers = []TraqUser
 
 // Users 回答者の一覧。匿名回答の場合はnull。
 type Users = []TraqId
