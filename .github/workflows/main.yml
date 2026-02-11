@@ -13,7 +13,7 @@ env:
 jobs:
   mod:
     name: Mod
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -22,7 +22,7 @@ jobs:
       - run: go mod download
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [mod]
     steps:
       - uses: actions/checkout@v4
@@ -36,11 +36,11 @@ jobs:
           path: anke-to
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [mod]
     services:
       mysql:
-        image: mariadb:10.3.9
+        image: mariadb:12.1.2
         ports:
           - 3306:3306
         env:
@@ -52,20 +52,31 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - run: go install go.uber.org/mock/mockgen@v0.6.0
-      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.0
-      - run: go generate ./...
+      - run: go generate ./model ./traq
       - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
         env:
+          ENV: test
+          PORT: :1323
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
+          TRAQ_BOT_TOKEN: ""
+          TRAQ_WEBHOOK_ID: ""
+          TRAQ_WEBHOOK_SECRET: ""
       - run: go test ./controller -v -coverprofile=coverage-controller.txt -race -vet=off
         env:
+          ENV: test
+          PORT: :1323
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
+          TRAQ_BOT_TOKEN: ""
+          TRAQ_WEBHOOK_ID: ""
+          TRAQ_WEBHOOK_SECRET: ""
       - name: Upload coverage data
         uses: codecov/codecov-action@v5
         with:
@@ -81,15 +92,14 @@ jobs:
           path: coverage-controller.txt
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
       - run: go install go.uber.org/mock/mockgen@v0.6.0
-      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.0
-      - run: go generate ./...
+      - run: go generate ./model ./traq
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
@@ -99,10 +109,10 @@ jobs:
           cache: false
   spectral:
     name: Spectral
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Spectral checks
-        uses: stoplightio/spectral-action@latest
+        uses: stoplightio/spectral-action@v0.8.13
         with:
           file_glob: docs/swagger/*.yaml

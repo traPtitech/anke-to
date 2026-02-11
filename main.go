@@ -1,11 +1,9 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -13,29 +11,15 @@ import (
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/openapi"
-
-	"github.com/traPtitech/anke-to/tuning"
 )
 
 func main() {
-	env, ok := os.LookupEnv("ANKE-TO_ENV")
+	env, ok := os.LookupEnv("ENV")
 	if !ok {
-		env = "production"
-	}
-	logOn := env == "pprof" || env == "dev"
-
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "init":
-			tuning.Inititial()
-			return
-		case "bench":
-			tuning.Bench()
-			return
-		}
+		panic("no ENV")
 	}
 
-	err := model.EstablishConnection(!logOn)
+	err := model.EstablishConnection(env)
 	if err != nil {
 		panic(err)
 	}
@@ -43,13 +27,6 @@ func main() {
 	_, err = model.Migrate()
 	if err != nil {
 		panic(err)
-	}
-
-	if env == "pprof" {
-		runtime.SetBlockProfileRate(1)
-		go func() {
-			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-		}()
 	}
 
 	port, ok := os.LookupEnv("PORT")
@@ -93,7 +70,7 @@ func main() {
 
 		e.Use(mws.ApplyMiddlewares)
 
-		openapi.RegisterHandlers(e, api)
+		openapi.RegisterHandlersWithBaseURL(e, api, "/api")
 
 		e.Logger.Fatal(e.Start(port))
 
@@ -107,6 +84,4 @@ func main() {
 	}()
 
 	api.Reminder.Wg.Wait()
-
-	// SetRouting(port)
 }
