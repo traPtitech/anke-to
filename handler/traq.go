@@ -178,12 +178,10 @@ func mapTraqChannels(channels []traq.Channel) (openapi.TraqChannels, error) {
 			return nil, err
 		}
 		path := buildPath(channel)
-		pathPtr := new(string)
-		*pathPtr = path
 		traqChannels = append(traqChannels, openapi.TraqChannel{
 			Id:   channelUUID,
 			Name: channel.Name,
-			Path: pathPtr,
+			Path: &path,
 		})
 	}
 	return traqChannels, nil
