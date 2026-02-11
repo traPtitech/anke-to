@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 	r = NewResponse(IQuestionnaire, IRespondent, IResponse, ITarget, IQuestion, IOption, IValidation, IScaleLabel, ITransaction)
 	q = NewQuestionnaire(IQuestionnaire, ITarget, ITargetGroup, ITargetUser, IAdministrator, IAdministratorGroup, IAdministratorUser, IQuestion, IOption, IScaleLabel, IValidation, ITransaction, IRespondent, IWebhook, r, re)
 
-	err := model.EstablishConnection(true)
+	err := model.EstablishConnection("test")
 	if err != nil {
 		panic(err)
 	}
