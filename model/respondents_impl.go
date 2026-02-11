@@ -12,7 +12,6 @@ import (
 
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // Respondent RespondentRepositoryの実装
@@ -100,21 +99,21 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 	}
 
 	if !questionnaire.IsDuplicateAnswerAllowed {
-		result := db.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "questionnaire_id"}, {Name: "user_traqid"}},
-			DoNothing: true,
-		}).Create(&respondent)
-		if result.Error != nil {
-			return 0, fmt.Errorf("failed to insert a respondent record: %w", result.Error)
-		}
-		if result.RowsAffected == 0 {
+		err = db.
+			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
+			First(&Respondents{}).Error
+		if err == nil {
 			return 0, ErrDuplicatedAnswered
 		}
-	} else {
-		err = db.Create(&respondent).Error
-		if err != nil {
-			return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, fmt.Errorf("failed to check duplicate answer: %w", err)
 		}
+
+	}
+
+	err = db.Create(&respondent).Error
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
 
 	return respondent.ResponseID, nil
