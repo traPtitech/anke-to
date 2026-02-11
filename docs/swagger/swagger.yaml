@@ -338,7 +338,7 @@ paths: # TODO 変数の命名を確認する
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TraqMe"
+                $ref: "#/components/schemas/TraqUser"
         "404":
           description: 対象ユーザーが見つかりませんでした
         "500":
@@ -1152,21 +1152,31 @@ components:
         name:
           type: string
           description: traQ ID
+        icon_file_id:
+          type: string
+          format: uuid
+        is_bot:
+          type: boolean
       required:
         - id
         - name
-    TraqMe:
+        - icon_file_id
+        - is_bot
+    TraqUserGroupMember:
       type: object
       properties:
         id:
           type: string
-          description: traQ ID
-        uuid:
-          type: string
           format: uuid
+        role:
+          type: string
       required:
         - id
-        - uuid
+        - role
+    TraqUserGroupMembers:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqUserGroupMember"
     TraqGroups:
       type: array
       items:
@@ -1179,9 +1189,12 @@ components:
           format: uuid
         name:
           type: string
+        members:
+          $ref: "#/components/schemas/TraqUserGroupMembers"
       required:
         - id
         - name
+        - members
     TraqStamps:
       type: array
       items:
@@ -1194,9 +1207,13 @@ components:
           format: uuid
         name:
           type: string
+        file_id:
+          type: string
+          format: uuid
       required:
         - id
         - name
+        - file_id
     TraqChannels:
       type: array
       items:

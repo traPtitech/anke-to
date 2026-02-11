@@ -28,9 +28,17 @@ func (h Handler) GetTraqUsers(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq user uuid: %w", err))
 		}
 
+		userIconFileUUID, err := parseOpenAPIUUID(user.IconFileId)
+		if err != nil {
+			ctx.Logger().Errorf("invalid user icon file uuid: %s", user.IconFileId)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user icon file uuid: %w", err))
+		}
+
 		traqUsers = append(traqUsers, openapi.TraqUser{
-			Id:   userUUID,
-			Name: user.Name,
+			IconFileId: userIconFileUUID,
+			Id:         userUUID,
+			IsBot:      user.Bot,
+			Name:       user.Name,
 		})
 	}
 
@@ -56,15 +64,23 @@ func (h Handler) GetTraqUsersMe(ctx echo.Context) error {
 
 	// 最初のユーザーを使用（GetUsersByNameは名前でフィルタリング済み）
 	user := users[0]
-	userUUID, err := uuid.Parse(user.Id)
+	userUUID, err := parseOpenAPIUUID(user.Id)
 	if err != nil {
 		ctx.Logger().Errorf("invalid user uuid: %s", user.Id)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user uuid: %w", err))
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.TraqMe{
-		Id:   userID,
-		Uuid: openapi_types.UUID(userUUID),
+	userIconFileUUID, err := parseOpenAPIUUID(user.IconFileId)
+	if err != nil {
+		ctx.Logger().Errorf("invalid user icon file uuid: %s", user.IconFileId)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid user icon file uuid: %w", err))
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.TraqUser{
+		IconFileId: userIconFileUUID,
+		Id:         userUUID,
+		IsBot:      user.Bot,
+		Name:       user.Name,
 	})
 }
 
@@ -84,9 +100,28 @@ func (h Handler) GetTraqGroups(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq group uuid: %w", err))
 		}
 
+		groupMembers := make(openapi.TraqUserGroupMembers, 0, len(group.Members))
+		if err != nil {
+			ctx.Logger().Errorf("failed to make traq group members: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make traq group members: %w", err))
+		}
+		for _, member := range group.Members {
+			memberUUID, err := parseOpenAPIUUID(member.Id)
+			if err != nil {
+				ctx.Logger().Errorf("invalid traq group member uuid: %s", member.Id)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq group member uuid: %w", err))
+			}
+
+			groupMembers = append(groupMembers, openapi.TraqUserGroupMember{
+				Id:   memberUUID,
+				Role: member.Role,
+			})
+		}
+
 		traqGroups = append(traqGroups, openapi.TraqGroup{
-			Id:   groupUUID,
-			Name: group.Name,
+			Id:      groupUUID,
+			Members: groupMembers,
+			Name:    group.Name,
 		})
 	}
 
@@ -109,9 +144,16 @@ func (h Handler) GetTraqStamps(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq stamp uuid: %w", err))
 		}
 
+		fileUUID, err := parseOpenAPIUUID(stamp.FileId)
+		if err != nil {
+			ctx.Logger().Errorf("invalid traq stamp file uuid: %s", stamp.FileId)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq stamp file uuid: %w", err))
+		}
+
 		traqStamps = append(traqStamps, openapi.TraqStamp{
-			Id:   stampUUID,
-			Name: stamp.Name,
+			FileId: fileUUID,
+			Id:     stampUUID,
+			Name:   stamp.Name,
 		})
 	}
 

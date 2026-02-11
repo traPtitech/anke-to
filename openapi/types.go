@@ -662,8 +662,9 @@ type TraqChannels = []TraqChannel
 
 // TraqGroup defines model for TraqGroup.
 type TraqGroup struct {
-	Id   openapi_types.UUID `json:"id"`
-	Name string             `json:"name"`
+	Id      openapi_types.UUID   `json:"id"`
+	Members TraqUserGroupMembers `json:"members"`
+	Name    string               `json:"name"`
 }
 
 // TraqGroups defines model for TraqGroups.
@@ -672,17 +673,11 @@ type TraqGroups = []TraqGroup
 // TraqId traQ ID
 type TraqId = string
 
-// TraqMe defines model for TraqMe.
-type TraqMe struct {
-	// Id traQ ID
-	Id   string             `json:"id"`
-	Uuid openapi_types.UUID `json:"uuid"`
-}
-
 // TraqStamp defines model for TraqStamp.
 type TraqStamp struct {
-	Id   openapi_types.UUID `json:"id"`
-	Name string             `json:"name"`
+	FileId openapi_types.UUID `json:"file_id"`
+	Id     openapi_types.UUID `json:"id"`
+	Name   string             `json:"name"`
 }
 
 // TraqStamps defines model for TraqStamps.
@@ -690,11 +685,22 @@ type TraqStamps = []TraqStamp
 
 // TraqUser defines model for TraqUser.
 type TraqUser struct {
-	Id openapi_types.UUID `json:"id"`
+	IconFileId openapi_types.UUID `json:"icon_file_id"`
+	Id         openapi_types.UUID `json:"id"`
+	IsBot      bool               `json:"is_bot"`
 
 	// Name traQ ID
 	Name string `json:"name"`
 }
+
+// TraqUserGroupMember defines model for TraqUserGroupMember.
+type TraqUserGroupMember struct {
+	Id   openapi_types.UUID `json:"id"`
+	Role string             `json:"role"`
+}
+
+// TraqUserGroupMembers defines model for TraqUserGroupMembers.
+type TraqUserGroupMembers = []TraqUserGroupMember
 
 // TraqUsers defines model for TraqUsers.
 type TraqUsers = []TraqUser
