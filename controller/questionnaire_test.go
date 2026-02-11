@@ -2777,7 +2777,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 		} else {
 			assertion.Nil(response.Respondent, testCase.description, "respondent")
 		}
-		assertion.Equal(testCase.args.isAnonymous, *response.IsAnonymous, testCase.description, "is anonymous")
+		assertion.Equal(testCase.args.isAnonymous, response.IsAnonymous, testCase.description, "is anonymous")
 
 		if testCase.args.params.IsDraft {
 			assertion.Equal(response.SubmittedAt, time.Time{}, testCase.description, "submitted at")

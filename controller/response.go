@@ -129,8 +129,8 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 
 		responses := responseLists[questionnaireID]
 		res = append(res, openapi.ResponseWithQuestionnaireInfoItem{
-			QuestionnaireInfo: &questionnaireInfo,
-			Responses:         &responses,
+			QuestionnaireInfo: questionnaireInfo,
+			Responses:         responses,
 		})
 	}
 
