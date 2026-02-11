@@ -552,7 +552,7 @@ type Response struct {
 	QuestionnaireId int            `json:"questionnaire_id"`
 
 	// Respondent traQ ID
-	Respondent  TraqId    `json:"respondent"`
+	Respondent  *TraqId   `json:"respondent,omitempty"`
 	ResponseId  int       `json:"response_id"`
 	SubmittedAt time.Time `json:"submitted_at"`
 }
