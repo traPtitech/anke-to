@@ -42,7 +42,7 @@ func (r *Responses) BeforeUpdate(_ *gorm.DB) error {
 
 // TableName テーブル名が単数形なのでその対応
 func (*Responses) TableName() string {
-	return "response"
+	return "responses"
 }
 
 // ResponseBody 質問に対する回答の構造体

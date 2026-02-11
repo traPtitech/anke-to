@@ -42,9 +42,8 @@ func (questionnaire *Questions) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-// TableName テーブル名が単数形なのでその対応
 func (*Questions) TableName() string {
-	return "question"
+	return "questions"
 }
 
 // QuestionIDType 質問のIDと種類の構造体
