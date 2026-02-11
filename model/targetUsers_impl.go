@@ -13,7 +13,7 @@ func NewTargetUser() *TargetUser {
 	return new(TargetUser)
 }
 
-// TargetUsers targets_usersテーブルの構造体
+// TargetUsers target_usersテーブルの構造体
 type TargetUsers struct {
 	QuestionnaireID int    `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`

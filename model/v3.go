@@ -75,7 +75,7 @@ type v3TargetUsers struct {
 }
 
 func (*v3TargetUsers) TableName() string {
-	return "targets_users"
+	return "target_users"
 }
 
 type v3TargetGroups struct {
@@ -84,7 +84,7 @@ type v3TargetGroups struct {
 }
 
 func (*v3TargetGroups) TableName() string {
-	return "targets_groups"
+	return "target_groups"
 }
 
 type v3AdministratorUsers struct {
