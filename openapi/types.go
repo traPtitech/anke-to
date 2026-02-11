@@ -662,8 +662,9 @@ type TraqChannels = []TraqChannel
 
 // TraqGroup defines model for TraqGroup.
 type TraqGroup struct {
-	Id   openapi_types.UUID `json:"id"`
-	Name string             `json:"name"`
+	Id      openapi_types.UUID   `json:"id"`
+	Members TraqUserGroupMembers `json:"members"`
+	Name    string               `json:"name"`
 }
 
 // TraqGroups defines model for TraqGroups.

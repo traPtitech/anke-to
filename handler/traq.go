@@ -93,9 +93,28 @@ func (h Handler) GetTraqGroups(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq group uuid: %w", err))
 		}
 
+		groupMembers := make(openapi.TraqUserGroupMembers, 0, len(group.Members))
+		if err != nil {
+			ctx.Logger().Errorf("failed to make traq group members: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make traq group members: %w", err))
+		}
+		for _, member := range group.Members {
+			memberUUID, err := parseOpenAPIUUID(member.Id)
+			if err != nil {
+				ctx.Logger().Errorf("invalid traq group member uuid: %s", member.Id)
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq group member uuid: %w", err))
+			}
+
+			groupMembers = append(groupMembers, openapi.TraqUserGroupMember{
+				Id:   memberUUID,
+				Role: member.Role,
+			})
+		}
+
 		traqGroups = append(traqGroups, openapi.TraqGroup{
-			Id:   groupUUID,
-			Name: group.Name,
+			Id:      groupUUID,
+			Members: groupMembers,
+			Name:    group.Name,
 		})
 	}
 

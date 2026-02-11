@@ -1210,9 +1210,12 @@ components:
           format: uuid
         name:
           type: string
+        members:
+          $ref: "#/components/schemas/TraqUserGroupMembers"
       required:
         - id
         - name
+        - members
     TraqStamps:
       type: array
       items:
