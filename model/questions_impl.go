@@ -177,8 +177,8 @@ func (*Question) CheckQuestionAdmin(ctx context.Context, userID string, question
 
 	err = db.
 		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
-		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
-		Select("question.id").
+		Where("questions.id = ? AND administrators.user_traqid = ?", questionID, userID).
+		Select("questions.id").
 		First(&Questions{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
