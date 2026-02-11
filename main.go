@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -54,6 +55,10 @@ func main() {
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		panic("no PORT")
+	}
+	traqBotToken, ok := os.LookupEnv("TRAQ_BOT_TOKEN")
+	if !ok || strings.TrimSpace(traqBotToken) == "" {
+		panic("no TRAQ_BOT_TOKEN")
 	}
 
 	e := echo.New()
