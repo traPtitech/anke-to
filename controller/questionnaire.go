@@ -286,7 +286,16 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
 				return err
 			}
-			questionType := questionParsed["question_type"].(string)
+			questionTypeRaw, ok := questionParsed["question_type"]
+			if !ok {
+				c.Logger().Errorf("question type is required")
+				return errors.New("question type is required")
+			}
+			questionType, ok := questionTypeRaw.(string)
+			if !ok {
+				c.Logger().Errorf("question type must be string")
+				return errors.New("question type must be string")
+			}
 			switch questionType {
 			case "Text":
 				questionType = "Text"
@@ -599,7 +608,16 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
 				return err
 			}
-			questionType := questionParsed["question_type"].(string)
+			questionTypeRaw, ok := questionParsed["question_type"]
+			if !ok {
+				c.Logger().Errorf("question type is required")
+				return errors.New("question type is required")
+			}
+			questionType, ok := questionTypeRaw.(string)
+			if !ok {
+				c.Logger().Errorf("question type must be string")
+				return errors.New("question type must be string")
+			}
 			switch questionType {
 			case "Text":
 				questionType = "Text"
