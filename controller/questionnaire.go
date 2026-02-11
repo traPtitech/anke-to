@@ -75,7 +75,25 @@ func NewQuestionnaire(
 	}
 }
 
-const MaxTitleLength = 50
+const (
+	MaxTitleLength               = 50
+	responseDueDateTimeTolerance = 5 * time.Second
+)
+
+func normalizeResponseDueDateTime(responseDueDateTime *null.Time, now time.Time) error {
+	if !responseDueDateTime.Valid {
+		return nil
+	}
+
+	if responseDueDateTime.ValueOrZero().Before(now) {
+		if now.Sub(responseDueDateTime.ValueOrZero()) > responseDueDateTimeTolerance {
+			return errors.New("invalid resTimeLimit")
+		}
+		responseDueDateTime.Time = now
+	}
+
+	return nil
+}
 
 func maxLengthPattern(maxLength *int) string {
 	if maxLength == nil {
@@ -183,12 +201,9 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if responseDueDateTime.Valid {
-		isBefore := responseDueDateTime.ValueOrZero().Before(time.Now())
-		if isBefore {
-			c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
-			return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
-		}
+	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
+		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
 
 	questionnaireID := 0
@@ -418,7 +433,8 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		}
 
 		if params.ResponseDueDateTime != nil {
-			err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
+			dueDateTime := responseDueDateTime.Time
+			err = q.PushReminder(questionnaireID, &dueDateTime)
 			if err != nil {
 				c.Logger().Errorf("failed to push reminder: %+v", err)
 				return err
@@ -475,12 +491,9 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if responseDueDateTime.Valid {
-		isBefore := responseDueDateTime.ValueOrZero().Before(time.Now())
-		if isBefore {
-			c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
-		}
+	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
 
 	if len(params.Title) == 0 || len(params.Title) > MaxTitleLength {
@@ -849,7 +862,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 			return err
 		}
 		if params.ResponseDueDateTime != nil {
-			err = q.PushReminder(questionnaireID, params.ResponseDueDateTime)
+			dueDateTime := responseDueDateTime.Time
+			err = q.PushReminder(questionnaireID, &dueDateTime)
 			if err != nil {
 				c.Logger().Errorf("failed to push reminder: %+v", err)
 				return err
