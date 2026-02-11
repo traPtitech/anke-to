@@ -60,9 +60,9 @@ type v3Questionnaires struct {
 	TargetGroups             []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions                []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents              []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	IsPublished              bool             `json:"is_published" gorm:"type:boolean;default:false"`
+	IsPublished              bool             `json:"is_published" gorm:"type:boolean;not null;default:true"`
 	IsAnonymous              bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
-	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
+	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:true"`
 }
 
 func (*v3Questionnaires) TableName() string {
