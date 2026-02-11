@@ -55,19 +55,18 @@ func main() {
 		e.Use(api.Middleware.SetUserIDMiddleware)
 
 		mws := NewMiddlewareSwitcher()
-		mws.AddGroupConfig("", api.Middleware.TraPMemberAuthenticate)
+		mws.AddGroupConfig("/api", api.Middleware.TraPMemberAuthenticate)
 
-		mws.AddRouteConfig("/questionnaires", http.MethodGet, api.Middleware.TrapRateLimitMiddlewareFunc())
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodGet, api.Middleware.QuestionnaireReadAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodPatch, api.Middleware.QuestionnaireAdministratorAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID", http.MethodDelete, api.Middleware.QuestionnaireAdministratorAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID/responses", http.MethodPost, api.Middleware.QuestionnaireReadAuthenticate)
-		mws.AddRouteConfig("/questionnaires/:questionnaireID/responses", http.MethodGet, api.Middleware.ResultAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires", http.MethodGet, api.Middleware.TrapRateLimitMiddlewareFunc())
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID", http.MethodGet, api.Middleware.QuestionnaireReadAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID", http.MethodPatch, api.Middleware.QuestionnaireAdministratorAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID", http.MethodDelete, api.Middleware.QuestionnaireAdministratorAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID/responses", http.MethodPost, api.Middleware.QuestionnaireReadAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID/responses", http.MethodGet, api.Middleware.ResultAuthenticate)
 
-		mws.AddRouteConfig("/responses/:responseID", http.MethodGet, api.Middleware.ResponseReadAuthenticate)
-		mws.AddRouteConfig("/responses/:responseID", http.MethodPatch, api.Middleware.RespondentAuthenticate)
-		mws.AddRouteConfig("/responses/:responseID", http.MethodDelete, api.Middleware.RespondentAuthenticate)
-
+		mws.AddRouteConfig("/api/responses/:responseID", http.MethodGet, api.Middleware.ResponseReadAuthenticate)
+		mws.AddRouteConfig("/api/responses/:responseID", http.MethodPatch, api.Middleware.RespondentAuthenticate)
+		mws.AddRouteConfig("/api/responses/:responseID", http.MethodDelete, api.Middleware.RespondentAuthenticate)
 		e.Use(mws.ApplyMiddlewares)
 
 		openapi.RegisterHandlersWithBaseURL(e, api, "/api")
