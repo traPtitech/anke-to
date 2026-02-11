@@ -346,7 +346,7 @@ func TestGetMyResponses(t *testing.T) {
 				switch *testCase.args.params.Sort {
 				case "submitted_at":
 					var preCreatedAt time.Time
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if !preCreatedAt.IsZero() {
 							assertion.False(preCreatedAt.After(response.SubmittedAt), testCase.description, "submitted_at")
 						}
@@ -354,7 +354,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 				case "-submitted_at":
 					var preCreatedAt time.Time
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if !preCreatedAt.IsZero() {
 							assertion.False(preCreatedAt.Before(response.SubmittedAt), testCase.description, "-submitted_at")
 						}
@@ -362,7 +362,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 				case "traqid":
 					var preTraqID string
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if preTraqID != "" {
 							assertion.False(preTraqID > *response.Respondent, testCase.description, "traqid")
 						}
@@ -370,7 +370,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 				case "-traqid":
 					var preTraqID string
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if preTraqID != "" {
 							assertion.False(preTraqID < *response.Respondent, testCase.description, "-traqid")
 						}
@@ -378,7 +378,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 				case "modified_at":
 					var preModifiedAt time.Time
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if !preModifiedAt.IsZero() {
 							assertion.False(preModifiedAt.After(response.ModifiedAt), testCase.description, "modified_at")
 						}
@@ -386,7 +386,7 @@ func TestGetMyResponses(t *testing.T) {
 					}
 				case "-modified_at":
 					var preModifiedAt time.Time
-					for _, response := range *responseList.Responses {
+					for _, response := range responseList.Responses {
 						if !preModifiedAt.IsZero() {
 							assertion.False(preModifiedAt.Before(response.ModifiedAt), testCase.description, "-modified_at")
 						}
@@ -399,7 +399,7 @@ func TestGetMyResponses(t *testing.T) {
 		if testCase.expect.responseIDList != nil {
 			responseIDList := []int{}
 			for _, responseList := range responseLists {
-				for _, response := range *responseList.Responses {
+				for _, response := range responseList.Responses {
 					responseIDList = append(responseIDList, response.ResponseId)
 				}
 			}
@@ -411,7 +411,7 @@ func TestGetMyResponses(t *testing.T) {
 		}
 
 		for _, responseList := range responseLists {
-			for _, response := range *responseList.Responses {
+			for _, response := range responseList.Responses {
 				assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response with no respondent")
 			}
 		}
@@ -555,7 +555,7 @@ func TestGetResponse(t *testing.T) {
 		if !testCase.args.isAnonymousQuestionnaire {
 			assertion.Equal(response0.Body, response.Body, testCase.description, "response body")
 			if response.Respondent != nil {
-				assertion.Equal(*response0.IsAnonymous, *response.IsAnonymous, testCase.description, "response isAnonymous")
+				assertion.Equal(response0.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
 			} else {
 				assertion.Equal(response0.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
 			}
@@ -573,7 +573,7 @@ func TestGetResponse(t *testing.T) {
 		} else {
 			assertion.Equal(response1.Body, response.Body, testCase.description, "response body")
 			if response.Respondent != nil {
-				assertion.Equal(*response1.IsAnonymous, *response.IsAnonymous, testCase.description, "response isAnonymous")
+				assertion.Equal(response1.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
 			} else {
 				assertion.Equal(response1.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
 			}

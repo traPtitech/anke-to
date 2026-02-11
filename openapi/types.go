@@ -546,7 +546,7 @@ type ResShareType string
 // Response defines model for Response.
 type Response struct {
 	Body            []ResponseBody `json:"body"`
-	IsAnonymous     *bool          `json:"is_anonymous,omitempty"`
+	IsAnonymous     bool           `json:"is_anonymous"`
 	IsDraft         bool           `json:"is_draft"`
 	ModifiedAt      time.Time      `json:"modified_at"`
 	QuestionnaireId int            `json:"questionnaire_id"`
@@ -637,8 +637,8 @@ type ResponseSortType string
 
 // ResponseWithQuestionnaireInfoItem 同じアンケートの回答情報をまとめて返す。
 type ResponseWithQuestionnaireInfoItem struct {
-	QuestionnaireInfo *QuestionnaireInfo `json:"questionnaire_info,omitempty"`
-	Responses         *[]Response        `json:"responses,omitempty"`
+	QuestionnaireInfo QuestionnaireInfo `json:"questionnaire_info"`
+	Responses         []Response        `json:"responses"`
 }
 
 // Responses defines model for Responses.

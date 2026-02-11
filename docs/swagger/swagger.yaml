@@ -985,6 +985,7 @@ components:
                 $ref: "#/components/schemas/ResponseBody"
           required:
             - response_id
+            - is_anonymous
             - submitted_at
             - modified_at
             - is_draft
@@ -1022,6 +1023,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Response"
+      required:
+        - questionnaire_info
+        - responses
       description: |
         同じアンケートの回答情報をまとめて返す。
     NewResponseBody:
