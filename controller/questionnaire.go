@@ -894,9 +894,32 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 			return err
 		}
 
+		err = q.DeleteTargetUsers(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete target users: %+v", err)
+			return err
+		}
+
+		err = q.DeleteTargetGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete target groups: %+v", err)
+			return err
+		}
+
 		err = q.DeleteAdministrators(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		err = q.DeleteAdministratorUsers(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrator users: %+v", err)
+			return err
+		}
+		err = q.DeleteAdministratorGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrator groups: %+v", err)
 			return err
 		}
 
@@ -908,7 +931,7 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 		for _, question := range questions {
 			err = q.DeleteQuestion(ctx, question.ID)
 			if err != nil {
-				c.Logger().Errorf("failed to delete administrators: %+v", err)
+				c.Logger().Errorf("failed to delete question: %+v", err)
 				return err
 			}
 		}
