@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
@@ -10,7 +10,7 @@ servers:
     description: local
 info:
   title: anke-to API
-  version: 1.0.0-oas3
+  version: v3
   description: anke-to API
   contact:
     name: traP
