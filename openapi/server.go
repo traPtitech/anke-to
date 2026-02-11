@@ -59,9 +59,6 @@ type ServerInterface interface {
 	// (GET /traq/groups)
 	GetTraqGroups(ctx echo.Context) error
 
-	// (GET /traq/groups/{traqGroupID}/members)
-	GetTraqGroupMembers(ctx echo.Context, traqGroupID string) error
-
 	// (GET /traq/stamps)
 	GetTraqStamps(ctx echo.Context) error
 
@@ -393,22 +390,6 @@ func (w *ServerInterfaceWrapper) GetTraqGroups(ctx echo.Context) error {
 	return err
 }
 
-// GetTraqGroupMembers converts echo context to params.
-func (w *ServerInterfaceWrapper) GetTraqGroupMembers(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "traqGroupID" -------------
-	var traqGroupID string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "traqGroupID", ctx.Param("traqGroupID"), &traqGroupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter traqGroupID: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetTraqGroupMembers(ctx, traqGroupID)
-	return err
-}
-
 // GetTraqStamps converts echo context to params.
 func (w *ServerInterfaceWrapper) GetTraqStamps(ctx echo.Context) error {
 	var err error
@@ -479,7 +460,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PATCH(baseURL+"/responses/:responseID", wrapper.EditResponse)
 	router.GET(baseURL+"/traq/channels", wrapper.GetTraqChannels)
 	router.GET(baseURL+"/traq/groups", wrapper.GetTraqGroups)
-	router.GET(baseURL+"/traq/groups/:traqGroupID/members", wrapper.GetTraqGroupMembers)
 	router.GET(baseURL+"/traq/stamps", wrapper.GetTraqStamps)
 	router.GET(baseURL+"/traq/users", wrapper.GetTraqUsers)
 	router.GET(baseURL+"/traq/users/me", wrapper.GetTraqUsersMe)

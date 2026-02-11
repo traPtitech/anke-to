@@ -121,30 +121,6 @@ func (h Handler) GetTraqGroups(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, traqGroups)
 }
 
-// (GET /traq/groups/{traqGroupID}/members)
-func (h Handler) GetTraqGroupMembers(ctx echo.Context, traqGroupID string) error {
-	members, err := h.TraqClient.GetGroupMembers(ctx.Request().Context(), traqGroupID)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get traq group members: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get traq group members: %w", err))
-	}
-
-	traqGroupMembers := make(openapi.TraqUserGroupMembers, 0, len(members))
-	for _, member := range members {
-		memberUUID, err := parseOpenAPIUUID(member.Id)
-		if err != nil {
-			ctx.Logger().Errorf("invalid traq group member uuid: %s", member.Id)
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invalid traq group member uuid: %w", err))
-		}
-
-		traqGroupMembers = append(traqGroupMembers, openapi.TraqUserGroupMember{
-			Id:   memberUUID,
-			Role: member.Role,
-		})
-	}
-	return ctx.JSON(http.StatusOK, traqGroupMembers)
-}
-
 // (GET /traq/stamps)
 func (h Handler) GetTraqStamps(ctx echo.Context) error {
 	stamps, err := h.TraqClient.GetStamps(ctx.Request().Context())
