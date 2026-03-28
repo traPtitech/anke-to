@@ -15,7 +15,7 @@ func NewTargetGroup() *TargetGroup {
 	return new(TargetGroup)
 }
 
-// TargetGroups targets_groupsテーブルの構造体
+// TargetGroups target_groupsテーブルの構造体
 type TargetGroups struct {
 	QuestionnaireID int       `gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	GroupID         uuid.UUID `gorm:"type:char(36);size:36;not null;primaryKey"`
