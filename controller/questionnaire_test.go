@@ -1933,7 +1933,7 @@ func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
+		t.Run(testCase.description, func(*testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
 			rec := httptest.NewRecorder()
 			ctx := e.NewContext(req, rec)
