@@ -37,7 +37,7 @@ func v3() *gormigrate.Migration {
 			if err := tx.Exec("INSERT INTO administrator_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM administrators").Error; err != nil {
 				return err
 			}
-			if err := tx.AutoMigrate(&v3Questions{}); err != nil {
+			if err := tx.AutoMigrate(&v3Question{}); err != nil {
 				return err
 			}
 			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
@@ -117,7 +117,7 @@ func (*v3AdministratorGroups) TableName() string {
 	return "administrator_groups"
 }
 
-type v3Questions struct {
+type v3Question struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);not null"`
 	PageNum         int            `json:"page_num"            gorm:"type:int(11);not null"`
@@ -134,6 +134,6 @@ type v3Questions struct {
 	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
 }
 
-func (*v3Questions) TableName() string {
+func (*v3Question) TableName() string {
 	return "question"
 }
