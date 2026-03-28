@@ -11,6 +11,8 @@ var (
 	ErrInvalidRegex = errors.New("invalid regexp")
 	// ErrRecordNotFound record not found
 	ErrRecordNotFound = errors.New("record not found")
+	// ErrTargetNotFound target not found
+	ErrTargetNotFound = errors.New("target not found")
 	// ErrNoRecordUpdated no record updated
 	ErrNoRecordUpdated = errors.New("no record updated")
 	// ErrNoRecordDeleted no record deleted
