@@ -203,12 +203,6 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 		return echo.NewHTTPError(http.StatusMethodNotAllowed, fmt.Errorf("unable edit the expired response"))
 	}
 
-	err = r.IResponse.DeleteResponse(ctx.Request().Context(), responseID)
-	if err != nil {
-		ctx.Logger().Errorf("failed to delete response: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
-	}
-
 	respondentDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
@@ -331,9 +325,14 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	}
 
 	err = r.ITransaction.Do(ctx.Request().Context(), nil, func(c context.Context) error {
+		err := r.IResponse.DeleteResponse(c, responseID)
+		if err != nil {
+			ctx.Logger().Errorf("failed to delete response: %+v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
+		}
 		if !respondentDetail.SubmittedAt.Valid {
 			if !req.IsDraft {
-				err := r.IRespondent.UpdateSubmittedAt(c, responseID)
+				err = r.IRespondent.UpdateSubmittedAt(c, responseID)
 				if err != nil {
 					ctx.Logger().Errorf("failed to update submitted at: %+v", err)
 					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update submitted at: %w", err))
@@ -345,7 +344,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("unable to update the response to draft"))
 			}
 		}
-		err := r.IRespondent.UpdateModifiedAt(c, responseID)
+		err = r.IRespondent.UpdateModifiedAt(c, responseID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to update modified at: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to update modified at: %w", err))
