@@ -306,6 +306,16 @@ func TestGetQuestionnaires(t *testing.T) {
 			},
 		},
 		{
+			description: "valid auto only administrated by me",
+			args: args{
+				userID: userFive,
+				params: openapi.GetQuestionnairesParams{},
+			},
+			expect: expect{
+				questionnaireIDList: &[]int{},
+			},
+		},
+		{
 			description: "invalid param sort",
 			args: args{
 				userID: userOne,
@@ -1958,7 +1968,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response02, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -2048,7 +2058,6 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response03.ResponseId,
 				},
 			},
 		},
@@ -2152,6 +2161,22 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 			expect: expect{
 				responseIDList: &[]int{},
+			},
+		},
+		{
+			description: "isDraft true forces only my response",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constFalse,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				responseIDList: &[]int{
+					response02.ResponseId,
+				},
 			},
 		},
 		{
