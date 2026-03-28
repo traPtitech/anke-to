@@ -178,7 +178,7 @@ paths: # TODO 変数の命名を確認する
       operationId: getQuestionnaireResponses
       tags:
         - questionnaire
-      description: アンケートの全ての回答を取得します。匿名回答の場合はRespondentが空文字列になります。
+      description: アンケートの全ての回答を取得します。匿名回答の場合はrespondentを返しません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
@@ -967,6 +967,8 @@ components:
               example: 1
             respondent:
               $ref: "#/components/schemas/TraqId"
+              description: |
+                回答者のtraQ ID。匿名回答の場合は返しません。
             is_anonymous:
               type: boolean
               example: true
