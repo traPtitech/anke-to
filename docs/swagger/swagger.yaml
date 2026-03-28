@@ -966,7 +966,8 @@ components:
               type: integer
               example: 1
             respondent:
-              $ref: "#/components/schemas/TraqId"
+              allOf:
+                - $ref: "#/components/schemas/TraqId"
               description: |
                 回答者のtraQ ID。匿名回答の場合は返しません。
             is_anonymous:
