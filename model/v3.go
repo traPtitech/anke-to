@@ -12,7 +12,7 @@ import (
 func v3() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "3",
-		Migrate: func(tx *gorm.DB) error {
+		Migrate: func(tx *gorm.DB) (err error) {
 			if err := tx.AutoMigrate(&v3Targets{}); err != nil {
 				return err
 			}
@@ -40,19 +40,18 @@ func v3() *gormigrate.Migration {
 			if err := tx.Exec("SET FOREIGN_KEY_CHECKS = 0").Error; err != nil {
 				return err
 			}
+			defer func() {
+				if restoreErr := tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; restoreErr != nil && err == nil {
+					err = restoreErr
+				}
+			}()
 			if err := tx.Migrator().RenameTable("question", "questions"); err != nil {
-				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
 				return err
 			}
 			if err := tx.AutoMigrate(&v3Questions{}); err != nil {
-				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
 				return err
 			}
 			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
-				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
-				return err
-			}
-			if err := tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; err != nil {
 				return err
 			}
 			return nil
