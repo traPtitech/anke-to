@@ -164,7 +164,7 @@ type v3QuestionForeignKeyColumn struct {
 	DeleteRule           string `gorm:"column:DELETE_RULE"`
 }
 
-var v3ReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
+var v3ValidReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
 
 func migrateQuestionForeignKeys(tx *gorm.DB) error {
 	const fkQuery = `
@@ -187,11 +187,11 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		return nil
 	}
 
-	type fkKey struct {
+	type foreignKeyIdentifier struct {
 		constraintName string
 		tableName      string
 	}
-	type fkDefinition struct {
+	type foreignKeyDefinition struct {
 		columns       []string
 		refColumns    []string
 		updateRule    string
@@ -200,9 +200,9 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		table         string
 	}
 
-	definitions := map[fkKey]*fkDefinition{}
+	definitions := map[foreignKeyIdentifier]*foreignKeyDefinition{}
 	for _, column := range columns {
-		key := fkKey{
+		key := foreignKeyIdentifier{
 			constraintName: column.ConstraintName,
 			tableName:      column.TableName,
 		}
@@ -216,7 +216,7 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 			if err != nil {
 				return err
 			}
-			definition = &fkDefinition{
+			definition = &foreignKeyDefinition{
 				columns:    []string{},
 				refColumns: []string{},
 				updateRule: updateRule,
@@ -271,10 +271,10 @@ func joinIdentifiers(identifiers []string) string {
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	for _, action := range v3ReferentialActions {
+	for _, action := range v3ValidReferentialActions {
 		if rule == action {
 			return rule, nil
 		}
 	}
-	return "", fmt.Errorf("unexpected referential action: %s", rule)
+	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActions)
 }
