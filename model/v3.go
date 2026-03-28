@@ -156,6 +156,13 @@ const (
 )
 
 var v3ValidReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
+var v3ValidReferentialActionSet = map[string]struct{}{
+	"CASCADE":     {},
+	"RESTRICT":    {},
+	"SET NULL":    {},
+	"NO ACTION":   {},
+	"SET DEFAULT": {},
+}
 
 func (*v3Questions) TableName() string {
 	return v3QuestionsTableName
@@ -281,8 +288,20 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 }
 
 func quoteIdentifier(identifier string) (string, error) {
-	if strings.ContainsRune(identifier, '\x00') {
+	if identifier == "" {
 		return "", fmt.Errorf("invalid identifier %q", identifier)
+	}
+	if len(identifier) > 64 {
+		return "", fmt.Errorf("invalid identifier %q: exceeds 64 characters", identifier)
+	}
+	if strings.ContainsRune(identifier, '\x00') {
+		return "", fmt.Errorf("invalid identifier %q: contains null byte", identifier)
+	}
+	for _, r := range identifier {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '$' || r == '-' {
+			continue
+		}
+		return "", fmt.Errorf("invalid identifier %q: contains %q", identifier, r)
 	}
 	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`", nil
 }
@@ -300,10 +319,8 @@ func joinIdentifiers(identifiers []string) (string, error) {
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	for _, action := range v3ValidReferentialActions {
-		if rule == action {
-			return rule, nil
-		}
+	if _, ok := v3ValidReferentialActionSet[rule]; ok {
+		return rule, nil
 	}
 	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActions)
 }
