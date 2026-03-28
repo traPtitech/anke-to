@@ -50,15 +50,14 @@ func migrateQuestionTable(tx *gorm.DB) error {
 	case hasQuestion && hasQuestions:
 		return fmt.Errorf("both %s and %s tables exist", v3LegacyQuestionsTableName, v3QuestionsTableName)
 	case hasQuestion:
-		definitions, err := loadLegacyQuestionForeignKeys(tx)
+		definitions, err := loadQuestionForeignKeys(tx, v3LegacyQuestionsTableName)
 		if err != nil {
 			return err
 		}
-		newForeignKeySQLs, err := buildQuestionForeignKeySQLs(definitions, v3QuestionsTableName)
-		if err != nil {
+		if err := saveQuestionForeignKeyBackup(tx, definitions); err != nil {
 			return err
 		}
-		legacyForeignKeySQLs, err := buildQuestionForeignKeySQLs(definitions, v3LegacyQuestionsTableName)
+		newForeignKeySQLs, err := buildQuestionForeignKeySQLs(definitions, v3QuestionsTableName, nil)
 		if err != nil {
 			return err
 		}
@@ -66,16 +65,22 @@ func migrateQuestionTable(tx *gorm.DB) error {
 			return err
 		}
 		if err := tx.Migrator().RenameTable(v3LegacyQuestionsTableName, v3QuestionsTableName); err != nil {
-			return restoreLegacyQuestionForeignKeys(tx, legacyForeignKeySQLs, err)
+			return err
 		}
 		if err := tx.AutoMigrate(&v3Questions{}); err != nil {
-			return rollbackQuestionRename(tx, legacyForeignKeySQLs, err)
+			return err
 		}
 		if err := execSQLStatements(tx, newForeignKeySQLs); err != nil {
-			return rollbackQuestionRename(tx, legacyForeignKeySQLs, err)
+			return err
+		}
+		if err := clearQuestionForeignKeyBackup(tx); err != nil {
+			return err
 		}
 	case hasQuestions:
 		if err := tx.AutoMigrate(&v3Questions{}); err != nil {
+			return err
+		}
+		if err := restoreQuestionForeignKeysFromBackup(tx); err != nil {
 			return err
 		}
 	default:
@@ -177,6 +182,20 @@ type v3QuestionForeignKeyDefinition struct {
 	table      string
 }
 
+type v3QuestionForeignKeyBackup struct {
+	ConstraintName       string `gorm:"column:constraint_name;type:varchar(64);not null;primaryKey"`
+	TableName            string `gorm:"column:table_name;type:varchar(64);not null;primaryKey"`
+	ColumnName           string `gorm:"column:column_name;type:varchar(64);not null;primaryKey"`
+	ReferencedColumnName string `gorm:"column:referenced_column_name;type:varchar(64);not null"`
+	OrdinalPosition      int    `gorm:"column:ordinal_position;type:int(11);not null"`
+	UpdateRule           string `gorm:"column:update_rule;type:varchar(30);not null"`
+	DeleteRule           string `gorm:"column:delete_rule;type:varchar(30);not null"`
+}
+
+func (*v3QuestionForeignKeyBackup) TableName() string {
+	return v3QuestionForeignKeyBackupTableName
+}
+
 type v3QuestionForeignKeyColumn struct {
 	ConstraintName       string `gorm:"column:CONSTRAINT_NAME"`
 	TableName            string `gorm:"column:TABLE_NAME"`
@@ -190,6 +209,7 @@ type v3QuestionForeignKeyColumn struct {
 const (
 	v3LegacyQuestionsTableName = "question"
 	v3QuestionsTableName       = "questions"
+	v3QuestionForeignKeyBackupTableName = "migration_v3_question_foreign_keys"
 )
 
 var v3ReferentialActions = map[string]struct{}{
@@ -214,7 +234,7 @@ func dropQuestionForeignKeys(tx *gorm.DB, definitions []v3QuestionForeignKeyDefi
 	return nil
 }
 
-func buildQuestionForeignKeySQLs(definitions []v3QuestionForeignKeyDefinition, referencedTable string) ([]string, error) {
+func buildQuestionForeignKeySQLs(definitions []v3QuestionForeignKeyDefinition, referencedTable string, existing map[string]struct{}) ([]string, error) {
 	if len(definitions) == 0 {
 		return nil, nil
 	}
@@ -228,9 +248,15 @@ func buildQuestionForeignKeySQLs(definitions []v3QuestionForeignKeyDefinition, r
 
 	statements := make([]string, 0, len(definitions))
 	for _, definition := range definitions {
+		key := questionForeignKeyKey(normalizeForeignKeyTableName(definition.table, referencedTable), definition.constraint)
+		if existing != nil {
+			if _, ok := existing[key]; ok {
+				continue
+			}
+		}
 		statements = append(statements, fmt.Sprintf(
 			"ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON UPDATE %s ON DELETE %s",
-			quoteIdentifier(definition.table),
+			quoteIdentifier(normalizeForeignKeyTableName(definition.table, referencedTable)),
 			quoteIdentifier(definition.constraint),
 			joinIdentifiers(definition.columns),
 			quoteIdentifier(referencedTable),
@@ -253,24 +279,77 @@ func execSQLStatements(tx *gorm.DB, statements []string) error {
 	return nil
 }
 
-func rollbackQuestionRename(tx *gorm.DB, legacyForeignKeySQLs []string, originalErr error) error {
-	if tx.Migrator().HasTable(v3QuestionsTableName) && !tx.Migrator().HasTable(v3LegacyQuestionsTableName) {
-		if err := tx.Migrator().RenameTable(v3QuestionsTableName, v3LegacyQuestionsTableName); err != nil {
-			return fmt.Errorf("failed to recreate foreign keys for %s: %w; rollback rename failed: %v", v3QuestionsTableName, originalErr, err)
+func restoreQuestionForeignKeysFromBackup(tx *gorm.DB) error {
+	definitions, err := loadQuestionForeignKeyBackup(tx)
+	if err != nil {
+		return err
+	}
+	if len(definitions) == 0 {
+		return nil
+	}
+
+	existing, err := loadQuestionForeignKeyConstraintSet(tx, v3QuestionsTableName)
+	if err != nil {
+		return err
+	}
+
+	statements, err := buildQuestionForeignKeySQLs(definitions, v3QuestionsTableName, existing)
+	if err != nil {
+		return err
+	}
+	if err := execSQLStatements(tx, statements); err != nil {
+		return err
+	}
+
+	return clearQuestionForeignKeyBackup(tx)
+}
+
+func saveQuestionForeignKeyBackup(tx *gorm.DB, definitions []v3QuestionForeignKeyDefinition) error {
+	if err := tx.AutoMigrate(&v3QuestionForeignKeyBackup{}); err != nil {
+		return err
+	}
+	if err := tx.Where("1 = 1").Delete(&v3QuestionForeignKeyBackup{}).Error; err != nil {
+		return err
+	}
+	rows := make([]v3QuestionForeignKeyBackup, 0)
+	for _, definition := range definitions {
+		for idx := range definition.columns {
+			rows = append(rows, v3QuestionForeignKeyBackup{
+				ConstraintName:       definition.constraint,
+				TableName:            definition.table,
+				ColumnName:           definition.columns[idx],
+				ReferencedColumnName: definition.refColumns[idx],
+				OrdinalPosition:      idx + 1,
+				UpdateRule:           definition.updateRule,
+				DeleteRule:           definition.deleteRule,
+			})
 		}
 	}
-	return restoreLegacyQuestionForeignKeys(tx, legacyForeignKeySQLs, originalErr)
-}
-
-func restoreLegacyQuestionForeignKeys(tx *gorm.DB, legacyForeignKeySQLs []string, originalErr error) error {
-	if err := execSQLStatements(tx, legacyForeignKeySQLs); err != nil {
-		return fmt.Errorf("failed to recreate foreign keys for %s: %w; rollback foreign keys failed: %v", v3QuestionsTableName, originalErr, err)
+	if len(rows) == 0 {
+		return nil
 	}
-
-	return fmt.Errorf("failed to recreate foreign keys for %s: %w", v3QuestionsTableName, originalErr)
+	return tx.Create(&rows).Error
 }
 
-func loadLegacyQuestionForeignKeys(tx *gorm.DB) ([]v3QuestionForeignKeyDefinition, error) {
+func loadQuestionForeignKeyBackup(tx *gorm.DB) ([]v3QuestionForeignKeyDefinition, error) {
+	if !tx.Migrator().HasTable(v3QuestionForeignKeyBackupTableName) {
+		return nil, nil
+	}
+	var rows []v3QuestionForeignKeyBackup
+	if err := tx.Order("table_name, constraint_name, ordinal_position").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return buildQuestionForeignKeyDefinitions(rows)
+}
+
+func clearQuestionForeignKeyBackup(tx *gorm.DB) error {
+	if !tx.Migrator().HasTable(v3QuestionForeignKeyBackupTableName) {
+		return nil
+	}
+	return tx.Migrator().DropTable(&v3QuestionForeignKeyBackup{})
+}
+
+func loadQuestionForeignKeys(tx *gorm.DB, referencedTable string) ([]v3QuestionForeignKeyDefinition, error) {
 	const fkQuery = `
 SELECT
 	kcu.CONSTRAINT_NAME,
@@ -290,9 +369,25 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 `
 
 	var columns []v3QuestionForeignKeyColumn
-	if err := tx.Raw(fkQuery, v3LegacyQuestionsTableName).Scan(&columns).Error; err != nil {
+	if err := tx.Raw(fkQuery, referencedTable).Scan(&columns).Error; err != nil {
 		return nil, err
 	}
+	return buildQuestionForeignKeyDefinitionsFromColumns(columns)
+}
+
+func loadQuestionForeignKeyConstraintSet(tx *gorm.DB, referencedTable string) (map[string]struct{}, error) {
+	definitions, err := loadQuestionForeignKeys(tx, referencedTable)
+	if err != nil {
+		return nil, err
+	}
+	constraintSet := make(map[string]struct{}, len(definitions))
+	for _, definition := range definitions {
+		constraintSet[questionForeignKeyKey(definition.table, definition.constraint)] = struct{}{}
+	}
+	return constraintSet, nil
+}
+
+func buildQuestionForeignKeyDefinitionsFromColumns(columns []v3QuestionForeignKeyColumn) ([]v3QuestionForeignKeyDefinition, error) {
 	if len(columns) == 0 {
 		return nil, nil
 	}
@@ -338,6 +433,65 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 	}
 
 	return result, nil
+}
+
+func buildQuestionForeignKeyDefinitions(rows []v3QuestionForeignKeyBackup) ([]v3QuestionForeignKeyDefinition, error) {
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	type fkKey struct {
+		constraintName string
+		tableName      string
+	}
+
+	definitions := map[fkKey]*v3QuestionForeignKeyDefinition{}
+	for _, row := range rows {
+		key := fkKey{
+			constraintName: row.ConstraintName,
+			tableName:      row.TableName,
+		}
+		definition, exists := definitions[key]
+		if !exists {
+			updateRule, err := validateReferentialRule(row.UpdateRule)
+			if err != nil {
+				return nil, err
+			}
+			deleteRule, err := validateReferentialRule(row.DeleteRule)
+			if err != nil {
+				return nil, err
+			}
+			definition = &v3QuestionForeignKeyDefinition{
+				columns:    []string{},
+				refColumns: []string{},
+				updateRule: updateRule,
+				deleteRule: deleteRule,
+				constraint: row.ConstraintName,
+				table:      row.TableName,
+			}
+			definitions[key] = definition
+		}
+		definition.columns = append(definition.columns, row.ColumnName)
+		definition.refColumns = append(definition.refColumns, row.ReferencedColumnName)
+	}
+
+	result := make([]v3QuestionForeignKeyDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		result = append(result, *definition)
+	}
+
+	return result, nil
+}
+
+func normalizeForeignKeyTableName(tableName, referencedTable string) string {
+	if tableName == v3LegacyQuestionsTableName && referencedTable == v3QuestionsTableName {
+		return v3QuestionsTableName
+	}
+	return tableName
+}
+
+func questionForeignKeyKey(tableName, constraintName string) string {
+	return tableName + ":" + constraintName
 }
 
 func quoteIdentifier(identifier string) string {
