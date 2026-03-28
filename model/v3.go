@@ -138,5 +138,5 @@ type v3Questions struct {
 }
 
 func (*v3Questions) TableName() string {
-	return "questions"
+	return "question"
 }
