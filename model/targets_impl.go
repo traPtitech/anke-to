@@ -118,7 +118,7 @@ func (*Target) GetTargetsCancelStatus(ctx context.Context, questionnaireID int, 
 		return nil, fmt.Errorf("failed to get targets remind status: %w", err)
 	}
 	if len(cancelStatus) != len(targets) {
-		return nil, fmt.Errorf("not all targets found")
+		return nil, ErrTargetNotFound
 	}
 
 	return cancelStatus, nil

@@ -457,7 +457,7 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 
 	responsesID := []int{}
 	query := db.Model(&Respondents{}).
-		Where("user_traqid = ?", userID).
+		Where("deleted_at IS NULL AND user_traqid = ?", userID).
 		Select("response_id")
 
 	if questionnaireIDs != nil {

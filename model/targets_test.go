@@ -437,6 +437,7 @@ func TestGetTargetsCancelStatus(t *testing.T) {
 			invalidTargets: []string{"c", "d"},
 			argTargets:     []string{"e"},
 			isErr:          true,
+			err:            ErrTargetNotFound,
 		},
 		{
 			description:    "argTargets with some of target not in db",
@@ -444,6 +445,7 @@ func TestGetTargetsCancelStatus(t *testing.T) {
 			invalidTargets: []string{"c", "d"},
 			argTargets:     []string{"a", "e"},
 			isErr:          true,
+			err:            ErrTargetNotFound,
 		},
 	}
 

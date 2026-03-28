@@ -20,6 +20,7 @@ func questionnaireInfo2questionnaireSummary(questionnaireInfo model.Questionnair
 		Description:              questionnaireInfo.Description,
 		HasMyDraft:               hasMyDraft,
 		HasMyResponse:            hasMyResponse,
+		IsAdministratedByMe:      questionnaireInfo.IsAdministratedByMe,
 		IsDuplicateAnswerAllowed: questionnaireInfo.IsDuplicateAnswerAllowed,
 		IsAnonymous:              questionnaireInfo.IsAnonymous,
 		IsPublished:              questionnaireInfo.IsPublished,
@@ -245,14 +246,14 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 			}
 		case "Number":
 			if r.Body.Valid {
-				answer, err := strconv.ParseFloat(r.Body.String, 32)
+				answer, err := strconv.ParseFloat(r.Body.String, 64)
 				if err != nil {
 					ctx.Logger().Errorf("failed to convert string to float: %+v", err)
 					return openapi.Response{}, err
 				}
 				err = oResponseBody.FromResponseBodyNumber(
 					openapi.ResponseBodyNumber{
-						Answer:       float32(answer),
+						Answer:       answer,
 						QuestionType: "Number",
 					},
 				)
@@ -380,7 +381,7 @@ func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []mode
 			}
 			res = append(res, &model.ResponseMeta{
 				QuestionID: questions[i].ID,
-				Data:       strconv.FormatFloat(float64(bNumber.Answer), 'f', -1, 32),
+				Data:       strconv.FormatFloat(bNumber.Answer, 'f', -1, 64),
 			})
 		case "MultipleChoice":
 			bSingleChoice, err := b.AsResponseBodySingleChoice()

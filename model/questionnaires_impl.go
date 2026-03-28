@@ -183,7 +183,7 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, isDraft *bool, hasMyResponse *bool, hasMyDraft *bool) ([]QuestionnaireInfo, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool) ([]QuestionnaireInfo, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -218,27 +218,19 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		query = query.Where("questionnaires.res_time_limit > ? OR questionnaires.res_time_limit IS NULL", time.Now())
 	}
 
-	if isDraft != nil {
-		if *isDraft {
-			query = query.Where("questionnaires.res_time_limit IS NULL")
-		} else {
-			query = query.Where("questionnaires.res_time_limit IS NOT NULL")
-		}
-	}
-
 	if hasMyResponse != nil {
 		if *hasMyResponse {
-			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		} else {
-			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		}
 	}
 
 	if hasMyDraft != nil {
 		if *hasMyDraft {
-			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL AND respondents.deleted_at IS NULL)", userID)
 		} else {
-			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL AND respondents.deleted_at IS NULL)", userID)
 		}
 	}
 
@@ -459,7 +451,7 @@ func (*Questionnaire) GetQuestionnairesInfoForReminder(ctx context.Context) ([]Q
 
 	questionnaires := []Questionnaires{}
 	err = db.
-		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
+		Where("deleted_at IS NULL AND is_published IS TRUE AND res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
 		Find(&questionnaires).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the questionnaires: %w", err)
