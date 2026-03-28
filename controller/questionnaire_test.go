@@ -2181,6 +2181,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
+					response02.ResponseId,
 				},
 			},
 		},
