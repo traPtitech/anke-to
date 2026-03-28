@@ -259,6 +259,49 @@ func TestCheckRemindStatus(t *testing.T) {
 	}
 }
 
+func TestReminderWorkerReschedulesEarlierJob(t *testing.T) {
+	re := NewReminder()
+
+	now := time.Now()
+	laterExecutedAtCh := make(chan time.Time, 1)
+	earlierExecutedAtCh := make(chan time.Time, 1)
+
+	re.push(&Job{
+		Timestamp:       now.Add(500 * time.Millisecond),
+		QuestionnaireID: 1,
+		Action: func() {
+			laterExecutedAtCh <- time.Now()
+		},
+	})
+
+	go re.ReminderWorker()
+
+	time.Sleep(100 * time.Millisecond)
+
+	earlierDue := now.Add(150 * time.Millisecond)
+	re.push(&Job{
+		Timestamp:       earlierDue,
+		QuestionnaireID: 2,
+		Action: func() {
+			earlierExecutedAtCh <- time.Now()
+		},
+	})
+
+	select {
+	case executedAt := <-earlierExecutedAtCh:
+		assert.WithinDuration(t, earlierDue, executedAt, 150*time.Millisecond)
+	case <-time.After(1 * time.Second):
+		t.Fatal("earlier reminder was not executed in time")
+	}
+
+	select {
+	case laterExecutedAt := <-laterExecutedAtCh:
+		assert.WithinDuration(t, now.Add(500*time.Millisecond), laterExecutedAt, 150*time.Millisecond)
+	case <-time.After(1 * time.Second):
+		t.Fatal("later reminder was not executed in time")
+	}
+}
+
 func TestPush(t *testing.T) {
 	t.Parallel()
 

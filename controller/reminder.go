@@ -20,16 +20,18 @@ type Job struct {
 }
 
 type Reminder struct {
-	jobs []*Job
-	mu   sync.Mutex
-	Wg   sync.WaitGroup
+	jobs     []*Job
+	mu       sync.Mutex
+	Wg       sync.WaitGroup
+	wakeUpCh chan struct{}
 }
 
 func NewReminder() *Reminder {
 	return &Reminder{
-		jobs: []*Job{},
-		mu:   sync.Mutex{},
-		Wg:   sync.WaitGroup{},
+		jobs:     []*Job{},
+		mu:       sync.Mutex{},
+		Wg:       sync.WaitGroup{},
+		wakeUpCh: make(chan struct{}, 1),
 	}
 }
 
@@ -54,14 +56,31 @@ func (re *Reminder) ReminderInit() {
 
 func (re *Reminder) ReminderWorker() {
 	for {
-		job := re.pop()
+		job := re.peek()
 		if job == nil {
-			time.Sleep(1 * time.Minute)
+			<-re.wakeUpCh
 			continue
 		}
 
-		if time.Until(job.Timestamp) > 0 {
-			time.Sleep(time.Until(job.Timestamp))
+		wait := time.Until(job.Timestamp)
+		if wait > 0 {
+			timer := time.NewTimer(wait)
+			select {
+			case <-timer.C:
+			case <-re.wakeUpCh:
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				continue
+			}
+		}
+
+		job = re.popDue(time.Now())
+		if job == nil {
+			continue
 		}
 
 		re.Wg.Add(1)
@@ -97,15 +116,22 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 
 func (re *Reminder) DeleteReminder(questionnaireID int) error {
 	re.mu.Lock()
-	defer re.mu.Unlock()
 
 	newJobs := []*Job{}
+	removed := false
 	for _, job := range re.jobs {
 		if job.QuestionnaireID != questionnaireID {
 			newJobs = append(newJobs, job)
+			continue
 		}
+		removed = true
 	}
 	re.jobs = newJobs
+	re.mu.Unlock()
+
+	if removed {
+		re.notifyWorker()
+	}
 
 	return nil
 }
@@ -123,22 +149,43 @@ func (re *Reminder) CheckRemindStatus(questionnaireID int) (bool, error) {
 
 func (re *Reminder) push(job *Job) {
 	re.mu.Lock()
-	defer re.mu.Unlock()
 	re.jobs = append(re.jobs, job)
 	sort.Slice(re.jobs, func(i, j int) bool {
 		return re.jobs[i].Timestamp.Before(re.jobs[j].Timestamp)
 	})
+	re.mu.Unlock()
+
+	re.notifyWorker()
 }
 
-func (re *Reminder) pop() *Job {
+func (re *Reminder) peek() *Job {
 	re.mu.Lock()
 	defer re.mu.Unlock()
 	if len(re.jobs) == 0 {
 		return nil
 	}
+	return re.jobs[0]
+}
+
+func (re *Reminder) popDue(now time.Time) *Job {
+	re.mu.Lock()
+	defer re.mu.Unlock()
+	if len(re.jobs) == 0 {
+		return nil
+	}
+	if re.jobs[0].Timestamp.After(now) {
+		return nil
+	}
 	job := re.jobs[0]
 	re.jobs = re.jobs[1:]
 	return job
+}
+
+func (re *Reminder) notifyWorker() {
+	select {
+	case re.wakeUpCh <- struct{}{}:
+	default:
+	}
 }
 
 func reminderAction(questionnaireID int, leftTimeText string) error {
