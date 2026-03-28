@@ -64,7 +64,7 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 	} else {
 		questionnaireIDs = *params.QuestionnaireIDs
 	}
-	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID, questionnaireIDs, params.IsDraft)
+	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID, questionnaireIDs, nil)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
 		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))

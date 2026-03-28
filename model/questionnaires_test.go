@@ -1425,9 +1425,6 @@ func getQuestionnairesTest(t *testing.T) {
 				} else {
 					hasNoLimit = true
 				}
-				if hasLimit && hasNoLimit {
-					break
-				}
 			}
 			assertion.True(hasLimit, testCase.description, "contains res_time_limit")
 			assertion.True(hasNoLimit, testCase.description, "contains no res_time_limit")
