@@ -551,7 +551,7 @@ type Response struct {
 	ModifiedAt      time.Time      `json:"modified_at"`
 	QuestionnaireId int            `json:"questionnaire_id"`
 
-	// Respondent traQ ID
+	// Respondent 回答者のtraQ ID。匿名回答の場合は返しません。
 	Respondent  *TraqId   `json:"respondent,omitempty"`
 	ResponseId  int       `json:"response_id"`
 	SubmittedAt time.Time `json:"submitted_at"`
