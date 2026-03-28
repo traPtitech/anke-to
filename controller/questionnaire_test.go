@@ -1979,7 +1979,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	response03, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	questionnaireAnonymous := sampleQuestionnaire
@@ -2044,6 +2044,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
 	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
 	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	constFalse := false
 	constTrue := true
 
 	testCases := []test{
