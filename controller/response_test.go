@@ -774,7 +774,7 @@ func TestEditResponse(t *testing.T) {
 	invalidResponseBodyNumber := openapi.NewResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
 	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
-		Answer:       100.5,
+		Answer:       101.5,
 		QuestionType: "Number",
 	})
 	require.NoError(t, err)
