@@ -148,7 +148,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response0, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -159,7 +159,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response1, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -171,7 +171,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response2, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -194,6 +194,38 @@ func TestGetMyResponses(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
 	response4, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "myResponsesSpecialUser")
+	require.NoError(t, err)
+
+	deletedQuestionnaire := sampleQuestionnaire
+	e = echo.New()
+	body, err = json.Marshal(deletedQuestionnaire)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	deletedQuestionnaireDetail, err := q.PostQuestionnaire(ctx, deletedQuestionnaire)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(deletedQuestionnaireDetail.QuestionnaireId)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", deletedQuestionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	deletedResponse, err := q.PostQuestionnaireResponse(ctx, deletedQuestionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	e = echo.New()
+	req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/questionnaires/%d", deletedQuestionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	err = q.DeleteQuestionnaire(ctx, deletedQuestionnaireDetail.QuestionnaireId)
 	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Unlock()
@@ -227,6 +259,9 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{},
+			},
+			expect: expect{
+				responseIDList: &[]int{response0.ResponseId, response1.ResponseId, response2.ResponseId},
 			},
 		},
 		{
@@ -407,6 +442,7 @@ func TestGetMyResponses(t *testing.T) {
 				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
 			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
+			assertion.NotContains(responseIDList, deletedResponse.ResponseId, testCase.description, "deleted questionnaire response should be filtered out")
 			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
 		}
 

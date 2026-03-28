@@ -458,7 +458,8 @@ func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID str
 
 	responsesID := []int{}
 	query := db.Model(&Respondents{}).
-		Where("deleted_at IS NULL AND user_traqid = ?", userID).
+		Joins("INNER JOIN questionnaires ON questionnaires.id = respondents.questionnaire_id").
+		Where("respondents.deleted_at IS NULL AND respondents.user_traqid = ? AND questionnaires.deleted_at IS NULL", userID).
 		Select("response_id")
 
 	if questionnaireIDs != nil {

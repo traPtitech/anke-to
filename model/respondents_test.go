@@ -1261,6 +1261,15 @@ func TestGetMyResponseIDs(t *testing.T) {
 		responseIDs = append(responseIDs, responseID)
 	}
 
+	deletedQuestionnaireID, err := questionnaireImpl.InsertQuestionnaire(ctx, "削除済みアンケート", "削除済みアンケートの回答は一覧に出さない", null.NewTime(time.Now(), false), "private", true, false, true)
+	require.NoError(t, err)
+
+	deletedResponseID, err := respondentImpl.InsertRespondent(ctx, "TestGetMyResponseIDsuserOne", deletedQuestionnaireID, null.NewTime(time.Now(), true))
+	require.NoError(t, err)
+
+	err = questionnaireImpl.DeleteQuestionnaire(ctx, deletedQuestionnaireID)
+	require.NoError(t, err)
+
 	type args struct {
 		sort   string
 		userID string
@@ -1325,6 +1334,10 @@ func TestGetMyResponseIDs(t *testing.T) {
 
 		assertion.Equal(testCase.expect.responseIDs, MyResponseIDs, testCase.description, "responseIDs")
 	}
+
+	responseIDs, err := respondentImpl.GetMyResponseIDs(ctx, "submitted_at", "TestGetMyResponseIDsuserOne", nil, nil)
+	require.NoError(t, err)
+	assertion.NotContains(responseIDs, deletedResponseID, "deleted questionnaire response should be filtered out")
 }
 
 func TestTestCheckRespondent(t *testing.T) {
