@@ -52,7 +52,7 @@ func setupSampleResponse() {
 		panic(fmt.Sprintf("failed to set sampleResponseBodyTextLong: %v", err))
 	}
 	err = sampleResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
-		Answer:       0,
+		Answer:       1.5,
 		QuestionType: "Number",
 	})
 	if err != nil {
@@ -774,7 +774,7 @@ func TestEditResponse(t *testing.T) {
 	invalidResponseBodyNumber := openapi.NewResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
 	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
-		Answer:       101,
+		Answer:       101.5,
 		QuestionType: "Number",
 	})
 	require.NoError(t, err)
@@ -1146,7 +1146,7 @@ func TestEditResponse(t *testing.T) {
 				require.NoError(t, err)
 			case "Number":
 				err = actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
-					Answer:       float32(responseParsed["answer"].(float64)),
+					Answer:       responseParsed["answer"].(float64),
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
 				require.NoError(t, err)
