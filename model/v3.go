@@ -150,8 +150,10 @@ type v3Questions struct {
 	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
 }
 
+const v3QuestionsTableName = "questions"
+
 func (*v3Questions) TableName() string {
-	return "questions"
+	return v3QuestionsTableName
 }
 
 type v3QuestionForeignKeyColumn struct {
@@ -241,7 +243,7 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		if err != nil {
 			return err
 		}
-		referencedTable, err := quoteIdentifier("questions")
+		referencedTable, err := quoteIdentifier(v3QuestionsTableName)
 		if err != nil {
 			return err
 		}
@@ -293,7 +295,7 @@ func joinIdentifiers(identifiers []string) (string, error) {
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	validActions := []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
+	validActions := []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
 	for _, action := range validActions {
 		if rule == action {
 			return rule, nil
