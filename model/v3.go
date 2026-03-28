@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -49,6 +51,9 @@ func v3() *gormigrate.Migration {
 				return err
 			}
 			if err := tx.AutoMigrate(&v3Questions{}); err != nil {
+				return err
+			}
+			if err := migrateQuestionForeignKeys(tx); err != nil {
 				return err
 			}
 			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
@@ -147,4 +152,110 @@ type v3Questions struct {
 
 func (*v3Questions) TableName() string {
 	return "questions"
+}
+
+type questionForeignKeyColumn struct {
+	ConstraintName       string `gorm:"column:CONSTRAINT_NAME"`
+	TableName            string `gorm:"column:TABLE_NAME"`
+	ColumnName           string `gorm:"column:COLUMN_NAME"`
+	ReferencedColumnName string `gorm:"column:REFERENCED_COLUMN_NAME"`
+	OrdinalPosition      int    `gorm:"column:ORDINAL_POSITION"`
+	UpdateRule           string `gorm:"column:UPDATE_RULE"`
+	DeleteRule           string `gorm:"column:DELETE_RULE"`
+}
+
+func migrateQuestionForeignKeys(tx *gorm.DB) error {
+	const fkQuery = `
+SELECT kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.REFERENCED_COLUMN_NAME,
+       kcu.ORDINAL_POSITION, rc.UPDATE_RULE, rc.DELETE_RULE
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
+  ON kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
+ AND kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+WHERE kcu.CONSTRAINT_SCHEMA = DATABASE()
+  AND kcu.REFERENCED_TABLE_NAME = 'question'
+ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
+`
+
+	var columns []questionForeignKeyColumn
+	if err := tx.Raw(fkQuery).Scan(&columns).Error; err != nil {
+		return err
+	}
+	if len(columns) == 0 {
+		return nil
+	}
+
+	type fkKey struct {
+		constraintName string
+		tableName      string
+	}
+	type fkDefinition struct {
+		columns       []string
+		refColumns    []string
+		updateRule    string
+		deleteRule    string
+		constraint    string
+		table         string
+	}
+
+	definitions := map[fkKey]*fkDefinition{}
+	for _, column := range columns {
+		key := fkKey{
+			constraintName: column.ConstraintName,
+			tableName:      column.TableName,
+		}
+		definition, exists := definitions[key]
+		if !exists {
+			definition = &fkDefinition{
+				columns:    []string{},
+				refColumns: []string{},
+				updateRule: column.UpdateRule,
+				deleteRule: column.DeleteRule,
+				constraint: column.ConstraintName,
+				table:      column.TableName,
+			}
+			definitions[key] = definition
+		}
+		definition.columns = append(definition.columns, column.ColumnName)
+		definition.refColumns = append(definition.refColumns, column.ReferencedColumnName)
+	}
+
+	for _, definition := range definitions {
+		dropSQL := fmt.Sprintf(
+			"ALTER TABLE %s DROP FOREIGN KEY %s",
+			quoteIdentifier(definition.table),
+			quoteIdentifier(definition.constraint),
+		)
+		if err := tx.Exec(dropSQL).Error; err != nil {
+			return err
+		}
+
+		addSQL := fmt.Sprintf(
+			"ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON UPDATE %s ON DELETE %s",
+			quoteIdentifier(definition.table),
+			quoteIdentifier(definition.constraint),
+			joinIdentifiers(definition.columns),
+			quoteIdentifier("questions"),
+			joinIdentifiers(definition.refColumns),
+			definition.updateRule,
+			definition.deleteRule,
+		)
+		if err := tx.Exec(addSQL).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func quoteIdentifier(identifier string) string {
+	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`"
+}
+
+func joinIdentifiers(identifiers []string) string {
+	quoted := make([]string, 0, len(identifiers))
+	for _, identifier := range identifiers {
+		quoted = append(quoted, quoteIdentifier(identifier))
+	}
+	return strings.Join(quoted, ", ")
 }
