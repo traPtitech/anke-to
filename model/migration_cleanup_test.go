@@ -11,6 +11,9 @@ import (
 
 func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 	now := time.Now()
+	newDB := func() *gorm.DB {
+		return db.Session(&gorm.Session{NewDB: true})
+	}
 
 	deletedQuestionnaire := Questionnaires{
 		Title:        "cleanup target questionnaire",
@@ -31,11 +34,11 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		IsPublished:  true,
 	}
 
-	err := db.Create(&deletedQuestionnaire).Error
+	err := newDB().Create(&deletedQuestionnaire).Error
 	if err != nil {
 		t.Fatalf("failed to create deleted questionnaire: %v", err)
 	}
-	err = db.Create(&activeQuestionnaire).Error
+	err = newDB().Create(&activeQuestionnaire).Error
 	if err != nil {
 		t.Fatalf("failed to create active questionnaire: %v", err)
 	}
@@ -57,11 +60,11 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		Description:     "active question",
 	}
 
-	err = db.Create(&deletedQuestion).Error
+	err = newDB().Create(&deletedQuestion).Error
 	if err != nil {
 		t.Fatalf("failed to create deleted question: %v", err)
 	}
-	err = db.Create(&activeQuestion).Error
+	err = newDB().Create(&activeQuestion).Error
 	if err != nil {
 		t.Fatalf("failed to create active question: %v", err)
 	}
@@ -77,11 +80,11 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		SubmittedAt:     null.NewTime(now, true),
 	}
 
-	err = db.Create(&deletedRespondent).Error
+	err = newDB().Create(&deletedRespondent).Error
 	if err != nil {
 		t.Fatalf("failed to create deleted respondent: %v", err)
 	}
-	err = db.Create(&activeRespondent).Error
+	err = newDB().Create(&activeRespondent).Error
 	if err != nil {
 		t.Fatalf("failed to create active respondent: %v", err)
 	}
@@ -90,7 +93,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, UserTraqid: "deleted-target"},
 		{QuestionnaireID: activeQuestionnaire.ID, UserTraqid: "active-target"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create target: %v", err)
 		}
@@ -100,7 +103,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, UserTraqid: "deleted-target-user"},
 		{QuestionnaireID: activeQuestionnaire.ID, UserTraqid: "active-target-user"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create target user: %v", err)
 		}
@@ -110,7 +113,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, GroupID: groupOne},
 		{QuestionnaireID: activeQuestionnaire.ID, GroupID: groupTwo},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create target group: %v", err)
 		}
@@ -120,7 +123,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, UserTraqid: "deleted-admin"},
 		{QuestionnaireID: activeQuestionnaire.ID, UserTraqid: "active-admin"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create administrator: %v", err)
 		}
@@ -130,7 +133,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, UserTraqid: "deleted-admin-user"},
 		{QuestionnaireID: activeQuestionnaire.ID, UserTraqid: "active-admin-user"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create administrator user: %v", err)
 		}
@@ -140,7 +143,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionnaireID: deletedQuestionnaire.ID, GroupID: groupOne},
 		{QuestionnaireID: activeQuestionnaire.ID, GroupID: groupTwo},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create administrator group: %v", err)
 		}
@@ -150,7 +153,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionID: deletedQuestion.ID, RegexPattern: "^deleted$"},
 		{QuestionID: activeQuestion.ID, RegexPattern: "^active$"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create validation: %v", err)
 		}
@@ -160,7 +163,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionID: deletedQuestion.ID, ScaleLabelLeft: "low", ScaleLabelRight: "high", ScaleMin: 1, ScaleMax: 5},
 		{QuestionID: activeQuestion.ID, ScaleLabelLeft: "low", ScaleLabelRight: "high", ScaleMin: 1, ScaleMax: 5},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create scale label: %v", err)
 		}
@@ -170,7 +173,7 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{QuestionID: deletedQuestion.ID, OptionNum: 1, Body: "deleted option"},
 		{QuestionID: activeQuestion.ID, OptionNum: 1, Body: "active option"},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create option: %v", err)
 		}
@@ -180,13 +183,13 @@ func TestCleanupSoftDeletedQuestionnaires(t *testing.T) {
 		{ResponseID: deletedRespondent.ResponseID, QuestionID: deletedQuestion.ID, Body: null.NewString("deleted response", true)},
 		{ResponseID: activeRespondent.ResponseID, QuestionID: activeQuestion.ID, Body: null.NewString("active response", true)},
 	} {
-		err = db.Create(&record).Error
+		err = newDB().Create(&record).Error
 		if err != nil {
 			t.Fatalf("failed to create response: %v", err)
 		}
 	}
 
-	err = cleanupSoftDeletedQuestionnaires(db)
+	err = cleanupSoftDeletedQuestionnaires(newDB())
 	if err != nil {
 		t.Fatalf("failed to cleanup soft-deleted questionnaires: %v", err)
 	}
@@ -223,7 +226,7 @@ func assertRecordCount(t *testing.T, table string, query string, arg interface{}
 	t.Helper()
 
 	var count int64
-	err := db.Table(table).Where(query, arg).Count(&count).Error
+	err := db.Session(&gorm.Session{NewDB: true}).Table(table).Where(query, arg).Count(&count).Error
 	if err != nil {
 		t.Fatalf("failed to count %s: %v", table, err)
 	}
