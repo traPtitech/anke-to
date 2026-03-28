@@ -256,8 +256,8 @@ type QuestionSettingsMultipleChoiceQuestionType string
 
 // QuestionSettingsNumber defines model for QuestionSettingsNumber.
 type QuestionSettingsNumber struct {
-	MaxValue     *int                               `json:"max_value,omitempty"`
-	MinValue     *int                               `json:"min_value,omitempty"`
+	MaxValue     *float64                           `json:"max_value,omitempty"`
+	MinValue     *float64                           `json:"min_value,omitempty"`
 	QuestionType QuestionSettingsNumberQuestionType `json:"question_type"`
 }
 
@@ -570,7 +570,7 @@ type ResponseBodyBaseInteger struct {
 
 // ResponseBodyBaseNumber defines model for ResponseBodyBaseNumber.
 type ResponseBodyBaseNumber struct {
-	Answer float32 `json:"answer"`
+	Answer float64 `json:"answer"`
 }
 
 // ResponseBodyBaseString defines model for ResponseBodyBaseString.
@@ -589,7 +589,7 @@ type ResponseBodyMultipleChoiceQuestionType string
 
 // ResponseBodyNumber defines model for ResponseBodyNumber.
 type ResponseBodyNumber struct {
-	Answer       float32                        `json:"answer"`
+	Answer       float64                        `json:"answer"`
 	QuestionType ResponseBodyNumberQuestionType `json:"question_type"`
 }
 
@@ -777,9 +777,6 @@ type GetQuestionnairesParams struct {
 
 	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
 	NotOverDue *NotOverDueInQuery `form:"notOverDue,omitempty" json:"notOverDue,omitempty"`
-
-	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
-	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 
 	// HasMyResponse trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
 	// falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。

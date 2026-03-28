@@ -35,7 +35,6 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
         - $ref: "#/components/parameters/notOverDueInQuery"
-        - $ref: "#/components/parameters/isDraftInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
       responses:
@@ -851,9 +850,11 @@ components:
         - type: object
           properties:
             min_value:
-              type: integer
+              type: number
+              format: double
             max_value:
-              type: integer
+              type: number
+              format: double
     QuestionSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
@@ -1107,6 +1108,7 @@ components:
       properties:
         answer:
           type: number
+          format: double
       required:
         - answer
     ResponseBodyBaseInteger:
