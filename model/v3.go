@@ -206,11 +206,19 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		}
 		definition, exists := definitions[key]
 		if !exists {
+			updateRule, err := validateReferentialRule(column.UpdateRule)
+			if err != nil {
+				return err
+			}
+			deleteRule, err := validateReferentialRule(column.DeleteRule)
+			if err != nil {
+				return err
+			}
 			definition = &fkDefinition{
 				columns:    []string{},
 				refColumns: []string{},
-				updateRule: column.UpdateRule,
-				deleteRule: column.DeleteRule,
+				updateRule: updateRule,
+				deleteRule: deleteRule,
 				constraint: column.ConstraintName,
 				table:      column.TableName,
 			}
@@ -253,9 +261,18 @@ func quoteIdentifier(identifier string) string {
 }
 
 func joinIdentifiers(identifiers []string) string {
-	quoted := make([]string, 0, len(identifiers))
-	for _, identifier := range identifiers {
-		quoted = append(quoted, quoteIdentifier(identifier))
+	quoted := make([]string, len(identifiers))
+	for index, identifier := range identifiers {
+		quoted[index] = quoteIdentifier(identifier)
 	}
 	return strings.Join(quoted, ", ")
+}
+
+func validateReferentialRule(rule string) (string, error) {
+	switch rule {
+	case "CASCADE", "RESTRICT", "SET NULL", "NO ACTION":
+		return rule, nil
+	default:
+		return "", fmt.Errorf("unexpected referential action: %s", rule)
+	}
 }
