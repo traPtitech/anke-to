@@ -297,7 +297,13 @@ func quoteIdentifier(identifier string) (string, error) {
 	if strings.ContainsRune(identifier, '\x00') {
 		return "", fmt.Errorf("invalid identifier %q: contains null byte", identifier)
 	}
-	for _, r := range identifier {
+	if strings.Contains(identifier, "`") {
+		return "", fmt.Errorf("invalid identifier %q: contains backtick", identifier)
+	}
+	for i, r := range identifier {
+		if i == 0 && r >= '0' && r <= '9' {
+			return "", fmt.Errorf("invalid identifier %q: starts with a digit", identifier)
+		}
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '$' {
 			continue
 		}
