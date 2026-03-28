@@ -778,9 +778,6 @@ type GetQuestionnairesParams struct {
 	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
 	NotOverDue *NotOverDueInQuery `form:"notOverDue,omitempty" json:"notOverDue,omitempty"`
 
-	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
-	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
-
 	// HasMyResponse trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
 	// falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
 	// 存在しない場合、すべてのアンケートを取得する。
@@ -800,7 +797,7 @@ type GetQuestionnaireResponsesParams struct {
 	// OnlyMyResponse 自分の回答のみ取得 (true), 自分の回答以外も含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyMyResponse *OnlyMyResponseInQuery `form:"onlyMyResponse,omitempty" json:"onlyMyResponse,omitempty"`
 
-	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	// IsDraft trueの場合、下書きの回答のみを取得する。falseの場合、下書きではない回答のみを取得する。存在しない場合はすべての回答を取得する
 	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
@@ -812,7 +809,7 @@ type GetMyResponsesParams struct {
 	// QuestionnaireIDs 取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
 	QuestionnaireIDs *QuestionnaireIDsInQuery `form:"questionnaireIDs,omitempty" json:"questionnaireIDs,omitempty"`
 
-	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+	// IsDraft trueの場合、下書きの回答のみを取得する。falseの場合、下書きではない回答のみを取得する。存在しない場合はすべての回答を取得する
 	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 

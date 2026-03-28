@@ -1371,7 +1371,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil, nil)
+		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1414,6 +1414,20 @@ func getQuestionnairesTest(t *testing.T) {
 
 		for _, questionnaire := range questionnaires {
 			assertion.Regexp(testCase.args.search, questionnaire.Title, testCase.description, "regexp")
+		}
+
+		if testCase.args.search == "GetQuestionnaireTest$" && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
+			hasLimit := false
+			hasNoLimit := false
+			for _, questionnaire := range questionnaires {
+				if questionnaire.ResTimeLimit.Valid {
+					hasLimit = true
+				} else {
+					hasNoLimit = true
+				}
+			}
+			assertion.True(hasLimit, testCase.description, "contains res_time_limit")
+			assertion.True(hasNoLimit, testCase.description, "contains no res_time_limit")
 		}
 
 		if len(testCase.args.search) == 0 && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {

@@ -35,7 +35,6 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
         - $ref: "#/components/parameters/notOverDueInQuery"
-        - $ref: "#/components/parameters/isDraftInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
       responses:
@@ -447,7 +446,7 @@ components:
       name: isDraft
       in: query
       description: |
-        trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+        trueの場合、下書きの回答のみを取得する。falseの場合、下書きではない回答のみを取得する。存在しない場合はすべての回答を取得する
       schema:
         type: boolean
     notOverDueInQuery:
