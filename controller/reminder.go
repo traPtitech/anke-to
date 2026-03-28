@@ -74,14 +74,16 @@ func (re *Reminder) ReminderWorker() {
 
 func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 
-	for i, timing := range reminderTimingMinutes {
+	for i := range reminderTimingMinutes {
+		timing := reminderTimingMinutes[i]
+		timingStrings := reminderTimingStrings[i]
 		remindTimeStamp := limit.Add(-time.Duration(timing) * time.Minute)
 		if remindTimeStamp.After(time.Now()) {
 			re.push(&Job{
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: questionnaireID,
 				Action: func() {
-					err := reminderAction(questionnaireID, reminderTimingStrings[i])
+					err := reminderAction(questionnaireID, timingStrings)
 					if err != nil {
 						log.Printf("Failed to execute reminderAction for questionnaireID %d: %v", questionnaireID, err)
 					}
