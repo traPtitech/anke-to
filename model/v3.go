@@ -43,6 +43,15 @@ func v3() *gormigrate.Migration {
 			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
 				return err
 			}
+			if err := tx.Exec(`
+				DELETE responses
+				FROM responses
+				INNER JOIN question ON responses.question_id = question.id
+				WHERE question.type NOT IN ('Checkbox', 'MultipleChoice')
+				  AND responses.body = ''
+			`).Error; err != nil {
+				return err
+			}
 			return nil
 		},
 	}
