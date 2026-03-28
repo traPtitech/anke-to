@@ -1899,9 +1899,51 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	}
 }
 
-// func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
-// 	// todo
-// }
+func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		description string
+		userID      string
+		expected    bool
+	}{
+		{
+			description: "target user returns true by default",
+			userID:      userThree,
+			expected:    true,
+		},
+		{
+			description: "non target user returns false",
+			userID:      userOne,
+			expected:    false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(*testing.T) {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+			rec := httptest.NewRecorder()
+			ctx := e.NewContext(req, rec)
+
+			status, err := q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, testCase.userID)
+			assertion.NoError(err, testCase.description, "no error")
+			assertion.Equal(testCase.expected, status, testCase.description, "status")
+		})
+	}
+}
 
 // func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
 // 	// todo

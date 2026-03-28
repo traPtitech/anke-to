@@ -961,6 +961,9 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
 	status, err := q.GetTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID})
 	if err != nil {
+		if errors.Is(err, model.ErrTargetNotFound) {
+			return false, nil
+		}
 		c.Logger().Errorf("failed to check remind status: %+v", err)
 		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
 	}
