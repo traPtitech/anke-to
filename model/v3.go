@@ -37,11 +37,11 @@ func v3() *gormigrate.Migration {
 			if err := tx.Exec("INSERT INTO administrator_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM administrators").Error; err != nil {
 				return err
 			}
-			if err := tx.Exec("SET FOREIGN_KEY_CHECKS = 0").Error; err != nil {
+			if err := tx.Exec("SET SESSION FOREIGN_KEY_CHECKS = 0").Error; err != nil {
 				return err
 			}
 			defer func() {
-				if restoreErr := tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; restoreErr != nil && err == nil {
+				if restoreErr := tx.Exec("SET SESSION FOREIGN_KEY_CHECKS = 1").Error; restoreErr != nil && err == nil {
 					err = restoreErr
 				}
 			}()
