@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -155,7 +156,6 @@ const (
 	v3OldQuestionsTableName = "question"
 )
 
-var v3ValidReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
 var v3ValidReferentialActionSet = map[string]struct{}{
 	"CASCADE":     {},
 	"RESTRICT":    {},
@@ -298,7 +298,7 @@ func quoteIdentifier(identifier string) (string, error) {
 		return "", fmt.Errorf("invalid identifier %q: contains null byte", identifier)
 	}
 	for _, r := range identifier {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '$' || r == '-' {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '$' {
 			continue
 		}
 		return "", fmt.Errorf("invalid identifier %q: contains %q", identifier, r)
@@ -322,5 +322,14 @@ func validateReferentialRule(rule string) (string, error) {
 	if _, ok := v3ValidReferentialActionSet[rule]; ok {
 		return rule, nil
 	}
-	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActions)
+	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, validReferentialActions())
+}
+
+func validReferentialActions() []string {
+	actions := make([]string, 0, len(v3ValidReferentialActionSet))
+	for action := range v3ValidReferentialActionSet {
+		actions = append(actions, action)
+	}
+	sort.Strings(actions)
+	return actions
 }
