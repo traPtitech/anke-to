@@ -2047,7 +2047,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	response11, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Unlock()
