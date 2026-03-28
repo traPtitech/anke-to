@@ -85,7 +85,7 @@
 | submitted_at     | timestamp | YES  |     | _NULL_            |                | 回答が送信された日時 (未送信の場合は NULL)          |
 | deleted_at       | timestamp | YES  |     | _NULL_            |                | 回答が破棄された日時 (破棄されていない場合は NULL)  |
 
-### response
+### responses
 
 回答
 

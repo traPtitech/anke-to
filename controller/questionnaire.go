@@ -492,15 +492,15 @@ func (q *Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) 
 }
 
 func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
-	// unable to change the questionnaire from anoymous to non-anonymous
+	// unable to change the questionnaire from anonymous to non-anonymous
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to get anonymous info: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get anonymous info")
 	}
 	if isAnonymous && !params.IsAnonymous {
-		c.Logger().Info("unable to change the questionnaire from anoymous to non-anonymous")
-		return echo.NewHTTPError(http.StatusBadRequest, "unable to change the questionnaire from anoymous to non-anonymous")
+		c.Logger().Info("unable to change the questionnaire from anonymous to non-anonymous")
+		return echo.NewHTTPError(http.StatusMethodNotAllowed, "unable to change the questionnaire from anonymous to non-anonymous")
 	}
 
 	responseDueDateTime := null.Time{}
