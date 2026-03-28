@@ -11,11 +11,53 @@ env:
   TZ: Asia/Tokyo
 
 jobs:
+  generate:
+    name: Generate files
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: auto-generate-${{ github.head_ref || github.ref_name }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1
+      - run: go install github.com/google/wire/cmd/wire@v0.7.0
+      - run: go generate ./openapi
+      - run: go generate -run "wire" ./...
+      - name: Auto-commit generated files
+        if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
+          if ! git diff --quiet -- "${files[@]}"; then
+            git add "${files[@]}"
+            git commit -m "chore: regenerate generated files"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+      - name: Verify generated files are committed
+        if: github.event_name != 'pull_request' || github.actor == 'github-actions[bot]' || github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
+          if ! git diff --quiet -- "${files[@]}"; then
+            echo "Generated files are out of date. Run generation locally and commit the results." >&2
+            git diff -- "${files[@]}"
+            exit 1
+          fi
   mod:
     name: Mod
     runs-on: ubuntu-24.04
+    needs: [generate]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -26,6 +68,8 @@ jobs:
     needs: [mod]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -48,6 +92,8 @@ jobs:
           MYSQL_DATABASE: anke-to
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -93,8 +139,11 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-24.04
+    needs: [mod]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -110,8 +159,11 @@ jobs:
   spectral:
     name: Spectral
     runs-on: ubuntu-24.04
+    needs: [mod]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - name: Spectral checks
         uses: stoplightio/spectral-action@v0.8.13
         with:

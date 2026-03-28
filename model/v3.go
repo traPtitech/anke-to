@@ -31,6 +31,27 @@ func v3() *gormigrate.Migration {
 			if err := tx.AutoMigrate(&v3AdministratorGroups{}); err != nil {
 				return err
 			}
+			if err := tx.Exec("INSERT INTO target_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM targets").Error; err != nil {
+				return err
+			}
+			if err := tx.Exec("INSERT INTO administrator_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM administrators").Error; err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&v3Question{}); err != nil {
+				return err
+			}
+			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
+				return err
+			}
+			if err := tx.Exec(`
+				DELETE responses
+				FROM responses
+				INNER JOIN question ON responses.question_id = question.id
+				WHERE question.type NOT IN ('Checkbox', 'MultipleChoice')
+				  AND responses.body = ''
+			`).Error; err != nil {
+				return err
+			}
 			return nil
 		},
 	}
@@ -60,9 +81,9 @@ type v3Questionnaires struct {
 	TargetGroups             []TargetGroups   `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions                []Questions      `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents              []Respondents    `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	IsPublished              bool             `json:"is_published" gorm:"type:boolean;default:false"`
+	IsPublished              bool             `json:"is_published" gorm:"type:boolean;not null;default:true"`
 	IsAnonymous              bool             `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
-	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
+	IsDuplicateAnswerAllowed bool             `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:true"`
 }
 
 func (*v3Questionnaires) TableName() string {
@@ -75,7 +96,7 @@ type v3TargetUsers struct {
 }
 
 func (*v3TargetUsers) TableName() string {
-	return "targets_users"
+	return "target_users"
 }
 
 type v3TargetGroups struct {
@@ -84,7 +105,7 @@ type v3TargetGroups struct {
 }
 
 func (*v3TargetGroups) TableName() string {
-	return "targets_groups"
+	return "target_groups"
 }
 
 type v3AdministratorUsers struct {
@@ -103,4 +124,25 @@ type v3AdministratorGroups struct {
 
 func (*v3AdministratorGroups) TableName() string {
 	return "administrator_groups"
+}
+
+type v3Question struct {
+	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
+	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);not null"`
+	PageNum         int            `json:"page_num"            gorm:"type:int(11);not null"`
+	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);not null"`
+	Type            string         `json:"type"                gorm:"type:char(20);size:20;not null"`
+	Body            string         `json:"body"                gorm:"type:text;default:NULL"`
+	Description     string         `json:"description"         gorm:"type:text;default:NULL"`
+	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);size:4;not null;default:0"`
+	DeletedAt       gorm.DeletedAt `json:"-"          gorm:"type:TIMESTAMP NULL;default:NULL"`
+	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
+	Options         []Options      `json:"-"  gorm:"foreignKey:QuestionID"`
+	Responses       []Responses    `json:"-"  gorm:"foreignKey:QuestionID"`
+	ScaleLabels     []ScaleLabels  `json:"-"  gorm:"foreignKey:QuestionID"`
+	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
+}
+
+func (*v3Question) TableName() string {
+	return "question"
 }

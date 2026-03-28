@@ -4,6 +4,8 @@ servers:
     description: production
   - url: "https://anke-to-dev.trapti.tech/api"
     description: development
+  - url: "http://anke-to-alpha.trap.show/api"
+    description: alpha (deployed on noeshowcase; actual url is https)
   - url: "http://anke-to-beta.trap.show/api"
     description: beta (deployed on noeshowcase; actual url is https)
   - url: "http://localhost:1323/api"
@@ -33,7 +35,6 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
         - $ref: "#/components/parameters/notOverDueInQuery"
-        - $ref: "#/components/parameters/isDraftInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
       responses:
@@ -176,7 +177,7 @@ paths: # TODO 変数の命名を確認する
       operationId: getQuestionnaireResponses
       tags:
         - questionnaire
-      description: アンケートの全ての回答を取得します。匿名回答の場合はRespondentが空文字列になります。
+      description: アンケートの全ての回答を取得します。匿名回答の場合はrespondentを返しません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
@@ -593,7 +594,7 @@ components:
               items:
                 $ref: "#/components/schemas/TraqId"
               description: |
-                回答者の一覧。匿名回答の場合はnull。
+                回答者の一覧。匿名アンケートでも返る。
             targets:
               type: array
               items:
@@ -849,9 +850,11 @@ components:
         - type: object
           properties:
             min_value:
-              type: integer
+              type: number
+              format: double
             max_value:
-              type: integer
+              type: number
+              format: double
     QuestionSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
@@ -964,7 +967,10 @@ components:
               type: integer
               example: 1
             respondent:
-              $ref: "#/components/schemas/TraqId"
+              allOf:
+                - $ref: "#/components/schemas/TraqId"
+              description: |
+                回答者のtraQ ID。匿名回答の場合は返しません。
             is_anonymous:
               type: boolean
               example: true
@@ -1102,6 +1108,7 @@ components:
       properties:
         answer:
           type: number
+          format: double
       required:
         - answer
     ResponseBodyBaseInteger:
@@ -1126,7 +1133,7 @@ components:
       items:
         $ref: "#/components/schemas/TraqId"
       description: |
-        回答者の一覧。匿名回答の場合はnull。
+        ユーザーIDの一覧。
     TraqId:
       type: string
       example: cp20

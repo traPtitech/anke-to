@@ -102,6 +102,13 @@ func maxLengthPattern(maxLength *int) string {
 	return "^.{0," + strconv.Itoa(*maxLength) + "}$"
 }
 
+func formatNumberBound(value *float64) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatFloat(*value, 'f', -1, 64)
+}
+
 func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
 	res := openapi.QuestionnaireList{}
 	var sort string
@@ -143,12 +150,11 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		notOverDue = *params.NotOverDue
 	}
 
-	var isDraft, hasMyResponse, hasMyDraft *bool
-	isDraft = params.IsDraft
+	var hasMyResponse, hasMyDraft *bool
 	hasMyResponse = params.HasMyResponse
 	hasMyDraft = params.HasMyDraft
 
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, isDraft, hasMyResponse, hasMyDraft)
+	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft)
 	if err != nil {
 		return res, err
 	}
@@ -286,7 +292,16 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
 				return err
 			}
-			questionType := questionParsed["question_type"].(string)
+			questionTypeRaw, ok := questionParsed["question_type"]
+			if !ok {
+				c.Logger().Errorf("question type is required")
+				return errors.New("question type is required")
+			}
+			questionType, ok := questionTypeRaw.(string)
+			if !ok {
+				c.Logger().Errorf("question type must be string")
+				return errors.New("question type must be string")
+			}
 			switch questionType {
 			case "Text":
 				questionType = "Text"
@@ -348,10 +363,18 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 					c.Logger().Errorf("invalid scale")
 					return errors.New("invalid scale")
 				}
+				minLabel := ""
+				maxLabel := ""
+				if b.MinLabel != nil {
+					minLabel = *b.MinLabel
+				}
+				if b.MaxLabel != nil {
+					maxLabel = *b.MaxLabel
+				}
 				err = q.IScaleLabel.InsertScaleLabel(ctx, questionID,
 					model.ScaleLabels{
-						ScaleLabelLeft:  *b.MinLabel,
-						ScaleLabelRight: *b.MaxLabel,
+						ScaleLabelLeft:  minLabel,
+						ScaleLabelRight: maxLabel,
 						ScaleMax:        b.MaxValue,
 						ScaleMin:        b.MinValue,
 					})
@@ -394,13 +417,8 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 					return errors.New("failed to get question settings")
 				}
 				// 数字かどうか，min<=maxになっているかどうか
-				minValueStr, maxValueStr := "", ""
-				if b.MinValue != nil {
-					minValueStr = strconv.Itoa(*b.MinValue)
-				}
-				if b.MaxValue != nil {
-					maxValueStr = strconv.Itoa(*b.MaxValue)
-				}
+				minValueStr := formatNumberBound(b.MinValue)
+				maxValueStr := formatNumberBound(b.MaxValue)
 				err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 				if err != nil {
 					c.Logger().Errorf("invalid number: %+v", err)
@@ -475,15 +493,15 @@ func (q *Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) 
 }
 
 func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
-	// unable to change the questionnaire from anoymous to non-anonymous
+	// unable to change the questionnaire from anonymous to non-anonymous
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
 	if err != nil {
 		c.Logger().Errorf("failed to get anonymous info: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get anonymous info")
 	}
 	if isAnonymous && !params.IsAnonymous {
-		c.Logger().Info("unable to change the questionnaire from anoymous to non-anonymous")
-		return echo.NewHTTPError(http.StatusBadRequest, "unable to change the questionnaire from anoymous to non-anonymous")
+		c.Logger().Info("unable to change the questionnaire from anonymous to non-anonymous")
+		return echo.NewHTTPError(http.StatusMethodNotAllowed, "unable to change the questionnaire from anonymous to non-anonymous")
 	}
 
 	responseDueDateTime := null.Time{}
@@ -599,7 +617,16 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				c.Logger().Errorf("failed to unmarshal new question: %+v", err)
 				return err
 			}
-			questionType := questionParsed["question_type"].(string)
+			questionTypeRaw, ok := questionParsed["question_type"]
+			if !ok {
+				c.Logger().Errorf("question type is required")
+				return errors.New("question type is required")
+			}
+			questionType, ok := questionTypeRaw.(string)
+			if !ok {
+				c.Logger().Errorf("question type must be string")
+				return errors.New("question type must be string")
+			}
 			switch questionType {
 			case "Text":
 				questionType = "Text"
@@ -708,13 +735,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					minValueStr, maxValueStr := "", ""
-					if b.MinValue != nil {
-						minValueStr = strconv.Itoa(*b.MinValue)
-					}
-					if b.MaxValue != nil {
-						maxValueStr = strconv.Itoa(*b.MaxValue)
-					}
+					minValueStr := formatNumberBound(b.MinValue)
+					maxValueStr := formatNumberBound(b.MaxValue)
 					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)
@@ -771,10 +793,18 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						c.Logger().Errorf("invalid scale")
 						return errors.New("invalid scale")
 					}
+					minLabel := ""
+					maxLabel := ""
+					if b.MinLabel != nil {
+						minLabel = *b.MinLabel
+					}
+					if b.MaxLabel != nil {
+						maxLabel = *b.MaxLabel
+					}
 					err = q.IScaleLabel.UpdateScaleLabel(ctx, *question.QuestionId,
 						model.ScaleLabels{
-							ScaleLabelLeft:  *b.MinLabel,
-							ScaleLabelRight: *b.MaxLabel,
+							ScaleLabelLeft:  minLabel,
+							ScaleLabelRight: maxLabel,
 							ScaleMax:        b.MaxValue,
 							ScaleMin:        b.MinValue,
 						})
@@ -817,13 +847,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					minValueStr, maxValueStr := "", ""
-					if b.MinValue != nil {
-						minValueStr = strconv.Itoa(*b.MinValue)
-					}
-					if b.MaxValue != nil {
-						maxValueStr = strconv.Itoa(*b.MaxValue)
-					}
+					minValueStr := formatNumberBound(b.MinValue)
+					maxValueStr := formatNumberBound(b.MaxValue)
 					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)

@@ -256,8 +256,8 @@ type QuestionSettingsMultipleChoiceQuestionType string
 
 // QuestionSettingsNumber defines model for QuestionSettingsNumber.
 type QuestionSettingsNumber struct {
-	MaxValue     *int                               `json:"max_value,omitempty"`
-	MinValue     *int                               `json:"min_value,omitempty"`
+	MaxValue     *float64                           `json:"max_value,omitempty"`
+	MinValue     *float64                           `json:"min_value,omitempty"`
 	QuestionType QuestionSettingsNumberQuestionType `json:"question_type"`
 }
 
@@ -403,7 +403,7 @@ type QuestionnaireDetail struct {
 	QuestionnaireId int        `json:"questionnaire_id"`
 	Questions       []Question `json:"questions"`
 
-	// Respondents 回答者の一覧。匿名回答の場合はnull。
+	// Respondents 回答者の一覧。匿名アンケートでも返る。
 	Respondents []TraqId `json:"respondents"`
 
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
@@ -551,7 +551,7 @@ type Response struct {
 	ModifiedAt      time.Time      `json:"modified_at"`
 	QuestionnaireId int            `json:"questionnaire_id"`
 
-	// Respondent traQ ID
+	// Respondent 回答者のtraQ ID。匿名回答の場合は返しません。
 	Respondent  *TraqId   `json:"respondent,omitempty"`
 	ResponseId  int       `json:"response_id"`
 	SubmittedAt time.Time `json:"submitted_at"`
@@ -570,7 +570,7 @@ type ResponseBodyBaseInteger struct {
 
 // ResponseBodyBaseNumber defines model for ResponseBodyBaseNumber.
 type ResponseBodyBaseNumber struct {
-	Answer float32 `json:"answer"`
+	Answer float64 `json:"answer"`
 }
 
 // ResponseBodyBaseString defines model for ResponseBodyBaseString.
@@ -589,7 +589,7 @@ type ResponseBodyMultipleChoiceQuestionType string
 
 // ResponseBodyNumber defines model for ResponseBodyNumber.
 type ResponseBodyNumber struct {
-	Answer       float32                        `json:"answer"`
+	Answer       float64                        `json:"answer"`
 	QuestionType ResponseBodyNumberQuestionType `json:"question_type"`
 }
 
@@ -705,14 +705,14 @@ type TraqUserGroupMembers = []TraqUserGroupMember
 // TraqUsers defines model for TraqUsers.
 type TraqUsers = []TraqUser
 
-// Users 回答者の一覧。匿名回答の場合はnull。
+// Users ユーザーIDの一覧。
 type Users = []TraqId
 
 // UsersAndGroups defines model for UsersAndGroups.
 type UsersAndGroups struct {
 	Groups Groups `json:"groups"`
 
-	// Users 回答者の一覧。匿名回答の場合はnull。
+	// Users ユーザーIDの一覧。
 	Users Users `json:"users"`
 }
 
@@ -777,9 +777,6 @@ type GetQuestionnairesParams struct {
 
 	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
 	NotOverDue *NotOverDueInQuery `form:"notOverDue,omitempty" json:"notOverDue,omitempty"`
-
-	// IsDraft trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
-	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 
 	// HasMyResponse trueの場合、自分の回答（下書きを除く）が存在するアンケートのみを取得する。
 	// falseの場合、自分の回答（下書きを除く）が存在しないアンケートのみを取得する。
