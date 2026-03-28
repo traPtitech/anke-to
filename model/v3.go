@@ -37,13 +37,22 @@ func v3() *gormigrate.Migration {
 			if err := tx.Exec("INSERT INTO administrator_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM administrators").Error; err != nil {
 				return err
 			}
+			if err := tx.Exec("SET FOREIGN_KEY_CHECKS = 0").Error; err != nil {
+				return err
+			}
 			if err := tx.Migrator().RenameTable("question", "questions"); err != nil {
+				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
 				return err
 			}
 			if err := tx.AutoMigrate(&v3Questions{}); err != nil {
+				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
 				return err
 			}
 			if err := tx.Migrator().RenameTable("response", "responses"); err != nil {
+				_ = tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error
+				return err
+			}
+			if err := tx.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; err != nil {
 				return err
 			}
 			return nil
