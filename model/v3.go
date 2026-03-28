@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -156,13 +155,14 @@ const (
 	v3OldQuestionsTableName = "question"
 )
 
-var v3ValidReferentialActionSet = map[string]struct{}{
-	"CASCADE":     {},
-	"RESTRICT":    {},
-	"SET NULL":    {},
-	"NO ACTION":   {},
-	"SET DEFAULT": {},
-}
+var v3ValidReferentialActionList = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
+var v3ValidReferentialActionSet = func() map[string]struct{} {
+	set := make(map[string]struct{}, len(v3ValidReferentialActionList))
+	for _, action := range v3ValidReferentialActionList {
+		set[action] = struct{}{}
+	}
+	return set
+}()
 
 func (*v3Questions) TableName() string {
 	return v3QuestionsTableName
@@ -309,7 +309,7 @@ func quoteIdentifier(identifier string) (string, error) {
 		}
 		return "", fmt.Errorf("invalid identifier %q: contains %q", identifier, r)
 	}
-	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`", nil
+	return "`" + identifier + "`", nil
 }
 
 func joinIdentifiers(identifiers []string) (string, error) {
@@ -328,14 +328,5 @@ func validateReferentialRule(rule string) (string, error) {
 	if _, ok := v3ValidReferentialActionSet[rule]; ok {
 		return rule, nil
 	}
-	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, validReferentialActions())
-}
-
-func validReferentialActions() []string {
-	actions := make([]string, 0, len(v3ValidReferentialActionSet))
-	for action := range v3ValidReferentialActionSet {
-		actions = append(actions, action)
-	}
-	sort.Strings(actions)
-	return actions
+	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActionList)
 }
