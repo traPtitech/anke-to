@@ -1,0 +1,36 @@
+name: Auto Generate
+ 
+on:
+  pull_request:
+ 
+jobs:
+  generate:
+    name: Generate files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: auto-generate-${{ github.head_ref }}
+      cancel-in-progress: true
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1
+      - run: go install github.com/google/wire/cmd/wire@v0.7.0
+      - run: go generate ./openapi
+      - run: go generate -run "wire" ./...
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
+          if ! git diff --quiet -- "${files[@]}"; then
+            git add "${files[@]}"
+            git commit -m "chore: regenerate generated files [skip ci]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
