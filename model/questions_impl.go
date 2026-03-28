@@ -43,7 +43,7 @@ func (questionnaire *Questions) BeforeCreate(_ *gorm.DB) error {
 }
 
 func (*Questions) TableName() string {
-	return "questions"
+	return "question"
 }
 
 // QuestionIDType 質問のIDと種類の構造体
@@ -176,9 +176,9 @@ func (*Question) CheckQuestionAdmin(ctx context.Context, userID string, question
 	}
 
 	err = db.
-		Joins("INNER JOIN administrators ON questions.questionnaire_id = administrators.questionnaire_id").
-		Where("questions.id = ? AND administrators.user_traqid = ?", questionID, userID).
-		Select("questions.id").
+		Joins("INNER JOIN administrators ON question.questionnaire_id = administrators.questionnaire_id").
+		Where("question.id = ? AND administrators.user_traqid = ?", questionID, userID).
+		Select("question.id").
 		First(&Questions{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil

@@ -220,17 +220,17 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 
 	if hasMyResponse != nil {
 		if *hasMyResponse {
-			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		} else {
-			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		}
 	}
 
 	if hasMyDraft != nil {
 		if *hasMyDraft {
-			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL AND respondents.deleted_at IS NULL)", userID)
 		} else {
-			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL)", userID)
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NULL AND respondents.deleted_at IS NULL)", userID)
 		}
 	}
 
@@ -451,7 +451,7 @@ func (*Questionnaire) GetQuestionnairesInfoForReminder(ctx context.Context) ([]Q
 
 	questionnaires := []Questionnaires{}
 	err = db.
-		Where("res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
+		Where("deleted_at IS NULL AND is_published IS TRUE AND res_time_limit > ? AND res_time_limit < ?", time.Now(), time.Now().AddDate(0, 0, 7)).
 		Find(&questionnaires).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the questionnaires: %w", err)
