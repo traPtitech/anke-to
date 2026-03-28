@@ -436,7 +436,7 @@ func TestPop(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		re.pop()
+		re.popDue(time.Date(2003, 1, 1, 0, 0, 0, 0, time.UTC))
 		assertion.Equal(testCase.expect.num, len(re.jobs), testCase.description, "queue length")
 		if testCase.expect.num != 0 {
 			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, re.jobs[0].Timestamp, testCase.description, "first content timestamp")
