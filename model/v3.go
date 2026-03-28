@@ -37,9 +37,6 @@ func v3() *gormigrate.Migration {
 			if err := tx.Exec("INSERT INTO administrator_users (questionnaire_id, user_traqid) SELECT questionnaire_id, user_traqid FROM administrators").Error; err != nil {
 				return err
 			}
-			if err := tx.Migrator().RenameTable("question", "questions"); err != nil {
-				return err
-			}
 			if err := tx.AutoMigrate(&v3Questions{}); err != nil {
 				return err
 			}
