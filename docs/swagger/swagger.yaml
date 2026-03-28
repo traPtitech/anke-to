@@ -851,9 +851,11 @@ components:
         - type: object
           properties:
             min_value:
-              type: integer
+              type: number
+              format: double
             max_value:
-              type: integer
+              type: number
+              format: double
     QuestionSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
@@ -1107,6 +1109,7 @@ components:
       properties:
         answer:
           type: number
+          format: double
       required:
         - answer
     ResponseBodyBaseInteger:

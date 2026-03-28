@@ -102,6 +102,13 @@ func maxLengthPattern(maxLength *int) string {
 	return "^.{0," + strconv.Itoa(*maxLength) + "}$"
 }
 
+func formatNumberBound(value *float64) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatFloat(*value, 'f', -1, 64)
+}
+
 func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
 	res := openapi.QuestionnaireList{}
 	var sort string
@@ -411,13 +418,8 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 					return errors.New("failed to get question settings")
 				}
 				// 数字かどうか，min<=maxになっているかどうか
-				minValueStr, maxValueStr := "", ""
-				if b.MinValue != nil {
-					minValueStr = strconv.Itoa(*b.MinValue)
-				}
-				if b.MaxValue != nil {
-					maxValueStr = strconv.Itoa(*b.MaxValue)
-				}
+				minValueStr := formatNumberBound(b.MinValue)
+				maxValueStr := formatNumberBound(b.MaxValue)
 				err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 				if err != nil {
 					c.Logger().Errorf("invalid number: %+v", err)
@@ -734,13 +736,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					minValueStr, maxValueStr := "", ""
-					if b.MinValue != nil {
-						minValueStr = strconv.Itoa(*b.MinValue)
-					}
-					if b.MaxValue != nil {
-						maxValueStr = strconv.Itoa(*b.MaxValue)
-					}
+					minValueStr := formatNumberBound(b.MinValue)
+					maxValueStr := formatNumberBound(b.MaxValue)
 					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)
@@ -851,13 +848,8 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						return errors.New("failed to get question settings")
 					}
 					// 数字かどうか，min<=maxになっているかどうか
-					minValueStr, maxValueStr := "", ""
-					if b.MinValue != nil {
-						minValueStr = strconv.Itoa(*b.MinValue)
-					}
-					if b.MaxValue != nil {
-						maxValueStr = strconv.Itoa(*b.MaxValue)
-					}
+					minValueStr := formatNumberBound(b.MinValue)
+					maxValueStr := formatNumberBound(b.MaxValue)
 					err = q.IValidation.CheckNumberValid(minValueStr, maxValueStr)
 					if err != nil {
 						c.Logger().Errorf("invalid number: %+v", err)

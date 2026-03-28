@@ -256,8 +256,8 @@ type QuestionSettingsMultipleChoiceQuestionType string
 
 // QuestionSettingsNumber defines model for QuestionSettingsNumber.
 type QuestionSettingsNumber struct {
-	MaxValue     *int                               `json:"max_value,omitempty"`
-	MinValue     *int                               `json:"min_value,omitempty"`
+	MaxValue     *float64                           `json:"max_value,omitempty"`
+	MinValue     *float64                           `json:"min_value,omitempty"`
 	QuestionType QuestionSettingsNumberQuestionType `json:"question_type"`
 }
 
@@ -570,7 +570,7 @@ type ResponseBodyBaseInteger struct {
 
 // ResponseBodyBaseNumber defines model for ResponseBodyBaseNumber.
 type ResponseBodyBaseNumber struct {
-	Answer float32 `json:"answer"`
+	Answer float64 `json:"answer"`
 }
 
 // ResponseBodyBaseString defines model for ResponseBodyBaseString.
@@ -589,7 +589,7 @@ type ResponseBodyMultipleChoiceQuestionType string
 
 // ResponseBodyNumber defines model for ResponseBodyNumber.
 type ResponseBodyNumber struct {
-	Answer       float32                        `json:"answer"`
+	Answer       float64                        `json:"answer"`
 	QuestionType ResponseBodyNumberQuestionType `json:"question_type"`
 }
 
