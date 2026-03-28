@@ -403,7 +403,7 @@ type QuestionnaireDetail struct {
 	QuestionnaireId int        `json:"questionnaire_id"`
 	Questions       []Question `json:"questions"`
 
-	// Respondents 回答者の一覧。匿名回答の場合はnull。
+	// Respondents 回答者の一覧。匿名アンケートでも返る。
 	Respondents []TraqId `json:"respondents"`
 
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
@@ -705,14 +705,14 @@ type TraqUserGroupMembers = []TraqUserGroupMember
 // TraqUsers defines model for TraqUsers.
 type TraqUsers = []TraqUser
 
-// Users 回答者の一覧。匿名回答の場合はnull。
+// Users ユーザーIDの一覧。
 type Users = []TraqId
 
 // UsersAndGroups defines model for UsersAndGroups.
 type UsersAndGroups struct {
 	Groups Groups `json:"groups"`
 
-	// Users 回答者の一覧。匿名回答の場合はnull。
+	// Users ユーザーIDの一覧。
 	Users Users `json:"users"`
 }
 
