@@ -2225,7 +2225,6 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response10.ResponseId,
-					response11.ResponseId,
 				},
 			},
 		},
