@@ -164,8 +164,6 @@ type v3QuestionForeignKeyColumn struct {
 	DeleteRule           string `gorm:"column:DELETE_RULE"`
 }
 
-var v3ValidReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
-
 func migrateQuestionForeignKeys(tx *gorm.DB) error {
 	const fkQuery = `
 SELECT kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.REFERENCED_COLUMN_NAME,
@@ -196,8 +194,6 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		refColumns    []string
 		updateRule    string
 		deleteRule    string
-		constraint    string
-		table         string
 	}
 
 	definitions := map[foreignKeyIdentifier]*foreignKeyDefinition{}
@@ -221,8 +217,6 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 				refColumns: []string{},
 				updateRule: updateRule,
 				deleteRule: deleteRule,
-				constraint: column.ConstraintName,
-				table:      column.TableName,
 			}
 			definitions[key] = definition
 		}
@@ -230,11 +224,32 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 		definition.refColumns = append(definition.refColumns, column.ReferencedColumnName)
 	}
 
-	for _, definition := range definitions {
+	for key, definition := range definitions {
+		tableName, err := quoteIdentifier(key.tableName)
+		if err != nil {
+			return err
+		}
+		constraintName, err := quoteIdentifier(key.constraintName)
+		if err != nil {
+			return err
+		}
+		columnList, err := joinIdentifiers(definition.columns)
+		if err != nil {
+			return err
+		}
+		refColumnList, err := joinIdentifiers(definition.refColumns)
+		if err != nil {
+			return err
+		}
+		referencedTable, err := quoteIdentifier("questions")
+		if err != nil {
+			return err
+		}
+
 		dropSQL := fmt.Sprintf(
 			"ALTER TABLE %s DROP FOREIGN KEY %s",
-			quoteIdentifier(definition.table),
-			quoteIdentifier(definition.constraint),
+			tableName,
+			constraintName,
 		)
 		if err := tx.Exec(dropSQL).Error; err != nil {
 			return err
@@ -242,11 +257,11 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 
 		addSQL := fmt.Sprintf(
 			"ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON UPDATE %s ON DELETE %s",
-			quoteIdentifier(definition.table),
-			quoteIdentifier(definition.constraint),
-			joinIdentifiers(definition.columns),
-			quoteIdentifier("questions"),
-			joinIdentifiers(definition.refColumns),
+			tableName,
+			constraintName,
+			columnList,
+			referencedTable,
+			refColumnList,
 			definition.updateRule,
 			definition.deleteRule,
 		)
@@ -258,23 +273,31 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 	return nil
 }
 
-func quoteIdentifier(identifier string) string {
-	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`"
+func quoteIdentifier(identifier string) (string, error) {
+	if strings.ContainsRune(identifier, '\x00') {
+		return "", fmt.Errorf("invalid identifier %q", identifier)
+	}
+	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`", nil
 }
 
-func joinIdentifiers(identifiers []string) string {
+func joinIdentifiers(identifiers []string) (string, error) {
 	quoted := make([]string, len(identifiers))
 	for i, identifier := range identifiers {
-		quoted[i] = quoteIdentifier(identifier)
+		quotedIdentifier, err := quoteIdentifier(identifier)
+		if err != nil {
+			return "", err
+		}
+		quoted[i] = quotedIdentifier
 	}
-	return strings.Join(quoted, ", ")
+	return strings.Join(quoted, ", "), nil
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	for _, action := range v3ValidReferentialActions {
+	validActions := []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
+	for _, action := range validActions {
 		if rule == action {
 			return rule, nil
 		}
 	}
-	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActions)
+	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, validActions)
 }
