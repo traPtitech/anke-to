@@ -306,16 +306,6 @@ func TestGetQuestionnaires(t *testing.T) {
 			},
 		},
 		{
-			description: "valid auto only administrated by me",
-			args: args{
-				userID: userFive,
-				params: openapi.GetQuestionnairesParams{},
-			},
-			expect: expect{
-				questionnaireIDList: &[]int{},
-			},
-		},
-		{
 			description: "invalid param sort",
 			args: args{
 				userID: userOne,

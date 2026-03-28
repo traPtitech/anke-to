@@ -153,9 +153,6 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	var hasMyResponse, hasMyDraft *bool
 	hasMyResponse = params.HasMyResponse
 	hasMyDraft = params.HasMyDraft
-	if isDraft == nil || *isDraft {
-		onlyAdministratedByMe = true
-	}
 
 	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft)
 	if err != nil {
