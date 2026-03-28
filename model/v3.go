@@ -164,12 +164,7 @@ type v3QuestionForeignKeyColumn struct {
 	DeleteRule           string `gorm:"column:DELETE_RULE"`
 }
 
-var v3ReferentialActions = map[string]struct{}{
-	"CASCADE":   {},
-	"RESTRICT":  {},
-	"SET NULL":  {},
-	"NO ACTION": {},
-}
+var v3ReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION"}
 
 func migrateQuestionForeignKeys(tx *gorm.DB) error {
 	const fkQuery = `
@@ -180,12 +175,12 @@ JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
   ON kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
  AND kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
 WHERE kcu.CONSTRAINT_SCHEMA = DATABASE()
-  AND kcu.REFERENCED_TABLE_NAME = 'question'
+  AND kcu.REFERENCED_TABLE_NAME = ?
 ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 `
 
 	var columns []v3QuestionForeignKeyColumn
-	if err := tx.Raw(fkQuery).Scan(&columns).Error; err != nil {
+	if err := tx.Raw(fkQuery, "question").Scan(&columns).Error; err != nil {
 		return err
 	}
 	if len(columns) == 0 {
@@ -276,8 +271,10 @@ func joinIdentifiers(identifiers []string) string {
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	if _, ok := v3ReferentialActions[rule]; ok {
-		return rule, nil
+	for _, action := range v3ReferentialActions {
+		if rule == action {
+			return rule, nil
+		}
 	}
 	return "", fmt.Errorf("unexpected referential action: %s", rule)
 }
