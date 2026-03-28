@@ -348,10 +348,18 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 					c.Logger().Errorf("invalid scale")
 					return errors.New("invalid scale")
 				}
+				minLabel := ""
+				maxLabel := ""
+				if b.MinLabel != nil {
+					minLabel = *b.MinLabel
+				}
+				if b.MaxLabel != nil {
+					maxLabel = *b.MaxLabel
+				}
 				err = q.IScaleLabel.InsertScaleLabel(ctx, questionID,
 					model.ScaleLabels{
-						ScaleLabelLeft:  *b.MinLabel,
-						ScaleLabelRight: *b.MaxLabel,
+						ScaleLabelLeft:  minLabel,
+						ScaleLabelRight: maxLabel,
 						ScaleMax:        b.MaxValue,
 						ScaleMin:        b.MinValue,
 					})
@@ -771,10 +779,18 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						c.Logger().Errorf("invalid scale")
 						return errors.New("invalid scale")
 					}
+					minLabel := ""
+					maxLabel := ""
+					if b.MinLabel != nil {
+						minLabel = *b.MinLabel
+					}
+					if b.MaxLabel != nil {
+						maxLabel = *b.MaxLabel
+					}
 					err = q.IScaleLabel.UpdateScaleLabel(ctx, *question.QuestionId,
 						model.ScaleLabels{
-							ScaleLabelLeft:  *b.MinLabel,
-							ScaleLabelRight: *b.MaxLabel,
+							ScaleLabelLeft:  minLabel,
+							ScaleLabelRight: maxLabel,
 							ScaleMax:        b.MaxValue,
 							ScaleMin:        b.MinValue,
 						})
