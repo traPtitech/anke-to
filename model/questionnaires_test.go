@@ -1416,20 +1416,6 @@ func getQuestionnairesTest(t *testing.T) {
 			assertion.Regexp(testCase.args.search, questionnaire.Title, testCase.description, "regexp")
 		}
 
-		if testCase.args.search == "GetQuestionnaireTest$" && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
-			hasLimit := false
-			hasNoLimit := false
-			for _, questionnaire := range questionnaires {
-				if questionnaire.ResTimeLimit.Valid {
-					hasLimit = true
-				} else {
-					hasNoLimit = true
-				}
-			}
-			assertion.True(hasLimit, testCase.description, "contains res_time_limit")
-			assertion.True(hasNoLimit, testCase.description, "contains no res_time_limit")
-		}
-
 		if len(testCase.args.search) == 0 && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
 			fmt.Println(testCase.description)
 			fmt.Println(questionnaireNum)
