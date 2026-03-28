@@ -325,7 +325,7 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 	}
 
 	err = r.ITransaction.Do(ctx.Request().Context(), nil, func(c context.Context) error {
-		err := r.IResponse.DeleteResponse(ctx.Request().Context(), responseID)
+		err := r.IResponse.DeleteResponse(c, responseID)
 		if err != nil {
 			ctx.Logger().Errorf("failed to delete response: %+v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to delete response: %w", err))
