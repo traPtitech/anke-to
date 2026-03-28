@@ -50,18 +50,28 @@ func migrateQuestionTable(tx *gorm.DB) error {
 	case hasQuestion && hasQuestions:
 		return fmt.Errorf("both %s and %s tables exist", v3LegacyQuestionsTableName, v3QuestionsTableName)
 	case hasQuestion:
-		definitions, err := loadQuestionForeignKeys(tx, v3LegacyQuestionsTableName)
+		definitions, err := loadQuestionForeignKeyBackup(tx)
 		if err != nil {
 			return err
 		}
-		if err := saveQuestionForeignKeyBackup(tx, definitions); err != nil {
-			return err
+		if len(definitions) == 0 {
+			definitions, err = loadQuestionForeignKeys(tx, v3LegacyQuestionsTableName)
+			if err != nil {
+				return err
+			}
+			if err := saveQuestionForeignKeyBackup(tx, definitions); err != nil {
+				return err
+			}
 		}
 		newForeignKeySQLs, err := buildQuestionForeignKeySQLs(definitions, v3QuestionsTableName, nil)
 		if err != nil {
 			return err
 		}
-		if err := dropQuestionForeignKeys(tx, definitions); err != nil {
+		liveDefinitions, err := loadQuestionForeignKeys(tx, v3LegacyQuestionsTableName)
+		if err != nil {
+			return err
+		}
+		if err := dropQuestionForeignKeys(tx, liveDefinitions); err != nil {
 			return err
 		}
 		if err := tx.Migrator().RenameTable(v3LegacyQuestionsTableName, v3QuestionsTableName); err != nil {
