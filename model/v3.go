@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -52,9 +53,123 @@ func v3() *gormigrate.Migration {
 			`).Error; err != nil {
 				return err
 			}
+			if err := cleanupSoftDeletedQuestionnaires(tx); err != nil {
+				return fmt.Errorf("failed to cleanup soft-deleted questionnaires: %w", err)
+			}
 			return nil
 		},
 	}
+}
+
+func cleanupSoftDeletedQuestionnaires(tx *gorm.DB) error {
+	queries := []string{
+		`DELETE FROM responses
+		WHERE response_id IN (
+			SELECT response_id
+			FROM respondents
+			WHERE questionnaire_id IN (
+				SELECT id
+				FROM questionnaires
+				WHERE deleted_at IS NOT NULL
+			)
+		)`,
+		`DELETE FROM responses
+		WHERE question_id IN (
+			SELECT id
+			FROM question
+			WHERE questionnaire_id IN (
+				SELECT id
+				FROM questionnaires
+				WHERE deleted_at IS NOT NULL
+			)
+		)`,
+		`DELETE FROM respondents
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM options
+		WHERE question_id IN (
+			SELECT id
+			FROM question
+			WHERE questionnaire_id IN (
+				SELECT id
+				FROM questionnaires
+				WHERE deleted_at IS NOT NULL
+			)
+		)`,
+		`DELETE FROM scale_labels
+		WHERE question_id IN (
+			SELECT id
+			FROM question
+			WHERE questionnaire_id IN (
+				SELECT id
+				FROM questionnaires
+				WHERE deleted_at IS NOT NULL
+			)
+		)`,
+		`DELETE FROM validations
+		WHERE question_id IN (
+			SELECT id
+			FROM question
+			WHERE questionnaire_id IN (
+				SELECT id
+				FROM questionnaires
+				WHERE deleted_at IS NOT NULL
+			)
+		)`,
+		`DELETE FROM question
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM targets
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM target_users
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM target_groups
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM administrators
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM administrator_users
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+		`DELETE FROM administrator_groups
+		WHERE questionnaire_id IN (
+			SELECT id
+			FROM questionnaires
+			WHERE deleted_at IS NOT NULL
+		)`,
+	}
+
+	for _, query := range queries {
+		if err := tx.Exec(query).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type v3Targets struct {
