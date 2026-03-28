@@ -20,6 +20,7 @@ func questionnaireInfo2questionnaireSummary(questionnaireInfo model.Questionnair
 		Description:              questionnaireInfo.Description,
 		HasMyDraft:               hasMyDraft,
 		HasMyResponse:            hasMyResponse,
+		IsAdministratedByMe:      questionnaireInfo.IsAdministratedByMe,
 		IsDuplicateAnswerAllowed: questionnaireInfo.IsDuplicateAnswerAllowed,
 		IsAnonymous:              questionnaireInfo.IsAnonymous,
 		IsPublished:              questionnaireInfo.IsPublished,
