@@ -150,7 +150,12 @@ type v3Questions struct {
 	Validations     []Validations  `json:"-"  gorm:"foreignKey:QuestionID"`
 }
 
-const v3QuestionsTableName = "questions"
+const (
+	v3QuestionsTableName    = "questions"
+	v3OldQuestionsTableName = "question"
+)
+
+var v3ValidReferentialActions = []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
 
 func (*v3Questions) TableName() string {
 	return v3QuestionsTableName
@@ -180,7 +185,7 @@ ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 `
 
 	var columns []v3QuestionForeignKeyColumn
-	if err := tx.Raw(fkQuery, "question").Scan(&columns).Error; err != nil {
+	if err := tx.Raw(fkQuery, v3OldQuestionsTableName).Scan(&columns).Error; err != nil {
 		return err
 	}
 	if len(columns) == 0 {
@@ -295,11 +300,10 @@ func joinIdentifiers(identifiers []string) (string, error) {
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	validActions := []string{"CASCADE", "RESTRICT", "SET NULL", "NO ACTION", "SET DEFAULT"}
-	for _, action := range validActions {
+	for _, action := range v3ValidReferentialActions {
 		if rule == action {
 			return rule, nil
 		}
 	}
-	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, validActions)
+	return "", fmt.Errorf("invalid referential action %q: must be one of %v", rule, v3ValidReferentialActions)
 }
