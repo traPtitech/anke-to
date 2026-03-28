@@ -820,37 +820,37 @@ func TestGetRespondentDetails(t *testing.T) {
 	testCases := []test{
 		{
 			description: "traqid",
-				args: args{
-					questionnaireID: questionnaireID,
-					sort:            "traqid",
-					onlyMyResponse:  false,
-					userID:          userOne,
-				},
-				expect: expect{
-					length:  4,
-					sortIdx: []int{0, 3, 1, 2},
-				},
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "traqid",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
+			expect: expect{
+				length:  4,
+				sortIdx: []int{0, 3, 1, 2},
+			},
+		},
 		{
 			description: "-traqid",
-				args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-traqid",
-					onlyMyResponse:  false,
-					userID:          userOne,
-				},
-				expect: expect{
-					length:  4,
-					sortIdx: []int{2, 1, 0, 3},
-				},
+			args: args{
+				questionnaireID: questionnaireID,
+				sort:            "-traqid",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
+			expect: expect{
+				length:  4,
+				sortIdx: []int{2, 1, 0, 3},
+			},
+		},
 		{
 			description: "submitted_at",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "submitted_at",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "submitted_at",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -860,10 +860,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "-submitted_at",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-submitted_at",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-submitted_at",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -873,10 +873,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "questionnaire does not exist",
 			args: args{
-					questionnaireID: -1,
-					sort:            "1",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: -1,
+				sort:            "1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  0,
@@ -886,10 +886,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Number",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "3",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "3",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -899,23 +899,23 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Number",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-3",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-3",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
-				expect: expect{
-					length:  4,
-					sortIdx: []int{0, 3, 1, 2},
-				},
+			expect: expect{
+				length:  4,
+				sortIdx: []int{0, 3, 1, 2},
 			},
+		},
 		{
 			description: "sortNum Text",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "1",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -925,10 +925,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Text desc",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-1",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-1",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -938,10 +938,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "invalid sortnum",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "a",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "a",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -950,10 +950,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "empty sortnum",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "",
-					onlyMyResponse:  false,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "",
+				onlyMyResponse:  false,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  4,
@@ -963,10 +963,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "traqid",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "traqid",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "traqid",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -976,10 +976,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "-traqid",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-traqid",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-traqid",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -989,10 +989,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "submitted_at",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "submitted_at",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "submitted_at",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1002,10 +1002,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "-submitted_at",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-submitted_at",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-submitted_at",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1015,10 +1015,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "questionnaire does not exist",
 			args: args{
-					questionnaireID: -1,
-					sort:            "1",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: -1,
+				sort:            "1",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  0,
@@ -1028,10 +1028,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Number",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "3",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "3",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1041,10 +1041,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Number",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-3",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-3",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1054,10 +1054,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Text",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "1",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "1",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1067,10 +1067,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "sortNum Text desc",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "-1",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "-1",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
@@ -1080,10 +1080,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "invalid sortnum",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "a",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "a",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				isErr: true,
@@ -1092,10 +1092,10 @@ func TestGetRespondentDetails(t *testing.T) {
 		{
 			description: "empty sortnum",
 			args: args{
-					questionnaireID: questionnaireID,
-					sort:            "",
-					onlyMyResponse:  true,
-					userID:          userOne,
+				questionnaireID: questionnaireID,
+				sort:            "",
+				onlyMyResponse:  true,
+				userID:          userOne,
 			},
 			expect: expect{
 				length:  2,
