@@ -82,8 +82,8 @@ func setupSampleQuestionnaire() {
 		Title:      "質問（数値）",
 		IsRequired: true,
 	}
-	sampleQuestionSettingsNumberMaxValue := 100
-	sampleQuestionSettingsNumberMinValue := 0
+	sampleQuestionSettingsNumberMaxValue := 100.5
+	sampleQuestionSettingsNumberMinValue := 0.5
 	err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &sampleQuestionSettingsNumberMaxValue,
 		MinValue:     &sampleQuestionSettingsNumberMinValue,
@@ -619,8 +619,8 @@ func TestPostQuestionnaire(t *testing.T) {
 		Title:      "質問（数値）",
 		IsRequired: true,
 	}
-	invalidQuestionSettingsNumberMaxValue := 0
-	invalidQuestionSettingsNumberMinValue := 100
+	invalidQuestionSettingsNumberMaxValue := 0.5
+	invalidQuestionSettingsNumberMinValue := 100.5
 	err := invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &invalidQuestionSettingsNumberMaxValue,
 		MinValue:     &invalidQuestionSettingsNumberMinValue,
@@ -1225,8 +1225,8 @@ func TestEditQuestionnaire(t *testing.T) {
 		Title:      "質問（数値）",
 		IsRequired: true,
 	}
-	invalidQuestionSettingsNumberMaxValue := 0
-	invalidQuestionSettingsNumberMinValue := 100
+	invalidQuestionSettingsNumberMaxValue := 0.5
+	invalidQuestionSettingsNumberMinValue := 100.5
 	err := invalidQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
 		MaxValue:     &invalidQuestionSettingsNumberMaxValue,
 		MinValue:     &invalidQuestionSettingsNumberMinValue,
@@ -2375,7 +2375,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	invalidResponseBodyNumber := openapi.NewResponseBody{}
 	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
 	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
-		Answer:       101,
+		Answer:       101.5,
 		QuestionType: "Number",
 	})
 	require.NoError(t, err)
@@ -2738,7 +2738,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 				require.NoError(t, err)
 			case "Number":
 				err = actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
-					Answer:       float32(responseParsed["answer"].(float64)),
+					Answer:       responseParsed["answer"].(float64),
 					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
 				})
 				require.NoError(t, err)
