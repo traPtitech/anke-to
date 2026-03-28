@@ -154,7 +154,7 @@ func (*v3Questions) TableName() string {
 	return "questions"
 }
 
-type questionForeignKeyColumn struct {
+type v3QuestionForeignKeyColumn struct {
 	ConstraintName       string `gorm:"column:CONSTRAINT_NAME"`
 	TableName            string `gorm:"column:TABLE_NAME"`
 	ColumnName           string `gorm:"column:COLUMN_NAME"`
@@ -162,6 +162,13 @@ type questionForeignKeyColumn struct {
 	OrdinalPosition      int    `gorm:"column:ORDINAL_POSITION"`
 	UpdateRule           string `gorm:"column:UPDATE_RULE"`
 	DeleteRule           string `gorm:"column:DELETE_RULE"`
+}
+
+var v3ReferentialActions = map[string]struct{}{
+	"CASCADE":   {},
+	"RESTRICT":  {},
+	"SET NULL":  {},
+	"NO ACTION": {},
 }
 
 func migrateQuestionForeignKeys(tx *gorm.DB) error {
@@ -177,7 +184,7 @@ WHERE kcu.CONSTRAINT_SCHEMA = DATABASE()
 ORDER BY kcu.CONSTRAINT_NAME, kcu.TABLE_NAME, kcu.ORDINAL_POSITION
 `
 
-	var columns []questionForeignKeyColumn
+	var columns []v3QuestionForeignKeyColumn
 	if err := tx.Raw(fkQuery).Scan(&columns).Error; err != nil {
 		return err
 	}
@@ -262,17 +269,15 @@ func quoteIdentifier(identifier string) string {
 
 func joinIdentifiers(identifiers []string) string {
 	quoted := make([]string, len(identifiers))
-	for index, identifier := range identifiers {
-		quoted[index] = quoteIdentifier(identifier)
+	for i, identifier := range identifiers {
+		quoted[i] = quoteIdentifier(identifier)
 	}
 	return strings.Join(quoted, ", ")
 }
 
 func validateReferentialRule(rule string) (string, error) {
-	switch rule {
-	case "CASCADE", "RESTRICT", "SET NULL", "NO ACTION":
+	if _, ok := v3ReferentialActions[rule]; ok {
 		return rule, nil
-	default:
-		return "", fmt.Errorf("unexpected referential action: %s", rule)
 	}
+	return "", fmt.Errorf("unexpected referential action: %s", rule)
 }
