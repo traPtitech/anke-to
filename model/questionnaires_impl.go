@@ -230,7 +230,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		if *hasMyResponse {
 			query = query.Where("EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		} else {
-			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL)", userID)
+			query = query.Where("NOT EXISTS (SELECT 1 FROM respondents WHERE questionnaires.id = respondents.questionnaire_id AND respondents.user_traqid = ? AND respondents.submitted_at IS NOT NULL AND respondents.deleted_at IS NULL)", userID)
 		}
 	}
 
