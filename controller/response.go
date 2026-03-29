@@ -50,7 +50,9 @@ func NewResponse(
 }
 
 func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesParams, userID string) (openapi.ResponsesWithQuestionnaireInfo, error) {
-	res := openapi.ResponsesWithQuestionnaireInfo{}
+	res := openapi.ResponsesWithQuestionnaireInfo{
+		ResponseGroups: []openapi.ResponseWithQuestionnaireInfoItem{},
+	}
 
 	var sort string
 	if params.Sort == nil {
@@ -58,80 +60,63 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 	} else {
 		sort = string(*params.Sort)
 	}
+	var pageNum int
+	if params.Page == nil {
+		pageNum = 1
+	} else {
+		pageNum = int(*params.Page)
+	}
+	if pageNum < 1 {
+		pageNum = 1
+	}
 	var questionnaireIDs []int
 	if params.QuestionnaireIDs == nil {
 		questionnaireIDs = nil
 	} else {
 		questionnaireIDs = *params.QuestionnaireIDs
 	}
-	responsesID, err := r.IRespondent.GetMyResponseIDs(ctx.Request().Context(), sort, userID, questionnaireIDs, params.IsDraft)
+
+	responseGroups, pageMax, err := r.IRespondent.GetMyResponseGroups(ctx.Request().Context(), sort, userID, questionnaireIDs, params.IsDraft, pageNum)
 	if err != nil {
-		ctx.Logger().Errorf("failed to get my responses ID: %+v", err)
+		if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidSortParam) {
+			ctx.Logger().Infof("invalid myResponses params: %+v", err)
+			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		ctx.Logger().Errorf("failed to get my response groups: %+v", err)
 		return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire responses: %w", err))
 	}
+	res.PageMax = pageMax
 
-	responseLists := make(map[int][]openapi.Response)
-	var responseQuestionnaireIDs []int
-
-	for _, responseID := range responsesID {
-		responseDetail, err := r.IRespondent.GetRespondentDetail(ctx.Request().Context(), responseID)
-		if err != nil {
-			ctx.Logger().Errorf("failed to get respondent detail: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get respondent detail: %w", err))
+	for _, responseGroup := range responseGroups {
+		var responseDueDateTime *time.Time
+		if responseGroup.QuestionnaireInfo.ResponseDueDateTime.Valid {
+			dueDateTime := responseGroup.QuestionnaireInfo.ResponseDueDateTime.Time
+			responseDueDateTime = &dueDateTime
 		}
 
-		response, err := respondentDetail2Response(ctx, responseDetail)
-		if err != nil {
-			ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
+		groupItem := openapi.ResponseWithQuestionnaireInfoItem{
+			QuestionnaireInfo: openapi.QuestionnaireInfo{
+				CreatedAt:           responseGroup.QuestionnaireInfo.CreatedAt,
+				IsTargetingMe:       responseGroup.QuestionnaireInfo.IsTargetingMe,
+				ModifiedAt:          responseGroup.QuestionnaireInfo.ModifiedAt,
+				ResponseDueDateTime: responseDueDateTime,
+				Title:               responseGroup.QuestionnaireInfo.Title,
+			},
+			Responses: []openapi.Response{},
 		}
 
-		tmp := openapi.Response{
-			Body:            response.Body,
-			IsDraft:         response.IsDraft,
-			ModifiedAt:      response.ModifiedAt,
-			QuestionnaireId: response.QuestionnaireId,
-			Respondent:      &userID,
-			ResponseId:      response.ResponseId,
-			SubmittedAt:     response.SubmittedAt,
-			IsAnonymous:     response.IsAnonymous,
-		}
-		responseLists[responseDetail.QuestionnaireID] = append(responseLists[responseDetail.QuestionnaireID], tmp)
-		responseQuestionnaireIDs = append(responseQuestionnaireIDs, responseDetail.QuestionnaireID)
-	}
+		for _, responseDetail := range responseGroup.Responses {
+			respondent := userID
+			response, err := respondentDetail2ResponseWithMetadata(ctx, responseDetail, &respondent, responseGroup.QuestionnaireInfo.IsAnonymous)
+			if err != nil {
+				ctx.Logger().Errorf("failed to convert respondent detail into response: %+v", err)
+				return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert respondent detail into response: %w", err))
+			}
 
-	questionnaireIDExists := make(map[int]bool, len(responseQuestionnaireIDs))
-	for _, questionnaireID := range responseQuestionnaireIDs {
-		if questionnaireIDExists[questionnaireID] {
-			continue
-		}
-		questionnaireIDExists[questionnaireID] = true
-
-		questionnaire, _, _, _, _, _, _, _, err := r.IQuestionnaire.GetQuestionnaireInfo(ctx.Request().Context(), questionnaireID)
-		if err != nil {
-			ctx.Logger().Errorf("failed to get questionnaire info: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get questionnaire info: %w", err))
+			groupItem.Responses = append(groupItem.Responses, response)
 		}
 
-		isTargetingMe, err := r.ITarget.IsTargetingMe(ctx.Request().Context(), questionnaireID, userID)
-		if err != nil {
-			ctx.Logger().Errorf("failed to get target info: %+v", err)
-			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get target info: %w", err))
-		}
-
-		questionnaireInfo := openapi.QuestionnaireInfo{
-			CreatedAt:           questionnaire.CreatedAt,
-			IsTargetingMe:       isTargetingMe,
-			ModifiedAt:          questionnaire.ModifiedAt,
-			ResponseDueDateTime: &questionnaire.ResTimeLimit.Time,
-			Title:               questionnaire.Title,
-		}
-
-		responses := responseLists[questionnaireID]
-		res = append(res, openapi.ResponseWithQuestionnaireInfoItem{
-			QuestionnaireInfo: questionnaireInfo,
-			Responses:         responses,
-		})
+		res.ResponseGroups = append(res.ResponseGroups, groupItem)
 	}
 
 	return res, nil

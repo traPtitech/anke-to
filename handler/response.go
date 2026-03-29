@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,10 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 
 	res, err := h.Response.GetMyResponses(ctx, params, userID)
 	if err != nil {
+		var httpErr *echo.HTTPError
+		if errors.As(err, &httpErr) {
+			return httpErr
+		}
 		ctx.Logger().Errorf("failed to get my responses: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %w", err))
 	}

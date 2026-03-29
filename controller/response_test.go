@@ -148,7 +148,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response0, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -159,7 +159,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response1, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -171,7 +171,7 @@ func TestGetMyResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	responseDraft, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -205,6 +205,7 @@ func TestGetMyResponses(t *testing.T) {
 	type expect struct {
 		isErr          bool
 		err            error
+		pageMax        *int
 		responseIDList *[]int
 	}
 	type test struct {
@@ -220,6 +221,11 @@ func TestGetMyResponses(t *testing.T) {
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
 	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
 	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	pageZero := 0
+	largePageNum := 100000000
+	pageOne := 1
+	constTrue := true
+	constFalse := false
 
 	testCases := []test{
 		{
@@ -227,6 +233,9 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{},
+			},
+			expect: expect{
+				pageMax: &pageOne,
 			},
 		},
 		{
@@ -249,6 +258,9 @@ func TestGetMyResponses(t *testing.T) {
 					Sort: &sortSubmittedAt,
 				},
 			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
 		},
 		{
 			description: "sort -submitted_at",
@@ -257,6 +269,9 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{
 					Sort: &sortSubmittedAtDesc,
 				},
+			},
+			expect: expect{
+				pageMax: &pageOne,
 			},
 		},
 		{
@@ -267,6 +282,9 @@ func TestGetMyResponses(t *testing.T) {
 					Sort: &sortTraqID,
 				},
 			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
 		},
 		{
 			description: "sort -traqid",
@@ -275,6 +293,9 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{
 					Sort: &sortTraqIDDesc,
 				},
+			},
+			expect: expect{
+				pageMax: &pageOne,
 			},
 		},
 		{
@@ -285,6 +306,9 @@ func TestGetMyResponses(t *testing.T) {
 					Sort: &sortModifiedAt,
 				},
 			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
 		},
 		{
 			description: "sort -modified_at",
@@ -294,6 +318,59 @@ func TestGetMyResponses(t *testing.T) {
 					Sort: &sortModifiedAtDesc,
 				},
 			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
+		},
+		{
+			description: "page less than one treated as first page",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					Page: &pageZero,
+				},
+			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
+		},
+		{
+			description: "too large page num",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					Page: &largePageNum,
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "draft only",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					IsDraft: &constTrue,
+				},
+			},
+			expect: expect{
+				pageMax:        &pageOne,
+				responseIDList: &[]int{responseDraft.ResponseId},
+			},
+		},
+		{
+			description: "non draft only",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					IsDraft: &constFalse,
+				},
+			},
+			expect: expect{
+				pageMax:        &pageOne,
+				responseIDList: &[]int{response0.ResponseId, response1.ResponseId},
+			},
 		},
 		{
 			description: "special user",
@@ -302,6 +379,7 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{},
 			},
 			expect: expect{
+				pageMax:        &pageOne,
 				responseIDList: &[]int{response4.ResponseId},
 			},
 		},
@@ -312,6 +390,7 @@ func TestGetMyResponses(t *testing.T) {
 				params: openapi.GetMyResponsesParams{},
 			},
 			expect: expect{
+				pageMax:        &pageZero,
 				responseIDList: &[]int{},
 			},
 		},
@@ -321,6 +400,12 @@ func TestGetMyResponses(t *testing.T) {
 		params := url.Values{}
 		if testCase.args.params.Sort != nil {
 			params.Add("sort", string(*testCase.args.params.Sort))
+		}
+		if testCase.args.params.Page != nil {
+			params.Add("page", fmt.Sprint(*testCase.args.params.Page))
+		}
+		if testCase.args.params.IsDraft != nil {
+			params.Add("isDraft", fmt.Sprint(*testCase.args.params.IsDraft))
 		}
 		e = echo.New()
 		req = httptest.NewRequest(http.MethodGet, "/responses/myResponses"+params.Encode(), nil)
@@ -341,7 +426,11 @@ func TestGetMyResponses(t *testing.T) {
 			continue
 		}
 
-		for _, responseList := range responseLists {
+		if testCase.expect.pageMax != nil {
+			assertion.Equal(*testCase.expect.pageMax, responseLists.PageMax, testCase.description, "pageMax")
+		}
+
+		for _, responseList := range responseLists.ResponseGroups {
 			if testCase.args.params.Sort != nil {
 				switch *testCase.args.params.Sort {
 				case "submitted_at":
@@ -398,7 +487,7 @@ func TestGetMyResponses(t *testing.T) {
 
 		if testCase.expect.responseIDList != nil {
 			responseIDList := []int{}
-			for _, responseList := range responseLists {
+			for _, responseList := range responseLists.ResponseGroups {
 				for _, response := range responseList.Responses {
 					responseIDList = append(responseIDList, response.ResponseId)
 				}
@@ -410,7 +499,7 @@ func TestGetMyResponses(t *testing.T) {
 			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
 		}
 
-		for _, responseList := range responseLists {
+		for _, responseList := range responseLists.ResponseGroups {
 			for _, response := range responseList.Responses {
 				assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response with no respondent")
 			}

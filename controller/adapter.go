@@ -211,7 +211,7 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 	return res, nil
 }
 
-func respondentDetail2Response(ctx echo.Context, respondentDetail model.RespondentDetail) (openapi.Response, error) {
+func respondentDetail2ResponseWithMetadata(ctx echo.Context, respondentDetail model.RespondentDetail, respondent *string, isAnonymous bool) (openapi.Response, error) {
 	oResponseBodies := []openapi.ResponseBody{}
 	for _, r := range respondentDetail.Responses {
 		oResponseBody := openapi.ResponseBody{}
@@ -318,17 +318,6 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 		oResponseBodies = append(oResponseBodies, oResponseBody)
 	}
 
-	isAnonymous, err := model.NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx.Request().Context(), respondentDetail.QuestionnaireID)
-	if err != nil {
-		ctx.Logger().Errorf("failed to get response is anonymous: %+v", err)
-		return openapi.Response{}, err
-	}
-
-	respondent := &respondentDetail.TraqID
-	if isAnonymous {
-		respondent = nil
-	}
-
 	res := openapi.Response{
 		Body:            oResponseBodies,
 		IsAnonymous:     isAnonymous,
@@ -341,6 +330,21 @@ func respondentDetail2Response(ctx echo.Context, respondentDetail model.Responde
 	}
 
 	return res, nil
+}
+
+func respondentDetail2Response(ctx echo.Context, respondentDetail model.RespondentDetail) (openapi.Response, error) {
+	isAnonymous, err := model.NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx.Request().Context(), respondentDetail.QuestionnaireID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to get response is anonymous: %+v", err)
+		return openapi.Response{}, err
+	}
+
+	respondent := &respondentDetail.TraqID
+	if isAnonymous {
+		respondent = nil
+	}
+
+	return respondentDetail2ResponseWithMetadata(ctx, respondentDetail, respondent, isAnonymous)
 }
 
 func responseBody2ResponseMetas(body []openapi.NewResponseBody, questions []model.Questions) ([]*model.ResponseMeta, error) {
