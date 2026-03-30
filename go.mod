@@ -3,6 +3,7 @@ module github.com/traPtitech/anke-to
 go 1.25.7
 
 require (
+	github.com/google/btree v1.1.3
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/google/wire v0.6.0
 	github.com/labstack/echo/v4 v4.13.3

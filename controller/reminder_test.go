@@ -9,6 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nthJob returns the nth job (0-indexed) from the btree in ascending order.
+func nthJob(re *Reminder, n int) *Job {
+	var result *Job
+	i := 0
+	re.tree.Ascend(func(item *Job) bool {
+		if i == n {
+			result = item
+			return false
+		}
+		i++
+		return true
+	})
+	return result
+}
+
 func TestPushReminder(t *testing.T) {
 	t.Parallel()
 
@@ -105,7 +120,7 @@ func TestPushReminder(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		assertion.Equal(testCase.expect.num, len(re.jobs), "reminder num")
+		assertion.Equal(testCase.expect.num, re.tree.Len(), "reminder num")
 	}
 }
 
@@ -169,7 +184,7 @@ func TestDeleteReminder(t *testing.T) {
 		require.NoError(t, err)
 		err = re.PushReminder(3, &reminderLimit3)
 		require.NoError(t, err)
-		jobsNum := len(re.jobs)
+		jobsNum := re.tree.Len()
 		err = re.DeleteReminder(testCase.args.questionnaireID)
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -181,7 +196,7 @@ func TestDeleteReminder(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		assertion.Equal(jobsNum-testCase.expect.num, len(re.jobs), testCase.description, "reminder num")
+		assertion.Equal(jobsNum-testCase.expect.num, re.tree.Len(), testCase.description, "reminder num")
 	}
 }
 func TestCheckRemindStatus(t *testing.T) {
@@ -365,9 +380,10 @@ func TestPush(t *testing.T) {
 
 	for i, testCase := range testCases {
 		re.push(testCase.args.job)
-		assertion.Equal(i, len(re.jobs)-1, "queue length")
-		assertion.Equal(testCase.args.job.Timestamp, re.jobs[testCase.expect.position].Timestamp, testCase.description, "pushed position timestamp")
-		assertion.Equal(testCase.args.job.QuestionnaireID, re.jobs[testCase.expect.position].QuestionnaireID, testCase.description, "pushed position questionnaire id")
+		assertion.Equal(i, re.tree.Len()-1, "queue length")
+		got := nthJob(re, testCase.expect.position)
+		assertion.Equal(testCase.args.job.Timestamp, got.Timestamp, testCase.description, "pushed position timestamp")
+		assertion.Equal(testCase.args.job.QuestionnaireID, got.QuestionnaireID, testCase.description, "pushed position questionnaire id")
 	}
 }
 
@@ -437,10 +453,12 @@ func TestPop(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re.popDue(time.Date(2003, 1, 1, 0, 0, 0, 0, time.UTC))
-		assertion.Equal(testCase.expect.num, len(re.jobs), testCase.description, "queue length")
+		assertion.Equal(testCase.expect.num, re.tree.Len(), testCase.description, "queue length")
 		if testCase.expect.num != 0 {
-			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, re.jobs[0].Timestamp, testCase.description, "first content timestamp")
-			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, re.jobs[0].QuestionnaireID, testCase.description, "first content questionnaire id")
+			min, ok := re.tree.Min()
+			assertion.True(ok)
+			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, min.Timestamp, testCase.description, "first content timestamp")
+			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, min.QuestionnaireID, testCase.description, "first content questionnaire id")
 		}
 	}
 }
