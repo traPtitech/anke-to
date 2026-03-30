@@ -161,35 +161,35 @@ func (re *Reminder) push(job *Job) {
 func (re *Reminder) peek() *Job {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	min, ok := re.tree.Min()
+	earliest, ok := re.tree.Min()
 	if !ok {
 		return nil
 	}
-	return min
+	return earliest
 }
 
 func (re *Reminder) popDue(now time.Time) *Job {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	min, ok := re.tree.Min()
+	earliest, ok := re.tree.Min()
 	if !ok {
 		return nil
 	}
-	if min.Timestamp.After(now) {
+	if earliest.Timestamp.After(now) {
 		return nil
 	}
 	re.tree.DeleteMin()
-	jobs := re.index[min.QuestionnaireID]
+	jobs := re.index[earliest.QuestionnaireID]
 	for i, j := range jobs {
-		if j == min {
-			re.index[min.QuestionnaireID] = append(jobs[:i], jobs[i+1:]...)
+		if j == earliest {
+			re.index[earliest.QuestionnaireID] = append(jobs[:i], jobs[i+1:]...)
 			break
 		}
 	}
-	if len(re.index[min.QuestionnaireID]) == 0 {
-		delete(re.index, min.QuestionnaireID)
+	if len(re.index[earliest.QuestionnaireID]) == 0 {
+		delete(re.index, earliest.QuestionnaireID)
 	}
-	return min
+	return earliest
 }
 
 func (re *Reminder) notifyWorker() {

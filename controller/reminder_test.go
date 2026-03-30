@@ -455,10 +455,10 @@ func TestPop(t *testing.T) {
 		re.popDue(time.Date(2003, 1, 1, 0, 0, 0, 0, time.UTC))
 		assertion.Equal(testCase.expect.num, re.tree.Len(), testCase.description, "queue length")
 		if testCase.expect.num != 0 {
-			min, ok := re.tree.Min()
+			earliest, ok := re.tree.Min()
 			assertion.True(ok)
-			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, min.Timestamp, testCase.description, "first content timestamp")
-			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, min.QuestionnaireID, testCase.description, "first content questionnaire id")
+			assertion.Equal(jobs[3-testCase.expect.num].Timestamp, earliest.Timestamp, testCase.description, "first content timestamp")
+			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, earliest.QuestionnaireID, testCase.description, "first content questionnaire id")
 		}
 	}
 }
