@@ -196,8 +196,8 @@ func (r *Response) EditResponse(ctx echo.Context, responseID openapi.ResponseIDI
 
 	responseMetas, err := responseBody2ResponseMetas(req.Body, questions)
 	if err != nil {
-		ctx.Logger().Errorf("failed to convert response body into response metas: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to convert response body into response metas: %w", err))
+		ctx.Logger().Infof("invalid response body: %+v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid response body: %w", err))
 	}
 
 	// validationでチェック
