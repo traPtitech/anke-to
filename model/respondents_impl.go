@@ -461,35 +461,8 @@ func buildMyResponseBaseQuery(db *gorm.DB, userID string, questionnaireIDs []int
 	return query
 }
 
-func setMyResponseGroupOrder(query *gorm.DB, sort string) (*gorm.DB, error) {
-	switch sort {
-	case "":
-		return query.Order("first_response_id"), nil
-	case "submitted_at":
-		return query.
-			Order("MIN(respondents.submitted_at)").
-			Order("first_response_id"), nil
-	case "-submitted_at":
-		return query.
-			Order("MAX(respondents.submitted_at) DESC").
-			Order("first_response_id"), nil
-	case "modified_at":
-		return query.
-			Order("MIN(respondents.modified_at)").
-			Order("first_response_id"), nil
-	case "-modified_at":
-		return query.
-			Order("MAX(respondents.modified_at) DESC").
-			Order("first_response_id"), nil
-	case "traqid", "-traqid":
-		return query.Order("first_response_id"), nil
-	default:
-		return nil, fmt.Errorf("failed to convert sort param to group order: %w", ErrInvalidSortParam)
-	}
-}
-
 // GetMyResponseGroups 自分の回答をアンケートごとにまとめて取得
-func (*Respondent) GetMyResponseGroups(ctx context.Context, sort string, userID string, questionnaireIDs []int, isDraft *bool, pageNum int) ([]MyResponseGroup, int, error) {
+func (*Respondent) GetMyResponseGroups(ctx context.Context, userID string, questionnaireIDs []int, isDraft *bool, pageNum int) ([]MyResponseGroup, int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get transaction: %w", err)
@@ -523,11 +496,8 @@ func (*Respondent) GetMyResponseGroups(ctx context.Context, sort string, userID 
 				"MIN(respondents.response_id) AS first_response_id",
 			userID,
 		).
-		Group("respondents.questionnaire_id, questionnaires.id, questionnaires.title, questionnaires.created_at, questionnaires.modified_at, questionnaires.res_time_limit, questionnaires.is_anonymous")
-	groupQuery, err = setMyResponseGroupOrder(groupQuery, sort)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to set my response group order: %w", err)
-	}
+		Group("respondents.questionnaire_id, questionnaires.id, questionnaires.title, questionnaires.created_at, questionnaires.modified_at, questionnaires.res_time_limit, questionnaires.is_anonymous").
+		Order("first_response_id")
 
 	err = groupQuery.
 		Limit(20).
@@ -573,10 +543,7 @@ func (*Respondent) GetMyResponseGroups(ctx context.Context, sort string, userID 
 			respondentQuery = respondentQuery.Where("submitted_at IS NOT NULL")
 		}
 	}
-	respondentQuery, _, err = setRespondentsOrder(respondentQuery, sort)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to set respondents order: %w", err)
-	}
+	respondentQuery = respondentQuery.Order("response_id")
 
 	err = respondentQuery.Find(&respondents).Error
 	if err != nil {

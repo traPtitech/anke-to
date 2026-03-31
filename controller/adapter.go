@@ -318,6 +318,10 @@ func respondentDetail2ResponseWithMetadata(ctx echo.Context, respondentDetail mo
 		oResponseBodies = append(oResponseBodies, oResponseBody)
 	}
 
+	if isAnonymous {
+		respondent = nil
+	}
+
 	res := openapi.Response{
 		Body:            oResponseBodies,
 		IsAnonymous:     isAnonymous,

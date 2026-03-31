@@ -300,7 +300,6 @@ paths: # TODO 変数の命名を確認する
         - response
       description: 自分のすべての回答のリストを、アンケートごとにまとめてページ単位で取得します。
       parameters:
-        - $ref: "#/components/parameters/responseSortInQuery"
         - $ref: "#/components/parameters/pageInQuery"
         - $ref: "#/components/parameters/questionnaireIDsInQuery"
         - $ref: "#/components/parameters/isDraftInQuery"

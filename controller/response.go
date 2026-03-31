@@ -54,12 +54,6 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 		ResponseGroups: []openapi.ResponseWithQuestionnaireInfoItem{},
 	}
 
-	var sort string
-	if params.Sort == nil {
-		sort = ""
-	} else {
-		sort = string(*params.Sort)
-	}
 	var pageNum int
 	if params.Page == nil {
 		pageNum = 1
@@ -76,9 +70,9 @@ func (r *Response) GetMyResponses(ctx echo.Context, params openapi.GetMyResponse
 		questionnaireIDs = *params.QuestionnaireIDs
 	}
 
-	responseGroups, pageMax, err := r.IRespondent.GetMyResponseGroups(ctx.Request().Context(), sort, userID, questionnaireIDs, params.IsDraft, pageNum)
+	responseGroups, pageMax, err := r.IRespondent.GetMyResponseGroups(ctx.Request().Context(), userID, questionnaireIDs, params.IsDraft, pageNum)
 	if err != nil {
-		if errors.Is(err, model.ErrTooLargePageNum) || errors.Is(err, model.ErrInvalidSortParam) {
+		if errors.Is(err, model.ErrTooLargePageNum) {
 			ctx.Logger().Infof("invalid myResponses params: %+v", err)
 			return openapi.ResponsesWithQuestionnaireInfo{}, echo.NewHTTPError(http.StatusBadRequest, err)
 		}
