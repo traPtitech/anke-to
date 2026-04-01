@@ -306,8 +306,8 @@ func TestGetMyResponses(t *testing.T) {
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
-				responseIDList:          &[]int{response0.ResponseId, response1.ResponseId},
-				nilRespondentResponseID: &[]int{},
+				responseIDList:          &[]int{response0.ResponseId, response1.ResponseId, responseAnonymous.ResponseId},
+				nilRespondentResponseID: &[]int{responseAnonymous.ResponseId},
 			},
 		},
 		{
