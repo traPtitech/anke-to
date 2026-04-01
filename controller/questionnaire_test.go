@@ -212,6 +212,9 @@ func TestGetQuestionnaires(t *testing.T) {
 
 	assertion := assert.New(t)
 
+	uniqueSearchTitle := fmt.Sprintf("search test %d", time.Now().UnixNano())
+	specialTargetUser := fmt.Sprintf("stgq%d", time.Now().UnixNano())
+
 	questionnaire := sampleQuestionnaire
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
@@ -224,7 +227,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.Title = "search test"
+	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -236,7 +239,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.Title = "search test"
+	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -260,7 +263,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	require.NoError(t, err)
 
 	questionnaire = sampleQuestionnaire
-	questionnaire.Target.Users = []string{"specialTargetUser"}
+	questionnaire.Target.Users = []string{specialTargetUser}
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -293,7 +296,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	sortTitleDesc := (openapi.SortInQuery)("-title")
 	sortModifiedAt := (openapi.SortInQuery)("modified_at")
 	sortModifiedAtDesc := (openapi.SortInQuery)("-modified_at")
-	searchTest := (openapi.SearchInQuery)("search test")
+	searchTest := openapi.SearchInQuery(uniqueSearchTitle)
 	largePageNum := 100000000
 	constTrue := true
 
@@ -435,7 +438,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "only targeting by me special target user",
 			args: args{
-				userID: "specialTargetUser",
+				userID: specialTargetUser,
 				params: openapi.GetQuestionnairesParams{
 					OnlyTargetingMe: &constTrue,
 				},

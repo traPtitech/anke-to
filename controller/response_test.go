@@ -245,13 +245,16 @@ func TestGetMyResponses(t *testing.T) {
 	pageOne := 1
 	constTrue := true
 	constFalse := false
+	questionnaireIDs := []int{questionnaireDetail.QuestionnaireId, questionnaireAnonymousDetail.QuestionnaireId}
 
 	testCases := []test{
 		{
 			description: "valid",
 			args: args{
 				userID: userOne,
-				params: openapi.GetMyResponsesParams{},
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
@@ -263,7 +266,8 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
-					Page: &pageZero,
+					Page:             &pageZero,
+					QuestionnaireIDs: &questionnaireIDs,
 				},
 			},
 			expect: expect{
@@ -275,7 +279,8 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
-					Page: &largePageNum,
+					Page:             &largePageNum,
+					QuestionnaireIDs: &questionnaireIDs,
 				},
 			},
 			expect: expect{
@@ -287,7 +292,8 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
-					IsDraft: &constTrue,
+					IsDraft:          &constTrue,
+					QuestionnaireIDs: &questionnaireIDs,
 				},
 			},
 			expect: expect{
@@ -301,7 +307,8 @@ func TestGetMyResponses(t *testing.T) {
 			args: args{
 				userID: userOne,
 				params: openapi.GetMyResponsesParams{
-					IsDraft: &constFalse,
+					IsDraft:          &constFalse,
+					QuestionnaireIDs: &questionnaireIDs,
 				},
 			},
 			expect: expect{
@@ -314,7 +321,9 @@ func TestGetMyResponses(t *testing.T) {
 			description: "special user",
 			args: args{
 				userID: "myResponsesSpecialUser",
-				params: openapi.GetMyResponsesParams{},
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
@@ -326,7 +335,9 @@ func TestGetMyResponses(t *testing.T) {
 			description: "user with no record",
 			args: args{
 				userID: "myResponsesNoRecord",
-				params: openapi.GetMyResponsesParams{},
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
 			},
 			expect: expect{
 				pageMax:                 &pageZero,
