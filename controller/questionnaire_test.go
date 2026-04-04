@@ -2880,7 +2880,7 @@ func TestCreateQuestionnaireMessage(t *testing.T) {
 		targets         []string
 	}
 	type expect struct {
-		message string
+		messages []string
 	}
 	type test struct {
 		description string
@@ -2905,7 +2905,7 @@ func TestCreateQuestionnaireMessage(t *testing.T) {
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -2915,7 +2915,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -2929,7 +2929,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -2939,7 +2939,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/0`,
+https://anke-to.trap.jp/responses/new/0`},
 			},
 		},
 		{
@@ -2954,7 +2954,7 @@ https://anke-to.trap.jp/responses/new/0`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -2964,7 +2964,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -2978,7 +2978,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -2988,7 +2988,7 @@ administrator1
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3002,7 +3002,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1,administrator2
 #### 説明
@@ -3012,7 +3012,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3027,7 +3027,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 
 #### 説明
@@ -3037,7 +3037,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3051,7 +3051,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -3061,7 +3061,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3075,7 +3075,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{"target1", "target2"},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -3085,7 +3085,7 @@ description
 #### 対象者
 @target1 @target2
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3099,7 +3099,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				targets:         []string{},
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』が作成されました
 #### 管理者
 administrator1
 #### 説明
@@ -3109,14 +3109,14 @@ description
 #### 対象者
 なし
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			message := createQuestionnaireMessage(
+			messages := createQuestionnaireMessage(
 				testCase.args.questionnaireID,
 				testCase.args.title,
 				testCase.args.description,
@@ -3125,7 +3125,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				testCase.args.targets,
 			)
 
-			assert.Equal(t, testCase.expect.message, message)
+			assert.Equal(t, testCase.expect.messages, messages)
 		})
 	}
 }
@@ -3142,7 +3142,7 @@ func TestCreateReminderMessage(t *testing.T) {
 		leftTimeText    string
 	}
 	type expect struct {
-		message string
+		messages []string
 	}
 	type test struct {
 		description string
@@ -3168,7 +3168,7 @@ func TestCreateReminderMessage(t *testing.T) {
 				leftTimeText:    "5分",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り5分です!==
 #### 管理者
 administrator1
@@ -3179,7 +3179,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3194,7 +3194,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				leftTimeText:    "30分",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/0)』の回答期限が迫っています!
 ==残り30分です!==
 #### 管理者
 administrator1
@@ -3205,7 +3205,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/0`,
+https://anke-to.trap.jp/responses/new/0`},
 			},
 		},
 		{
@@ -3221,7 +3221,7 @@ https://anke-to.trap.jp/responses/new/0`,
 				leftTimeText:    "1時間",
 			},
 			expect: expect{
-				message: `### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り1時間です!==
 #### 管理者
 administrator1
@@ -3232,7 +3232,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3247,7 +3247,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				leftTimeText:    "1日",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り1日です!==
 #### 管理者
 administrator1
@@ -3258,7 +3258,7 @@ administrator1
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3273,7 +3273,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				leftTimeText:    "5分",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り5分です!==
 #### 管理者
 administrator1,administrator2
@@ -3284,7 +3284,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3300,7 +3300,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				leftTimeText:    "1週間",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り1週間です!==
 #### 管理者
 
@@ -3311,7 +3311,7 @@ description
 #### 対象者
 @target1
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 		{
@@ -3326,7 +3326,7 @@ https://anke-to.trap.jp/responses/new/1`,
 				leftTimeText:    "5分",
 			},
 			expect: expect{
-				message: `### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
+				messages: []string{`### アンケート『[title](https://anke-to.trap.jp/questionnaires/1)』の回答期限が迫っています!
 ==残り5分です!==
 #### 管理者
 administrator1
@@ -3337,14 +3337,14 @@ description
 #### 対象者
 @target1 @target2
 #### 回答リンク
-https://anke-to.trap.jp/responses/new/1`,
+https://anke-to.trap.jp/responses/new/1`},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			message := createReminderMessage(
+			messages := createReminderMessage(
 				testCase.args.questionnaireID,
 				testCase.args.title,
 				testCase.args.description,
@@ -3354,7 +3354,64 @@ https://anke-to.trap.jp/responses/new/1`,
 				testCase.args.leftTimeText,
 			)
 
-			assert.Equal(t, testCase.expect.message, message)
+			assert.Equal(t, testCase.expect.messages, messages)
+		})
+	}
+}
+
+func TestCreateMessagesFromTargets(t *testing.T) {
+	t.Parallel()
+
+	const prefix = "### ヘッダー\n#### 管理者\nadmin"
+	const suffix = "\n#### 回答リンク\nhttps://anke-to.trap.jp/responses/new/1"
+	// prefix=23, "\n#### 対象者\n"=10, suffix=52 → 固定部分85文字
+	// limit=110 の場合、対象者に使える文字数は 110-85=25 文字
+	// "@userAAAA"=9, " @userBBBB"=10 → "9+10=19 ≤ 25" OK、"9+10+10=29 > 25" → 分割
+	const limit = 110
+
+	tests := []struct {
+		description string
+		targets     []string
+		wantLen     int
+		wantFirst   string
+		wantLast    string
+	}{
+		{
+			description: "対象者なしの場合はなしと表示",
+			targets:     []string{},
+			wantLen:     1,
+			wantFirst:   prefix + "\n#### 対象者\nなし" + suffix,
+		},
+		{
+			description: "対象者がlimit以内に収まる場合は1件",
+			targets:     []string{"user1", "user2"},
+			wantLen:     1,
+			wantFirst:   prefix + "\n#### 対象者\n@user1 @user2" + suffix,
+		},
+		{
+			description: "対象者が多い場合は複数メッセージに分割され各メッセージはヘッダーとフッターを含む",
+			targets:     []string{"userAAAA", "userBBBB", "userCCCC"},
+			wantLen:     2,
+			wantFirst:   prefix + "\n#### 対象者\n@userAAAA @userBBBB" + suffix,
+			wantLast:    prefix + "\n#### 対象者\n@userCCCC" + suffix,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			msgs := createMessagesFromTargets(prefix, suffix, tt.targets, limit)
+			assert.Len(t, msgs, tt.wantLen)
+			for _, msg := range msgs {
+				assert.LessOrEqual(t, len([]rune(msg)), limit, "message exceeded limit")
+				assert.Contains(t, msg, "### ヘッダー", "各メッセージにヘッダーが含まれる")
+				assert.Contains(t, msg, "#### 回答リンク", "各メッセージにフッターが含まれる")
+			}
+			if tt.wantFirst != "" {
+				assert.Equal(t, tt.wantFirst, msgs[0])
+			}
+			if tt.wantLast != "" {
+				assert.Equal(t, tt.wantLast, msgs[len(msgs)-1])
+			}
 		})
 	}
 }
