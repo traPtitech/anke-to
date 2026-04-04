@@ -4,31 +4,43 @@ import (
 	"context"
 	"log"
 	"slices"
-	"sort"
 	"sync"
 	"time"
 
+	"github.com/google/btree"
 	"github.com/traPtitech/anke-to/model"
 	"github.com/traPtitech/anke-to/traq"
-	// "golang.org/x/sync/semaphore"
 )
 
 type Job struct {
 	Timestamp       time.Time
 	QuestionnaireID int
+	TimingIndex     int
 	Action          func()
 }
 
 type Reminder struct {
-	jobs     []*Job
+	tree     *btree.BTreeG[*Job]
+	index    map[int][]*Job
 	mu       sync.Mutex
 	Wg       sync.WaitGroup
 	wakeUpCh chan struct{}
 }
 
+func jobLess(a, b *Job) bool {
+	if !a.Timestamp.Equal(b.Timestamp) {
+		return a.Timestamp.Before(b.Timestamp)
+	}
+	if a.QuestionnaireID != b.QuestionnaireID {
+		return a.QuestionnaireID < b.QuestionnaireID
+	}
+	return a.TimingIndex < b.TimingIndex
+}
+
 func NewReminder() *Reminder {
 	return &Reminder{
-		jobs:     []*Job{},
+		tree:     btree.NewG(32, jobLess),
+		index:    make(map[int][]*Job),
 		mu:       sync.Mutex{},
 		Wg:       sync.WaitGroup{},
 		wakeUpCh: make(chan struct{}, 1),
@@ -36,7 +48,6 @@ func NewReminder() *Reminder {
 }
 
 var (
-	// sem                   = semaphore.NewWeighted(1)
 	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
 	reminderTimingStrings = []string{"5分", "30分", "1時間", "1日", "1週間"}
 )
@@ -92,7 +103,6 @@ func (re *Reminder) ReminderWorker() {
 }
 
 func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
-
 	for i := range reminderTimingMinutes {
 		timing := reminderTimingMinutes[i]
 		timingStrings := reminderTimingStrings[i]
@@ -101,6 +111,7 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 			re.push(&Job{
 				Timestamp:       remindTimeStamp,
 				QuestionnaireID: questionnaireID,
+				TimingIndex:     i,
 				Action: func() {
 					err := reminderAction(questionnaireID, timingStrings)
 					if err != nil {
@@ -110,26 +121,21 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 			})
 		}
 	}
-
 	return nil
 }
 
 func (re *Reminder) DeleteReminder(questionnaireID int) error {
 	re.mu.Lock()
-
-	newJobs := []*Job{}
-	removed := false
-	for _, job := range re.jobs {
-		if job.QuestionnaireID != questionnaireID {
-			newJobs = append(newJobs, job)
-			continue
+	jobs, exists := re.index[questionnaireID]
+	if exists {
+		for _, job := range jobs {
+			re.tree.Delete(job)
 		}
-		removed = true
+		delete(re.index, questionnaireID)
 	}
-	re.jobs = newJobs
 	re.mu.Unlock()
 
-	if removed {
+	if exists {
 		re.notifyWorker()
 	}
 
@@ -139,20 +145,14 @@ func (re *Reminder) DeleteReminder(questionnaireID int) error {
 func (re *Reminder) CheckRemindStatus(questionnaireID int) (bool, error) {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	for _, job := range re.jobs {
-		if job.QuestionnaireID == questionnaireID {
-			return true, nil
-		}
-	}
-	return false, nil
+	jobs, exists := re.index[questionnaireID]
+	return exists && len(jobs) > 0, nil
 }
 
 func (re *Reminder) push(job *Job) {
 	re.mu.Lock()
-	re.jobs = append(re.jobs, job)
-	sort.Slice(re.jobs, func(i, j int) bool {
-		return re.jobs[i].Timestamp.Before(re.jobs[j].Timestamp)
-	})
+	re.tree.ReplaceOrInsert(job)
+	re.index[job.QuestionnaireID] = append(re.index[job.QuestionnaireID], job)
 	re.mu.Unlock()
 
 	re.notifyWorker()
@@ -161,24 +161,35 @@ func (re *Reminder) push(job *Job) {
 func (re *Reminder) peek() *Job {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	if len(re.jobs) == 0 {
+	earliest, ok := re.tree.Min()
+	if !ok {
 		return nil
 	}
-	return re.jobs[0]
+	return earliest
 }
 
 func (re *Reminder) popDue(now time.Time) *Job {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	if len(re.jobs) == 0 {
+	earliest, ok := re.tree.Min()
+	if !ok {
 		return nil
 	}
-	if re.jobs[0].Timestamp.After(now) {
+	if earliest.Timestamp.After(now) {
 		return nil
 	}
-	job := re.jobs[0]
-	re.jobs = re.jobs[1:]
-	return job
+	re.tree.DeleteMin()
+	jobs := re.index[earliest.QuestionnaireID]
+	for i, j := range jobs {
+		if j == earliest {
+			re.index[earliest.QuestionnaireID] = append(jobs[:i], jobs[i+1:]...)
+			break
+		}
+	}
+	if len(re.index[earliest.QuestionnaireID]) == 0 {
+		delete(re.index, earliest.QuestionnaireID)
+	}
+	return earliest
 }
 
 func (re *Reminder) notifyWorker() {
