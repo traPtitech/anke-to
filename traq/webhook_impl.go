@@ -23,8 +23,20 @@ func NewWebhook() *Webhook {
 	return new(Webhook)
 }
 
+// traqMessageLimit traQのメッセージの最大文字数
+const traqMessageLimit = 2000
+
 // PostMessage Webhookでのメッセージの投稿
 func (*Webhook) PostMessage(message string) error {
+	for _, chunk := range splitMessage(message, traqMessageLimit) {
+		if err := postSingleMessage(chunk); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func postSingleMessage(message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
 	req, err := http.NewRequest("POST",
 		url,
@@ -60,6 +72,61 @@ func (*Webhook) PostMessage(message string) error {
 	fmt.Printf("Message sent to %s, message: %s, response: %s\n", url, message, sb.String())
 
 	return nil
+}
+
+// splitMessage はメッセージをlimit文字以内のチャンクに分割する。
+// まず改行・スペース単位でトークン化し、各トークンを貪欲にチャンクへ詰める。
+// 改行はトークン間のセパレーターとして保持されるため、元の構造をできるだけ維持する。
+func splitMessage(message string, limit int) []string {
+	if len([]rune(message)) <= limit {
+		return []string{message}
+	}
+
+	// トークンはテキストと直前のセパレーター（""、"\n"、" "）のペア
+	type token struct {
+		text string
+		sep  string
+	}
+
+	var tokens []token
+	lines := strings.Split(message, "\n")
+	for i, line := range lines {
+		words := strings.Split(line, " ")
+		for j, word := range words {
+			sep := " "
+			if j == 0 && i == 0 {
+				sep = ""
+			} else if j == 0 {
+				sep = "\n"
+			}
+			tokens = append(tokens, token{text: word, sep: sep})
+		}
+	}
+
+	var chunks []string
+	current := &strings.Builder{}
+
+	for _, tok := range tokens {
+		sep := tok.sep
+		if current.Len() == 0 {
+			sep = ""
+		}
+		potentialLen := len([]rune(current.String())) + len([]rune(sep)) + len([]rune(tok.text))
+		if current.Len() == 0 || potentialLen <= limit {
+			current.WriteString(sep)
+			current.WriteString(tok.text)
+		} else {
+			chunks = append(chunks, current.String())
+			current.Reset()
+			current.WriteString(tok.text)
+		}
+	}
+
+	if current.Len() > 0 {
+		chunks = append(chunks, current.String())
+	}
+
+	return chunks
 }
 
 func calcHMACSHA1(message string) (string, error) {
