@@ -919,9 +919,32 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 			return err
 		}
 
+		err = q.DeleteTargetUsers(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete target users: %+v", err)
+			return err
+		}
+
+		err = q.DeleteTargetGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete target groups: %+v", err)
+			return err
+		}
+
 		err = q.DeleteAdministrators(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete administrators: %+v", err)
+			return err
+		}
+
+		err = q.DeleteAdministratorUsers(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrator users: %+v", err)
+			return err
+		}
+		err = q.DeleteAdministratorGroups(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete administrator groups: %+v", err)
 			return err
 		}
 
@@ -931,9 +954,50 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 			return err
 		}
 		for _, question := range questions {
+			err = q.DeleteOptions(ctx, question.ID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete options: %+v", err)
+				return err
+			}
+
+			if question.Type == "LinearScale" {
+				err = q.DeleteScaleLabel(ctx, question.ID)
+				if err != nil {
+					c.Logger().Errorf("failed to delete scale label: %+v", err)
+					return err
+				}
+			}
+
+			if question.Type == "Text" || question.Type == "TextArea" || question.Type == "Number" {
+				err = q.DeleteValidation(ctx, question.ID)
+				if err != nil {
+					c.Logger().Errorf("failed to delete validation: %+v", err)
+					return err
+				}
+			}
+
 			err = q.DeleteQuestion(ctx, question.ID)
 			if err != nil {
-				c.Logger().Errorf("failed to delete administrators: %+v", err)
+				c.Logger().Errorf("failed to delete question: %+v", err)
+				return err
+			}
+		}
+
+		respondentDetails, err := q.GetRespondentDetails(ctx, questionnaireID, "", false, "", nil)
+		if err != nil {
+			c.Logger().Errorf("failed to get respondent details: %+v", err)
+			return err
+		}
+		for _, respondentDetail := range respondentDetails {
+			err = q.IResponse.DeleteResponse(ctx, respondentDetail.ResponseID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete responses: %+v", err)
+				return err
+			}
+
+			err = q.DeleteRespondent(ctx, respondentDetail.ResponseID)
+			if err != nil {
+				c.Logger().Errorf("failed to delete respondents: %+v", err)
 				return err
 			}
 		}
@@ -994,6 +1058,9 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 		onlyMyResponse = *params.OnlyMyResponse
 	} else {
 		onlyMyResponse = false
+	}
+	if params.IsDraft == nil || *params.IsDraft {
+		onlyMyResponse = true
 	}
 	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {

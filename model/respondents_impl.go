@@ -310,10 +310,9 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 
 	respondents := []Respondents{}
 
-	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
 	query := db.
 		Session(&gorm.Session{}).
-		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ?", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
 	if onlyMyResponse {
 		query = query.Where("user_traqid = ?", userID)

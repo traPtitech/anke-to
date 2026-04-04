@@ -827,8 +827,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  4,
+				sortIdx: []int{0, 3, 1, 2},
 			},
 		},
 		{
@@ -840,8 +840,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  4,
+				sortIdx: []int{2, 1, 0, 3},
 			},
 		},
 		{
@@ -853,8 +853,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 2, 1},
+				length:  4,
+				sortIdx: []int{3, 0, 2, 1},
 			},
 		},
 		{
@@ -866,8 +866,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{1, 2, 0},
+				length:  4,
+				sortIdx: []int{1, 2, 0, 3},
 			},
 		},
 		{
@@ -892,8 +892,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  4,
+				sortIdx: []int{2, 1, 0, 3},
 			},
 		},
 		{
@@ -905,8 +905,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  4,
+				sortIdx: []int{0, 3, 1, 2},
 			},
 		},
 		{
@@ -918,8 +918,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  4,
+				sortIdx: []int{0, 3, 1, 2},
 			},
 		},
 		{
@@ -931,8 +931,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{2, 1, 0},
+				length:  4,
+				sortIdx: []int{2, 1, 0, 3},
 			},
 		},
 		{
@@ -956,8 +956,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  3,
-				sortIdx: []int{0, 1, 2},
+				length:  4,
+				sortIdx: []int{0, 1, 2, 3},
 			},
 		},
 		{
@@ -969,8 +969,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -982,8 +982,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -995,8 +995,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{3, 0},
 			},
 		},
 		{
@@ -1008,8 +1008,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -1034,8 +1034,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -1047,8 +1047,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -1060,8 +1060,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -1073,8 +1073,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 		{
@@ -1098,8 +1098,8 @@ func TestGetRespondentDetails(t *testing.T) {
 				userID:          userOne,
 			},
 			expect: expect{
-				length:  1,
-				sortIdx: []int{0},
+				length:  2,
+				sortIdx: []int{0, 3},
 			},
 		},
 	}
