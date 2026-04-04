@@ -8,5 +8,5 @@ import (
 
 func TestMessageLimit(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, 2000, MessageLimit)
+	assert.Equal(t, 10000, MessageLimit)
 }

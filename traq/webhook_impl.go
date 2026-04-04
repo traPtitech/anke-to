@@ -23,7 +23,8 @@ func NewWebhook() *Webhook {
 }
 
 // MessageLimit traQのメッセージの最大文字数
-const MessageLimit = 2000
+// ref: https://github.com/traPtitech/traQ/blob/d6d3981/router/v3/messages.go
+const MessageLimit = 10000
 
 // PostMessage Webhookでのメッセージの投稿
 func (*Webhook) PostMessage(message string) error {
