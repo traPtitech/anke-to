@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Respondent RespondentRepositoryの実装
@@ -99,6 +100,18 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 	}
 
 	if !questionnaire.IsDuplicateAnswerAllowed {
+		// Lock the questionnaire row to serialize concurrent insert attempts.
+		// SELECT ... FOR UPDATE on respondents would not lock non-existent rows,
+		// allowing both transactions to pass the duplicate check simultaneously.
+		// By locking the parent questionnaire row (which always exists), we ensure
+		// only one transaction can proceed through the check+insert at a time.
+		err = db.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", questionnaireID).
+			First(&Questionnaires{}).Error
+		if err != nil {
+			return 0, fmt.Errorf("failed to lock questionnaire row: %w", err)
+		}
 		err = db.
 			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
 			First(&Respondents{}).Error
@@ -108,7 +121,6 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, fmt.Errorf("failed to check duplicate answer: %w", err)
 		}
-
 	}
 
 	err = db.Create(&respondent).Error
