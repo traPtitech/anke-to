@@ -448,7 +448,8 @@ components:
       name: isDraft
       in: query
       description: |
-        trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+        trueの場合、下書きのみを取得する。falseの場合、下書きではないもののみを取得する。存在しない場合はすべて取得する。
+        /questionnaires/{questionnaireID}/responses では、trueまたは未指定の場合 onlyMyResponse も true として扱う。
       schema:
         type: boolean
     notOverDueInQuery:

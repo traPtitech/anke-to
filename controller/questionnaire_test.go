@@ -2003,7 +2003,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	response02, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
 	newResponse = sampleResponse
@@ -2014,7 +2014,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	response03, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	questionnaireAnonymous := sampleQuestionnaire
@@ -2050,7 +2050,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	response11, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Unlock()
@@ -2079,6 +2079,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	sortSubmittedAtDesc := (openapi.ResponseSortInQuery)("-submitted_at")
 	sortModifiedAt := (openapi.ResponseSortInQuery)("modified_at")
 	sortModifiedAtDesc := (openapi.ResponseSortInQuery)("-modified_at")
+	constFalse := false
 	constTrue := true
 
 	testCases := []test{
@@ -2093,7 +2094,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response03.ResponseId,
+					response02.ResponseId,
 				},
 			},
 		},
@@ -2183,6 +2184,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
+					response02.ResponseId,
 				},
 			},
 		},
@@ -2200,6 +2202,22 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
+			description: "isDraft true forces only my response",
+			args: args{
+				userID:          userOne,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constFalse,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				responseIDList: &[]int{
+					response02.ResponseId,
+				},
+			},
+		},
+		{
 			description: "anonymous questionnaire",
 			args: args{
 				isAnonymousQuestionnaire: true,
@@ -2210,7 +2228,6 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response10.ResponseId,
-					response11.ResponseId,
 				},
 			},
 		},
