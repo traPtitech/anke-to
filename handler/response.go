@@ -19,7 +19,7 @@ func (h Handler) GetMyResponses(ctx echo.Context, params openapi.GetMyResponsesP
 	res, err := h.Response.GetMyResponses(ctx, params, userID)
 	if err != nil {
 		ctx.Logger().Errorf("failed to get my responses: %+v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get my responses: %w", err))
+		return err
 	}
 	return ctx.JSON(200, res)
 }

@@ -1110,8 +1110,8 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 
 	responseMetas, err := responseBody2ResponseMetas(params.Body, questions)
 	if err != nil {
-		c.Logger().Errorf("failed to convert response body to response metas: %+v", err)
-		return res, echo.NewHTTPError(http.StatusInternalServerError, err)
+		c.Logger().Infof("invalid response body: %+v", err)
+		return res, echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid response body: %w", err))
 	}
 
 	// validationでチェック
