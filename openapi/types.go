@@ -472,7 +472,7 @@ type QuestionnaireList struct {
 	PageMax        int                    `json:"page_max"`
 	Questionnaires []QuestionnaireSummary `json:"questionnaires"`
 
-	// TotalRecords 条件に一致するアンケートの総件数
+	// TotalRecords 現在の検索条件に一致するアンケートの総件数
 	TotalRecords int `json:"total_records"`
 }
 
@@ -723,11 +723,11 @@ type UsersAndGroups struct {
 	Users Users `json:"users"`
 }
 
-// HasMyDraftInQuery defines model for hasMyDraftInQuery.
-type HasMyDraftInQuery = bool
-
 // CountOnlyInQuery defines model for countOnlyInQuery.
 type CountOnlyInQuery = bool
+
+// HasMyDraftInQuery defines model for hasMyDraftInQuery.
+type HasMyDraftInQuery = bool
 
 // HasMyResponseInQuery defines model for hasMyResponseInQuery.
 type HasMyResponseInQuery = bool
