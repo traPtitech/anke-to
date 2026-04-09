@@ -338,6 +338,18 @@ func (m Middleware) ResultAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// ResultOrMyResponseAuthenticate 全体結果か自分の回答一覧かに応じて認証を切り替える
+func (m Middleware) ResultOrMyResponseAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		onlyMyResponse, err := strconv.ParseBool(c.QueryParam("onlyMyResponse"))
+		if err == nil && onlyMyResponse {
+			return m.QuestionnaireReadAuthenticate(next)(c)
+		}
+
+		return m.ResultAuthenticate(next)(c)
+	}
+}
+
 // GetUserID ユーザーIDを取得する
 func (m *Middleware) GetUserID(c echo.Context) (string, error) {
 	rowUserID := c.Get(userIDKey)

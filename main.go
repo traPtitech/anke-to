@@ -62,7 +62,7 @@ func main() {
 		mws.AddRouteConfig("/api/questionnaires/:questionnaireID", http.MethodPatch, api.Middleware.QuestionnaireAdministratorAuthenticate)
 		mws.AddRouteConfig("/api/questionnaires/:questionnaireID", http.MethodDelete, api.Middleware.QuestionnaireAdministratorAuthenticate)
 		mws.AddRouteConfig("/api/questionnaires/:questionnaireID/responses", http.MethodPost, api.Middleware.QuestionnaireReadAuthenticate)
-		mws.AddRouteConfig("/api/questionnaires/:questionnaireID/responses", http.MethodGet, api.Middleware.ResultAuthenticate)
+		mws.AddRouteConfig("/api/questionnaires/:questionnaireID/responses", http.MethodGet, api.Middleware.ResultOrMyResponseAuthenticate)
 
 		mws.AddRouteConfig("/api/responses/:responseID", http.MethodGet, api.Middleware.ResponseReadAuthenticate)
 		mws.AddRouteConfig("/api/responses/:responseID", http.MethodPatch, api.Middleware.RespondentAuthenticate)
