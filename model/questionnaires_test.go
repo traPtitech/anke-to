@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -1145,6 +1144,7 @@ func getQuestionnairesTest(t *testing.T) {
 		pageNum               int
 		onlyTargetingMe       bool
 		onlyAdministratedByMe bool
+		countOnly             bool
 	}
 	type expect struct {
 		isErr      bool
@@ -1337,6 +1337,18 @@ func getQuestionnairesTest(t *testing.T) {
 			},
 		},
 		{
+			description: "count only ignores page",
+			args: args{
+				userID:                questionnairesTestUserID,
+				sort:                  "",
+				search:                "",
+				pageNum:               100000,
+				onlyTargetingMe:       false,
+				onlyAdministratedByMe: false,
+				countOnly:             true,
+			},
+		},
+		{
 			description: "userID:valid, sort:no, search:notFoundQuestionnaire, page:1",
 			args: args{
 				userID:                questionnairesTestUserID,
@@ -1371,7 +1383,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil)
+		questionnaires, totalRecords, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil, testCase.args.countOnly)
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")
@@ -1417,17 +1429,13 @@ func getQuestionnairesTest(t *testing.T) {
 		}
 
 		if len(testCase.args.search) == 0 && !testCase.args.onlyTargetingMe && !testCase.args.onlyAdministratedByMe {
-			fmt.Println(testCase.description)
-			fmt.Println(questionnaireNum)
-			fmt.Println(pageMax)
-			var allNum int64
-			db.
-				Session(&gorm.Session{NewDB: true}).
-				Model(&Questionnaires{}).
-				Count(&allNum)
-			fmt.Println(allNum)
+			assertion.Equal(int(questionnaireNum), totalRecords, testCase.description, "totalRecords")
 			assertion.Equal((questionnaireNum+19)/20, int64(pageMax), testCase.description, "pageMax")
-			assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(int64(testCase.pageNum)-1)), 20.0)), testCase.description, "page")
+			if testCase.args.countOnly {
+				assertion.Empty(questionnaires, testCase.description, "countOnly")
+			} else {
+				assertion.Len(questionnaires, int(math.Min(float64(questionnaireNum-20*(int64(testCase.pageNum)-1)), 20.0)), testCase.description, "page")
+			}
 		}
 
 		if testCase.expect.isCheckLen {

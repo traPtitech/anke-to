@@ -179,29 +179,16 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 	return nil
 }
 
-/*
-GetQuestionnaires アンケートの一覧
-2つ目の戻り値はページ数の最大値
-*/
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool) ([]QuestionnaireInfo, int, error) {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-
-	db, err := getTx(ctx)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get tx: %w", err)
-	}
-
-	questionnaires := make([]QuestionnaireInfo, 0, 20)
-
+func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search string, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool) (*gorm.DB, error) {
 	query := db.
 		Table("questionnaires").
 		Where("deleted_at IS NULL AND is_published IS TRUE").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
+	var err error
 	query, err = setQuestionnairesOrder(query, sort)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
+		return nil, fmt.Errorf("failed to set the order of the questionnaire table: %w", err)
 	}
 
 	if onlyTargetingMe {
@@ -236,13 +223,34 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 
 	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
-		_, err := regexp.Compile(search)
-		if err != nil {
-			return nil, 0, fmt.Errorf("invalid search param: %w", ErrInvalidRegex)
+		if _, err := regexp.Compile(search); err != nil {
+			return nil, fmt.Errorf("invalid search param: %w", ErrInvalidRegex)
 		}
 
 		// BINARYをつけていないので大文字小文字区別しない
 		query = query.Where("questionnaires.title REGEXP ?", search)
+	}
+
+	return query, nil
+}
+
+/*
+GetQuestionnaires アンケートの一覧
+2つ目の戻り値は対象件数、3つ目の戻り値はページ数の最大値
+*/
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, countOnly bool) ([]QuestionnaireInfo, int, int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	questionnaires := make([]QuestionnaireInfo, 0, 20)
+	query, err := buildQuestionnairesQuery(db, userID, sort, search, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft)
+	if err != nil {
+		return nil, 0, 0, err
 	}
 
 	var count int64
@@ -251,19 +259,23 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		Group("questionnaires.id").
 		Count(&count).Error
 	if errors.Is(err, context.DeadlineExceeded) {
-		return nil, 0, ErrDeadlineExceeded
+		return nil, 0, 0, ErrDeadlineExceeded
 	}
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
+		return nil, 0, 0, fmt.Errorf("failed to retrieve the number of questionnaires: %w", err)
 	}
 
 	if count == 0 {
-		return []QuestionnaireInfo{}, 0, nil
+		return []QuestionnaireInfo{}, 0, 0, nil
 	}
 	pageMax := (int(count) + 19) / 20
 
+	if countOnly {
+		return []QuestionnaireInfo{}, int(count), pageMax, nil
+	}
+
 	if pageNum > pageMax {
-		return nil, 0, fmt.Errorf("failed to set page offset: %w", ErrTooLargePageNum)
+		return nil, 0, 0, fmt.Errorf("failed to set page offset: %w", ErrTooLargePageNum)
 	}
 
 	offset := (pageNum - 1) * 20
@@ -275,13 +287,13 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 		Group("questionnaires.id").
 		Find(&questionnaires).Error
 	if errors.Is(err, context.DeadlineExceeded) {
-		return nil, 0, ErrDeadlineExceeded
+		return nil, 0, 0, ErrDeadlineExceeded
 	}
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
+		return nil, 0, 0, fmt.Errorf("failed to get the targeted questionnaires: %w", err)
 	}
 
-	return questionnaires, pageMax, nil
+	return questionnaires, int(count), pageMax, nil
 }
 
 // GetAdminQuestionnaires 自分が管理者のアンケートの取得

@@ -471,6 +471,9 @@ type QuestionnaireList struct {
 	// PageMax 合計のページ数
 	PageMax        int                    `json:"page_max"`
 	Questionnaires []QuestionnaireSummary `json:"questionnaires"`
+
+	// TotalRecords 条件に一致するアンケートの総件数
+	TotalRecords int `json:"total_records"`
 }
 
 // QuestionnaireModifiedAt defines model for QuestionnaireModifiedAt.
@@ -723,6 +726,9 @@ type UsersAndGroups struct {
 // HasMyDraftInQuery defines model for hasMyDraftInQuery.
 type HasMyDraftInQuery = bool
 
+// CountOnlyInQuery defines model for countOnlyInQuery.
+type CountOnlyInQuery = bool
+
 // HasMyResponseInQuery defines model for hasMyResponseInQuery.
 type HasMyResponseInQuery = bool
 
@@ -791,6 +797,9 @@ type GetQuestionnairesParams struct {
 	// falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
 	// 存在しない場合、すべてのアンケートを取得する。
 	HasMyDraft *HasMyDraftInQuery `form:"hasMyDraft,omitempty" json:"hasMyDraft,omitempty"`
+
+	// CountOnly trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。
+	CountOnly *CountOnlyInQuery `form:"countOnly,omitempty" json:"countOnly,omitempty"`
 }
 
 // GetQuestionnaireResponsesParams defines parameters for GetQuestionnaireResponses.
@@ -802,7 +811,6 @@ type GetQuestionnaireResponsesParams struct {
 	OnlyMyResponse *OnlyMyResponseInQuery `form:"onlyMyResponse,omitempty" json:"onlyMyResponse,omitempty"`
 
 	// IsDraft trueの場合、下書きのみを取得する。falseの場合、下書きではないもののみを取得する。存在しない場合はすべて取得する。
-	// /questionnaires/{questionnaireID}/responses では、trueまたは未指定の場合 onlyMyResponse も true として扱う。
 	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 
@@ -815,7 +823,6 @@ type GetMyResponsesParams struct {
 	QuestionnaireIDs *QuestionnaireIDsInQuery `form:"questionnaireIDs,omitempty" json:"questionnaireIDs,omitempty"`
 
 	// IsDraft trueの場合、下書きのみを取得する。falseの場合、下書きではないもののみを取得する。存在しない場合はすべて取得する。
-	// /questionnaires/{questionnaireID}/responses では、trueまたは未指定の場合 onlyMyResponse も true として扱う。
 	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 }
 

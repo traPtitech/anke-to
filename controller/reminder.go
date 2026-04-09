@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"log"
-	"slices"
+	"sort"
 	"sync"
 	"time"
 
@@ -206,16 +206,35 @@ func reminderAction(questionnaireID int, leftTimeText string) error {
 		return err
 	}
 
-	var reminderTargets []string
-	for _, target := range questionnaire.Targets {
-		if target.IsCanceled {
-			continue
-		}
-		if slices.Contains(respondants, target.UserTraqid) {
-			continue
-		}
-		reminderTargets = append(reminderTargets, target.UserTraqid)
+	reminderTargetOverrides, err := model.NewReminderTarget().GetReminderTargets(ctx, questionnaireID)
+	if err != nil {
+		return err
 	}
+
+	respondantSet := make(map[string]struct{}, len(respondants))
+	for _, respondent := range respondants {
+		respondantSet[respondent] = struct{}{}
+	}
+
+	reminderTargetMap := make(map[string]bool, len(questionnaire.Targets)+len(reminderTargetOverrides))
+	for _, target := range questionnaire.Targets {
+		reminderTargetMap[target.UserTraqid] = !target.IsCanceled
+	}
+	for _, target := range reminderTargetOverrides {
+		reminderTargetMap[target.UserTraqid] = !target.IsCanceled
+	}
+
+	var reminderTargets []string
+	for userID, isEnabled := range reminderTargetMap {
+		if !isEnabled {
+			continue
+		}
+		if _, ok := respondantSet[userID]; ok {
+			continue
+		}
+		reminderTargets = append(reminderTargets, userID)
+	}
+	sort.Strings(reminderTargets)
 
 	reminderMessage := createReminderMessage(questionnaireID, questionnaire.Title, questionnaire.Description, administrators, questionnaire.ResTimeLimit.Time, reminderTargets, leftTimeText)
 	wh := traq.NewWebhook()
