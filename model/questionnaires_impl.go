@@ -179,7 +179,7 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 	return nil
 }
 
-func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search string, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isPublished *bool) (*gorm.DB, error) {
+func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search string, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isDraft *bool) (*gorm.DB, error) {
 	query := db.
 		Table("questionnaires").
 		Where("deleted_at IS NULL").
@@ -221,13 +221,12 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 		}
 	}
 
-	if isPublished != nil && !*isPublished {
-		// Only show unpublished questionnaires that the user administrates
-		query = query.
-			Where("questionnaires.is_published IS NOT TRUE").
-			Where("EXISTS (SELECT 1 FROM administrators WHERE administrators.questionnaire_id = questionnaires.id AND administrators.user_traqid = ?)", userID)
+	if isDraft != nil && *isDraft {
+		// isDraft=true: show only unpublished (draft) questionnaires
+		// Note: controller enforces onlyAdministratedByMe=true for this case
+		query = query.Where("questionnaires.is_published IS NOT TRUE")
 	} else {
-		// Default (nil) or isPublished=true: only show published questionnaires
+		// Default (nil) or isDraft=false: only show published questionnaires
 		query = query.Where("questionnaires.is_published IS TRUE")
 	}
 
@@ -248,7 +247,7 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値は対象件数、3つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isPublished *bool, countOnly bool) ([]QuestionnaireInfo, int, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isDraft *bool, countOnly bool) ([]QuestionnaireInfo, int, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -258,7 +257,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	}
 
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
-	query, err := buildQuestionnairesQuery(db, userID, sort, search, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isPublished)
+	query, err := buildQuestionnairesQuery(db, userID, sort, search, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isDraft)
 	if err != nil {
 		return nil, 0, 0, err
 	}

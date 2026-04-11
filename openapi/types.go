@@ -729,9 +729,6 @@ type CountOnlyInQuery = bool
 // HasMyDraftInQuery defines model for hasMyDraftInQuery.
 type HasMyDraftInQuery = bool
 
-// IsPublishedInQuery defines model for isPublishedInQuery.
-type IsPublishedInQuery = bool
-
 // HasMyResponseInQuery defines model for hasMyResponseInQuery.
 type HasMyResponseInQuery = bool
 
@@ -801,10 +798,10 @@ type GetQuestionnairesParams struct {
 	// 存在しない場合、すべてのアンケートを取得する。
 	HasMyDraft *HasMyDraftInQuery `form:"hasMyDraft,omitempty" json:"hasMyDraft,omitempty"`
 
-	// IsPublished trueの場合、公開済みのアンケートのみを取得する。
-	// falseの場合、自分が管理者である未公開のアンケートのみを取得する。
+	// IsDraft trueの場合、自分が管理者である下書き（未公開）のアンケートのみを取得する。
+	// falseの場合、公開済みのアンケートのみを取得する。
 	// 存在しない場合、公開済みのアンケートのみを取得する。
-	IsPublished *IsPublishedInQuery `form:"isPublished,omitempty" json:"isPublished,omitempty"`
+	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 
 	// CountOnly trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。
 	CountOnly *CountOnlyInQuery `form:"countOnly,omitempty" json:"countOnly,omitempty"`

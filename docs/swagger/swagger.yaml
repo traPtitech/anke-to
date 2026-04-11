@@ -37,7 +37,7 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/notOverDueInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
-        - $ref: "#/components/parameters/isPublishedInQuery"
+        - $ref: "#/components/parameters/questionnaireisDraftInQuery"
         - $ref: "#/components/parameters/countOnlyInQuery"
       responses:
         "200":
@@ -478,12 +478,12 @@ components:
         存在しない場合、すべてのアンケートを取得する。
       schema:
         type: boolean
-    isPublishedInQuery:
-      name: isPublished
+    questionnaireisDraftInQuery:
+      name: isDraft
       in: query
       description: |
-        trueの場合、公開済みのアンケートのみを取得する。
-        falseの場合、自分が管理者である未公開のアンケートのみを取得する。
+        trueの場合、自分が管理者である下書き（未公開）のアンケートのみを取得する。
+        falseの場合、公開済みのアンケートのみを取得する。
         存在しない場合、公開済みのアンケートのみを取得する。
       schema:
         type: boolean

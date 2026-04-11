@@ -136,11 +136,11 @@ func (w *ServerInterfaceWrapper) GetQuestionnaires(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter hasMyDraft: %s", err))
 	}
 
-	// ------------- Optional query parameter "isPublished" -------------
+	// ------------- Optional query parameter "isDraft" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "isPublished", ctx.QueryParams(), &params.IsPublished)
+	err = runtime.BindQueryParameter("form", true, false, "isDraft", ctx.QueryParams(), &params.IsDraft)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter isPublished: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter isDraft: %s", err))
 	}
 
 	// ------------- Optional query parameter "countOnly" -------------

@@ -1383,7 +1383,7 @@ func getQuestionnairesTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
-		questionnaires, totalRecords, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil, nil, testCase.args.countOnly)
+		questionnaires, totalRecords, pageMax, err := questionnaireImpl.GetQuestionnaires(ctx, testCase.args.userID, testCase.args.sort, testCase.args.search, testCase.args.pageNum, testCase.args.onlyTargetingMe, testCase.args.onlyAdministratedByMe, false, nil, nil, nil, testCase.args.countOnly) // isDraft=nil: published only
 
 		if !testCase.expect.isErr {
 			assertion.NoError(err, testCase.description, "no error")

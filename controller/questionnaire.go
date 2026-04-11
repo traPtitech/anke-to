@@ -152,13 +152,17 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		notOverDue = *params.NotOverDue
 	}
 
-	var hasMyResponse, hasMyDraft, isPublished *bool
+	var hasMyResponse, hasMyDraft, isDraft *bool
 	hasMyResponse = params.HasMyResponse
 	hasMyDraft = params.HasMyDraft
-	isPublished = params.IsPublished
+	isDraft = params.IsDraft
+	// When fetching draft (unpublished) questionnaires, restrict to ones the user administrates
+	if isDraft != nil && *isDraft {
+		onlyAdministratedByMe = true
+	}
 	countOnly := params.CountOnly != nil && *params.CountOnly
 
-	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isPublished, countOnly)
+	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isDraft, countOnly)
 	if err != nil {
 		return res, err
 	}
