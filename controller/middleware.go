@@ -85,7 +85,7 @@ func (m *Middleware) TraPMemberAuthenticate(next echo.HandlerFunc) echo.HandlerF
 // TrapRateLimitMiddlewareFunc traP IDベースのリクエスト制限
 func (m *Middleware) TrapRateLimitMiddlewareFunc() echo.MiddlewareFunc {
 	config := middleware.RateLimiterConfig{
-		Store: middleware.NewRateLimiterMemoryStore(5),
+		Store: middleware.NewRateLimiterMemoryStore(60),
 		IdentifierExtractor: func(c echo.Context) (string, error) {
 			userID, err := m.GetUserID(c)
 			if err != nil {
