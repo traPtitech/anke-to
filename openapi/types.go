@@ -802,8 +802,8 @@ type GetQuestionnairesParams struct {
 	HasMyDraft *HasMyDraftInQuery `form:"hasMyDraft,omitempty" json:"hasMyDraft,omitempty"`
 
 	// IsPublished trueの場合、公開済みのアンケートのみを取得する。
-	// falseの場合、未公開のアンケートのみを取得する。
-	// 存在しない場合、すべてのアンケートを取得する。
+	// falseの場合、自分が管理者である未公開のアンケートのみを取得する。
+	// 存在しない場合、公開済みのアンケートのみを取得する。
 	IsPublished *IsPublishedInQuery `form:"isPublished,omitempty" json:"isPublished,omitempty"`
 
 	// CountOnly trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。

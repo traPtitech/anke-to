@@ -221,12 +221,14 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 		}
 	}
 
-	if isPublished != nil {
-		if *isPublished {
-			query = query.Where("questionnaires.is_published IS TRUE")
-		} else {
-			query = query.Where("questionnaires.is_published IS NOT TRUE")
-		}
+	if isPublished != nil && !*isPublished {
+		// Only show unpublished questionnaires that the user administrates
+		query = query.
+			Where("questionnaires.is_published IS NOT TRUE").
+			Where("EXISTS (SELECT 1 FROM administrators WHERE administrators.questionnaire_id = questionnaires.id AND administrators.user_traqid = ?)", userID)
+	} else {
+		// Default (nil) or isPublished=true: only show published questionnaires
+		query = query.Where("questionnaires.is_published IS TRUE")
 	}
 
 	if len(search) != 0 {
