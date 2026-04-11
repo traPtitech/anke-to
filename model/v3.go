@@ -20,6 +20,9 @@ func v3() *gormigrate.Migration {
 			if err := tx.AutoMigrate(&v3Questionnaires{}); err != nil {
 				return err
 			}
+			if err := tx.AutoMigrate(&v3ReminderTargets{}); err != nil {
+				return err
+			}
 			if err := tx.AutoMigrate(&v3TargetUsers{}); err != nil {
 				return err
 			}
@@ -203,6 +206,16 @@ type v3Questionnaires struct {
 
 func (*v3Questionnaires) TableName() string {
 	return "questionnaires"
+}
+
+type v3ReminderTargets struct {
+	QuestionnaireID int    `gorm:"type:int(11);not null;primaryKey"`
+	UserTraqid      string `gorm:"type:varchar(32);size:32;not null;primaryKey"`
+	IsCanceled      bool   `gorm:"type:tinyint(1);not null;default:0"`
+}
+
+func (*v3ReminderTargets) TableName() string {
+	return "reminder_targets"
 }
 
 type v3TargetUsers struct {
