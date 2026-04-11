@@ -645,7 +645,11 @@ type ResponseWithQuestionnaireInfoItem struct {
 type Responses = []Response
 
 // ResponsesWithQuestionnaireInfo defines model for ResponsesWithQuestionnaireInfo.
-type ResponsesWithQuestionnaireInfo = []ResponseWithQuestionnaireInfoItem
+type ResponsesWithQuestionnaireInfo struct {
+	// PageMax 合計のページ数
+	PageMax        int                                 `json:"page_max"`
+	ResponseGroups []ResponseWithQuestionnaireInfoItem `json:"response_groups"`
+}
 
 // SortType question、questionnaire用のソートの種類
 type SortType string
@@ -804,8 +808,8 @@ type GetQuestionnaireResponsesParams struct {
 
 // GetMyResponsesParams defines parameters for GetMyResponses.
 type GetMyResponsesParams struct {
-	// Sort 並び順 (作成日時が新しい "submitted_at", 作成日時が古い "-submitted_at", TraqIDの昇順 "traqid", TraqIDの降順 "-traqid", 更新日時が新しい "modified_at", 更新日時が古い "-modified_at" )
-	Sort *ResponseSortInQuery `form:"sort,omitempty" json:"sort,omitempty"`
+	// Page 何ページ目か (未定義の場合は1ページ目)
+	Page *PageInQuery `form:"page,omitempty" json:"page,omitempty"`
 
 	// QuestionnaireIDs 取得したい情報のアンケートをフィルタリングするためのパラメータ。複数指定可能。
 	QuestionnaireIDs *QuestionnaireIDsInQuery `form:"questionnaireIDs,omitempty" json:"questionnaireIDs,omitempty"`

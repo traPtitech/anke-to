@@ -298,18 +298,20 @@ paths: # TODO 変数の命名を確認する
       operationId: getMyResponses
       tags:
         - response
-      description: 自分のすべての回答のリストを取得します。
+      description: 自分のすべての回答のリストを、アンケートごとにまとめてページ単位で取得します。
       parameters:
-        - $ref: "#/components/parameters/responseSortInQuery"
+        - $ref: "#/components/parameters/pageInQuery"
         - $ref: "#/components/parameters/questionnaireIDsInQuery"
         - $ref: "#/components/parameters/isDraftInQuery"
       responses:
         "200":
-          description: 正常に取得できました。回答の配列を返します。
+          description: 正常に取得できました。ページ情報付きの回答一覧を返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
+        "400":
+          description: 与えられた情報の形式が異なります
         "500":
           description: 自分の回答のリストを取得できませんでした
   /traq/users:
@@ -1010,9 +1012,20 @@ components:
       items:
         $ref: "#/components/schemas/Response"
     ResponsesWithQuestionnaireInfo:
-      type: array
-      items:
-        $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+      type: object
+      properties:
+        page_max:
+          type: integer
+          example: 1
+          description: |
+            合計のページ数
+        response_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+      required:
+        - page_max
+        - response_groups
     QuestionnaireInfo:
       type: object
       allOf:
