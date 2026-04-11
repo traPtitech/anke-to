@@ -2105,6 +2105,57 @@ func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
 	assertion.False(status, "target user can opt out via override")
 }
 
+func TestEditQuestionnaireMyRemindStatusPersistsExplicitSubscriptionAfterTargetRemoval(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	questionnaire.Target = openapi.UsersAndGroups{
+		Users:  []string{userThree, userFour},
+		Groups: []uuid.UUID{},
+	}
+
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	err = q.EditQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree, true)
+	require.NoError(t, err)
+
+	editParams := postQuestionnaireParams2EditQuestionnaireParams(questionnaireDetail.QuestionnaireId, questionnaireDetail.Questions, questionnaire)
+	editParams.Target = &openapi.UsersAndGroups{
+		Users:  []string{},
+		Groups: []uuid.UUID{},
+	}
+
+	req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	err = q.EditQuestionnaire(ctx, questionnaireDetail.QuestionnaireId, editParams)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	status, err := q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree)
+	require.NoError(t, err)
+	assertion.True(status, "explicitly opted-in user remains a reminder target after target removal")
+
+	status, err = q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userFour)
+	require.NoError(t, err)
+	assertion.False(status, "removed target without an explicit reminder subscription is not reminded")
+}
+
 func TestGetQuestionnaireResponses(t *testing.T) {
 	t.Parallel()
 

@@ -220,6 +220,7 @@ func reminderAction(questionnaireID int, leftTimeText string) error {
 	for _, target := range questionnaire.Targets {
 		reminderTargetMap[target.UserTraqid] = !target.IsCanceled
 	}
+	// reminder_targets stores per-user subscriptions independent from questionnaire targets.
 	for _, target := range reminderTargetOverrides {
 		reminderTargetMap[target.UserTraqid] = !target.IsCanceled
 	}
