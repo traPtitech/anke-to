@@ -1020,14 +1020,6 @@ components:
               type: integer
               example: 1
         - $ref: "#/components/schemas/NewResponse"
-    EditResponse:
-      allOf:
-        - type: object
-          properties:
-            response_id:
-              type: integer
-              example: 1
-        - $ref: "#/components/schemas/NewResponse"
     Responses:
       type: array
       items:
