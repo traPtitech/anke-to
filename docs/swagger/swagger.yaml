@@ -1,12 +1,18 @@
-openapi: 3.0.0
+openapi: 3.0.4
 servers:
   - url: "https://anke-to.trap.jp/api"
     description: production
-  - url: "http://localhost:1323"
+  - url: "https://anke-to-dev.trapti.tech/api"
+    description: development
+  - url: "http://anke-to-alpha.trap.show/api"
+    description: alpha (deployed on noeshowcase; actual url is https)
+  - url: "http://anke-to-beta.trap.show/api"
+    description: beta (deployed on noeshowcase; actual url is https)
+  - url: "http://localhost:1323/api"
     description: local
 info:
   title: anke-to API
-  version: 1.0.0-oas3
+  version: v3
   description: anke-to API
   contact:
     name: traP
@@ -14,6 +20,7 @@ info:
 tags: # TODO: リソースの分類でつけなおす
   - name: questionnaire
   - name: response
+  - name: traq
 paths: # TODO 変数の命名を確認する
   /questionnaires: # TODO: 取得個数可変でもいいかも
     get:
@@ -28,9 +35,9 @@ paths: # TODO 変数の命名を確認する
         - $ref: "#/components/parameters/onlyTargetingMeInQuery"
         - $ref: "#/components/parameters/onlyAdministratedByMeInQuery"
         - $ref: "#/components/parameters/notOverDueInQuery"
-        - $ref: "#/components/parameters/isDraftInQuery"
         - $ref: "#/components/parameters/hasMyResponseInQuery"
         - $ref: "#/components/parameters/hasMyDraftInQuery"
+        - $ref: "#/components/parameters/countOnlyInQuery"
       responses:
         "200":
           description: 正常に取得できました。アンケートの配列を返します。
@@ -171,7 +178,7 @@ paths: # TODO 変数の命名を確認する
       operationId: getQuestionnaireResponses
       tags:
         - questionnaire
-      description: アンケートの全ての回答を取得します。匿名回答の場合はRespondentが空文字列になります。
+      description: アンケートの全ての回答を取得します。匿名回答の場合はrespondentを返しません。
       parameters:
         - $ref: "#/components/parameters/questionnaireIDInPath"
         - $ref: "#/components/parameters/responseSortInQuery"
@@ -292,22 +299,99 @@ paths: # TODO 変数の命名を確認する
       operationId: getMyResponses
       tags:
         - response
-      description: 自分のすべての回答のリストを取得します。
+      description: 自分のすべての回答のリストを、アンケートごとにまとめてページ単位で取得します。
       parameters:
-        - $ref: "#/components/parameters/responseSortInQuery"
+        - $ref: "#/components/parameters/pageInQuery"
         - $ref: "#/components/parameters/questionnaireIDsInQuery"
         - $ref: "#/components/parameters/isDraftInQuery"
       responses:
         "200":
-          description: 正常に取得できました。回答の配列を返します。
+          description: 正常に取得できました。ページ情報付きの回答一覧を返します。
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
+                $ref: "#/components/schemas/ResponsesWithQuestionnaireInfo"
+        "400":
+          description: 与えられた情報の形式が異なります
         "500":
           description: 自分の回答のリストを取得できませんでした
+  /traq/users:
+    get:
+      operationId: getTraqUsers
+      tags:
+        - traq
+      description: traQのユーザー一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。ユーザーの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqUsers"
+        "500":
+          description: ユーザー一覧を正常に取得できませんでした
+  /traq/users/me:
+    get:
+      operationId: getTraqUsersMe
+      tags:
+        - traq
+      description: リクエストユーザーのtraQ情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqUser"
+        "404":
+          description: 対象ユーザーが見つかりませんでした
+        "500":
+          description: ユーザー情報を正常に取得できませんでした
+  /traq/groups:
+    get:
+      operationId: getTraqGroups
+      tags:
+        - traq
+      description: traQのグループ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。グループの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqGroups"
+        "500":
+          description: グループ一覧を正常に取得できませんでした
+  /traq/stamps:
+    get:
+      operationId: getTraqStamps
+      tags:
+        - traq
+      description: traQのスタンプ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。スタンプの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqStamps"
+        "500":
+          description: スタンプ一覧を正常に取得できませんでした
+  /traq/channels:
+    get:
+      operationId: getTraqChannels
+      tags:
+        - traq
+      description: traQのチャンネル一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。チャンネルの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraqChannels"
+        "500":
+          description: チャンネル一覧を正常に取得できませんでした
 components:
   parameters:
     sortInQuery:
@@ -365,7 +449,7 @@ components:
       name: isDraft
       in: query
       description: |
-        trueの場合、下書きのアンケート/回答のみを取得する。falseの場合、下書きではないアンケート/回答のみを取得する。存在しない場合はすべてのアンケート/回答を取得する
+        trueの場合、下書きのみを取得する。falseの場合、下書きではないもののみを取得する。存在しない場合はすべて取得する。
       schema:
         type: boolean
     notOverDueInQuery:
@@ -391,6 +475,13 @@ components:
         trueの場合、自分の回答の下書きが存在するアンケートのみを取得する。
         falseの場合、自分の回答の下書きが存在しないアンケートのみを取得する。
         存在しない場合、すべてのアンケートを取得する。
+      schema:
+        type: boolean
+    countOnlyInQuery:
+      name: countOnly
+      in: query
+      description: |
+        trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。
       schema:
         type: boolean
     questionnaireIDsInQuery:
@@ -484,8 +575,6 @@ components:
                 $ref: "#/components/schemas/NewQuestion"
           required:
             - questions
-            - targets
-            - admins
     EditQuestionnaire:
       allOf:
         - $ref: "#/components/schemas/QuestionnaireID"
@@ -515,7 +604,7 @@ components:
               items:
                 $ref: "#/components/schemas/TraqId"
               description: |
-                回答者の一覧。匿名回答の場合はnull。
+                回答者の一覧。匿名アンケートでも返る。
             targets:
               type: array
               items:
@@ -577,12 +666,18 @@ components:
           example: 1
           description: |
             合計のページ数
+        total_records:
+          type: integer
+          example: 42
+          description: |
+            現在の検索条件に一致するアンケートの総件数
         questionnaires:
           type: array
           items:
             $ref: "#/components/schemas/QuestionnaireSummary"
       required:
         - page_max
+        - total_records
         - questionnaires
     QuestionnaireID:
       type: object
@@ -771,9 +866,11 @@ components:
         - type: object
           properties:
             min_value:
-              type: integer
+              type: number
+              format: double
             max_value:
-              type: integer
+              type: number
+              format: double
     QuestionSettingsSingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
@@ -783,6 +880,7 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
           required:
             - options
     QuestionSettingsMultipleChoice:
@@ -794,6 +892,8 @@ components:
               type: array
               items:
                 type: string
+              uniqueItems: true
+              minItems: 1
           required:
             - options
     QuestionSettingsScale:
@@ -869,7 +969,8 @@ components:
         body:
           type: array
           items:
-            $ref: "#/components/schemas/ResponseBody"
+            $ref: "#/components/schemas/NewResponseBody"
+          minItems: 1
       required:
         - is_draft
         - body
@@ -882,7 +983,10 @@ components:
               type: integer
               example: 1
             respondent:
-              $ref: "#/components/schemas/TraqId"
+              allOf:
+                - $ref: "#/components/schemas/TraqId"
+              description: |
+                回答者のtraQ ID。匿名回答の場合は返しません。
             is_anonymous:
               type: boolean
               example: true
@@ -894,10 +998,27 @@ components:
               type: string
               format: date-time
               example: 2020-01-01T00:00:00+09:00
+            is_draft:
+              type: boolean
+              example: true
+            body:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResponseBody"
           required:
             - response_id
+            - is_anonymous
             - submitted_at
             - modified_at
+            - is_draft
+            - body
+    EditResponse:
+      allOf:
+        - type: object
+          properties:
+            response_id:
+              type: integer
+              example: 1
         - $ref: "#/components/schemas/NewResponse"
     EditResponse:
       allOf:
@@ -912,9 +1033,20 @@ components:
       items:
         $ref: "#/components/schemas/Response"
     ResponsesWithQuestionnaireInfo:
-      type: array
-      items:
-        $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+      type: object
+      properties:
+        page_max:
+          type: integer
+          example: 1
+          description: |
+            合計のページ数
+        response_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseWithQuestionnaireInfoItem"
+      required:
+        - page_max
+        - response_groups
     QuestionnaireInfo:
       type: object
       allOf:
@@ -932,8 +1064,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Response"
+      required:
+        - questionnaire_info
+        - responses
       description: |
         同じアンケートの回答情報をまとめて返す。
+    NewResponseBody:
+      allOf:
+        - type: object
+          properties:
+            question_id:
+              type: integer
+          required:
+            - question_id
+        - oneOf:
+          - $ref: "#/components/schemas/ResponseBodyText"
+          - $ref: "#/components/schemas/ResponseBodyTextLong"
+          - $ref: "#/components/schemas/ResponseBodyNumber"
+          - $ref: "#/components/schemas/ResponseBodySingleChoice"
+          - $ref: "#/components/schemas/ResponseBodyMultipleChoice"
+          - $ref: "#/components/schemas/ResponseBodyScale"
     ResponseBody:
       allOf:
         - type: object
@@ -964,9 +1114,7 @@ components:
     ResponseBodySingleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeSingleChoice"
-        - $ref: "#/components/schemas/ResponseBodyBaseInteger"
-        - description: |
-            選択肢のインデックス
+        - $ref: "#/components/schemas/ResponseBodyBaseString"
     ResponseBodyMultipleChoice:
       allOf:
         - $ref: "#/components/schemas/QuestionTypeMultipleChoice"
@@ -975,9 +1123,8 @@ components:
             answer:
               type: array
               items:
-                type: integer
-          description: |
-            選択肢のインデックスの配列
+                type: string
+              uniqueItems: true
           required:
             - answer
     ResponseBodyScale:
@@ -996,6 +1143,7 @@ components:
       properties:
         answer:
           type: number
+          format: double
       required:
         - answer
     ResponseBodyBaseInteger:
@@ -1020,7 +1168,7 @@ components:
       items:
         $ref: "#/components/schemas/TraqId"
       description: |
-        回答者の一覧。匿名回答の場合はnull。
+        ユーザーIDの一覧。
     TraqId:
       type: string
       example: cp20
@@ -1033,4 +1181,95 @@ components:
         format: uuid
         description: |
           Group UUID
- 
+    TraqUsers:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqUser"
+    TraqUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: traQ ID
+        icon_file_id:
+          type: string
+          format: uuid
+        is_bot:
+          type: boolean
+      required:
+        - id
+        - name
+        - icon_file_id
+        - is_bot
+    TraqUserGroupMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+      required:
+        - id
+        - role
+    TraqUserGroupMembers:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqUserGroupMember"
+    TraqGroups:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqGroup"
+    TraqGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        members:
+          $ref: "#/components/schemas/TraqUserGroupMembers"
+      required:
+        - id
+        - name
+        - members
+    TraqStamps:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqStamp"
+    TraqStamp:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        file_id:
+          type: string
+          format: uuid
+      required:
+        - id
+        - name
+        - file_id
+    TraqChannels:
+      type: array
+      items:
+        $ref: "#/components/schemas/TraqChannel"
+    TraqChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        path:
+          type: string
+      required:
+        - id
+        - name
