@@ -152,12 +152,13 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 		notOverDue = *params.NotOverDue
 	}
 
-	var hasMyResponse, hasMyDraft *bool
+	var hasMyResponse, hasMyDraft, isPublished *bool
 	hasMyResponse = params.HasMyResponse
 	hasMyDraft = params.HasMyDraft
+	isPublished = params.IsPublished
 	countOnly := params.CountOnly != nil && *params.CountOnly
 
-	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, countOnly)
+	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isPublished, countOnly)
 	if err != nil {
 		return res, err
 	}

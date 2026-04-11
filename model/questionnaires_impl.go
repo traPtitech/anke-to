@@ -179,10 +179,10 @@ func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID i
 	return nil
 }
 
-func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search string, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool) (*gorm.DB, error) {
+func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search string, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isPublished *bool) (*gorm.DB, error) {
 	query := db.
 		Table("questionnaires").
-		Where("deleted_at IS NULL AND is_published IS TRUE").
+		Where("deleted_at IS NULL").
 		Joins("LEFT OUTER JOIN targets ON questionnaires.id = targets.questionnaire_id")
 
 	var err error
@@ -221,6 +221,14 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 		}
 	}
 
+	if isPublished != nil {
+		if *isPublished {
+			query = query.Where("questionnaires.is_published IS TRUE")
+		} else {
+			query = query.Where("questionnaires.is_published IS NOT TRUE")
+		}
+	}
+
 	if len(search) != 0 {
 		// MySQLでのregexpの構文は少なくともGoのregexpの構文でvalidである必要がある
 		if _, err := regexp.Compile(search); err != nil {
@@ -238,7 +246,7 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 GetQuestionnaires アンケートの一覧
 2つ目の戻り値は対象件数、3つ目の戻り値はページ数の最大値
 */
-func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, countOnly bool) ([]QuestionnaireInfo, int, int, error) {
+func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort string, search string, pageNum int, onlyTargetingMe bool, onlyAdministratedByMe bool, notOverDue bool, hasMyResponse *bool, hasMyDraft *bool, isPublished *bool, countOnly bool) ([]QuestionnaireInfo, int, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -248,7 +256,7 @@ func (*Questionnaire) GetQuestionnaires(ctx context.Context, userID string, sort
 	}
 
 	questionnaires := make([]QuestionnaireInfo, 0, 20)
-	query, err := buildQuestionnairesQuery(db, userID, sort, search, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft)
+	query, err := buildQuestionnairesQuery(db, userID, sort, search, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isPublished)
 	if err != nil {
 		return nil, 0, 0, err
 	}
