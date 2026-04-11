@@ -221,12 +221,15 @@ func buildQuestionnairesQuery(db *gorm.DB, userID string, sort string, search st
 		}
 	}
 
-	if isDraft != nil && *isDraft {
+	if isDraft == nil {
+		// No filter: show published questionnaires or drafts administered by the user
+		query = query.Where("questionnaires.is_published IS TRUE OR EXISTS (SELECT 1 FROM administrators WHERE administrators.questionnaire_id = questionnaires.id AND administrators.user_traqid = ?)", userID)
+	} else if *isDraft {
 		// isDraft=true: show only unpublished (draft) questionnaires
 		// Note: controller enforces onlyAdministratedByMe=true for this case
 		query = query.Where("questionnaires.is_published IS NOT TRUE")
 	} else {
-		// Default (nil) or isDraft=false: only show published questionnaires
+		// isDraft=false: show only published questionnaires
 		query = query.Where("questionnaires.is_published IS TRUE")
 	}
 

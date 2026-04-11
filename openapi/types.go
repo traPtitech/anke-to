@@ -803,7 +803,7 @@ type GetQuestionnairesParams struct {
 
 	// IsDraft trueの場合、自分が管理者である下書き（未公開）のアンケートのみを取得する。
 	// falseの場合、公開済みのアンケートのみを取得する。
-	// 存在しない場合、公開済みのアンケートのみを取得する。
+	// 存在しない場合、公開済みのアンケートと自分が管理者である下書きのアンケートをすべて取得する。
 	IsDraft *QuestionnaireisDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 
 	// CountOnly trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。
