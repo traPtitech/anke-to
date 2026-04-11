@@ -756,6 +756,9 @@ type QuestionnaireIDInPath = int
 // QuestionnaireIDsInQuery defines model for questionnaireIDsInQuery.
 type QuestionnaireIDsInQuery = []int
 
+// QuestionnaireisDraftInQuery defines model for questionnaireisDraftInQuery.
+type QuestionnaireisDraftInQuery = bool
+
 // ResponseIDInPath defines model for responseIDInPath.
 type ResponseIDInPath = int
 
@@ -801,7 +804,7 @@ type GetQuestionnairesParams struct {
 	// IsDraft trueの場合、自分が管理者である下書き（未公開）のアンケートのみを取得する。
 	// falseの場合、公開済みのアンケートのみを取得する。
 	// 存在しない場合、公開済みのアンケートのみを取得する。
-	IsDraft *IsDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
+	IsDraft *QuestionnaireisDraftInQuery `form:"isDraft,omitempty" json:"isDraft,omitempty"`
 
 	// CountOnly trueの場合、questionnaires は空配列で返し、件数情報のみ取得する。page は無視される。
 	CountOnly *CountOnlyInQuery `form:"countOnly,omitempty" json:"countOnly,omitempty"`
