@@ -110,7 +110,9 @@ func formatNumberBound(value *float64) string {
 }
 
 func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, params openapi.GetQuestionnairesParams) (openapi.QuestionnaireList, error) {
-	res := openapi.QuestionnaireList{}
+	res := openapi.QuestionnaireList{
+		Questionnaires: []openapi.QuestionnaireSummary{},
+	}
 	var sort string
 	if params.Sort == nil {
 		sort = ""
@@ -153,50 +155,67 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	var hasMyResponse, hasMyDraft *bool
 	hasMyResponse = params.HasMyResponse
 	hasMyDraft = params.HasMyDraft
+	countOnly := params.CountOnly != nil && *params.CountOnly
 
-	questionnaireList, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft)
+	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, countOnly)
+	if err != nil {
+		return res, err
+	}
+	res.PageMax = pageMax
+	res.TotalRecords = totalRecords
+	if countOnly || len(questionnaireList) == 0 {
+		return res, nil
+	}
+
+	questionnaireIDs := make([]int, 0, len(questionnaireList))
+	for _, questionnaire := range questionnaireList {
+		questionnaireIDs = append(questionnaireIDs, questionnaire.ID)
+	}
+
+	targets, err := q.ITarget.GetTargets(ctx.Request().Context(), questionnaireIDs)
+	if err != nil {
+		return res, err
+	}
+	respondents, err := q.IRespondent.GetRespondentsUserIDs(ctx.Request().Context(), questionnaireIDs)
+	if err != nil {
+		return res, err
+	}
+	myRespondents, err := q.GetRespondentInfos(ctx.Request().Context(), userID, questionnaireIDs...)
 	if err != nil {
 		return res, err
 	}
 
-	for _, questionnaire := range questionnaireList {
-		targets, err := q.ITarget.GetTargets(ctx.Request().Context(), []int{questionnaire.ID})
-		if err != nil {
-			return res, err
-		}
-		allRespondend := false
-		if len(targets) == 0 {
-			allRespondend = true
-		} else {
-			respondents, err := q.IRespondent.GetRespondentsUserIDs(ctx.Request().Context(), []int{questionnaire.ID})
-			if err != nil {
-				return res, err
-			}
-			allRespondend = isAllTargetsReponded(targets, respondents)
-		}
+	targetsByQuestionnaireID := make(map[int][]model.Targets, len(questionnaireList))
+	for _, target := range targets {
+		targetsByQuestionnaireID[target.QuestionnaireID] = append(targetsByQuestionnaireID[target.QuestionnaireID], target)
+	}
+	respondentsByQuestionnaireID := make(map[int][]model.Respondents, len(questionnaireList))
+	for _, respondent := range respondents {
+		respondentsByQuestionnaireID[respondent.QuestionnaireID] = append(respondentsByQuestionnaireID[respondent.QuestionnaireID], respondent)
+	}
+	myRespondentsByQuestionnaireID := make(map[int][]model.RespondentInfo, len(questionnaireList))
+	for _, respondent := range myRespondents {
+		myRespondentsByQuestionnaireID[respondent.QuestionnaireID] = append(myRespondentsByQuestionnaireID[respondent.QuestionnaireID], respondent)
+	}
 
-		hasMyDraft := false
-		hasMyResponse := false
+	for _, questionnaire := range questionnaireList {
+		allRespondend := len(targetsByQuestionnaireID[questionnaire.ID]) == 0 || isAllTargetsReponded(targetsByQuestionnaireID[questionnaire.ID], respondentsByQuestionnaireID[questionnaire.ID])
+		hasMyDraftForQuestionnaire := false
+		hasMyResponseForQuestionnaire := false
 		respondendDateTimeByMe := null.Time{}
 
-		myRespondents, err := q.GetRespondentInfos(ctx.Request().Context(), userID, questionnaire.ID)
-		if err != nil {
-			return res, err
-		}
-		for _, respondent := range myRespondents {
+		for _, respondent := range myRespondentsByQuestionnaireID[questionnaire.ID] {
 			if !respondent.SubmittedAt.Valid {
-				hasMyDraft = true
+				hasMyDraftForQuestionnaire = true
+				continue
 			}
-			if respondent.SubmittedAt.Valid {
-				if !respondendDateTimeByMe.Valid {
-					respondendDateTimeByMe = respondent.SubmittedAt
-				}
-				hasMyResponse = true
+			if !respondendDateTimeByMe.Valid {
+				respondendDateTimeByMe = respondent.SubmittedAt
 			}
+			hasMyResponseForQuestionnaire = true
 		}
 
-		res.PageMax = pageMax
-		res.Questionnaires = append(res.Questionnaires, *questionnaireInfo2questionnaireSummary(questionnaire, allRespondend, hasMyDraft, hasMyResponse, respondendDateTimeByMe))
+		res.Questionnaires = append(res.Questionnaires, *questionnaireInfo2questionnaireSummary(questionnaire, allRespondend, hasMyDraftForQuestionnaire, hasMyResponseForQuestionnaire, respondendDateTimeByMe))
 	}
 	return res, nil
 }
@@ -911,7 +930,13 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 
 func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
 	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.IQuestionnaire.DeleteQuestionnaire(ctx, questionnaireID)
+		respondentDetails, err := q.GetRespondentDetails(ctx, questionnaireID, "", false, "", nil)
+		if err != nil {
+			c.Logger().Errorf("failed to get respondent details: %+v", err)
+			return err
+		}
+
+		err = q.IQuestionnaire.DeleteQuestionnaire(ctx, questionnaireID)
 		if err != nil {
 			c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 			return err
@@ -987,14 +1012,9 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 			}
 		}
 
-		respondentDetails, err := q.GetRespondentDetails(ctx, questionnaireID, "", false, "", nil)
-		if err != nil {
-			c.Logger().Errorf("failed to get respondent details: %+v", err)
-			return err
-		}
 		for _, respondentDetail := range respondentDetails {
 			err = q.IResponse.DeleteResponse(ctx, respondentDetail.ResponseID)
-			if err != nil {
+			if err != nil && !errors.Is(err, model.ErrNoRecordDeleted) {
 				c.Logger().Errorf("failed to delete responses: %+v", err)
 				return err
 			}
@@ -1004,6 +1024,12 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 				c.Logger().Errorf("failed to delete respondents: %+v", err)
 				return err
 			}
+		}
+
+		err = model.NewReminderTarget().DeleteReminderTargets(ctx, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder targets: %+v", err)
+			return err
 		}
 
 		err = q.DeleteReminder(questionnaireID)
@@ -1027,6 +1053,24 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 }
 
 func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
+	_, _, _, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return false, echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+		}
+		c.Logger().Errorf("failed to get questionnaire info: %+v", err)
+		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+	}
+
+	reminderTarget, err := model.NewReminderTarget().GetReminderTarget(c.Request().Context(), questionnaireID, userID)
+	if err == nil {
+		return !reminderTarget.IsCanceled, nil
+	}
+	if err != nil && !errors.Is(err, model.ErrRecordNotFound) {
+		c.Logger().Errorf("failed to get reminder target status: %+v", err)
+		return false, echo.NewHTTPError(http.StatusInternalServerError, "failed to check remind status")
+	}
+
 	status, err := q.GetTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID})
 	if err != nil {
 		if errors.Is(err, model.ErrTargetNotFound) {
@@ -1040,7 +1084,16 @@ func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionn
 }
 
 func (q *Questionnaire) EditQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string, isRemindEnabled bool) error {
-	err := q.UpdateTargetsCancelStatus(c.Request().Context(), questionnaireID, []string{userID}, !isRemindEnabled)
+	_, _, _, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+		}
+		c.Logger().Errorf("failed to get questionnaire info: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update remind status")
+	}
+
+	err = model.NewReminderTarget().UpsertReminderTarget(c.Request().Context(), questionnaireID, userID, !isRemindEnabled)
 	if err != nil {
 		c.Logger().Errorf("failed to update remind status: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update remind status")
@@ -1062,9 +1115,6 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 		onlyMyResponse = *params.OnlyMyResponse
 	} else {
 		onlyMyResponse = false
-	}
-	if params.IsDraft == nil || *params.IsDraft {
-		onlyMyResponse = true
 	}
 	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {

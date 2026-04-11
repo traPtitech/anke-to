@@ -282,6 +282,8 @@ func TestGetQuestionnaires(t *testing.T) {
 		isErr               bool
 		err                 error
 		questionnaireIDList *[]int
+		totalRecords        *int
+		pageMax             *int
 	}
 	type test struct {
 		description string
@@ -299,6 +301,8 @@ func TestGetQuestionnaires(t *testing.T) {
 	searchTest := openapi.SearchInQuery(uniqueSearchTitle)
 	largePageNum := 100000000
 	constTrue := true
+	totalRecordsTwo := 2
+	pageMaxOne := 1
 
 	testCases := []test{
 		{
@@ -395,6 +399,8 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 			expect: expect{
+				totalRecords: &totalRecordsTwo,
+				pageMax:      &pageMaxOne,
 				questionnaireIDList: &[]int{
 					questionnairePosted1.QuestionnaireId,
 					questionnairePosted2.QuestionnaireId,
@@ -411,10 +417,43 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 			expect: expect{
+				totalRecords: &totalRecordsTwo,
+				pageMax:      &pageMaxOne,
 				questionnaireIDList: &[]int{
 					questionnairePosted1.QuestionnaireId,
 					questionnairePosted2.QuestionnaireId,
 				},
+			},
+		},
+		{
+			description: "search test count only",
+			args: args{
+				userID: userOne,
+				params: openapi.GetQuestionnairesParams{
+					Search:    &searchTest,
+					CountOnly: &constTrue,
+				},
+			},
+			expect: expect{
+				totalRecords:        &totalRecordsTwo,
+				pageMax:             &pageMaxOne,
+				questionnaireIDList: &[]int{},
+			},
+		},
+		{
+			description: "search test count only ignores page",
+			args: args{
+				userID: userOne,
+				params: openapi.GetQuestionnairesParams{
+					Search:    &searchTest,
+					CountOnly: &constTrue,
+					Page:      &largePageNum,
+				},
+			},
+			expect: expect{
+				totalRecords:        &totalRecordsTwo,
+				pageMax:             &pageMaxOne,
+				questionnaireIDList: &[]int{},
 			},
 		},
 		{
@@ -485,6 +524,9 @@ func TestGetQuestionnaires(t *testing.T) {
 		}
 		if testCase.args.params.OnlyAdministratedByMe != nil {
 			params.Add("onlyAdministratedByMe", fmt.Sprint(*testCase.args.params.OnlyAdministratedByMe))
+		}
+		if testCase.args.params.CountOnly != nil {
+			params.Add("countOnly", fmt.Sprint(*testCase.args.params.CountOnly))
 		}
 		e = echo.New()
 		req = httptest.NewRequest(http.MethodGet, "/questionnaires"+params.Encode(), nil)
@@ -561,7 +603,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		}
 
 		if testCase.expect.questionnaireIDList != nil {
-			var questionnaireIDList []int
+			questionnaireIDList := []int{}
 			for _, questionnairSummary := range questionnaireList.Questionnaires {
 				questionnaireIDList = append(questionnaireIDList, questionnairSummary.QuestionnaireId)
 			}
@@ -570,6 +612,12 @@ func TestGetQuestionnaires(t *testing.T) {
 			})
 			sort.Slice(questionnaireIDList, func(i, j int) bool { return questionnaireIDList[i] < questionnaireIDList[j] })
 			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIDList")
+		}
+		if testCase.expect.totalRecords != nil {
+			assertion.Equal(*testCase.expect.totalRecords, questionnaireList.TotalRecords, testCase.description, "totalRecords")
+		}
+		if testCase.expect.pageMax != nil {
+			assertion.Equal(*testCase.expect.pageMax, questionnaireList.PageMax, testCase.description, "pageMax")
 		}
 
 		if testCase.args.params.OnlyTargetingMe != nil || testCase.args.params.OnlyAdministratedByMe != nil {
@@ -1902,6 +1950,81 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	}
 }
 
+func TestDeleteQuestionnaireWithResponses(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+	newResponse := sampleResponse
+	AddQuestionID2SampleResponseMutex.Unlock()
+
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/questionnaires/%d", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+
+	err = q.DeleteQuestionnaire(ctx, questionnaireDetail.QuestionnaireId)
+	assertion.NoError(err)
+}
+
+func TestDeleteQuestionnaireWithEmptyDraft(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	emptyDraft := openapi.PostQuestionnaireResponseJSONRequestBody{
+		Body:    []openapi.NewResponseBody{},
+		IsDraft: true,
+	}
+	body, err = json.Marshal(emptyDraft)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, emptyDraft, userOne)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/questionnaires/%d", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+
+	err = q.DeleteQuestionnaire(ctx, questionnaireDetail.QuestionnaireId)
+	assertion.NoError(err)
+}
+
 func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
 	t.Parallel()
 
@@ -1948,9 +2071,90 @@ func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
 	}
 }
 
-// func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
-// 	// todo
-// }
+func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	err = q.EditQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userOne, true)
+	require.NoError(t, err)
+
+	status, err := q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userOne)
+	require.NoError(t, err)
+	assertion.True(status, "non target user can opt in")
+
+	err = q.EditQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree, false)
+	require.NoError(t, err)
+
+	status, err = q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree)
+	require.NoError(t, err)
+	assertion.False(status, "target user can opt out via override")
+}
+
+func TestEditQuestionnaireMyRemindStatusPersistsExplicitSubscriptionAfterTargetRemoval(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	questionnaire.Target = openapi.UsersAndGroups{
+		Users:  []string{userThree, userFour},
+		Groups: []uuid.UUID{},
+	}
+
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	err = q.EditQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree, true)
+	require.NoError(t, err)
+
+	editParams := postQuestionnaireParams2EditQuestionnaireParams(questionnaireDetail.QuestionnaireId, questionnaireDetail.Questions, questionnaire)
+	editParams.Target = &openapi.UsersAndGroups{
+		Users:  []string{},
+		Groups: []uuid.UUID{},
+	}
+
+	req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	err = q.EditQuestionnaire(ctx, questionnaireDetail.QuestionnaireId, editParams)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d/myRemindStatus", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	status, err := q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userThree)
+	require.NoError(t, err)
+	assertion.True(status, "explicitly opted-in user remains a reminder target after target removal")
+
+	status, err = q.GetQuestionnaireMyRemindStatus(ctx, questionnaireDetail.QuestionnaireId, userFour)
+	require.NoError(t, err)
+	assertion.False(status, "removed target without an explicit reminder subscription is not reminded")
+}
 
 func TestGetQuestionnaireResponses(t *testing.T) {
 	t.Parallel()
@@ -2014,7 +2218,19 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
+	responseUserTwo, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
+	require.NoError(t, err)
+
+	newResponse = sampleResponse
+	newResponse.IsDraft = true
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response03, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	questionnaireAnonymous := sampleQuestionnaire
@@ -2050,7 +2266,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	ctx = e.NewContext(req, rec)
-	_, err = q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
+	response11, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
 	AddQuestionID2SampleResponseMutex.Unlock()
@@ -2084,7 +2300,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 
 	testCases := []test{
 		{
-			description: "valid",
+			description: "valid returns all responses by default",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2095,6 +2311,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 					response00.ResponseId,
 					response01.ResponseId,
 					response02.ResponseId,
+					responseUserTwo.ResponseId,
+					response03.ResponseId,
 				},
 			},
 		},
@@ -2202,7 +2420,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "isDraft true forces only my response",
+			description: "isDraft true does not force only my response",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2214,11 +2432,12 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response02.ResponseId,
+					response03.ResponseId,
 				},
 			},
 		},
 		{
-			description: "anonymous questionnaire",
+			description: "anonymous questionnaire returns all responses by default",
 			args: args{
 				isAnonymousQuestionnaire: true,
 				userID:                   userOne,
@@ -2228,6 +2447,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response10.ResponseId,
+					response11.ResponseId,
 				},
 			},
 		},
@@ -2327,7 +2547,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
 		}
 
-		if testCase.args.params.OnlyMyResponse != nil {
+		if testCase.args.params.OnlyMyResponse != nil && *testCase.args.params.OnlyMyResponse {
 			for _, response := range responseList {
 				assertion.Equal(*response.Respondent, testCase.args.userID, testCase.description, "OnlyMyResponse")
 			}

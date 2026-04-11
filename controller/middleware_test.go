@@ -634,3 +634,129 @@ func TestCheckResponseReadPrivilege(t *testing.T) {
 		}
 	}
 }
+
+func TestResultOrMyResponseAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRespondent := mock_model.NewMockIRespondent(ctrl)
+	mockAdministrator := mock_model.NewMockIAdministrator(ctrl)
+	mockQuestionnaire := mock_model.NewMockIQuestionnaire(ctrl)
+	mockQuestion := mock_model.NewMockIQuestion(ctrl)
+
+	middleware := NewMiddleware(mockAdministrator, mockRespondent, mockQuestion, mockQuestionnaire)
+
+	type args struct {
+		query           string
+		isPublished     bool
+		resultPrivilege model.ResponseReadPrivilegeInfo
+	}
+	type expect struct {
+		statusCode int
+		isCalled   bool
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "onlyMyResponse=trueなら全体結果権限がなくても公開済みアンケートを読めれば通す",
+			args: args{
+				query:       "?onlyMyResponse=true",
+				isPublished: true,
+				resultPrivilege: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "administrators",
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+		{
+			description: "onlyMyResponse=trueでも未公開アンケートなら403",
+			args: args{
+				query:       "?onlyMyResponse=true",
+				isPublished: false,
+				resultPrivilege: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "public",
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusForbidden,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "onlyMyResponse=falseなら従来通り全体結果権限を見る",
+			args: args{
+				query:       "?onlyMyResponse=false",
+				isPublished: true,
+				resultPrivilege: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "administrators",
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusForbidden,
+				isCalled:   false,
+			},
+		},
+		{
+			description: "onlyMyResponse未指定なら従来通り全体結果権限を見る",
+			args: args{
+				isPublished: true,
+				resultPrivilege: model.ResponseReadPrivilegeInfo{
+					ResSharedTo: "public",
+				},
+			},
+			expect: expect{
+				statusCode: http.StatusOK,
+				isCalled:   true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		userID := "testUser"
+		questionnaireID := 1
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaires/%d/responses%s", questionnaireID, testCase.args.query), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/questionnaires/:questionnaireID/responses")
+		c.SetParamNames("questionnaireID")
+		c.SetParamValues(strconv.Itoa(questionnaireID))
+		c.Set(userIDKey, userID)
+
+		if testCase.args.query == "?onlyMyResponse=true" {
+			mockAdministrator.
+				EXPECT().
+				CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID).
+				Return(false, nil)
+			mockQuestionnaire.
+				EXPECT().
+				GetQuestionnaireInfo(c.Request().Context(), questionnaireID).
+				Return(&model.Questionnaires{IsPublished: testCase.args.isPublished}, nil, nil, nil, nil, nil, nil, nil, nil)
+		} else {
+			mockQuestionnaire.
+				EXPECT().
+				GetResponseReadPrivilegeInfoByQuestionnaireID(c.Request().Context(), userID, questionnaireID).
+				Return(&testCase.args.resultPrivilege, nil)
+		}
+
+		callChecker := CallChecker{}
+
+		e.HTTPErrorHandler(middleware.ResultOrMyResponseAuthenticate(callChecker.Handler)(c), c)
+
+		assertion.Equalf(testCase.expect.statusCode, rec.Code, testCase.description, "status code")
+		assertion.Equalf(testCase.expect.isCalled, callChecker.IsCalled, testCase.description, "isCalled")
+	}
+}
