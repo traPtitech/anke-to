@@ -4,9 +4,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"io"
-
 	"fmt"
+	"io"
 	"net/http"
 	netUrl "net/url"
 	"os"
@@ -22,6 +21,10 @@ type Webhook struct{}
 func NewWebhook() *Webhook {
 	return new(Webhook)
 }
+
+// MessageLimit traQのメッセージの最大文字数
+// ref: https://github.com/traPtitech/traQ/blob/d6d3981/router/v3/messages.go
+const MessageLimit = 10000
 
 // PostMessage Webhookでのメッセージの投稿
 func (*Webhook) PostMessage(message string) error {

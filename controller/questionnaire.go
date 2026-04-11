@@ -220,6 +220,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid title")
 	}
 
+	var notificationMessages []string
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		questionnaireID, err = q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
@@ -436,7 +437,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			}
 		}
 
-		message := createQuestionnaireMessage(
+		notificationMessages = createQuestionnaireMessage(
 			questionnaireID,
 			params.Title,
 			params.Description,
@@ -444,11 +445,6 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			responseDueDateTime,
 			append(allTargetUsers, targetGroupNames...),
 		)
-		err = q.PostMessage(message)
-		if err != nil {
-			c.Logger().Errorf("failed to post message: %+v", err)
-			return err
-		}
 
 		if params.ResponseDueDateTime != nil {
 			dueDateTime := responseDueDateTime.Time
@@ -464,6 +460,14 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 	if err != nil {
 		c.Logger().Errorf("failed to create a questionnaire: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
+	}
+
+	// Send traQ notifications after the DB transaction commits.
+	// Failures are only logged; the questionnaire creation itself is treated as successful.
+	for _, message := range notificationMessages {
+		if err := q.PostMessage(message); err != nil {
+			c.Logger().Errorf("failed to post questionnaire creation message (questionnaireID: %d): %+v", questionnaireID, err)
+		}
 	}
 
 	questionnaireInfo, targets, targetUsers, targetGroups, admins, adminUsers, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
@@ -1258,7 +1262,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 	return response, nil
 }
 
-func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) string {
+func createQuestionnaireMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit null.Time, targets []string) []string {
 	var resTimeLimitText string
 	if resTimeLimit.Valid {
 		resTimeLimitText = resTimeLimit.Time.Local().Format("2006/01/02 15:04")
@@ -1266,59 +1270,77 @@ func createQuestionnaireMessage(questionnaireID int, title string, description s
 		resTimeLimitText = "なし"
 	}
 
-	var targetsMentionText string
-	if len(targets) == 0 {
-		targetsMentionText = "なし"
-	} else {
-		targetsMentionText = "@" + strings.Join(targets, " @")
-	}
-
-	return fmt.Sprintf(
-		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』が作成されました
-#### 管理者
-%s
-#### 説明
-%s
-#### 回答期限
-%s
-#### 対象者
-%s
-#### 回答リンク
-https://anke-to.trap.jp/responses/new/%d`,
+	prefix := fmt.Sprintf(
+		"### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』が作成されました\n#### 管理者\n%s\n#### 説明\n%s\n#### 回答期限\n%s",
 		title,
 		questionnaireID,
 		strings.Join(administrators, ","),
 		description,
 		resTimeLimitText,
-		targetsMentionText,
-		questionnaireID,
 	)
+	suffix := fmt.Sprintf("\n#### 回答リンク\nhttps://anke-to.trap.jp/responses/new/%d", questionnaireID)
+
+	return createMessagesFromTargets(prefix, suffix, targets, traq.MessageLimit)
 }
 
-func createReminderMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit time.Time, targets []string, leftTimeText string) string {
+func createReminderMessage(questionnaireID int, title string, description string, administrators []string, resTimeLimit time.Time, targets []string, leftTimeText string) []string {
 	resTimeLimitText := resTimeLimit.Local().Format("2006/01/02 15:04")
-	targetsMentionText := "@" + strings.Join(targets, " @")
 
-	return fmt.Sprintf(
-		`### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』の回答期限が迫っています!
-==残り%sです!==
-#### 管理者
-%s
-#### 説明
-%s
-#### 回答期限
-%s
-#### 対象者
-%s
-#### 回答リンク
-https://anke-to.trap.jp/responses/new/%d`,
+	prefix := fmt.Sprintf(
+		"### アンケート『[%s](https://anke-to.trap.jp/questionnaires/%d)』の回答期限が迫っています!\n==残り%sです!==\n#### 管理者\n%s\n#### 説明\n%s\n#### 回答期限\n%s",
 		title,
 		questionnaireID,
 		leftTimeText,
 		strings.Join(administrators, ","),
 		description,
 		resTimeLimitText,
-		targetsMentionText,
-		questionnaireID,
 	)
+	suffix := fmt.Sprintf("\n#### 回答リンク\nhttps://anke-to.trap.jp/responses/new/%d", questionnaireID)
+
+	return createMessagesFromTargets(prefix, suffix, targets, traq.MessageLimit)
+}
+
+// createMessagesFromTargets は対象者リストをlimit文字以内に収まるよう分割し、
+// それぞれに完全なヘッダーとフッターを付けた複数のメッセージを返す。
+func createMessagesFromTargets(prefix, suffix string, targets []string, limit int) []string {
+	const targetsHeader = "\n#### 対象者\n"
+
+	if len(targets) == 0 {
+		return []string{prefix + targetsHeader + "なし" + suffix}
+	}
+
+	allTargetsText := "@" + strings.Join(targets, " @")
+	full := prefix + targetsHeader + allTargetsText + suffix
+	if len([]rune(full)) <= limit {
+		return []string{full}
+	}
+
+	available := limit - len([]rune(prefix)) - len([]rune(targetsHeader)) - len([]rune(suffix))
+
+	var messages []string
+	var group []string
+	groupLen := 0
+
+	for _, target := range targets {
+		mention := "@" + target
+		addLen := len([]rune(mention))
+		if groupLen > 0 {
+			addLen++ // スペース区切り分
+		}
+
+		if groupLen+addLen > available && len(group) > 0 {
+			messages = append(messages, prefix+targetsHeader+"@"+strings.Join(group, " @")+suffix)
+			group = []string{target}
+			groupLen = len([]rune(mention))
+		} else {
+			group = append(group, target)
+			groupLen += addLen
+		}
+	}
+
+	if len(group) > 0 {
+		messages = append(messages, prefix+targetsHeader+"@"+strings.Join(group, " @")+suffix)
+	}
+
+	return messages
 }
