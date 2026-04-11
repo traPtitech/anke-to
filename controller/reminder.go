@@ -237,11 +237,13 @@ func reminderAction(questionnaireID int, leftTimeText string) error {
 	}
 	sort.Strings(reminderTargets)
 
-	reminderMessage := createReminderMessage(questionnaireID, questionnaire.Title, questionnaire.Description, administrators, questionnaire.ResTimeLimit.Time, reminderTargets, leftTimeText)
+	reminderMessages := createReminderMessage(questionnaireID, questionnaire.Title, questionnaire.Description, administrators, questionnaire.ResTimeLimit.Time, reminderTargets, leftTimeText)
 	wh := traq.NewWebhook()
-	err = wh.PostMessage(reminderMessage)
-	if err != nil {
-		return err
+	for _, msg := range reminderMessages {
+		err = wh.PostMessage(msg)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
