@@ -220,6 +220,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid title")
 	}
 
+	var notificationMessages []string
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
 		questionnaireID, err = q.InsertQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil {
@@ -436,7 +437,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			}
 		}
 
-		messages := createQuestionnaireMessage(
+		notificationMessages = createQuestionnaireMessage(
 			questionnaireID,
 			params.Title,
 			params.Description,
@@ -444,13 +445,6 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			responseDueDateTime,
 			append(allTargetUsers, targetGroupNames...),
 		)
-		for _, message := range messages {
-			err = q.PostMessage(message)
-			if err != nil {
-				c.Logger().Errorf("failed to post message: %+v", err)
-				return err
-			}
-		}
 
 		if params.ResponseDueDateTime != nil {
 			dueDateTime := responseDueDateTime.Time
@@ -466,6 +460,14 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 	if err != nil {
 		c.Logger().Errorf("failed to create a questionnaire: %+v", err)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to create a questionnaire")
+	}
+
+	// Send traQ notifications after the DB transaction commits.
+	// Failures are only logged; the questionnaire creation itself is treated as successful.
+	for _, message := range notificationMessages {
+		if err := q.PostMessage(message); err != nil {
+			c.Logger().Errorf("failed to post questionnaire creation message (questionnaireID: %d): %+v", questionnaireID, err)
+		}
 	}
 
 	questionnaireInfo, targets, targetUsers, targetGroups, admins, adminUsers, adminGroups, respondents, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
