@@ -717,10 +717,18 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 						c.Logger().Errorf("invalid scale")
 						return errors.New("invalid scale")
 					}
+					minLabel := ""
+					maxLabel := ""
+					if b.MinLabel != nil {
+						minLabel = *b.MinLabel
+					}
+					if b.MaxLabel != nil {
+						maxLabel = *b.MaxLabel
+					}
 					err = q.IScaleLabel.InsertScaleLabel(ctx, questionID,
 						model.ScaleLabels{
-							ScaleLabelLeft:  *b.MinLabel,
-							ScaleLabelRight: *b.MaxLabel,
+							ScaleLabelLeft:  minLabel,
+							ScaleLabelRight: maxLabel,
 							ScaleMax:        b.MaxValue,
 							ScaleMin:        b.MinValue,
 						})
@@ -1158,7 +1166,7 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 	// 回答期限を過ぎていたらエラー
 	if limit.Valid && limit.Time.Before(time.Now()) {
 		c.Logger().Info("expired questionnaire")
-		return res, echo.NewHTTPError(http.StatusUnprocessableEntity, err)
+		return res, echo.NewHTTPError(http.StatusUnprocessableEntity, errors.New("expired questionnaire"))
 	}
 
 	questions, err := q.IQuestion.GetQuestions(c.Request().Context(), questionnaireID)
@@ -1253,7 +1261,8 @@ func (q *Questionnaire) PostQuestionnaireResponse(c echo.Context, questionnaireI
 			if !params.IsDraft {
 				label, ok := scaleLabelMap[responseMeta.QuestionID]
 				if !ok {
-					label = model.ScaleLabels{}
+					c.Logger().Errorf("scale label not found for question %d", responseMeta.QuestionID)
+					return res, echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("scale label not found for question %d", responseMeta.QuestionID))
 				}
 				err := q.IScaleLabel.CheckScaleLabel(label, responseMeta.Data)
 				if err != nil {
