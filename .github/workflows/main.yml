@@ -124,7 +124,7 @@ jobs:
           TRAQ_WEBHOOK_ID: ""
           TRAQ_WEBHOOK_SECRET: ""
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./coverage-model.txt ./coverage-controller.txt
           token: ${{ secrets.CODECOV_TOKEN }}
