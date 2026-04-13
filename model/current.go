@@ -8,7 +8,6 @@ import (
 func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v3(),
-		v4(),
 	}
 }
 
