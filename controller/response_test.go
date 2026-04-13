@@ -1,0 +1,1185 @@
+package controller
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"sort"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/anke-to/openapi"
+	"gopkg.in/guregu/null.v4"
+)
+
+var (
+	sampleResponseBodyText            = openapi.NewResponseBody{}
+	sampleResponseBodyTextLong        = openapi.NewResponseBody{}
+	sampleResponseBodyNumber          = openapi.NewResponseBody{}
+	sampleResponseBodySingleChoice    = openapi.NewResponseBody{}
+	sampleResponseBodyMultipleChoice  = openapi.NewResponseBody{}
+	sampleResponseBodyScale           = openapi.NewResponseBody{}
+	sampleResponse                    = openapi.NewResponse{}
+	AddQuestionID2SampleResponseMutex sync.Mutex
+)
+
+func setupSampleResponse() {
+	if len(sampleResponse.Body) > 0 {
+		return
+	}
+	err := sampleResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
+		Answer:       "テキスト",
+		QuestionType: "Text",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyText: %v", err))
+	}
+	err = sampleResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+		Answer:       "ロングテキスト",
+		QuestionType: "TextLong",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyTextLong: %v", err))
+	}
+	err = sampleResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
+		Answer:       1.5,
+		QuestionType: "Number",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyNumber: %v", err))
+	}
+	err = sampleResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+		Answer:       "選択肢B",
+		QuestionType: "SingleChoice",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodySingleChoice: %v", err))
+	}
+	err = sampleResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+		Answer:       []string{"選択肢B", "選択肢C"},
+		QuestionType: "MultipleChoice",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyMultipleChoice: %v", err))
+	}
+	err = sampleResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
+		Answer:       1,
+		QuestionType: "Scale",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set sampleResponseBodyScale: %v", err))
+	}
+	sampleResponse = openapi.NewResponse{
+		Body: []openapi.NewResponseBody{
+			sampleResponseBodyText,
+			sampleResponseBodyTextLong,
+			sampleResponseBodyNumber,
+			sampleResponseBodySingleChoice,
+			sampleResponseBodyMultipleChoice,
+			sampleResponseBodyScale,
+		},
+		IsDraft: false,
+	}
+}
+
+// sampleResponseのResponseBodyでquestionnaireIDに基づいてquestionIDを設定する
+func AddQuestionID2SampleResponse(questionnaireID int) {
+	questions, err := q.IQuestion.GetQuestions(context.Background(), questionnaireID)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get questions: %v", err))
+	}
+	sampleResponseBodyText.QuestionId = questions[0].ID
+	sampleResponseBodyTextLong.QuestionId = questions[1].ID
+	sampleResponseBodyNumber.QuestionId = questions[2].ID
+	sampleResponseBodySingleChoice.QuestionId = questions[3].ID
+	sampleResponseBodyMultipleChoice.QuestionId = questions[4].ID
+	sampleResponseBodyScale.QuestionId = questions[5].ID
+	sampleResponse = openapi.NewResponse{
+		Body: []openapi.NewResponseBody{
+			sampleResponseBodyText,
+			sampleResponseBodyTextLong,
+			sampleResponseBodyNumber,
+			sampleResponseBodySingleChoice,
+			sampleResponseBodyMultipleChoice,
+			sampleResponseBodyScale,
+		},
+		IsDraft: false,
+	}
+	for i := range sampleResponse.Body {
+		sampleResponse.Body[i].QuestionId = questions[i].ID
+	}
+}
+
+func TestGetMyResponses(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
+
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+
+	newResponse := sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response0, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response1, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	newResponse = sampleResponse
+	newResponse.IsDraft = true
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	responseDraft, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
+	require.NoError(t, err)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response4, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "myResponsesSpecialUser")
+	require.NoError(t, err)
+
+	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous.IsAnonymous = true
+	e = echo.New()
+	body, err = json.Marshal(questionnaireAnonymous)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireAnonymousDetail, err := q.PostQuestionnaire(ctx, questionnaireAnonymous)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(questionnaireAnonymousDetail.QuestionnaireId)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireAnonymousDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	responseAnonymous, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Unlock()
+
+	type args struct {
+		userID string
+		params openapi.GetMyResponsesParams
+	}
+	type expect struct {
+		isErr                   bool
+		err                     error
+		pageMax                 *int
+		responseIDList          *[]int
+		nilRespondentResponseID *[]int
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	pageZero := 0
+	largePageNum := 100000000
+	pageOne := 1
+	constTrue := true
+	constFalse := false
+	questionnaireIDs := []int{questionnaireDetail.QuestionnaireId, questionnaireAnonymousDetail.QuestionnaireId}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax:                 &pageOne,
+				nilRespondentResponseID: &[]int{responseAnonymous.ResponseId},
+			},
+		},
+		{
+			description: "page less than one treated as first page",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					Page:             &pageZero,
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax: &pageOne,
+			},
+		},
+		{
+			description: "too large page num",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					Page:             &largePageNum,
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "draft only",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					IsDraft:          &constTrue,
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax:                 &pageOne,
+				responseIDList:          &[]int{responseDraft.ResponseId},
+				nilRespondentResponseID: &[]int{},
+			},
+		},
+		{
+			description: "non draft only",
+			args: args{
+				userID: userOne,
+				params: openapi.GetMyResponsesParams{
+					IsDraft:          &constFalse,
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax:                 &pageOne,
+				responseIDList:          &[]int{response0.ResponseId, response1.ResponseId, responseAnonymous.ResponseId},
+				nilRespondentResponseID: &[]int{responseAnonymous.ResponseId},
+			},
+		},
+		{
+			description: "special user",
+			args: args{
+				userID: "myResponsesSpecialUser",
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax:                 &pageOne,
+				responseIDList:          &[]int{response4.ResponseId},
+				nilRespondentResponseID: &[]int{},
+			},
+		},
+		{
+			description: "user with no record",
+			args: args{
+				userID: "myResponsesNoRecord",
+				params: openapi.GetMyResponsesParams{
+					QuestionnaireIDs: &questionnaireIDs,
+				},
+			},
+			expect: expect{
+				pageMax:                 &pageZero,
+				responseIDList:          &[]int{},
+				nilRespondentResponseID: &[]int{},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		params := url.Values{}
+		if testCase.args.params.Page != nil {
+			params.Add("page", fmt.Sprint(*testCase.args.params.Page))
+		}
+		if testCase.args.params.IsDraft != nil {
+			params.Add("isDraft", fmt.Sprint(*testCase.args.params.IsDraft))
+		}
+		e = echo.New()
+		req = httptest.NewRequest(http.MethodGet, "/responses/myResponses"+params.Encode(), nil)
+		rec = httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx = e.NewContext(req, rec)
+
+		responseLists, err := r.GetMyResponses(ctx, testCase.args.params, testCase.args.userID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		if testCase.expect.pageMax != nil {
+			assertion.Equal(*testCase.expect.pageMax, responseLists.PageMax, testCase.description, "pageMax")
+		}
+
+		if testCase.expect.responseIDList != nil {
+			responseIDList := []int{}
+			for _, responseList := range responseLists.ResponseGroups {
+				for _, response := range responseList.Responses {
+					responseIDList = append(responseIDList, response.ResponseId)
+				}
+			}
+			sort.Slice(*testCase.expect.responseIDList, func(i, j int) bool {
+				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
+			})
+			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
+			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
+		}
+
+		if testCase.expect.nilRespondentResponseID != nil {
+			nilRespondentResponseID := []int{}
+			for _, responseList := range responseLists.ResponseGroups {
+				for _, response := range responseList.Responses {
+					if response.Respondent == nil {
+						nilRespondentResponseID = append(nilRespondentResponseID, response.ResponseId)
+					}
+				}
+			}
+			sort.Slice(*testCase.expect.nilRespondentResponseID, func(i, j int) bool {
+				return (*testCase.expect.nilRespondentResponseID)[i] < (*testCase.expect.nilRespondentResponseID)[j]
+			})
+			sort.Slice(nilRespondentResponseID, func(i, j int) bool { return nilRespondentResponseID[i] < nilRespondentResponseID[j] })
+			assertion.Equal(*testCase.expect.nilRespondentResponseID, nilRespondentResponseID, testCase.description, "nilRespondentResponseID")
+		}
+
+		for _, responseList := range responseLists.ResponseGroups {
+			for _, response := range responseList.Responses {
+				if response.Respondent == nil {
+					assertion.True(response.IsAnonymous, testCase.description, "response with nil respondent should be anonymous")
+					continue
+				}
+				assertion.Equal(testCase.args.userID, *response.Respondent, testCase.description, "response respondent should match userID")
+			}
+		}
+	}
+}
+
+func TestGetResponse(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
+
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+
+	newResponse := sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response0, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous.IsAnonymous = true
+	e = echo.New()
+	body, err = json.Marshal(questionnaireAnonymous)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireAnonymousDetail, err := q.PostQuestionnaire(ctx, questionnaireAnonymous)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(questionnaireAnonymousDetail.QuestionnaireId)
+
+	newResponse = sampleResponse
+	e = echo.New()
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireAnonymousDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	response1, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Unlock()
+
+	type args struct {
+		isAnonymousQuestionnaire bool
+		invalidResponseID        bool
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+		},
+		{
+			description: "invalid response id",
+			args: args{
+				invalidResponseID: true,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "anonymous questionnaire",
+			args: args{
+				isAnonymousQuestionnaire: true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		var responseID int
+		if !testCase.args.invalidResponseID {
+			if !testCase.args.isAnonymousQuestionnaire {
+				responseID = response0.ResponseId
+			} else {
+				responseID = response1.ResponseId
+			}
+		} else {
+			responseID = 10000
+			valid := true
+			for valid {
+				c := context.Background()
+				_, err := IRespondent.GetRespondent(c, responseID)
+				if err == model.ErrRecordNotFound {
+					valid = false
+				} else if err != nil {
+					assertion.Fail("unexpected error during getting respondent")
+				} else {
+					responseID *= 10
+				}
+			}
+		}
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/responses/%d", responseID), nil)
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		response, err := r.GetResponse(ctx, responseID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		if !testCase.args.isAnonymousQuestionnaire {
+			assertion.Equal(response0.Body, response.Body, testCase.description, "response body")
+			if response.Respondent != nil {
+				assertion.Equal(response0.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			} else {
+				assertion.Equal(response0.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			}
+			assertion.Equal(response0.IsDraft, response.IsDraft, testCase.description, "response isDraft")
+			assertion.WithinDuration(response0.ModifiedAt.UTC().Truncate(time.Second), response.ModifiedAt.UTC(), time.Second, testCase.description, "response modifiedAt")
+			assertion.Equal(response0.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			if response.Respondent != nil {
+				assertion.Equal(*response0.Respondent, *response.Respondent, testCase.description, "response respondent")
+			} else {
+				assertion.Equal(response0.Respondent, response.Respondent, testCase.description, "response respondent")
+			}
+			assertion.Equal(response0.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(response0.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.WithinDuration(response0.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
+		} else {
+			assertion.Equal(response1.Body, response.Body, testCase.description, "response body")
+			if response.Respondent != nil {
+				assertion.Equal(response1.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			} else {
+				assertion.Equal(response1.IsAnonymous, response.IsAnonymous, testCase.description, "response isAnonymous")
+			}
+			assertion.Equal(response1.IsDraft, response.IsDraft, testCase.description, "response isDraft")
+			assertion.WithinDuration(response1.ModifiedAt.UTC().Truncate(time.Second), response.ModifiedAt.UTC(), time.Second, testCase.description, "response modifiedAt")
+			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.Nil(response.Respondent, testCase.description, "anonymous questionnaire respondent")
+			assertion.Equal(response1.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
+			assertion.WithinDuration(response1.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
+		}
+	}
+}
+
+func TestDeleteResponse(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		invalidResponseID bool
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				invalidResponseID: false,
+			},
+		},
+		{
+			description: "invalid",
+			args: args{
+				invalidResponseID: true,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		questionnaire := sampleQuestionnaire
+		e := echo.New()
+		body, err := json.Marshal(questionnaire)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+		require.NoError(t, err)
+		var responseID int
+		if !testCase.args.invalidResponseID {
+			AddQuestionID2SampleResponseMutex.Lock()
+
+			AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+			newResponse := sampleResponse
+			e := echo.New()
+			body, err := json.Marshal(questionnaire)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+			rec := httptest.NewRecorder()
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			ctx := e.NewContext(req, rec)
+			response, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "userOne")
+			require.NoError(t, err)
+
+			AddQuestionID2SampleResponseMutex.Unlock()
+
+			responseID = response.ResponseId
+		} else {
+			responseID = 10000
+			valid := true
+			for valid {
+				c := context.Background()
+				_, err := IRespondent.GetRespondent(c, responseID)
+				if err == model.ErrRecordNotFound {
+					valid = false
+				} else if err != nil {
+					assertion.Fail("unexpected error during getting respondent")
+				} else {
+					responseID *= 10
+				}
+			}
+		}
+
+		e = echo.New()
+		req = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/responses/%d", responseID), nil)
+		rec = httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx = e.NewContext(req, rec)
+		err = r.DeleteResponse(ctx, responseID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+
+		c := context.Background()
+		_, err = IRespondent.GetRespondent(c, responseID)
+
+		if err == nil {
+			assertion.Fail("response not deleted")
+		} else if err != model.ErrRecordNotFound {
+			assertion.Fail("unexpected error during getting respondent")
+		}
+	}
+}
+
+func TestEditResponse(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
+
+	questionnaire := sampleQuestionnaire
+	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	questionnaire = sampleQuestionnaire
+	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
+	questionnaire.IsAnonymous = true
+	e = echo.New()
+	body, err = json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireDetailAnonymous, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	questionnaire = sampleQuestionnaire
+	e = echo.New()
+	body, err = json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireDetailNoDue, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	type args struct {
+		invalidResponseID   bool
+		questionnaireDetail openapi.QuestionnaireDetail
+		isAnonymous         bool
+		params              openapi.PostQuestionnaireResponseJSONRequestBody
+		userID              string
+		isTimeAfterDue      bool
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	invalidResponseBodyText := openapi.NewResponseBody{}
+	invalidResponseBodyText.QuestionId = *questionnaireDetail.Questions[0].QuestionId
+	err = invalidResponseBodyText.FromResponseBodyText(openapi.ResponseBodyText{
+		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		QuestionType: "Text",
+	})
+	require.NoError(t, err)
+	invalidResponseBodyTextLong := openapi.NewResponseBody{}
+	invalidResponseBodyTextLong.QuestionId = *questionnaireDetail.Questions[1].QuestionId
+	err = invalidResponseBodyTextLong.FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+		Answer:       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		QuestionType: "TextLong",
+	})
+	require.NoError(t, err)
+	invalidResponseBodyNumber := openapi.NewResponseBody{}
+	invalidResponseBodyNumber.QuestionId = *questionnaireDetail.Questions[2].QuestionId
+	err = invalidResponseBodyNumber.FromResponseBodyNumber(openapi.ResponseBodyNumber{
+		Answer:       101.5,
+		QuestionType: "Number",
+	})
+	require.NoError(t, err)
+	invalidResponseBodySingleChoice := openapi.NewResponseBody{}
+	invalidResponseBodySingleChoice.QuestionId = *questionnaireDetail.Questions[3].QuestionId
+	err = invalidResponseBodySingleChoice.FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+		Answer:       "選択肢が存在しない",
+		QuestionType: "SingleChoice",
+	})
+	require.NoError(t, err)
+	invalidResponseBodyMultipleChoice := openapi.NewResponseBody{}
+	invalidResponseBodyMultipleChoice.QuestionId = *questionnaireDetail.Questions[4].QuestionId
+	err = invalidResponseBodyMultipleChoice.FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+		Answer:       []string{"選択肢が存在しない"},
+		QuestionType: "MultipleChoice",
+	})
+	require.NoError(t, err)
+	invalidResponseBodyScale := openapi.NewResponseBody{}
+	invalidResponseBodyScale.QuestionId = *questionnaireDetail.Questions[5].QuestionId
+	err = invalidResponseBodyScale.FromResponseBodyScale(openapi.ResponseBodyScale{
+		Answer:       0,
+		QuestionType: "Scale",
+	})
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
+
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params:              sampleResponse,
+				userID:              userOne,
+			},
+		},
+		{
+			description: "invalid edit to draft",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: true,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response id",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				invalidResponseID:   true,
+				params:              sampleResponse,
+				userID:              userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body text",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						invalidResponseBodyText,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body text long",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						invalidResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body number",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						sampleResponseBodyTextLong,
+						invalidResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body single choice",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						invalidResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body multiple choice",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						invalidResponseBodyMultipleChoice,
+						sampleResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "invalid response body scale",
+			args: args{
+				questionnaireDetail: questionnaireDetail,
+				params: openapi.PostQuestionnaireResponseJSONRequestBody{
+					Body: []openapi.NewResponseBody{
+						sampleResponseBodyText,
+						sampleResponseBodyTextLong,
+						sampleResponseBodyNumber,
+						sampleResponseBodySingleChoice,
+						sampleResponseBodyMultipleChoice,
+						invalidResponseBodyScale,
+					},
+					IsDraft: false,
+				},
+				userID: userOne,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+	}
+	tmpTestCase := test{
+		description: "question type not match",
+		args: args{
+			questionnaireDetail: questionnaireDetail,
+			params: openapi.PostQuestionnaireResponseJSONRequestBody{
+				Body: []openapi.NewResponseBody{
+					sampleResponseBodyText,
+					sampleResponseBodyScale,
+					sampleResponseBodyNumber,
+					sampleResponseBodySingleChoice,
+					sampleResponseBodyMultipleChoice,
+					sampleResponseBodyTextLong,
+				},
+				IsDraft: false,
+			},
+			userID: userOne,
+		},
+		expect: expect{
+			isErr: true,
+		},
+	}
+	tmpTestCase.args.params.Body[1].QuestionId = sampleResponseBodyTextLong.QuestionId
+	tmpTestCase.args.params.Body[5].QuestionId = sampleResponseBodyScale.QuestionId
+	testCases = append(testCases, tmpTestCase)
+
+	AddQuestionID2SampleResponse(questionnaireDetailAnonymous.QuestionnaireId)
+	testCases = append(testCases, test{
+		description: "valid anonymous",
+		args: args{
+			questionnaireDetail: questionnaireDetailAnonymous,
+			isAnonymous:         true,
+			params:              sampleResponse,
+			userID:              userOne,
+		},
+	})
+
+	AddQuestionID2SampleResponse(questionnaireDetailNoDue.QuestionnaireId)
+	testCases = append(testCases, test{
+		description: "questionnaire no due",
+		args: args{
+			questionnaireDetail: questionnaireDetailNoDue,
+			params:              sampleResponse,
+			userID:              userOne,
+		},
+	})
+
+	testCases = append(testCases, test{
+		description: "is time after due (attention: need to be the last testCase)",
+		args: args{
+			questionnaireDetail: questionnaireDetail,
+			params:              sampleResponse,
+			userID:              userOne,
+			isTimeAfterDue:      true,
+		},
+		expect: expect{
+			isErr: true,
+		},
+	})
+
+	AddQuestionID2SampleResponseMutex.Unlock()
+
+	for _, testCase := range testCases {
+		AddQuestionID2SampleResponseMutex.Lock()
+
+		AddQuestionID2SampleResponse(testCase.args.questionnaireDetail.QuestionnaireId)
+		e = echo.New()
+		body, err = json.Marshal(sampleResponse)
+		require.NoError(t, err)
+		req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/responses", testCase.args.questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+		rec = httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx = e.NewContext(req, rec)
+		response, err := q.PostQuestionnaireResponse(ctx, testCase.args.questionnaireDetail.QuestionnaireId, sampleResponse, testCase.args.userID)
+		require.NoError(t, err)
+
+		AddQuestionID2SampleResponseMutex.Unlock()
+
+		var responseID int
+		if !testCase.args.invalidResponseID {
+			responseID = response.ResponseId
+		} else {
+			responseID = 10000
+			valid := true
+			for valid {
+				c := context.Background()
+				_, err := IRespondent.GetRespondent(c, responseID)
+				if err == model.ErrRecordNotFound {
+					valid = false
+				} else if err != nil {
+					assertion.Fail("unexpected error during getting respondent")
+				} else {
+					responseID *= 10
+				}
+			}
+		}
+
+		if testCase.args.isTimeAfterDue {
+			c := context.Background()
+			responseDueDateTime := null.Time{}
+			responseDueDateTime.Valid = true
+			responseDueDateTime.Time = time.Now().Add(-24 * time.Hour)
+			err = IQuestionnaire.UpdateQuestionnaire(c, testCase.args.questionnaireDetail.Title, testCase.args.questionnaireDetail.Description, responseDueDateTime, convertResponseViewableBy(testCase.args.questionnaireDetail.ResponseViewableBy), testCase.args.questionnaireDetail.QuestionnaireId, testCase.args.questionnaireDetail.IsPublished, testCase.args.questionnaireDetail.IsAnonymous, testCase.args.questionnaireDetail.IsDuplicateAnswerAllowed)
+			require.NoError(t, err)
+		}
+
+		var responseEditPost openapi.EditResponseJSONRequestBody
+		responseEditPost.Body = testCase.args.params.Body
+		responseEditPost.IsDraft = testCase.args.params.IsDraft
+		responseEditPost.ResponseId = &responseID
+
+		e = echo.New()
+		body, err = json.Marshal(responseEditPost)
+		require.NoError(t, err)
+		req = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/responses/%d", responseID), bytes.NewReader(body))
+		rec = httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx = e.NewContext(req, rec)
+		err = r.EditResponse(ctx, responseID, responseEditPost)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/responses/%d", responseID), nil)
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		responseEdited, err := r.GetResponse(ctx, responseID)
+		require.NoError(t, err)
+
+		assertion.Equal(response.QuestionnaireId, responseEdited.QuestionnaireId, testCase.description, "questionnaireId")
+		if testCase.args.isAnonymous {
+			assertion.Nil(responseEdited.Respondent, testCase.description, "anonymous response with respondent")
+		} else {
+			assertion.Equal(response.Respondent, responseEdited.Respondent, testCase.description, "respondent")
+		}
+		assertion.Equal(response.ResponseId, responseEdited.ResponseId, testCase.description, "responseId")
+		assertion.Equal(response.IsAnonymous, responseEdited.IsAnonymous, testCase.description, "isAnonymous")
+		assertion.WithinDuration(response.SubmittedAt.UTC().Truncate(time.Second), responseEdited.SubmittedAt.UTC(), time.Second, testCase.description, "submittedAt")
+		modifiedAtDiff := time.Since(responseEdited.ModifiedAt)
+		assertion.True(modifiedAtDiff > -time.Second && modifiedAtDiff < time.Minute, testCase.description, "modifiedAt", responseEdited.ModifiedAt)
+
+		actualResponseBody := make([]openapi.ResponseBody, len(testCase.args.params.Body))
+		for i, body := range responseEditPost.Body {
+			actualResponseBody[i].QuestionId = body.QuestionId
+			b, err := body.MarshalJSON()
+			require.NoError(t, err)
+			var responseParsed map[string]interface{}
+			err = json.Unmarshal([]byte(b), &responseParsed)
+			require.NoError(t, err)
+			questionType := responseParsed["question_type"].(string)
+			switch questionType {
+			case "Text":
+				err = actualResponseBody[i].FromResponseBodyText(openapi.ResponseBodyText{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			case "TextLong":
+				err = actualResponseBody[i].FromResponseBodyTextLong(openapi.ResponseBodyTextLong{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodyTextLongQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			case "Number":
+				err = actualResponseBody[i].FromResponseBodyNumber(openapi.ResponseBodyNumber{
+					Answer:       responseParsed["answer"].(float64),
+					QuestionType: openapi.ResponseBodyNumberQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			case "SingleChoice":
+				err = actualResponseBody[i].FromResponseBodySingleChoice(openapi.ResponseBodySingleChoice{
+					Answer:       responseParsed["answer"].(string),
+					QuestionType: openapi.ResponseBodySingleChoiceQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			case "MultipleChoice":
+				answers := make([]string, len(responseParsed["answer"].([]interface{})))
+				for j, answer := range responseParsed["answer"].([]interface{}) {
+					answers[j] = answer.(string)
+				}
+				err = actualResponseBody[i].FromResponseBodyMultipleChoice(openapi.ResponseBodyMultipleChoice{
+					Answer:       answers,
+					QuestionType: openapi.ResponseBodyMultipleChoiceQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			case "Scale":
+				err = actualResponseBody[i].FromResponseBodyScale(openapi.ResponseBodyScale{
+					Answer:       int(responseParsed["answer"].(float64)),
+					QuestionType: openapi.ResponseBodyScaleQuestionType(questionType),
+				})
+				require.NoError(t, err)
+			default:
+				assertion.Fail("unknown question type", "question type: %s", questionType)
+			}
+		}
+		assertion.Equal(actualResponseBody, responseEdited.Body, testCase.description, "response body")
+		assertion.Equal(responseEditPost.IsDraft, responseEdited.IsDraft, testCase.description, "response isDraft")
+
+	}
+}

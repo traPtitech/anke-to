@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Respondent RespondentRepositoryの実装
@@ -34,14 +35,14 @@ type Respondents struct {
 }
 
 // BeforeCreate insert時に自動でmodifiedAt更新
-func (r *Respondents) BeforeCreate(tx *gorm.DB) error {
+func (r *Respondents) BeforeCreate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (r *Respondents) BeforeUpdate(tx *gorm.DB) error {
+func (r *Respondents) BeforeUpdate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
@@ -72,7 +73,19 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		return 0, fmt.Errorf("failed to get tx: %w", err)
 	}
 
+	var questionnaire Questionnaires
 	var respondent Respondents
+
+	err = db.
+		Where("id = ?", questionnaireID).
+		First(&questionnaire).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, ErrRecordNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get questionnaire: %w", err)
+	}
+
 	if submittedAt.Valid {
 		respondent = Respondents{
 			QuestionnaireID: questionnaireID,
@@ -86,12 +99,37 @@ func (*Respondent) InsertRespondent(ctx context.Context, userID string, question
 		}
 	}
 
+	if !questionnaire.IsDuplicateAnswerAllowed {
+		// Lock the questionnaire row to serialize concurrent insert attempts.
+		// SELECT ... FOR UPDATE on respondents would not lock non-existent rows,
+		// allowing both transactions to pass the duplicate check simultaneously.
+		// By locking the parent questionnaire row (which always exists), we ensure
+		// only one transaction can proceed through the check+insert at a time.
+		err = db.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", questionnaireID).
+			First(&Questionnaires{}).Error
+		if err != nil {
+			return 0, fmt.Errorf("failed to lock questionnaire row: %w", err)
+		}
+		err = db.
+			Where("questionnaire_id = ? AND user_traqid = ?", questionnaireID, userID).
+			First(&Respondents{}).Error
+		if err == nil {
+			return 0, ErrDuplicatedAnswered
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, fmt.Errorf("failed to check duplicate answer: %w", err)
+		}
+	}
+
 	err = db.Create(&respondent).Error
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert a respondent record: %w", err)
 	}
 
 	return respondent.ResponseID, nil
+
 }
 
 // UpdateSubmittedAt 投稿日時更新
@@ -107,6 +145,24 @@ func (*Respondent) UpdateSubmittedAt(ctx context.Context, responseID int) error 
 		Update("submitted_at", time.Now()).Error
 	if err != nil {
 		return fmt.Errorf("failed to update response's submitted_at: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateModifiedAt 編集日時更新
+func (*Respondent) UpdateModifiedAt(ctx context.Context, responseID int) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.
+		Model(&Respondents{}).
+		Where("response_id = ?", responseID).
+		Update("modified_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to update response's modified_at: %w", err)
 	}
 
 	return nil
@@ -171,11 +227,7 @@ func (*Respondent) GetRespondentInfos(ctx context.Context, userID string, questi
 		Where("user_traqid = ? AND respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL", userID)
 
 	if len(questionnaireIDs) != 0 {
-		questionnaireID := questionnaireIDs[0]
-		query = query.Where("questionnaire_id = ?", questionnaireID)
-	} else if len(questionnaireIDs) > 1 {
-		// 空配列か1要素の取得にしか用いない
-		return nil, errors.New("illegal function usage")
+		query = query.Where("questionnaire_id IN (?)", questionnaireIDs)
 	}
 
 	err = query.
@@ -257,7 +309,7 @@ func (*Respondent) GetRespondentDetail(ctx context.Context, responseID int) (Res
 }
 
 // GetRespondentDetails アンケートの回答の詳細情報一覧の取得
-func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string) ([]RespondentDetail, error) {
+func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int, sort string, onlyMyResponse bool, userID string, isDraft *bool) ([]RespondentDetail, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tx: %w", err)
@@ -265,11 +317,20 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 
 	respondents := []Respondents{}
 
-	// Note: respondents.submitted_at IS NOT NULLで一時保存の回答を除外している
 	query := db.
 		Session(&gorm.Session{}).
-		Where("respondents.questionnaire_id = ? AND respondents.submitted_at IS NOT NULL", questionnaireID).
+		Where("respondents.questionnaire_id = ?", questionnaireID).
 		Select("ResponseID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+	if onlyMyResponse {
+		query = query.Where("user_traqid = ?", userID)
+	}
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("submitted_at IS NULL")
+		} else {
+			query = query.Where("submitted_at IS NOT NULL")
+		}
+	}
 
 	query, sortNum, err := setRespondentsOrder(query, sort)
 	if err != nil {
@@ -291,16 +352,28 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		responseIDs = append(responseIDs, respondent.ResponseID)
 	}
 
+	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response is anonymous by questionnaire id: %w", err)
+	}
+
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
 	for i, respondent := range respondents {
-		respondentDetails = append(respondentDetails, RespondentDetail{
+		r := RespondentDetail{
 			ResponseID:      respondent.ResponseID,
-			TraqID:          respondent.UserTraqid,
 			QuestionnaireID: questionnaireID,
 			SubmittedAt:     respondent.SubmittedAt,
 			ModifiedAt:      respondent.ModifiedAt,
-		})
+		}
+
+		if !isAnonymous {
+			r.TraqID = respondent.UserTraqid
+		} else {
+			r.TraqID = ""
+		}
+
+		respondentDetails = append(respondentDetails, r)
 
 		respondentDetailMap[respondent.ResponseID] = &respondentDetails[i]
 	}
@@ -362,6 +435,208 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	return respondentDetails, nil
 }
 
+type myResponseGroupRow struct {
+	QuestionnaireID int       `gorm:"column:questionnaire_id"`
+	Title           string    `gorm:"column:title"`
+	CreatedAt       time.Time `gorm:"column:created_at"`
+	ModifiedAt      time.Time `gorm:"column:modified_at"`
+	ResTimeLimit    null.Time `gorm:"column:res_time_limit"`
+	IsAnonymous     bool      `gorm:"column:is_anonymous"`
+	IsTargetingMe   bool      `gorm:"column:is_targeting_me"`
+	FirstResponseID int       `gorm:"column:first_response_id"`
+}
+
+func buildMyResponseBaseQuery(db *gorm.DB, userID string, questionnaireIDs []int, isDraft *bool) *gorm.DB {
+	query := db.
+		Table("respondents").
+		Joins("INNER JOIN questionnaires ON respondents.questionnaire_id = questionnaires.id").
+		Where("respondents.deleted_at IS NULL AND questionnaires.deleted_at IS NULL AND respondents.user_traqid = ?", userID)
+
+	if questionnaireIDs != nil {
+		query = query.Where("respondents.questionnaire_id IN (?)", questionnaireIDs)
+	}
+
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("respondents.submitted_at IS NULL")
+		} else {
+			query = query.Where("respondents.submitted_at IS NOT NULL")
+		}
+	}
+
+	return query
+}
+
+// GetMyResponseGroups 自分の回答をアンケートごとにまとめて取得
+func (*Respondent) GetMyResponseGroups(ctx context.Context, userID string, questionnaireIDs []int, isDraft *bool, pageNum int) ([]MyResponseGroup, int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	baseQuery := buildMyResponseBaseQuery(db, userID, questionnaireIDs, isDraft)
+
+	var count int64
+	err = baseQuery.
+		Session(&gorm.Session{}).
+		Distinct("respondents.questionnaire_id").
+		Count(&count).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count my response questionnaires: %w", err)
+	}
+
+	if count == 0 {
+		return []MyResponseGroup{}, 0, nil
+	}
+
+	pageMax := (int(count) + 19) / 20
+	if pageNum > pageMax {
+		return nil, 0, ErrTooLargePageNum
+	}
+
+	groupRows := []myResponseGroupRow{}
+	groupQuery := buildMyResponseBaseQuery(db, userID, questionnaireIDs, isDraft).
+		Select(
+			"respondents.questionnaire_id, questionnaires.title, questionnaires.created_at, questionnaires.modified_at, questionnaires.res_time_limit, questionnaires.is_anonymous, "+
+				"EXISTS(SELECT 1 FROM targets WHERE targets.questionnaire_id = questionnaires.id AND targets.user_traqid = ?) AS is_targeting_me, "+
+				"MIN(respondents.response_id) AS first_response_id",
+			userID,
+		).
+		Group("respondents.questionnaire_id, questionnaires.id, questionnaires.title, questionnaires.created_at, questionnaires.modified_at, questionnaires.res_time_limit, questionnaires.is_anonymous").
+		Order("first_response_id")
+
+	err = groupQuery.
+		Limit(20).
+		Offset((pageNum - 1) * 20).
+		Find(&groupRows).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get my response groups: %w", err)
+	}
+
+	if len(groupRows) == 0 {
+		return []MyResponseGroup{}, pageMax, nil
+	}
+
+	groups := make([]MyResponseGroup, 0, len(groupRows))
+	groupIndexByQuestionnaireID := make(map[int]int, len(groupRows))
+	pageQuestionnaireIDs := make([]int, 0, len(groupRows))
+	for i, row := range groupRows {
+		groups = append(groups, MyResponseGroup{
+			QuestionnaireInfo: MyResponseQuestionnaireInfo{
+				QuestionnaireID:     row.QuestionnaireID,
+				Title:               row.Title,
+				CreatedAt:           row.CreatedAt,
+				ModifiedAt:          row.ModifiedAt,
+				ResponseDueDateTime: row.ResTimeLimit,
+				IsAnonymous:         row.IsAnonymous,
+				IsTargetingMe:       row.IsTargetingMe,
+			},
+			Responses: []RespondentDetail{},
+		})
+		groupIndexByQuestionnaireID[row.QuestionnaireID] = i
+		pageQuestionnaireIDs = append(pageQuestionnaireIDs, row.QuestionnaireID)
+	}
+
+	respondents := []Respondents{}
+	respondentQuery := db.
+		Session(&gorm.Session{}).
+		Where("respondents.deleted_at IS NULL AND respondents.user_traqid = ? AND respondents.questionnaire_id IN (?)", userID, pageQuestionnaireIDs).
+		Select("ResponseID", "QuestionnaireID", "UserTraqid", "ModifiedAt", "SubmittedAt")
+	if isDraft != nil {
+		if *isDraft {
+			respondentQuery = respondentQuery.Where("submitted_at IS NULL")
+		} else {
+			respondentQuery = respondentQuery.Where("submitted_at IS NOT NULL")
+		}
+	}
+	respondentQuery = respondentQuery.Order("response_id")
+
+	err = respondentQuery.Find(&respondents).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get respondents for my response groups: %w", err)
+	}
+
+	if len(respondents) == 0 {
+		return groups, pageMax, nil
+	}
+
+	responseIDs := make([]int, 0, len(respondents))
+	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
+	responseIDsByQuestionnaireID := make(map[int][]int, len(groupRows))
+	for _, respondent := range respondents {
+		groupIdx := groupIndexByQuestionnaireID[respondent.QuestionnaireID]
+		groups[groupIdx].Responses = append(groups[groupIdx].Responses, RespondentDetail{
+			ResponseID:      respondent.ResponseID,
+			TraqID:          respondent.UserTraqid,
+			QuestionnaireID: respondent.QuestionnaireID,
+			ModifiedAt:      respondent.ModifiedAt,
+			SubmittedAt:     respondent.SubmittedAt,
+			Responses:       []ResponseBody{},
+		})
+		lastIdx := len(groups[groupIdx].Responses) - 1
+		respondentDetailMap[respondent.ResponseID] = &groups[groupIdx].Responses[lastIdx]
+		responseIDs = append(responseIDs, respondent.ResponseID)
+		responseIDsByQuestionnaireID[respondent.QuestionnaireID] = append(responseIDsByQuestionnaireID[respondent.QuestionnaireID], respondent.ResponseID)
+	}
+
+	questions := []Questions{}
+	err = db.
+		Preload("Responses", func(db *gorm.DB) *gorm.DB {
+			return db.
+				Select("ResponseID", "QuestionID", "Body").
+				Where("response_id IN (?)", responseIDs)
+		}).
+		Where("questionnaire_id IN (?)", pageQuestionnaireIDs).
+		Order("questionnaire_id").
+		Order("question_num").
+		Select("ID", "QuestionnaireID", "QuestionNum", "Type").
+		Find(&questions).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get questions for my response groups: %w", err)
+	}
+
+	for _, question := range questions {
+		responseBodyMap := make(map[int][]string)
+		for _, response := range question.Responses {
+			if response.Body.Valid {
+				responseBodyMap[response.ResponseID] = append(responseBodyMap[response.ResponseID], response.Body.String)
+			}
+		}
+
+		for _, responseID := range responseIDsByQuestionnaireID[question.QuestionnaireID] {
+			respondentDetail := respondentDetailMap[responseID]
+			if respondentDetail == nil {
+				continue
+			}
+
+			responseBodies := responseBodyMap[responseID]
+			responseBody := ResponseBody{
+				QuestionID:   question.ID,
+				QuestionType: question.Type,
+			}
+
+			switch question.Type {
+			case "MultipleChoice", "Checkbox", "Dropdown":
+				if responseBodies == nil {
+					responseBody.OptionResponse = []string{}
+				} else {
+					responseBody.OptionResponse = responseBodies
+				}
+			default:
+				if len(responseBodies) == 0 {
+					responseBody.Body = null.NewString("", false)
+				} else {
+					responseBody.Body = null.NewString(responseBodies[0], true)
+				}
+			}
+
+			respondentDetail.Responses = append(respondentDetail.Responses, responseBody)
+		}
+	}
+
+	return groups, pageMax, nil
+}
+
 // GetRespondentsUserIDs 回答者のユーザーID取得
 func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs []int) ([]Respondents, error) {
 	db, err := getTx(ctx)
@@ -380,6 +655,43 @@ func (*Respondent) GetRespondentsUserIDs(ctx context.Context, questionnaireIDs [
 	}
 
 	return respondents, nil
+}
+
+// GetMyResponses 自分のすべての回答を取得
+func (*Respondent) GetMyResponseIDs(ctx context.Context, sort string, userID string, questionnaireIDs []int, isDraft *bool) ([]int, error) {
+	db, err := getTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	responsesID := []int{}
+	query := db.Model(&Respondents{}).
+		Where("deleted_at IS NULL AND user_traqid = ?", userID).
+		Select("response_id")
+
+	if questionnaireIDs != nil {
+		query = query.Where("questionnaire_id IN (?)", questionnaireIDs)
+	}
+
+	if isDraft != nil {
+		if *isDraft {
+			query = query.Where("submitted_at IS NULL")
+		} else {
+			query = query.Where("submitted_at IS NOT NULL")
+		}
+	}
+
+	query, _, err = setRespondentsOrder(query, sort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set respondents order: %w", err)
+	}
+
+	err = query.Select("respondents.response_id").Find(&responsesID).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get responsesID: %w", err)
+	}
+
+	return responsesID, nil
 }
 
 // CheckRespondent 回答者かどうかの確認
@@ -413,6 +725,10 @@ func setRespondentsOrder(query *gorm.DB, sort string) (*gorm.DB, int, error) {
 		query = query.Order("submitted_at")
 	case "-submitted_at":
 		query = query.Order("submitted_at DESC")
+	case "modified_at":
+		query = query.Order("modified_at")
+	case "-modified_at":
+		query = query.Order("modified_at DESC")
 	case "":
 	default:
 		var err error

@@ -14,7 +14,7 @@ func NewScaleLabel() *ScaleLabel {
 	return new(ScaleLabel)
 }
 
-//ScaleLabels scale_labelsテーブルの構造体
+// ScaleLabels scale_labelsテーブルの構造体
 type ScaleLabels struct {
 	QuestionID      int    `json:"questionID"        gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	ScaleLabelRight string `json:"scale_label_right" gorm:"type:text;default:NULL;"`

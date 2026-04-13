@@ -11,6 +11,8 @@ var (
 	ErrInvalidRegex = errors.New("invalid regexp")
 	// ErrRecordNotFound record not found
 	ErrRecordNotFound = errors.New("record not found")
+	// ErrTargetNotFound target not found
+	ErrTargetNotFound = errors.New("target not found")
 	// ErrNoRecordUpdated no record updated
 	ErrNoRecordUpdated = errors.New("no record updated")
 	// ErrNoRecordDeleted no record deleted
@@ -29,4 +31,6 @@ var (
 	ErrInvalidTx = errors.New("invalid tx")
 	// ErrDeadlineExceeded deadline exceeded
 	ErrDeadlineExceeded = errors.New("deadline exceeded")
+	// ErrDuplicatedAnswered
+	ErrDuplicatedAnswered = errors.New("duplicated answered is not allowed")
 )

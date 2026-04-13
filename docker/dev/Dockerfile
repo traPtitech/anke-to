@@ -1,9 +1,9 @@
-FROM golang:1.22.2-alpine as build-step
+FROM golang:1.25.7-alpine as build-step
 RUN apk add --update --no-cache ca-certificates git
 
 WORKDIR /go/src/github.com/traPtitech/anke-to
 
-RUN go install github.com/cosmtrek/air@v1.27.3
+RUN go install github.com/cosmtrek/air@v1.64.5
 
 COPY go.mod go.sum ./
 RUN go mod download

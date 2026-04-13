@@ -1,0 +1,49 @@
+name: Deploy
+
+on: 
+  push:
+    branches: 
+      - main
+
+env:
+  IMAGE_NAME: anke-to
+  IMAGE_TAG: main
+
+jobs:
+  image:
+    name: Build Docker Image (master)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GitHub Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: traPtitech
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          file: ./docker/staging/Dockerfile
+          platforms: linux/amd64
+          tags: ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  deploy-staging:
+    name: Deploy staging
+    runs-on: ubuntu-24.04
+    needs: [image]
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          known_hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
+      - name: Deploy
+        run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "sudo sh /srv/anke-to/deploy.sh"
