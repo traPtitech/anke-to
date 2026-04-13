@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -158,6 +159,9 @@ func convertQuestions(questions []model.Questions) ([]openapi.Question, error) {
 			question.ScaleLabels, err = model.NewScaleLabel().GetScaleLabels(context.Background(), []int{question.ID})
 			if err != nil {
 				return nil, err
+			}
+			if len(question.ScaleLabels) == 0 {
+				return nil, fmt.Errorf("scale label not found for question %d", question.ID)
 			}
 			err = q.FromQuestionSettingsScale(
 				openapi.QuestionSettingsScale{
