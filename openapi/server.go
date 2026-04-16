@@ -29,6 +29,9 @@ type ServerInterface interface {
 	// (PATCH /questionnaires/{questionnaireID})
 	EditQuestionnaire(ctx echo.Context, questionnaireID QuestionnaireIDInPath) error
 
+	// (POST /questionnaires/{questionnaireID}/close)
+	CloseQuestionnaire(ctx echo.Context, questionnaireID QuestionnaireIDInPath) error
+
 	// (GET /questionnaires/{questionnaireID}/myRemindStatus)
 	GetQuestionnaireMyRemindStatus(ctx echo.Context, questionnaireID QuestionnaireIDInPath) error
 
@@ -209,6 +212,22 @@ func (w *ServerInterfaceWrapper) EditQuestionnaire(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EditQuestionnaire(ctx, questionnaireID)
+	return err
+}
+
+// CloseQuestionnaire converts echo context to params.
+func (w *ServerInterfaceWrapper) CloseQuestionnaire(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "questionnaireID" -------------
+	var questionnaireID QuestionnaireIDInPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "questionnaireID", ctx.Param("questionnaireID"), &questionnaireID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter questionnaireID: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CloseQuestionnaire(ctx, questionnaireID)
 	return err
 }
 
@@ -457,6 +476,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/questionnaires/:questionnaireID", wrapper.DeleteQuestionnaire)
 	router.GET(baseURL+"/questionnaires/:questionnaireID", wrapper.GetQuestionnaire)
 	router.PATCH(baseURL+"/questionnaires/:questionnaireID", wrapper.EditQuestionnaire)
+	router.POST(baseURL+"/questionnaires/:questionnaireID/close", wrapper.CloseQuestionnaire)
 	router.GET(baseURL+"/questionnaires/:questionnaireID/myRemindStatus", wrapper.GetQuestionnaireMyRemindStatus)
 	router.PATCH(baseURL+"/questionnaires/:questionnaireID/myRemindStatus", wrapper.EditQuestionnaireMyRemindStatus)
 	router.GET(baseURL+"/questionnaires/:questionnaireID/responses", wrapper.GetQuestionnaireResponses)

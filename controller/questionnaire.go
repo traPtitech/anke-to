@@ -1065,6 +1065,30 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 	return nil
 }
 
+func (q *Questionnaire) CloseQuestionnaire(c echo.Context, questionnaireID int) error {
+	now := null.TimeFrom(time.Now())
+	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.UpdateQuestionnaireLimit(ctx, questionnaireID, now)
+		if err != nil {
+			if errors.Is(err, model.ErrNoRecordUpdated) {
+				return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+			}
+			c.Logger().Errorf("failed to update questionnaire limit: %+v", err)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		var httpError *echo.HTTPError
+		if errors.As(err, &httpError) {
+			return httpError
+		}
+		c.Logger().Errorf("failed to close questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to close questionnaire")
+	}
+	return nil
+}
+
 func (q *Questionnaire) GetQuestionnaireMyRemindStatus(c echo.Context, questionnaireID int, userID string) (bool, error) {
 	_, _, _, _, _, _, _, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
