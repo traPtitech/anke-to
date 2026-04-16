@@ -785,7 +785,7 @@ type GetQuestionnairesParams struct {
 	// OnlyTargetingMe 自分がターゲットになっているもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyTargetingMe *OnlyTargetingMeInQuery `form:"onlyTargetingMe,omitempty" json:"onlyTargetingMe,omitempty"`
 
-	// OnlyAdministratedByMe 自分が管理者になっていないもののみ取得 (true), 管理者になっているものも含めてすべて取得 (false)。デフォルトはfalse。
+	// OnlyAdministratedByMe 自分が管理者になっているもののみ取得 (true), 管理者になっていないものも含めてすべて取得 (false)。デフォルトはfalse。
 	OnlyAdministratedByMe *OnlyAdministratedByMeInQuery `form:"onlyAdministratedByMe,omitempty" json:"onlyAdministratedByMe,omitempty"`
 
 	// NotOverDue 回答期限が過ぎていないもののみ取得 (true), 回答期限が過ぎているものも含めてすべて取得 (false)。デフォルトはfalse。
