@@ -138,6 +138,7 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 		"is_published":                isPublished,
 		"is_anonymous":                isAnonymous,
 		"is_duplicate_answer_allowed": isDuplicateAnswerAllowed,
+		"modified_at":                 time.Now(),
 	}
 	if resTimeLimit.Valid {
 		questionnaire["res_time_limit"] = resTimeLimit
