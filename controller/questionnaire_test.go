@@ -1981,6 +1981,99 @@ func TestDeleteQuestionnaireWithResponses(t *testing.T) {
 	assertion.NoError(err)
 }
 
+func TestCloseQuestionnaire(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	type args struct {
+		invalidQuestionnaireID bool
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "valid",
+			args: args{
+				invalidQuestionnaireID: false,
+			},
+		},
+		{
+			description: "invalid questionnaire ID",
+			args: args{
+				invalidQuestionnaireID: true,
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		var questionnaireID int
+		if !testCase.args.invalidQuestionnaireID {
+			questionnaire := sampleQuestionnaire
+			e := echo.New()
+			body, err := json.Marshal(questionnaire)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+			rec := httptest.NewRecorder()
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			ctx := e.NewContext(req, rec)
+			questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+			require.NoError(t, err)
+			questionnaireID = questionnaireDetail.QuestionnaireId
+		} else {
+			questionnaireID = 10000
+			valid := true
+			for valid {
+				c := context.Background()
+				_, _, _, _, _, _, _, _, err := IQuestionnaire.GetQuestionnaireInfo(c, questionnaireID)
+				if errors.Is(err, model.ErrRecordNotFound) {
+					valid = false
+				} else if err != nil {
+					assertion.Fail("unexpected error during getting questionnaire info")
+				} else {
+					questionnaireID *= 10
+				}
+			}
+		}
+
+		before := time.Now()
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaires/%d/close", questionnaireID), nil)
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(req, rec)
+		err := q.CloseQuestionnaire(ctx, questionnaireID)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		c := context.Background()
+		limit, err := IQuestionnaire.GetQuestionnaireLimit(c, questionnaireID)
+		require.NoError(t, err, testCase.description, "get limit after close")
+		assertion.True(limit.Valid, testCase.description, "limit should be set")
+		assertion.WithinDuration(before, limit.Time, 3*time.Second, testCase.description, "limit should be close to now")
+	}
+}
+
 func TestDeleteQuestionnaireWithEmptyDraft(t *testing.T) {
 	t.Parallel()
 
