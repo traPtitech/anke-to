@@ -990,6 +990,13 @@ func updateQuestionnaireLimitTest(t *testing.T) {
 
 	assertion := assert.New(t)
 
+	var createdIDs []int
+	t.Cleanup(func() {
+		for _, id := range createdIDs {
+			db.Session(&gorm.Session{NewDB: true}).Delete(&Questionnaires{}, id)
+		}
+	})
+
 	type args struct {
 		resTimeLimit null.Time
 	}
@@ -1037,6 +1044,7 @@ func updateQuestionnaireLimitTest(t *testing.T) {
 			t.Errorf("failed to create questionnaire(%s): %v", testCase.description, err)
 			continue
 		}
+		createdIDs = append(createdIDs, questionnaire.ID)
 
 		err = questionnaireImpl.UpdateQuestionnaireLimit(ctx, questionnaire.ID, testCase.args.resTimeLimit)
 
