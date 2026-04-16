@@ -76,24 +76,8 @@ func NewQuestionnaire(
 }
 
 const (
-	MaxTitleLength               = 50
-	responseDueDateTimeTolerance = 5 * time.Second
+	MaxTitleLength = 50
 )
-
-func normalizeResponseDueDateTime(responseDueDateTime *null.Time, now time.Time) error {
-	if !responseDueDateTime.Valid {
-		return nil
-	}
-
-	if responseDueDateTime.ValueOrZero().Before(now) {
-		if now.Sub(responseDueDateTime.ValueOrZero()) > responseDueDateTimeTolerance {
-			return errors.New("invalid resTimeLimit")
-		}
-		responseDueDateTime.Time = now
-	}
-
-	return nil
-}
 
 func maxLengthPattern(maxLength *int) string {
 	if maxLength == nil {
@@ -231,7 +215,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+	if responseDueDateTime.Valid && responseDueDateTime.Time.Before(time.Now()) {
 		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
@@ -537,7 +521,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+	if responseDueDateTime.Valid && responseDueDateTime.Time.Before(time.Now()) {
 		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
@@ -1074,6 +1058,11 @@ func (q *Questionnaire) CloseQuestionnaire(c echo.Context, questionnaireID int) 
 				return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
 			}
 			c.Logger().Errorf("failed to update questionnaire limit: %+v", err)
+			return err
+		}
+		err = q.DeleteReminder(questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
 		return nil
