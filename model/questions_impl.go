@@ -17,7 +17,7 @@ func NewQuestion() *Question {
 	return new(Question)
 }
 
-//Questions questionテーブルの構造体
+// Questions questionテーブルの構造体
 type Questions struct {
 	ID              int            `json:"id"                  gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
 	QuestionnaireID int            `json:"questionnaireID"     gorm:"type:int(11);not null"`
@@ -25,6 +25,7 @@ type Questions struct {
 	QuestionNum     int            `json:"question_num"        gorm:"type:int(11);not null"`
 	Type            string         `json:"type"                gorm:"type:char(20);size:20;not null"`
 	Body            string         `json:"body"                gorm:"type:text;default:NULL"`
+	Description     string         `json:"description"         gorm:"type:text;default:NULL"`
 	IsRequired      bool           `json:"is_required"         gorm:"type:tinyint(4);size:4;not null;default:0"`
 	DeletedAt       gorm.DeletedAt `json:"-"          gorm:"type:TIMESTAMP NULL;default:NULL"`
 	CreatedAt       time.Time      `json:"created_at"          gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
@@ -35,25 +36,24 @@ type Questions struct {
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
-func (questionnaire *Questions) BeforeCreate(tx *gorm.DB) error {
+func (questionnaire *Questions) BeforeCreate(_ *gorm.DB) error {
 	questionnaire.CreatedAt = time.Now()
 
 	return nil
 }
 
-//TableName テーブル名が単数形なのでその対応
 func (*Questions) TableName() string {
 	return "question"
 }
 
-//QuestionIDType 質問のIDと種類の構造体
+// QuestionIDType 質問のIDと種類の構造体
 type QuestionIDType struct {
 	ID   int
 	Type string
 }
 
-//InsertQuestion 質問の追加
-func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool) (int, error) {
+// InsertQuestion 質問の追加
+func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, title string, description string, isRequired bool) (int, error) {
 	db, err := getTx(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get transaction: %w", err)
@@ -64,7 +64,8 @@ func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNu
 		PageNum:         pageNum,
 		QuestionNum:     questionNum,
 		Type:            questionType,
-		Body:            body,
+		Body:            title,
+		Description:     description,
 		IsRequired:      isRequired,
 	}
 
@@ -77,34 +78,55 @@ func (*Question) InsertQuestion(ctx context.Context, questionnaireID int, pageNu
 	return question.ID, nil
 }
 
-//UpdateQuestion 質問の修正
-func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, body string, isRequired bool, questionID int) error {
+// UpdateQuestion 質問の修正
+func (*Question) UpdateQuestion(ctx context.Context, questionnaireID int, pageNum int, questionNum int, questionType string, title string, description string, isRequired bool, questionID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get transaction: %w", err)
 	}
 
 	question := map[string]interface{}{
-		"questionnaire_id": questionnaireID,
-		"page_num":         pageNum,
-		"question_num":     questionNum,
-		"type":             questionType,
-		"body":             body,
-		"is_required":      isRequired,
+		"page_num":     pageNum,
+		"question_num": questionNum,
+		"type":         questionType,
+		"body":         title,
+		"description":  description,
+		"is_required":  isRequired,
 	}
 
-	err = db.
+	var questionTypeNow string
+	result := db.Model(&Questions{}).
+		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
+		Select("type").
+		Scan(&questionTypeNow)
+	if result.Error != nil {
+		return fmt.Errorf("failed to get current question type: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("failed to get find a valid question")
+	}
+	if questionTypeNow != questionType {
+		return fmt.Errorf("question type cannot be changed: %s -> %s", questionTypeNow, questionType)
+	}
+
+	result = db.
 		Model(&Questions{}).
-		Where("id = ?", questionID).
-		Updates(question).Error
-	if err != nil {
-		return fmt.Errorf("failed to update a question record: %w", err)
+		Where("id = ? and questionnaire_id = ?", questionID, questionnaireID).
+		Updates(question)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update a question record: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return ErrNoRecordUpdated
+	}
+	if result.RowsAffected != 1 {
+		return fmt.Errorf("expected to update 1 question record, but updated %d question records", result.RowsAffected)
 	}
 
 	return nil
 }
 
-//DeleteQuestion 質問の削除
+// DeleteQuestion 質問の削除
 func (*Question) DeleteQuestion(ctx context.Context, questionID int) error {
 	db, err := getTx(ctx)
 	if err != nil {
@@ -125,7 +147,7 @@ func (*Question) DeleteQuestion(ctx context.Context, questionID int) error {
 	return nil
 }
 
-//GetQuestions 質問一覧の取得
+// GetQuestions 質問一覧の取得
 func (*Question) GetQuestions(ctx context.Context, questionnaireID int) ([]Questions, error) {
 	db, err := getTx(ctx)
 	if err != nil {

@@ -27,14 +27,14 @@ type Responses struct {
 }
 
 // BeforeCreate insert時に自動でmodifiedAt更新
-func (r *Responses) BeforeCreate(tx *gorm.DB) error {
+func (r *Responses) BeforeCreate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
 }
 
 // BeforeUpdate Update時に自動でmodified_atを現在時刻に
-func (r *Responses) BeforeUpdate(tx *gorm.DB) error {
+func (r *Responses) BeforeUpdate(_ *gorm.DB) error {
 	r.ModifiedAt = time.Now()
 
 	return nil
@@ -42,7 +42,7 @@ func (r *Responses) BeforeUpdate(tx *gorm.DB) error {
 
 // TableName テーブル名が単数形なのでその対応
 func (*Responses) TableName() string {
-	return "response"
+	return "responses"
 }
 
 // ResponseBody 質問に対する回答の構造体

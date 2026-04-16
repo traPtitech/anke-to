@@ -3,117 +3,167 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
-      - 'develop'
+      - "main"
+      - "develop"
   pull_request:
 
 env:
   TZ: Asia/Tokyo
 
 jobs:
+  generate:
+    name: Generate files
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: auto-generate-${{ github.head_ref || github.ref_name }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - run: go install tool
+      - run: go generate ./openapi
+      - run: go generate -run "wire" ./...
+      - name: Auto-commit generated files
+        if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
+          if ! git diff --quiet -- "${files[@]}"; then
+            git add "${files[@]}"
+            git commit -m "chore: regenerate generated files"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+      - name: Verify generated files are committed
+        if: github.event_name != 'pull_request' || github.actor == 'github-actions[bot]' || github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
+          if ! git diff --quiet -- "${files[@]}"; then
+            echo "Generated files are out of date. Run generation locally and commit the results." >&2
+            git diff -- "${files[@]}"
+            exit 1
+          fi
   mod:
     name: Mod
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: [generate]
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3.3.2
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
       - run: go mod download
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [mod]
-    env:
-      GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3.3.2
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - uses: actions/cache@v3.3.2
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
         with:
-          path: /tmp/go/cache
-          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-${{ github.ref }}-
-            ${{ runner.os }}-go-build-
+          go-version-file: "go.mod"
       - run: go build -o anke-to
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: anke-to
           path: anke-to
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [mod]
     services:
       mysql:
-        image: mariadb:10.3.9
+        image: mariadb:12.1.2
         ports:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: anke-to
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3.3.2
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - run: go install github.com/golang/mock/mockgen@v1.5.0
-      - run: go generate ./...
-      - run: go test ./model ./router -v -coverprofile=coverage.txt -race -vet=off
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - run: go install go.uber.org/mock/mockgen@v0.6.0
+      - run: go generate ./model ./traq
+      - run: go test ./model -v -coverprofile=coverage-model.txt -race -vet=off
         env:
+          ENV: test
+          PORT: :1323
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
+          TRAQ_BOT_TOKEN: ""
+          TRAQ_WEBHOOK_ID: ""
+          TRAQ_WEBHOOK_SECRET: ""
+      - run: go test ./controller -v -coverprofile=coverage-controller.txt -race -vet=off
+        env:
+          ENV: test
+          PORT: :1323
+          MARIADB_USERNAME: root
+          MARIADB_PASSWORD: password
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_DATABASE: anke-to
+          MARIADB_PORT: 3306
+          TRAQ_BOT_TOKEN: ""
+          TRAQ_WEBHOOK_ID: ""
+          TRAQ_WEBHOOK_SECRET: ""
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.txt
-          yml: ./codecov.yml
-      - uses: actions/upload-artifact@v3
+          files: ./coverage-model.txt ./coverage-controller.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: actions/upload-artifact@v4
         with:
-          name: coverage.txt
-          path: coverage.txt
+          name: coverage-model.txt
+          path: coverage-model.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-controller.txt
+          path: coverage-controller.txt
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: [mod]
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - run: go install go.uber.org/mock/mockgen@v0.6.0
+      - run: go generate ./model ./traq
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.3
+        uses: reviewdog/action-golangci-lint@v2
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: error
+          cache: false
   spectral:
     name: Spectral
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: [mod]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.7
+        uses: stoplightio/spectral-action@v0.8.13
         with:
           file_glob: docs/swagger/*.yaml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}

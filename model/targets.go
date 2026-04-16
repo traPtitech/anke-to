@@ -1,4 +1,4 @@
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
+//go:generate go tool mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
 
 package model
 
@@ -9,4 +9,7 @@ type ITarget interface {
 	InsertTargets(ctx context.Context, questionnaireID int, targets []string) error
 	DeleteTargets(ctx context.Context, questionnaireID int) error
 	GetTargets(ctx context.Context, questionnaireIDs []int) ([]Targets, error)
+	IsTargetingMe(ctx context.Context, quesionnairID int, userID string) (bool, error)
+	GetTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string) ([]Targets, error)
+	UpdateTargetsCancelStatus(ctx context.Context, questionnaireID int, targets []string, cancelStatus bool) error
 }

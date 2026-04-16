@@ -4,9 +4,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"io"
-
 	"fmt"
+	"io"
 	"net/http"
 	netUrl "net/url"
 	"os"
@@ -23,6 +22,10 @@ func NewWebhook() *Webhook {
 	return new(Webhook)
 }
 
+// MessageLimit traQのメッセージの最大文字数
+// ref: https://github.com/traPtitech/traQ/blob/d6d3981/router/v3/messages.go
+const MessageLimit = 10000
+
 // PostMessage Webhookでのメッセージの投稿
 func (*Webhook) PostMessage(message string) error {
 	url := "https://q.trap.jp/api/v3/webhooks/" + os.Getenv("TRAQ_WEBHOOK_ID")
@@ -34,7 +37,11 @@ func (*Webhook) PostMessage(message string) error {
 	}
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMETextPlainCharsetUTF8)
-	req.Header.Set("X-TRAQ-Signature", calcHMACSHA1(message))
+	messageHMAC, err := calcHMACSHA1(message)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("X-TRAQ-Signature", messageHMAC)
 
 	query := netUrl.Values{}
 	query.Add("embed", "1")
@@ -58,8 +65,11 @@ func (*Webhook) PostMessage(message string) error {
 	return nil
 }
 
-func calcHMACSHA1(message string) string {
+func calcHMACSHA1(message string) (string, error) {
 	mac := hmac.New(sha1.New, []byte(os.Getenv("TRAQ_WEBHOOK_SECRET")))
-	_, _ = mac.Write([]byte(message))
-	return hex.EncodeToString(mac.Sum(nil))
+	_, err := mac.Write([]byte(message))
+	if err != nil {
+		return "", fmt.Errorf("failed to write message to mac: %w", err)
+	}
+	return hex.EncodeToString(mac.Sum(nil)), nil
 }
