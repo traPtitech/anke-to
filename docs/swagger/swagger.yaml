@@ -1,8 +1,8 @@
 openapi: 3.0.4
 servers:
-  - url: "https://anke-to.trap.jp/api"
+  - url: "http://anke-to.trap.jp/api"
     description: production
-  - url: "https://anke-to-dev.trapti.tech/api"
+  - url: "http://anke-to-dev.trapti.tech/api"
     description: development
   - url: "http://anke-to-alpha.trap.show/api"
     description: alpha (deployed on noeshowcase; actual url is https)
