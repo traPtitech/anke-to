@@ -987,7 +987,6 @@ func updateQuestionnaireTest(t *testing.T) {
 
 func updateQuestionnaireLimitTest(t *testing.T) {
 	t.Helper()
-	t.Parallel()
 
 	assertion := assert.New(t)
 
@@ -1022,11 +1021,14 @@ func updateQuestionnaireLimitTest(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := context.Background()
 
+		// seed with a limit in the past so that updating to any new value is a real change
+		initialLimit := null.NewTime(time.Now().Add(-24*time.Hour), true)
 		questionnaire := Questionnaires{
-			Title:       "UpdateQuestionnaireLimitTest",
-			Description: "test",
-			ResSharedTo: "public",
-			IsPublished: true,
+			Title:        "UpdateQuestionnaireLimitTest",
+			Description:  "test",
+			ResTimeLimit: initialLimit,
+			ResSharedTo:  "public",
+			IsPublished:  true,
 		}
 		err := db.
 			Session(&gorm.Session{NewDB: true}).
