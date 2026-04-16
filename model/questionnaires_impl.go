@@ -168,6 +168,14 @@ func (*Questionnaire) UpdateQuestionnaireLimit(ctx context.Context, questionnair
 		return fmt.Errorf("failed to get tx: %w", err)
 	}
 
+	err = db.Select("id").First(&Questionnaires{}, questionnaireID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("failed to update questionnaire limit: %w", ErrNoRecordUpdated)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to find questionnaire: %w", err)
+	}
+
 	update := map[string]interface{}{
 		"modified_at": time.Now(),
 	}
@@ -177,15 +185,8 @@ func (*Questionnaire) UpdateQuestionnaireLimit(ctx context.Context, questionnair
 		update["res_time_limit"] = gorm.Expr("NULL")
 	}
 
-	result := db.
-		Model(&Questionnaires{}).
-		Where("id = ?", questionnaireID).
-		Updates(update)
-	if result.Error != nil {
-		return fmt.Errorf("failed to update questionnaire limit: %w", result.Error)
-	}
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("failed to update questionnaire limit: %w", ErrNoRecordUpdated)
+	if err := db.Model(&Questionnaires{}).Where("id = ?", questionnaireID).Updates(update).Error; err != nil {
+		return fmt.Errorf("failed to update questionnaire limit: %w", err)
 	}
 
 	return nil
