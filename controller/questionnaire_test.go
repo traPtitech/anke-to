@@ -652,9 +652,8 @@ func TestPostQuestionnaire(t *testing.T) {
 		params openapi.PostQuestionnaireJSONRequestBody
 	}
 	type expect struct {
-		isErr             bool
-		err               error
-		normalizedDueDate bool
+		isErr bool
+		err   error
 	}
 	type test struct {
 		description string
@@ -752,7 +751,7 @@ func TestPostQuestionnaire(t *testing.T) {
 			},
 		},
 		{
-			description: "valid response due date time within tolerance",
+			description: "invalid response due date time (slightly in the past)",
 			args: args{
 				params: openapi.PostQuestionnaireJSONRequestBody{
 					Admin:                    sampleAdmin,
@@ -775,7 +774,7 @@ func TestPostQuestionnaire(t *testing.T) {
 				},
 			},
 			expect: expect{
-				normalizedDueDate: true,
+				isErr: true,
 			},
 		},
 		{
@@ -1124,13 +1123,7 @@ func TestPostQuestionnaire(t *testing.T) {
 		}
 
 		if testCase.args.params.ResponseDueDateTime != nil {
-			if testCase.expect.normalizedDueDate {
-				if assertion.NotNil(questionnaireDetail.ResponseDueDateTime, testCase.description, "response due date time should not be nil") {
-					assertion.WithinDuration(time.Now().UTC(), questionnaireDetail.ResponseDueDateTime.UTC(), 3*time.Second, testCase.description, "response due date time should be normalized to server current time")
-				}
-			} else {
-				assertion.WithinDuration(testCase.args.params.ResponseDueDateTime.UTC().Truncate(time.Second), questionnaireDetail.ResponseDueDateTime.UTC(), time.Second, testCase.description, "response due date time not equal")
-			}
+			assertion.WithinDuration(testCase.args.params.ResponseDueDateTime.UTC().Truncate(time.Second), questionnaireDetail.ResponseDueDateTime.UTC(), time.Second, testCase.description, "response due date time not equal")
 		} else {
 			assertion.Nil(questionnaireDetail.ResponseDueDateTime, testCase.description, "response due date time not equal")
 		}
