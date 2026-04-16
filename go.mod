@@ -63,7 +63,7 @@ require (
 )
 
 require (
-	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
