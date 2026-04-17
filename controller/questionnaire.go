@@ -1060,11 +1060,6 @@ func (q *Questionnaire) CloseQuestionnaire(c echo.Context, questionnaireID int) 
 			c.Logger().Errorf("failed to update questionnaire limit: %+v", err)
 			return err
 		}
-		err = q.DeleteReminder(questionnaireID)
-		if err != nil {
-			c.Logger().Errorf("failed to delete reminder: %+v", err)
-			return err
-		}
 		return nil
 	})
 	if err != nil {
@@ -1074,6 +1069,9 @@ func (q *Questionnaire) CloseQuestionnaire(c echo.Context, questionnaireID int) 
 		}
 		c.Logger().Errorf("failed to close questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to close questionnaire")
+	}
+	if err := q.DeleteReminder(questionnaireID); err != nil {
+		c.Logger().Errorf("failed to delete reminder: %+v", err)
 	}
 	return nil
 }
