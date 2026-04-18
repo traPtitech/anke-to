@@ -19,11 +19,11 @@ func TestV3_1TitleColumnType(t *testing.T) {
 
 	// verify a 1024-char title can be inserted
 	q := Questionnaires{
-		Title:       strings.Repeat("a", 1024),
-		Description: "test",
+		Title:        strings.Repeat("a", 1024),
+		Description:  "test",
 		ResTimeLimit: null.Time{},
-		ResSharedTo: "public",
-		IsPublished: true,
+		ResSharedTo:  "public",
+		IsPublished:  true,
 	}
 	err = db.Create(&q).Error
 	assert.NoError(t, err)
