@@ -23,8 +23,8 @@ func NewQuestionnaire() *Questionnaire {
 // Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
 	ID                       int                   `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
-	Title                    string                `json:"title"           gorm:"type:char(50);size:50;not null"`
-	Description              string                `json:"description"     gorm:"type:text;not null"`
+	Title                    string                `json:"title"           gorm:"type:varchar(1024);size:1024;not null"`
+	Description              string                `json:"description"     gorm:"type:mediumtext;not null"`
 	ResTimeLimit             null.Time             `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	DeletedAt                gorm.DeletedAt        `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	ResSharedTo              string                `json:"res_shared_to"   gorm:"type:char(30);size:30;not null;default:administrators"`

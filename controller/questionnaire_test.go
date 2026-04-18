@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -825,7 +826,7 @@ func TestPostQuestionnaire(t *testing.T) {
 					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
-					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Title:               strings.Repeat("a", 1025),
 				},
 			},
 			expect: expect{
@@ -1461,7 +1462,7 @@ func TestEditQuestionnaire(t *testing.T) {
 					ResponseDueDateTime: nil,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
-					Title:               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Title:               strings.Repeat("a", 1025),
 				},
 				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
