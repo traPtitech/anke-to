@@ -77,7 +77,6 @@ func NewQuestionnaire(
 
 const (
 	MaxTitleLength               = 1024
-	MaxDescriptionLength         = 1024 * 1024
 	responseDueDateTimeTolerance = 5 * time.Second
 )
 
@@ -243,10 +242,6 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 	if len(params.Title) == 0 || len(params.Title) > MaxTitleLength {
 		c.Logger().Infof("invalid title: %+v", params.Title)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid title")
-	}
-	if len(params.Description) > MaxDescriptionLength {
-		c.Logger().Infof("invalid description: length %d", len(params.Description))
-		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid description")
 	}
 
 	var notificationMessages []string
@@ -550,10 +545,6 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 	if len(params.Title) == 0 || len(params.Title) > MaxTitleLength {
 		c.Logger().Infof("invalid title: %+v", params.Title)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid title")
-	}
-	if len(params.Description) > MaxDescriptionLength {
-		c.Logger().Infof("invalid description: length %d", len(params.Description))
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid description")
 	}
 
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
