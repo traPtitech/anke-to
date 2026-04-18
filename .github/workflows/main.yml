@@ -37,7 +37,7 @@ jobs:
           files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
           if ! git diff --quiet -- "${files[@]}"; then
             git add "${files[@]}"
-            git commit -m "chore: regenerate generated files"
+            git commit -m "chore: regenerate generated files [skip ci]"
             git push origin HEAD:${{ github.head_ref }}
           fi
       - name: Verify generated files are committed

@@ -454,7 +454,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			append(allTargetUsers, targetGroupNames...),
 		)
 
-		if params.ResponseDueDateTime != nil {
+		if params.ResponseDueDateTime != nil && params.IsPublished {
 			dueDateTime := responseDueDateTime.Time
 			err = q.PushReminder(questionnaireID, &dueDateTime)
 			if err != nil {
@@ -906,7 +906,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 			c.Logger().Errorf("failed to delete reminder: %+v", err)
 			return err
 		}
-		if params.ResponseDueDateTime != nil {
+		if params.ResponseDueDateTime != nil && params.IsPublished {
 			dueDateTime := responseDueDateTime.Time
 			err = q.PushReminder(questionnaireID, &dueDateTime)
 			if err != nil {

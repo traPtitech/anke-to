@@ -652,14 +652,18 @@ func TestPostQuestionnaire(t *testing.T) {
 		params openapi.PostQuestionnaireJSONRequestBody
 	}
 	type expect struct {
-		isErr bool
-		err   error
+		isErr     bool
+		err       error
+		hasReminder *bool
 	}
 	type test struct {
 		description string
 		args
 		expect
 	}
+
+	hasReminderTrue := true
+	hasReminderFalse := false
 
 	responseDueDateTimeMinus := time.Now().Add(-24 * time.Hour)
 	responseDueDateTimeNearlyNowPast := time.Now().Add(-3 * time.Second)
@@ -721,6 +725,9 @@ func TestPostQuestionnaire(t *testing.T) {
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
+			},
+			expect: expect{
+				hasReminder: &hasReminderTrue,
 			},
 		},
 		{
@@ -1003,6 +1010,33 @@ func TestPostQuestionnaire(t *testing.T) {
 			},
 		},
 		{
+			description: "not published with response due date time",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              false,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &responseDueDateTimePlus,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+			expect: expect{
+				hasReminder: &hasReminderFalse,
+			},
+		},
+		{
 			description: "invalid question settings number",
 			args: args{
 				params: openapi.PostQuestionnaireJSONRequestBody{
@@ -1146,6 +1180,12 @@ func TestPostQuestionnaire(t *testing.T) {
 		assertion.Equal(testCase.args.params.Target.Groups, questionnaireDetail.Target.Groups, "target groups not equal")
 
 		assertion.Equal(testCase.args.params.Title, questionnaireDetail.Title, "title not equal")
+
+		if testCase.expect.hasReminder != nil {
+			remindStatus, err := re.CheckRemindStatus(questionnaireDetail.QuestionnaireId)
+			assertion.NoError(err, testCase.description, "no error checking remind status")
+			assertion.Equal(*testCase.expect.hasReminder, remindStatus, testCase.description, "reminder status")
+		}
 	}
 }
 
@@ -1253,14 +1293,18 @@ func TestEditQuestionnaire(t *testing.T) {
 		isNewQuestion             []bool
 	}
 	type expect struct {
-		isErr bool
-		err   error
+		isErr       bool
+		err         error
+		hasReminder *bool
 	}
 	type test struct {
 		description string
 		args
 		expect
 	}
+
+	hasReminderTrue := true
+	hasReminderFalse := false
 
 	responseDueDateTimeMinus := time.Now().Add(-24 * time.Hour)
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
@@ -1354,6 +1398,9 @@ func TestEditQuestionnaire(t *testing.T) {
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
 				},
 				isNewQuestion: []bool{false, false, false, false, false, false},
+			},
+			expect: expect{
+				hasReminder: &hasReminderTrue,
 			},
 		},
 		{
@@ -1641,6 +1688,34 @@ func TestEditQuestionnaire(t *testing.T) {
 			},
 		},
 		{
+			description: "not published with response due date time",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              false,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &responseDueDateTimePlus,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
+			},
+			expect: expect{
+				hasReminder: &hasReminderFalse,
+			},
+		},
+		{
 			description: "invalid question settings number",
 			args: args{
 				params: openapi.PostQuestionnaireJSONRequestBody{
@@ -1848,6 +1923,12 @@ func TestEditQuestionnaire(t *testing.T) {
 			questionnaireDetailExpected.Questions[i].CreatedAt = questionnaireDetailEdited.Questions[i].CreatedAt
 		}
 		assertion.Equal(questionnaireDetailExpected, questionnaireDetailEdited, testCase.description, "questionnaireDetail")
+
+		if testCase.expect.hasReminder != nil {
+			remindStatus, err := re.CheckRemindStatus(questionnaireDetail.QuestionnaireId)
+			assertion.NoError(err, testCase.description, "no error checking remind status")
+			assertion.Equal(*testCase.expect.hasReminder, remindStatus, testCase.description, "reminder status")
+		}
 	}
 }
 

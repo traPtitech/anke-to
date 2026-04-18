@@ -1,12 +1,18 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/anke-to/openapi"
 )
 
 // nthJob returns the nth job (0-indexed) from the btree in ascending order.
@@ -461,4 +467,34 @@ func TestPop(t *testing.T) {
 			assertion.Equal(jobs[3-testCase.expect.num].QuestionnaireID, earliest.QuestionnaireID, testCase.description, "first content questionnaire id")
 		}
 	}
+}
+
+func TestReminderActionUnpublished(t *testing.T) {
+	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
+	params := openapi.PostQuestionnaireJSONRequestBody{
+		Admin:                    sampleAdmin,
+		Description:              "リマインダーテスト用アンケート",
+		IsDuplicateAnswerAllowed: false,
+		IsAnonymous:              false,
+		IsPublished:              false,
+		Questions:                []openapi.NewQuestion{},
+		ResponseDueDateTime:      &responseDueDateTimePlus,
+		ResponseViewableBy:       "anyone",
+		Target:                   sampleTarget,
+		Title:                    "未公開リマインダーテスト",
+	}
+
+	e := echo.New()
+	body, err := json.Marshal(params)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+
+	detail, err := q.PostQuestionnaire(ctx, params)
+	require.NoError(t, err)
+
+	err = reminderAction(detail.QuestionnaireId, "5分")
+	assert.NoError(t, err, "reminderAction should return nil for unpublished questionnaire")
 }
