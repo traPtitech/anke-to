@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.21.0
 
 # build backend
-FROM golang:1.25.7-alpine as server-build
+FROM golang:1.26.2-alpine as server-build
 RUN --mount=type=cache,target=/var/cache/apk \
   apk add --update git
 
