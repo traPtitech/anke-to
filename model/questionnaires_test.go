@@ -550,7 +550,7 @@ func insertQuestionnaireTest(t *testing.T) {
 			},
 		},
 		{
-			description: "long description",
+			description: "too long description",
 			args: args{
 				title:        "第1回集会らん☆ぷろ募集アンケート",
 				description:  strings.Repeat("a", 200000),
@@ -558,6 +558,9 @@ func insertQuestionnaireTest(t *testing.T) {
 				resSharedTo:  "public",
 				isPublished:  true,
 				isAnonymous:  false,
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 		{

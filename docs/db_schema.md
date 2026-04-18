@@ -63,7 +63,7 @@
 | -------------- | --------- | ---- | --- | ----------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | id             | int(11)   | NO   | PRI | _NULL_            | auto_increment |
 | title          | varchar(1024) | NO   | MUL | _NULL_            |                | アンケートのタイトル                                                                                                    |
-| description    | mediumtext    | NO   |     | _NULL_            |                | アンケートの説明                                                                                                        |
+| description    | text          | NO   |     | _NULL_            |                | アンケートの説明                                                                                                        |
 | res_time_limit | timestamp | YES  |     | _NULL_            |                | 回答の締切日時 (締切がない場合は NULL)                                                                                  |
 | deleted_at     | timestamp | YES  |     | _NULL_            |                | アンケートが削除された日時 (削除されていない場合は NULL)                                                                |
 | res_shared_to  | char(30)  | NO   |     | administrators    |                | アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public") |

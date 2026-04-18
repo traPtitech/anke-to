@@ -12,9 +12,6 @@ func v3_1() *gormigrate.Migration {
 			if err := tx.Exec("ALTER TABLE questionnaires MODIFY COLUMN title varchar(1024) NOT NULL").Error; err != nil {
 				return err
 			}
-			if err := tx.Exec("ALTER TABLE questionnaires MODIFY COLUMN description mediumtext NOT NULL").Error; err != nil {
-				return err
-			}
 			return nil
 		},
 	}
