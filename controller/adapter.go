@@ -28,6 +28,7 @@ func questionnaireInfo2questionnaireSummary(questionnaireInfo model.Questionnair
 		IsTargetingMe:            questionnaireInfo.IsTargeted,
 		ModifiedAt:               questionnaireInfo.ModifiedAt,
 		QuestionnaireId:          questionnaireInfo.ID,
+		ResponseViewableBy:       convertResSharedTo(questionnaireInfo.ResSharedTo),
 		Title:                    questionnaireInfo.Title,
 	}
 	if respondedDateTimeByMe.Valid {
