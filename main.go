@@ -43,7 +43,7 @@ func main() {
 
 	api.Reminder.Wg.Add(1)
 	go func() {
-		e.Use(middleware.Logger())
+		e.Use(middleware.RequestLogger())
 		e.Use(middleware.Recover())
 
 		swagger, err := openapi.GetSwagger()
