@@ -9,14 +9,14 @@ require (
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -67,7 +67,7 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
-	go.uber.org/mock v0.5.2
+	go.uber.org/mock v0.6.0
 )
 
 require (
@@ -85,7 +85,7 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/runtime v1.1.1
 )
 
