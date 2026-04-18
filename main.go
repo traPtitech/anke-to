@@ -43,20 +43,7 @@ func main() {
 
 	api.Reminder.Wg.Add(1)
 	go func() {
-		e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-			LogStatus:   true,
-			LogURI:      true,
-			LogMethod:   true,
-			LogLatency:  true,
-			LogRemoteIP: true,
-			LogError:    true,
-			HandleError: true,
-			LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-				e.Logger.Infof("method=%s uri=%s status=%d latency=%s ip=%s",
-					v.Method, v.URI, v.Status, v.Latency, v.RemoteIP)
-				return nil
-			},
-		}))
+		e.Use(middleware.RequestLogger())
 		e.Use(middleware.Recover())
 
 		swagger, err := openapi.GetSwagger()
