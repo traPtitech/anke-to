@@ -1004,6 +1004,30 @@ func TestPostQuestionnaire(t *testing.T) {
 			},
 		},
 		{
+			description: "not published with response due date time",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              false,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &responseDueDateTimePlus,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+			},
+		},
+		{
 			description: "invalid question settings number",
 			args: args{
 				params: openapi.PostQuestionnaireJSONRequestBody{
@@ -1640,6 +1664,31 @@ func TestEditQuestionnaire(t *testing.T) {
 						sampleQeustionsettingsScale,
 					},
 					ResponseDueDateTime: nil,
+					ResponseViewableBy:  "anyone",
+					Target:              sampleTarget,
+					Title:               "第1回集会らん☆ぷろ募集アンケート",
+				},
+				isNewQuestion: []bool{false, false, false, false, false, false},
+			},
+		},
+		{
+			description: "not published with response due date time",
+			args: args{
+				params: openapi.PostQuestionnaireJSONRequestBody{
+					Admin:                    sampleAdmin,
+					Description:              "第1回集会らん☆ぷろ参加者募集",
+					IsDuplicateAnswerAllowed: true,
+					IsAnonymous:              false,
+					IsPublished:              false,
+					Questions: []openapi.NewQuestion{
+						sampleQuestionSettingsText,
+						sampleQuestionSettingsTextLong,
+						sampleQuestionSettingsNumber,
+						sampleQuestionSettingsSingleChoice,
+						sampleQuestionSettingsMultipleChoice,
+						sampleQeustionsettingsScale,
+					},
+					ResponseDueDateTime: &responseDueDateTimePlus,
 					ResponseViewableBy:  "anyone",
 					Target:              sampleTarget,
 					Title:               "第1回集会らん☆ぷろ募集アンケート",
