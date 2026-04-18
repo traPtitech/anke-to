@@ -30,7 +30,7 @@ func v3_1() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "3.1",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&v3_1Questionnaires{})
+			return tx.Migrator().AlterColumn(&v3_1Questionnaires{}, "Title")
 		},
 	}
 }
