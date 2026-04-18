@@ -1,12 +1,12 @@
 package model
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v4"
-	"strings"
 )
 
 func TestV3_1TitleColumnType(t *testing.T) {
