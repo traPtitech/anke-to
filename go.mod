@@ -47,7 +47,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	gorm.io/gorm v1.26.0
+	gorm.io/gorm v1.26.1
 )
 
 require (
@@ -64,7 +64,7 @@ require (
 
 require (
 	github.com/deckarep/golang-set/v2 v2.8.0
-	github.com/go-gormigrate/gormigrate/v2 v2.1.1
+	github.com/go-gormigrate/gormigrate/v2 v2.1.5
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
 	go.uber.org/mock v0.6.0
