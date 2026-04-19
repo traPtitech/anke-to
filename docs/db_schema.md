@@ -62,15 +62,16 @@
 | Field          | Type      | Null | Key | Default           | Extra          | 説明など                                                                                                                |
 | -------------- | --------- | ---- | --- | ----------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | id             | int(11)   | NO   | PRI | _NULL_            | auto_increment |
-| title          | char(50)  | NO   | MUL | _NULL_            |                | アンケートのタイトル                                                                                                    |
-| description    | text      | NO   |     | _NULL_            |                | アンケートの説明                                                                                                        |
+| title          | varchar(1024) | NO   | MUL | _NULL_            |                | アンケートのタイトル                                                                                                    |
+| description    | text          | NO   |     | _NULL_            |                | アンケートの説明                                                                                                        |
 | res_time_limit | timestamp | YES  |     | _NULL_            |                | 回答の締切日時 (締切がない場合は NULL)                                                                                  |
 | deleted_at     | timestamp | YES  |     | _NULL_            |                | アンケートが削除された日時 (削除されていない場合は NULL)                                                                |
 | res_shared_to  | char(30)  | NO   |     | administrators    |                | アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public") |
 | is_anonymous   | boolean   | NO   |     | false             |                | アンケートが匿名解答かどうか                                                                                            |
 | created_at     | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                                                                                              |
 | modified_at    | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                                                                                              |
-| is_published   | boolean   | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
+| is_published              | boolean | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
+| is_duplicate_answer_allowed | boolean | NO   |     | false             |                | 重複回答を許可するかどうか                                                                                              |
 
 ### respondents
 

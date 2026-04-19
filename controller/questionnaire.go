@@ -76,7 +76,7 @@ func NewQuestionnaire(
 }
 
 const (
-	MaxTitleLength = 50
+	MaxTitleLength = 1024
 )
 
 func maxLengthPattern(maxLength *int) string {
