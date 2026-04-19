@@ -17,9 +17,9 @@ type v3_1Questionnaires struct {
 	ResSharedTo              string         `gorm:"type:char(30);size:30;not null;default:administrators"`
 	CreatedAt                time.Time      `gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
 	ModifiedAt               time.Time      `gorm:"type:timestamp;not null;default:CURRENT_TIMESTAMP"`
-	IsPublished              bool           `gorm:"type:boolean;not null;default:true"`
+	IsPublished              bool           `gorm:"type:boolean;not null;default:false"`
 	IsAnonymous              bool           `gorm:"type:boolean;not null;default:false"`
-	IsDuplicateAnswerAllowed bool           `gorm:"type:tinyint(4);size:4;not null;default:true"`
+	IsDuplicateAnswerAllowed bool           `gorm:"type:boolean;not null;default:false"`
 }
 
 func (*v3_1Questionnaires) TableName() string {
@@ -30,7 +30,13 @@ func v3_1() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "3.1",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.Migrator().AlterColumn(&v3_1Questionnaires{}, "Title")
+			if err := tx.Migrator().AlterColumn(&v3_1Questionnaires{}, "Title"); err != nil {
+				return err
+			}
+			if err := tx.Migrator().AlterColumn(&v3_1Questionnaires{}, "IsPublished"); err != nil {
+				return err
+			}
+			return tx.Migrator().AlterColumn(&v3_1Questionnaires{}, "IsDuplicateAnswerAllowed")
 		},
 	}
 }

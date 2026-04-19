@@ -70,7 +70,8 @@
 | is_anonymous   | boolean   | NO   |     | false             |                | アンケートが匿名解答かどうか                                                                                            |
 | created_at     | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが作成された日時                                                                                              |
 | modified_at    | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                                                                                              |
-| is_published   | boolean   | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
+| is_published              | boolean | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
+| is_duplicate_answer_allowed | boolean | NO   |     | false             |                | 重複回答を許可するかどうか                                                                                              |
 
 ### respondents
 
