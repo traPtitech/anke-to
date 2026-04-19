@@ -652,8 +652,8 @@ func TestPostQuestionnaire(t *testing.T) {
 		params openapi.PostQuestionnaireJSONRequestBody
 	}
 	type expect struct {
-		isErr     bool
-		err       error
+		isErr       bool
+		err         error
 		hasReminder *bool
 	}
 	type test struct {
