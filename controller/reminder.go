@@ -206,6 +206,10 @@ func reminderAction(questionnaireID int, leftTimeText string) error {
 		return err
 	}
 
+	if !questionnaire.IsPublished {
+		return nil
+	}
+
 	reminderTargetOverrides, err := model.NewReminderTarget().GetReminderTargets(ctx, questionnaireID)
 	if err != nil {
 		return err
