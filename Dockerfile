@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o /anke-to -ldflags "-s -w"
 
 # run
-FROM alpine:3.23.3
+FROM alpine:3.23.4
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
