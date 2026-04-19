@@ -23,7 +23,7 @@ func NewQuestionnaire() *Questionnaire {
 // Questionnaires questionnairesテーブルの構造体
 type Questionnaires struct {
 	ID                       int                   `json:"questionnaireID" gorm:"type:int(11) AUTO_INCREMENT;not null;primaryKey"`
-	Title                    string                `json:"title"           gorm:"type:char(50);size:50;not null"`
+	Title                    string                `json:"title"           gorm:"type:varchar(1024);size:1024;not null"`
 	Description              string                `json:"description"     gorm:"type:text;not null"`
 	ResTimeLimit             null.Time             `json:"res_time_limit,omitempty"  gorm:"type:TIMESTAMP NULL;default:NULL;"`
 	DeletedAt                gorm.DeletedAt        `json:"-"      gorm:"type:TIMESTAMP NULL;default:NULL;"`
@@ -38,9 +38,9 @@ type Questionnaires struct {
 	TargetGroups             []TargetGroups        `json:"-" gorm:"foreignKey:QuestionnaireID"`
 	Questions                []Questions           `json:"-"  gorm:"foreignKey:QuestionnaireID"`
 	Respondents              []Respondents         `json:"-"  gorm:"foreignKey:QuestionnaireID"`
-	IsPublished              bool                  `json:"is_published" gorm:"type:boolean;default:false"`
+	IsPublished              bool                  `json:"is_published" gorm:"type:boolean;not null;default:false"`
 	IsAnonymous              bool                  `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
-	IsDuplicateAnswerAllowed bool                  `json:"is_duplicate_answer_allowed" gorm:"type:tinyint(4);size:4;not null;default:0"`
+	IsDuplicateAnswerAllowed bool                  `json:"is_duplicate_answer_allowed" gorm:"type:boolean;not null;default:false"`
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に

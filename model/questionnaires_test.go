@@ -516,7 +516,7 @@ func insertQuestionnaireTest(t *testing.T) {
 		{
 			description: "long title",
 			args: args{
-				title:        strings.Repeat("a", 50),
+				title:        strings.Repeat("a", 1024),
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
@@ -527,7 +527,7 @@ func insertQuestionnaireTest(t *testing.T) {
 		{
 			description: "too long title",
 			args: args{
-				title:        strings.Repeat("a", 500),
+				title:        strings.Repeat("a", 2000),
 				description:  "第1回集会らん☆ぷろ参加者募集",
 				resTimeLimit: null.NewTime(time.Time{}, false),
 				resSharedTo:  "public",
