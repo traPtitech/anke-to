@@ -163,6 +163,23 @@ func setupSampleQuestionnaire() {
 	}
 }
 
+func newSampleQuestionnaire() openapi.PostQuestionnaireJSONRequestBody {
+	setupSampleQuestionnaire()
+
+	// Deep-copy test fixtures so parallel tests do not share slice-backed state.
+	b, err := json.Marshal(sampleQuestionnaire)
+	if err != nil {
+		panic(fmt.Sprintf("failed to marshal sampleQuestionnaire: %v", err))
+	}
+
+	var questionnaire openapi.PostQuestionnaireJSONRequestBody
+	if err := json.Unmarshal(b, &questionnaire); err != nil {
+		panic(fmt.Sprintf("failed to unmarshal sampleQuestionnaire: %v", err))
+	}
+
+	return questionnaire
+}
+
 func newQuestion2Question(questionID *int, createdAt *time.Time, newQuestion openapi.NewQuestion) (openapi.Question, error) {
 	b, err := newQuestion.MarshalJSON()
 	if err != nil {
@@ -215,8 +232,9 @@ func TestGetQuestionnaires(t *testing.T) {
 
 	uniqueSearchTitle := fmt.Sprintf("search test %d", time.Now().UnixNano())
 	specialTargetUser := fmt.Sprintf("stgq%d", time.Now().UnixNano())
+	draftAdminUser := fmt.Sprintf("draft-admin-%d", time.Now().UnixNano())
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -227,7 +245,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	_, err = q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -239,7 +257,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted1, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -251,7 +269,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted2, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = "abcde"
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -263,7 +281,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	_, err = q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Target.Users = []string{specialTargetUser}
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -275,9 +293,10 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted4, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = "draft questionnaire"
 	questionnaire.IsPublished = false
+	questionnaire.Admin.Users = []string{draftAdminUser}
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -293,11 +312,12 @@ func TestGetQuestionnaires(t *testing.T) {
 		params openapi.GetQuestionnairesParams
 	}
 	type expect struct {
-		isErr               bool
-		err                 error
-		questionnaireIDList *[]int
-		totalRecords        *int
-		pageMax             *int
+		isErr                   bool
+		err                     error
+		questionnaireIDList     *[]int
+		questionnaireIDContains *[]int
+		totalRecords            *int
+		pageMax                 *int
 	}
 	type test struct {
 		description string
@@ -523,11 +543,11 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "default list includes my draft questionnaire",
 			args: args{
-				userID: userOne,
+				userID: draftAdminUser,
 				params: openapi.GetQuestionnairesParams{},
 			},
 			expect: expect{
-				questionnaireIDList: &[]int{
+				questionnaireIDContains: &[]int{
 					questionnaireDraftByUserOne.QuestionnaireId,
 				},
 			},
@@ -535,7 +555,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		{
 			description: "only administrated by me includes my draft questionnaire",
 			args: args{
-				userID: userOne,
+				userID: draftAdminUser,
 				params: openapi.GetQuestionnairesParams{
 					OnlyAdministratedByMe: &constTrue,
 				},
@@ -653,6 +673,15 @@ func TestGetQuestionnaires(t *testing.T) {
 			sort.Slice(questionnaireIDList, func(i, j int) bool { return questionnaireIDList[i] < questionnaireIDList[j] })
 			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIDList")
 		}
+		if testCase.expect.questionnaireIDContains != nil {
+			questionnaireIDList := []int{}
+			for _, questionnairSummary := range questionnaireList.Questionnaires {
+				questionnaireIDList = append(questionnaireIDList, questionnairSummary.QuestionnaireId)
+			}
+			for _, questionnaireID := range *testCase.expect.questionnaireIDContains {
+				assertion.Contains(questionnaireIDList, questionnaireID, testCase.description, "questionnaireIDContains")
+			}
+		}
 		if testCase.expect.totalRecords != nil {
 			assertion.Equal(*testCase.expect.totalRecords, questionnaireList.TotalRecords, testCase.description, "totalRecords")
 		}
@@ -741,7 +770,7 @@ func TestPostQuestionnaire(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				params: sampleQuestionnaire,
+				params: newSampleQuestionnaire(),
 			},
 		},
 		{
@@ -1241,7 +1270,7 @@ func TestGetQuestionnaire(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -1387,21 +1416,21 @@ func TestEditQuestionnaire(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
 			description: "valid new question",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{true, true, true, true, true, true},
 			},
 		},
 		{
 			description: "valid some new question",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{true, false, true, false, true, false},
 			},
 		},
@@ -1454,7 +1483,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			description: "invalid question id",
 			args: args{
 				invalidQuestionID: true,
-				params:            sampleQuestionnaire,
+				params:            newSampleQuestionnaire(),
 				isNewQuestion:     []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
@@ -1465,7 +1494,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			description: "invalid anonymous to not anonymous",
 			args: args{
 				isAnonymousToNotAnonymous: true,
-				params:                    sampleQuestionnaire,
+				params:                    newSampleQuestionnaire(),
 				isNewQuestion:             []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
@@ -1838,7 +1867,7 @@ func TestEditQuestionnaire(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaire := sampleQuestionnaire
+		questionnaire := newSampleQuestionnaire()
 		if testCase.args.isAnonymousToNotAnonymous {
 			questionnaire.IsAnonymous = true
 		}
@@ -2018,7 +2047,7 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	for _, testCase := range testCases {
 		var questionnaireID int
 		if !testCase.args.invalidQuestionnaireID {
-			questionnaire := sampleQuestionnaire
+			questionnaire := newSampleQuestionnaire()
 			e := echo.New()
 			body, err := json.Marshal(questionnaire)
 			require.NoError(t, err)
@@ -2076,7 +2105,7 @@ func TestDeleteQuestionnaireWithResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2114,7 +2143,7 @@ func TestDeleteQuestionnaireWithEmptyDraft(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2151,7 +2180,7 @@ func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2197,7 +2226,7 @@ func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2231,7 +2260,7 @@ func TestEditQuestionnaireMyRemindStatusPersistsExplicitSubscriptionAfterTargetR
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	questionnaire.Target = openapi.UsersAndGroups{
 		Users:  []string{userThree, userFour},
 		Groups: []uuid.UUID{},
@@ -2282,7 +2311,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2354,7 +2383,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	response03, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
-	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous := newSampleQuestionnaire()
 	questionnaireAnonymous.IsAnonymous = true
 	e = echo.New()
 	body, err = json.Marshal(questionnaireAnonymous)
@@ -2723,7 +2752,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
@@ -2735,7 +2764,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	questionnaire.IsAnonymous = true
 	e = echo.New()
@@ -2748,7 +2777,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetailAnonymous, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	questionnaire.IsDuplicateAnswerAllowed = false
 	e = echo.New()
@@ -2761,7 +2790,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetailNoMultipleResponse, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
