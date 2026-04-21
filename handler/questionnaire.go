@@ -74,6 +74,16 @@ func (h Handler) EditQuestionnaire(ctx echo.Context, questionnaireID openapi.Que
 	return ctx.NoContent(200)
 }
 
+// (POST /questionnaires/{questionnaireID}/close)
+func (h Handler) CloseQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
+	err := h.Questionnaire.CloseQuestionnaire(ctx, questionnaireID)
+	if err != nil {
+		ctx.Logger().Errorf("failed to close questionnaire: %+v", err)
+		return err
+	}
+	return ctx.NoContent(200)
+}
+
 // (DELETE /questionnaires/{questionnaireID})
 func (h Handler) DeleteQuestionnaire(ctx echo.Context, questionnaireID openapi.QuestionnaireIDInPath) error {
 	err := h.Questionnaire.DeleteQuestionnaire(ctx, questionnaireID)

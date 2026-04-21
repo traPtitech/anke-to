@@ -161,6 +161,37 @@ func (*Questionnaire) UpdateQuestionnaire(ctx context.Context, title string, des
 	return nil
 }
 
+// UpdateQuestionnaireLimit アンケートの回答期限の更新
+func (*Questionnaire) UpdateQuestionnaireLimit(ctx context.Context, questionnaireID int, resTimeLimit null.Time) error {
+	db, err := getTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx: %w", err)
+	}
+
+	err = db.Select("id").First(&Questionnaires{}, questionnaireID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("failed to update questionnaire limit: %w", ErrNoRecordUpdated)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to find questionnaire: %w", err)
+	}
+
+	update := map[string]interface{}{
+		"modified_at": time.Now(),
+	}
+	if resTimeLimit.Valid {
+		update["res_time_limit"] = resTimeLimit
+	} else {
+		update["res_time_limit"] = gorm.Expr("NULL")
+	}
+
+	if err := db.Model(&Questionnaires{}).Where("id = ?", questionnaireID).Updates(update).Error; err != nil {
+		return fmt.Errorf("failed to update questionnaire limit: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteQuestionnaire アンケートの削除
 func (*Questionnaire) DeleteQuestionnaire(ctx context.Context, questionnaireID int) error {
 	db, err := getTx(ctx)

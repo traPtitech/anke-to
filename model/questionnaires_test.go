@@ -53,6 +53,7 @@ func TestQuestionnaires(t *testing.T) {
 
 	t.Run("InsertQuestionnaire", insertQuestionnaireTest)
 	t.Run("UpdateQuestionnaire", updateQuestionnaireTest)
+	t.Run("UpdateQuestionnaireLimit", updateQuestionnaireLimitTest)
 	t.Run("DeleteQuestionnaire", deleteQuestionnaireTest)
 	t.Run("GetQuestionnaires", getQuestionnairesTest)
 	t.Run("GetAdminQuestionnaires", getAdminQuestionnairesTest)
@@ -980,6 +981,124 @@ func updateQuestionnaireTest(t *testing.T) {
 			} else {
 				t.Errorf("failed to update questionnaire(invalid questionnireID): %v", err)
 			}
+		}
+	}
+}
+
+func updateQuestionnaireLimitTest(t *testing.T) {
+	t.Helper()
+
+	assertion := assert.New(t)
+
+	var createdIDs []int
+	t.Cleanup(func() {
+		for _, id := range createdIDs {
+			db.Session(&gorm.Session{NewDB: true}).Delete(&Questionnaires{}, id)
+		}
+	})
+
+	type args struct {
+		resTimeLimit null.Time
+	}
+	type expect struct {
+		isErr bool
+		err   error
+	}
+	type test struct {
+		description string
+		args
+		expect
+	}
+
+	testCases := []test{
+		{
+			description: "set limit to now",
+			args: args{
+				resTimeLimit: null.NewTime(time.Now(), true),
+			},
+		},
+		{
+			description: "clear limit (null)",
+			args: args{
+				resTimeLimit: null.NewTime(time.Time{}, false),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		ctx := context.Background()
+
+		// seed with a limit in the past so that updating to any new value is a real change
+		initialLimit := null.NewTime(time.Now().Add(-24*time.Hour), true)
+		questionnaire := Questionnaires{
+			Title:        "UpdateQuestionnaireLimitTest",
+			Description:  "test",
+			ResTimeLimit: initialLimit,
+			ResSharedTo:  "public",
+			IsPublished:  true,
+		}
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Create(&questionnaire).Error
+		if err != nil {
+			t.Errorf("failed to create questionnaire(%s): %v", testCase.description, err)
+			continue
+		}
+		createdIDs = append(createdIDs, questionnaire.ID)
+
+		err = questionnaireImpl.UpdateQuestionnaireLimit(ctx, questionnaire.ID, testCase.args.resTimeLimit)
+
+		if !testCase.expect.isErr {
+			assertion.NoError(err, testCase.description, "no error")
+		} else if testCase.expect.err != nil {
+			assertion.Equal(true, errors.Is(err, testCase.expect.err), testCase.description, "errorIs")
+		} else {
+			assertion.Error(err, testCase.description, "any error")
+		}
+		if err != nil {
+			continue
+		}
+
+		var updated Questionnaires
+		err = db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", questionnaire.ID).
+			First(&updated).Error
+		if err != nil {
+			t.Errorf("failed to fetch updated questionnaire(%s): %v", testCase.description, err)
+			continue
+		}
+
+		assertion.Equal(testCase.args.resTimeLimit.Valid, updated.ResTimeLimit.Valid, testCase.description, "limit valid")
+		if testCase.args.resTimeLimit.Valid {
+			assertion.WithinDuration(testCase.args.resTimeLimit.Time, updated.ResTimeLimit.Time, 2*time.Second, testCase.description, "limit time")
+		}
+	}
+
+	// invalid questionnaire ID
+	invalidQuestionnaireID := 1000
+	for {
+		err := db.
+			Session(&gorm.Session{NewDB: true}).
+			Where("id = ?", invalidQuestionnaireID).
+			First(&Questionnaires{}).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			break
+		}
+		if err != nil {
+			t.Errorf("failed to get questionnaire(make invalid questionnaireID): %v", err)
+			break
+		}
+		invalidQuestionnaireID *= 10
+	}
+
+	ctx := context.Background()
+	err := questionnaireImpl.UpdateQuestionnaireLimit(ctx, invalidQuestionnaireID, null.NewTime(time.Now(), true))
+	if !errors.Is(err, ErrNoRecordUpdated) {
+		if err == nil {
+			t.Errorf("succeeded with invalid questionnaireID")
+		} else {
+			t.Errorf("unexpected error with invalid questionnaireID: %v", err)
 		}
 	}
 }

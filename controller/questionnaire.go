@@ -76,24 +76,8 @@ func NewQuestionnaire(
 }
 
 const (
-	MaxTitleLength               = 1024
-	responseDueDateTimeTolerance = 5 * time.Second
+	MaxTitleLength = 1024
 )
-
-func normalizeResponseDueDateTime(responseDueDateTime *null.Time, now time.Time) error {
-	if !responseDueDateTime.Valid {
-		return nil
-	}
-
-	if responseDueDateTime.ValueOrZero().Before(now) {
-		if now.Sub(responseDueDateTime.ValueOrZero()) > responseDueDateTimeTolerance {
-			return errors.New("invalid resTimeLimit")
-		}
-		responseDueDateTime.Time = now
-	}
-
-	return nil
-}
 
 func maxLengthPattern(maxLength *int) string {
 	if maxLength == nil {
@@ -231,7 +215,7 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+	if responseDueDateTime.Valid && responseDueDateTime.Time.Before(time.Now()) {
 		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
 		return openapi.QuestionnaireDetail{}, echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
@@ -537,7 +521,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 		responseDueDateTime.Valid = true
 		responseDueDateTime.Time = *params.ResponseDueDateTime
 	}
-	if err := normalizeResponseDueDateTime(&responseDueDateTime, time.Now()); err != nil {
+	if responseDueDateTime.Valid && responseDueDateTime.Time.Before(time.Now()) {
 		c.Logger().Infof("invalid resTimeLimit: %+v", responseDueDateTime)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid resTimeLimit")
 	}
@@ -1061,6 +1045,29 @@ func (q *Questionnaire) DeleteQuestionnaire(c echo.Context, questionnaireID int)
 
 		c.Logger().Errorf("failed to delete questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete a questionnaire")
+	}
+	return nil
+}
+
+func (q *Questionnaire) CloseQuestionnaire(c echo.Context, questionnaireID int) error {
+	now := null.TimeFrom(time.Now())
+	err := q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
+		err := q.UpdateQuestionnaireLimit(ctx, questionnaireID, now)
+		if err != nil {
+			c.Logger().Errorf("failed to update questionnaire limit: %+v", err)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, model.ErrNoRecordUpdated) {
+			return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+		}
+		c.Logger().Errorf("failed to close questionnaire: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to close questionnaire")
+	}
+	if err := q.DeleteReminder(questionnaireID); err != nil {
+		c.Logger().Errorf("failed to delete reminder: %+v", err)
 	}
 	return nil
 }
