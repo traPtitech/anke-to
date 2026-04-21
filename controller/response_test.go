@@ -125,7 +125,7 @@ func TestGetMyResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -196,7 +196,7 @@ func TestGetMyResponses(t *testing.T) {
 	response4, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, "myResponsesSpecialUser")
 	require.NoError(t, err)
 
-	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous := newSampleQuestionnaire()
 	questionnaireAnonymous.IsAnonymous = true
 	e = echo.New()
 	body, err = json.Marshal(questionnaireAnonymous)
@@ -425,7 +425,7 @@ func TestGetResponse(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -451,7 +451,7 @@ func TestGetResponse(t *testing.T) {
 	response0, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
 	require.NoError(t, err)
 
-	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous := newSampleQuestionnaire()
 	questionnaireAnonymous.IsAnonymous = true
 	e = echo.New()
 	body, err = json.Marshal(questionnaireAnonymous)
@@ -627,7 +627,7 @@ func TestDeleteResponse(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaire := sampleQuestionnaire
+		questionnaire := newSampleQuestionnaire()
 		e := echo.New()
 		body, err := json.Marshal(questionnaire)
 		require.NoError(t, err)
@@ -705,7 +705,7 @@ func TestEditResponse(t *testing.T) {
 
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
@@ -717,7 +717,7 @@ func TestEditResponse(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	questionnaire.IsAnonymous = true
 	e = echo.New()
@@ -730,7 +730,7 @@ func TestEditResponse(t *testing.T) {
 	questionnaireDetailAnonymous, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
