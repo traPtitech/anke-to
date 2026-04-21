@@ -2570,7 +2570,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "administrator can view draft responses",
+			description: "administrator cannot view other respondents draft responses",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2580,10 +2580,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 			expect: expect{
-				responseIDList: &[]int{
-					response02.ResponseId,
-					response03.ResponseId,
-				},
+				isErr: true,
 			},
 		},
 		{
