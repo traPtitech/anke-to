@@ -1129,6 +1129,17 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 	} else {
 		onlyMyResponse = false
 	}
+	if params.IsDraft != nil && *params.IsDraft && !onlyMyResponse {
+		isAdmin, err := q.IAdministrator.CheckQuestionnaireAdmin(c.Request().Context(), userID, questionnaireID)
+		if err != nil {
+			c.Logger().Errorf("failed to check questionnaire admin: %+v", err)
+			return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to check questionnaire admin")
+		}
+		if !isAdmin {
+			c.Logger().Infof("user %s is not allowed to view other respondents' drafts for questionnaire %d", userID, questionnaireID)
+			return res, echo.NewHTTPError(http.StatusForbidden, "you do not have permission to view other respondents' drafts")
+		}
+	}
 	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {

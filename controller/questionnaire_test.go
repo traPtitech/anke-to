@@ -275,6 +275,19 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted4, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
+	questionnaire = sampleQuestionnaire
+	questionnaire.Title = "draft questionnaire"
+	questionnaire.IsPublished = false
+	e = echo.New()
+	body, err = json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireDraftByUserOne, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
 	type args struct {
 		userID string
 		params openapi.GetQuestionnairesParams
@@ -504,6 +517,32 @@ func TestGetQuestionnaires(t *testing.T) {
 				userID: userFive,
 				params: openapi.GetQuestionnairesParams{
 					OnlyAdministratedByMe: &constTrue,
+				},
+			},
+		},
+		{
+			description: "default list includes my draft questionnaire",
+			args: args{
+				userID: userOne,
+				params: openapi.GetQuestionnairesParams{},
+			},
+			expect: expect{
+				questionnaireIDList: &[]int{
+					questionnaireDraftByUserOne.QuestionnaireId,
+				},
+			},
+		},
+		{
+			description: "only administrated by me includes my draft questionnaire",
+			args: args{
+				userID: userOne,
+				params: openapi.GetQuestionnairesParams{
+					OnlyAdministratedByMe: &constTrue,
+				},
+			},
+			expect: expect{
+				questionnaireIDList: &[]int{
+					questionnaireDraftByUserOne.QuestionnaireId,
 				},
 			},
 		},
@@ -2502,7 +2541,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "isDraft true does not force only my response",
+			description: "administrator can view draft responses",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2514,6 +2553,36 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response02.ResponseId,
+					response03.ResponseId,
+				},
+			},
+		},
+		{
+			description: "non administrator cannot view other respondents draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constFalse,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				isErr: true,
+			},
+		},
+		{
+			description: "non administrator can still view only my draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constTrue,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				responseIDList: &[]int{
 					response03.ResponseId,
 				},
 			},
