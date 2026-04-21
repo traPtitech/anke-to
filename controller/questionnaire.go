@@ -1129,11 +1129,18 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 	} else {
 		onlyMyResponse = false
 	}
-	if params.IsDraft != nil && *params.IsDraft && !onlyMyResponse {
+	isDraft := params.IsDraft
+	if !onlyMyResponse {
+		submittedOnly := false
+		if params.IsDraft == nil {
+			isDraft = &submittedOnly
+		}
+	}
+	if isDraft != nil && *isDraft && !onlyMyResponse {
 		c.Logger().Infof("user %s is not allowed to view other respondents' drafts for questionnaire %d", userID, questionnaireID)
 		return res, echo.NewHTTPError(http.StatusForbidden, "you do not have permission to view other respondents' drafts")
 	}
-	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, params.IsDraft)
+	respondentDetails, err := q.GetRespondentDetails(c.Request().Context(), questionnaireID, sort, onlyMyResponse, userID, isDraft)
 	if err != nil {
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")

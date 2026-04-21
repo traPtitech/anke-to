@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -49,118 +50,118 @@ var (
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{}
 	sampleQeustionsettingsScale          = openapi.NewQuestion{}
 	sampleQuestionnaire                  = openapi.PostQuestionnaireJSONRequestBody{}
+	sampleQuestionnaireOnce              sync.Once
 )
 
 func setupSampleQuestionnaire() {
-	if sampleQuestionnaire.Title != "" {
-		return
-	}
-	sampleQuestionSettingsText = openapi.NewQuestion{
-		Title:      "質問（テキスト）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsTextMaxLength := 100
-	err := sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
-		MaxLength:    &sampleQuestionSettingsTextMaxLength,
-		QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsText: %v", err))
-	}
-	sampleQuestionSettingsTextLong = openapi.NewQuestion{
-		Title:      "質問（ロングテキスト）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsTextLongMaxLength := 500
-	err = sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
-		MaxLength:    &sampleQuestionSettingsTextLongMaxLength,
-		QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsTextLong: %v", err))
-	}
-	sampleQuestionSettingsNumber = openapi.NewQuestion{
-		Title:      "質問（数値）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsNumberMaxValue := 100.5
-	sampleQuestionSettingsNumberMinValue := 0.5
-	err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
-		MaxValue:     &sampleQuestionSettingsNumberMaxValue,
-		MinValue:     &sampleQuestionSettingsNumberMinValue,
-		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsNumber: %v", err))
-	}
-	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
-		Title:      "質問（単一選択）",
-		IsRequired: true,
-	}
-	err = sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
-		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
-		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsSingleChoice: %v", err))
-	}
-	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
-		Title:      "質問（複数選択）",
-		IsRequired: true,
-	}
-	err = sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
-		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
-		QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsMultipleChoice: %v", err))
-	}
-	sampleQeustionsettingsScale = openapi.NewQuestion{
-		Title:      "質問（スケール）",
-		IsRequired: true,
-	}
-	sampleQeustionsettingsScaleMaxLabel := "最大値"
-	sampleQeustionsettingsScaleMinLabel := "最小値"
-	err = sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
-		MaxLabel:     &sampleQeustionsettingsScaleMaxLabel,
-		MaxValue:     10,
-		MinLabel:     &sampleQeustionsettingsScaleMinLabel,
-		MinValue:     1,
-		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQeustionsettingsScale: %v", err))
-	}
+	sampleQuestionnaireOnce.Do(func() {
+		sampleQuestionSettingsText = openapi.NewQuestion{
+			Title:      "質問（テキスト）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsTextMaxLength := 100
+		err := sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
+			MaxLength:    &sampleQuestionSettingsTextMaxLength,
+			QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsText: %v", err))
+		}
+		sampleQuestionSettingsTextLong = openapi.NewQuestion{
+			Title:      "質問（ロングテキスト）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsTextLongMaxLength := 500
+		err = sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
+			MaxLength:    &sampleQuestionSettingsTextLongMaxLength,
+			QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsTextLong: %v", err))
+		}
+		sampleQuestionSettingsNumber = openapi.NewQuestion{
+			Title:      "質問（数値）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsNumberMaxValue := 100.5
+		sampleQuestionSettingsNumberMinValue := 0.5
+		err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+			MaxValue:     &sampleQuestionSettingsNumberMaxValue,
+			MinValue:     &sampleQuestionSettingsNumberMinValue,
+			QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsNumber: %v", err))
+		}
+		sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
+			Title:      "質問（単一選択）",
+			IsRequired: true,
+		}
+		err = sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
+			Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
+			QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsSingleChoice: %v", err))
+		}
+		sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
+			Title:      "質問（複数選択）",
+			IsRequired: true,
+		}
+		err = sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
+			Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
+			QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsMultipleChoice: %v", err))
+		}
+		sampleQeustionsettingsScale = openapi.NewQuestion{
+			Title:      "質問（スケール）",
+			IsRequired: true,
+		}
+		sampleQeustionsettingsScaleMaxLabel := "最大値"
+		sampleQeustionsettingsScaleMinLabel := "最小値"
+		err = sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+			MaxLabel:     &sampleQeustionsettingsScaleMaxLabel,
+			MaxValue:     10,
+			MinLabel:     &sampleQeustionsettingsScaleMinLabel,
+			MinValue:     1,
+			QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQeustionsettingsScale: %v", err))
+		}
 
-	sampleAdmin = openapi.UsersAndGroups{
-		Users:  []string{userOne},
-		Groups: []uuid.UUID{},
-	}
+		sampleAdmin = openapi.UsersAndGroups{
+			Users:  []string{userOne},
+			Groups: []uuid.UUID{},
+		}
 
-	sampleTarget = openapi.UsersAndGroups{
-		Users:  []string{userThree},
-		Groups: []uuid.UUID{},
-	}
+		sampleTarget = openapi.UsersAndGroups{
+			Users:  []string{userThree},
+			Groups: []uuid.UUID{},
+		}
 
-	sampleQuestionnaire = openapi.PostQuestionnaireJSONRequestBody{
-		Admin:                    sampleAdmin,
-		Description:              "第1回集会らん☆ぷろ参加者募集",
-		IsDuplicateAnswerAllowed: true,
-		IsAnonymous:              false,
-		IsPublished:              true,
-		Questions: []openapi.NewQuestion{
-			sampleQuestionSettingsText,
-			sampleQuestionSettingsTextLong,
-			sampleQuestionSettingsNumber,
-			sampleQuestionSettingsSingleChoice,
-			sampleQuestionSettingsMultipleChoice,
-			sampleQeustionsettingsScale,
-		},
-		ResponseDueDateTime: nil,
-		ResponseViewableBy:  "anyone",
-		Target:              sampleTarget,
-		Title:               "第1回集会らん☆ぷろ募集アンケート",
-	}
+		sampleQuestionnaire = openapi.PostQuestionnaireJSONRequestBody{
+			Admin:                    sampleAdmin,
+			Description:              "第1回集会らん☆ぷろ参加者募集",
+			IsDuplicateAnswerAllowed: true,
+			IsAnonymous:              false,
+			IsPublished:              true,
+			Questions: []openapi.NewQuestion{
+				sampleQuestionSettingsText,
+				sampleQuestionSettingsTextLong,
+				sampleQuestionSettingsNumber,
+				sampleQuestionSettingsSingleChoice,
+				sampleQuestionSettingsMultipleChoice,
+				sampleQeustionsettingsScale,
+			},
+			ResponseDueDateTime: nil,
+			ResponseViewableBy:  "anyone",
+			Target:              sampleTarget,
+			Title:               "第1回集会らん☆ぷろ募集アンケート",
+		}
+	})
 }
 
 func newSampleQuestionnaire() openapi.PostQuestionnaireJSONRequestBody {
@@ -2460,9 +2461,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response02.ResponseId,
 					responseUserTwo.ResponseId,
-					response03.ResponseId,
 				},
 			},
 		},
@@ -2595,6 +2594,21 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 			expect: expect{
 				isErr: true,
+			},
+		},
+		{
+			description: "non administrator default response list excludes draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params:          openapi.GetQuestionnaireResponsesParams{},
+			},
+			expect: expect{
+				responseIDList: &[]int{
+					response00.ResponseId,
+					response01.ResponseId,
+					responseUserTwo.ResponseId,
+				},
 			},
 		},
 		{
