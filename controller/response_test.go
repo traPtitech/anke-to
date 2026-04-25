@@ -258,7 +258,7 @@ func TestGetMyResponses(t *testing.T) {
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
-				nilRespondentResponseID: &[]int{responseAnonymous.ResponseId},
+				nilRespondentResponseID: &[]int{responseIDValue(responseAnonymous.ResponseId)},
 			},
 		},
 		{
@@ -298,7 +298,7 @@ func TestGetMyResponses(t *testing.T) {
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
-				responseIDList:          &[]int{responseDraft.ResponseId},
+				responseIDList:          &[]int{responseIDValue(responseDraft.ResponseId)},
 				nilRespondentResponseID: &[]int{},
 			},
 		},
@@ -313,8 +313,8 @@ func TestGetMyResponses(t *testing.T) {
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
-				responseIDList:          &[]int{response0.ResponseId, response1.ResponseId, responseAnonymous.ResponseId},
-				nilRespondentResponseID: &[]int{responseAnonymous.ResponseId},
+				responseIDList:          &[]int{responseIDValue(response0.ResponseId), responseIDValue(response1.ResponseId), responseIDValue(responseAnonymous.ResponseId)},
+				nilRespondentResponseID: &[]int{responseIDValue(responseAnonymous.ResponseId)},
 			},
 		},
 		{
@@ -327,7 +327,7 @@ func TestGetMyResponses(t *testing.T) {
 			},
 			expect: expect{
 				pageMax:                 &pageOne,
-				responseIDList:          &[]int{response4.ResponseId},
+				responseIDList:          &[]int{responseIDValue(response4.ResponseId)},
 				nilRespondentResponseID: &[]int{},
 			},
 		},
@@ -382,7 +382,7 @@ func TestGetMyResponses(t *testing.T) {
 			responseIDList := []int{}
 			for _, responseList := range responseLists.ResponseGroups {
 				for _, response := range responseList.Responses {
-					responseIDList = append(responseIDList, response.ResponseId)
+					responseIDList = append(responseIDList, responseIDValue(response.ResponseId))
 				}
 			}
 			sort.Slice(*testCase.expect.responseIDList, func(i, j int) bool {
@@ -397,7 +397,7 @@ func TestGetMyResponses(t *testing.T) {
 			for _, responseList := range responseLists.ResponseGroups {
 				for _, response := range responseList.Responses {
 					if response.Respondent == nil {
-						nilRespondentResponseID = append(nilRespondentResponseID, response.ResponseId)
+						nilRespondentResponseID = append(nilRespondentResponseID, responseIDValue(response.ResponseId))
 					}
 				}
 			}
@@ -517,9 +517,9 @@ func TestGetResponse(t *testing.T) {
 		var responseID int
 		if !testCase.args.invalidResponseID {
 			if !testCase.args.isAnonymousQuestionnaire {
-				responseID = response0.ResponseId
+				responseID = responseIDValue(response0.ResponseId)
 			} else {
-				responseID = response1.ResponseId
+				responseID = responseIDValue(response1.ResponseId)
 			}
 		} else {
 			responseID = 10000
@@ -569,7 +569,7 @@ func TestGetResponse(t *testing.T) {
 			} else {
 				assertion.Equal(response0.Respondent, response.Respondent, testCase.description, "response respondent")
 			}
-			assertion.Equal(response0.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(responseIDValue(response0.ResponseId), responseIDValue(response.ResponseId), testCase.description, "response responseID")
 			assertion.Equal(response0.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
 			assertion.WithinDuration(response0.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
 		} else {
@@ -583,7 +583,7 @@ func TestGetResponse(t *testing.T) {
 			assertion.WithinDuration(response1.ModifiedAt.UTC().Truncate(time.Second), response.ModifiedAt.UTC(), time.Second, testCase.description, "response modifiedAt")
 			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
 			assertion.Nil(response.Respondent, testCase.description, "anonymous questionnaire respondent")
-			assertion.Equal(response1.ResponseId, response.ResponseId, testCase.description, "response responseID")
+			assertion.Equal(responseIDValue(response1.ResponseId), responseIDValue(response.ResponseId), testCase.description, "response responseID")
 			assertion.Equal(response1.QuestionnaireId, response.QuestionnaireId, testCase.description, "response questionnaireID")
 			assertion.WithinDuration(response1.SubmittedAt.UTC().Truncate(time.Second), response.SubmittedAt.UTC(), time.Second, testCase.description, "response submittedAt")
 		}
@@ -655,7 +655,7 @@ func TestDeleteResponse(t *testing.T) {
 
 			AddQuestionID2SampleResponseMutex.Unlock()
 
-			responseID = response.ResponseId
+			responseID = responseIDValue(response.ResponseId)
 		} else {
 			responseID = 10000
 			valid := true
@@ -1053,7 +1053,7 @@ func TestEditResponse(t *testing.T) {
 
 		var responseID int
 		if !testCase.args.invalidResponseID {
-			responseID = response.ResponseId
+			responseID = responseIDValue(response.ResponseId)
 		} else {
 			responseID = 10000
 			valid := true
@@ -1118,7 +1118,7 @@ func TestEditResponse(t *testing.T) {
 		} else {
 			assertion.Equal(response.Respondent, responseEdited.Respondent, testCase.description, "respondent")
 		}
-		assertion.Equal(response.ResponseId, responseEdited.ResponseId, testCase.description, "responseId")
+		assertion.Equal(responseIDValue(response.ResponseId), responseIDValue(responseEdited.ResponseId), testCase.description, "responseId")
 		assertion.Equal(response.IsAnonymous, responseEdited.IsAnonymous, testCase.description, "isAnonymous")
 		assertion.WithinDuration(response.SubmittedAt.UTC().Truncate(time.Second), responseEdited.SubmittedAt.UTC(), time.Second, testCase.description, "submittedAt")
 		modifiedAtDiff := time.Since(responseEdited.ModifiedAt)

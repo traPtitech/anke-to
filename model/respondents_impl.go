@@ -2,10 +2,13 @@ package model
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
-	"sort"
+	sortpkg "sort"
 	"strconv"
 	"strings"
 	"time"
@@ -64,6 +67,12 @@ type RespondentDetail struct {
 	SubmittedAt     null.Time      `json:"submitted_at,omitempty"`
 	ModifiedAt      time.Time      `json:"modified_at,omitempty"`
 	Responses       []ResponseBody `json:"body"`
+}
+
+func stableRandomOrderKey(salt string, namespace string, value interface{}) string {
+	mac := hmac.New(sha256.New, []byte(salt))
+	_, _ = fmt.Fprintf(mac, "%s:%v", namespace, value)
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 // InsertRespondent 回答の追加
@@ -317,6 +326,21 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 
 	respondents := []Respondents{}
 
+	var questionnaire Questionnaires
+	err = db.
+		Where("id = ?", questionnaireID).
+		Select("is_anonymous", "random_order_salt").
+		Take(&questionnaire).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get questionnaire: %w", err)
+	}
+	if questionnaire.IsAnonymous && sort != "" {
+		return nil, ErrInvalidSortParam
+	}
+
 	query := db.
 		Session(&gorm.Session{}).
 		Where("respondents.questionnaire_id = ?", questionnaireID).
@@ -352,11 +376,6 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		responseIDs = append(responseIDs, respondent.ResponseID)
 	}
 
-	isAnonymous, err := NewQuestionnaire().GetResponseIsAnonymousByQuestionnaireID(ctx, questionnaireID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get response is anonymous by questionnaire id: %w", err)
-	}
-
 	respondentDetails := make([]RespondentDetail, 0, len(respondents))
 	respondentDetailMap := make(map[int]*RespondentDetail, len(respondents))
 	for i, respondent := range respondents {
@@ -367,7 +386,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 			ModifiedAt:      respondent.ModifiedAt,
 		}
 
-		if !isAnonymous {
+		if !questionnaire.IsAnonymous {
 			r.TraqID = respondent.UserTraqid
 		} else {
 			r.TraqID = ""
@@ -430,6 +449,16 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 	respondentDetails, err = sortRespondentDetail(sortNum, len(questions), respondentDetails)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sort RespondentDetails: %w", err)
+	}
+	if questionnaire.IsAnonymous {
+		sortpkg.Slice(respondentDetails, func(i, j int) bool {
+			keyI := stableRandomOrderKey(questionnaire.RandomOrderSalt, "response", respondentDetails[i].ResponseID)
+			keyJ := stableRandomOrderKey(questionnaire.RandomOrderSalt, "response", respondentDetails[j].ResponseID)
+			if keyI == keyJ {
+				return respondentDetails[i].ResponseID < respondentDetails[j].ResponseID
+			}
+			return keyI < keyJ
+		})
 	}
 
 	return respondentDetails, nil
@@ -752,7 +781,7 @@ func sortRespondentDetail(sortNum int, questionNum int, respondentDetails []Resp
 		return nil, fmt.Errorf("sort param is too large: %d", sortNum)
 	}
 
-	sort.Slice(respondentDetails, func(i, j int) bool {
+	sortpkg.Slice(respondentDetails, func(i, j int) bool {
 		bodyI := respondentDetails[i].Responses[sortNumAbs-1]
 		bodyJ := respondentDetails[j].Responses[sortNumAbs-1]
 		if bodyI.QuestionType == "Number" {

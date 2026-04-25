@@ -9,6 +9,7 @@ func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v3(),
 		v3_1(),
+		v3_2(),
 	}
 }
 

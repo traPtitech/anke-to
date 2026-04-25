@@ -72,6 +72,7 @@
 | modified_at    | timestamp | NO   |     | CURRENT_TIMESTAMP |                | アンケートが更新された日時                                                                                              |
 | is_published              | boolean | NO   |     | false             |                | アンケートが公開かどうか                                                                                                |
 | is_duplicate_answer_allowed | boolean | NO   |     | false             |                | 重複回答を許可するかどうか                                                                                              |
+| random_order_salt | char(64) | NO   |     | _NULL_            |                | 匿名回答一覧の安定ランダム順に使う内部 salt                                                                              |
 
 ### respondents
 

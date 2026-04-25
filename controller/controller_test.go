@@ -31,6 +31,13 @@ var (
 	q  *Questionnaire
 )
 
+func responseIDValue(responseID *int) int {
+	if responseID == nil {
+		return 0
+	}
+	return *responseID
+}
+
 func TestMain(m *testing.M) {
 	IQuestionnaire = model.NewQuestionnaire()
 	IRespondent = model.NewRespondent()

@@ -217,6 +217,10 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 }
 
 func respondentDetail2ResponseWithMetadata(ctx echo.Context, respondentDetail model.RespondentDetail, respondent *string, isAnonymous bool) (openapi.Response, error) {
+	return respondentDetail2ResponseWithMetadataAndOptions(ctx, respondentDetail, respondent, isAnonymous, false)
+}
+
+func respondentDetail2ResponseWithMetadataAndOptions(ctx echo.Context, respondentDetail model.RespondentDetail, respondent *string, isAnonymous bool, hideResponseID bool) (openapi.Response, error) {
 	oResponseBodies := []openapi.ResponseBody{}
 	for _, r := range respondentDetail.Responses {
 		oResponseBody := openapi.ResponseBody{}
@@ -326,6 +330,10 @@ func respondentDetail2ResponseWithMetadata(ctx echo.Context, respondentDetail mo
 	if isAnonymous {
 		respondent = nil
 	}
+	responseID := &respondentDetail.ResponseID
+	if hideResponseID {
+		responseID = nil
+	}
 
 	res := openapi.Response{
 		Body:            oResponseBodies,
@@ -334,7 +342,7 @@ func respondentDetail2ResponseWithMetadata(ctx echo.Context, respondentDetail mo
 		ModifiedAt:      respondentDetail.ModifiedAt,
 		QuestionnaireId: respondentDetail.QuestionnaireID,
 		Respondent:      respondent,
-		ResponseId:      respondentDetail.ResponseID,
+		ResponseId:      responseID,
 		SubmittedAt:     respondentDetail.SubmittedAt.Time,
 	}
 
