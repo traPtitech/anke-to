@@ -445,14 +445,16 @@ func (q *Questionnaire) PostQuestionnaire(c echo.Context, params openapi.PostQue
 			}
 		}
 
-		notificationMessages = createQuestionnaireMessage(
-			questionnaireID,
-			params.Title,
-			params.Description,
-			append(allAdminUsers, adminGroupNames...),
-			responseDueDateTime,
-			append(allTargetUsers, targetGroupNames...),
-		)
+		if params.IsPublished {
+			notificationMessages = createQuestionnaireMessage(
+				questionnaireID,
+				params.Title,
+				params.Description,
+				append(allAdminUsers, adminGroupNames...),
+				responseDueDateTime,
+				append(allTargetUsers, targetGroupNames...),
+			)
+		}
 
 		if params.ResponseDueDateTime != nil && params.IsPublished {
 			dueDateTime := responseDueDateTime.Time
@@ -505,6 +507,12 @@ func (q *Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) 
 }
 
 func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
+	questionnaireBeforeEdit, targetsBeforeEdit, _, targetGroupsBeforeEdit, adminsBeforeEdit, _, adminGroupsBeforeEdit, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
+	if err != nil {
+		c.Logger().Errorf("failed to get questionnaire info before edit: %+v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info before edit")
+	}
+
 	// unable to change the questionnaire from anonymous to non-anonymous
 	isAnonymous, err := q.GetResponseIsAnonymousByQuestionnaireID(c.Request().Context(), questionnaireID)
 	if err != nil {
@@ -531,8 +539,14 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid title")
 	}
 
+	var notificationMessages []string
 	err = q.ITransaction.Do(c.Request().Context(), nil, func(ctx context.Context) error {
-		err := q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
+		allTargetUsers := targetsBeforeEdit
+		targetGroupIDs := targetGroupsBeforeEdit
+		allAdminUsers := adminsBeforeEdit
+		adminGroupIDs := adminGroupsBeforeEdit
+
+		err = q.UpdateQuestionnaire(ctx, params.Title, params.Description, responseDueDateTime, convertResponseViewableBy(params.ResponseViewableBy), questionnaireID, params.IsPublished, params.IsAnonymous, params.IsDuplicateAnswerAllowed)
 		if err != nil && !errors.Is(err, model.ErrNoRecordUpdated) {
 			c.Logger().Errorf("failed to update questionnaire: %+v", err)
 			return err
@@ -553,11 +567,12 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				c.Logger().Errorf("failed to delete target groups: %+v", err)
 				return err
 			}
-			allTargetUsers, err := rollOutUsersAndGroups((*params.Target).Users, params.Target.Groups)
+			allTargetUsers, err = rollOutUsersAndGroups((*params.Target).Users, params.Target.Groups)
 			if err != nil {
 				c.Logger().Errorf("failed to roll out users and groups: %+v", err)
 				return err
 			}
+			targetGroupIDs = params.Target.Groups
 			err = q.InsertTargets(ctx, questionnaireID, allTargetUsers)
 			if err != nil {
 				c.Logger().Errorf("failed to insert targets: %+v", err)
@@ -590,7 +605,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				c.Logger().Errorf("failed to delete administrator groups: %+v", err)
 				return err
 			}
-			allAdminUsers, err := rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
+			allAdminUsers, err = rollOutUsersAndGroups(params.Admin.Users, params.Admin.Groups)
 			if err != nil {
 				c.Logger().Errorf("failed to roll out administrators: %+v", err)
 				return err
@@ -599,6 +614,7 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 				c.Logger().Errorf("no administrators")
 				return errors.New("no administrators")
 			}
+			adminGroupIDs = params.Admin.Groups
 			err = q.InsertAdministrators(ctx, questionnaireID, allAdminUsers)
 			if err != nil {
 				c.Logger().Errorf("failed to insert administrators: %+v", err)
@@ -915,11 +931,38 @@ func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, p
 			}
 		}
 
+		if !questionnaireBeforeEdit.IsPublished && params.IsPublished {
+			targetGroupNames, err := uuid2GroupNames(targetGroupIDs)
+			if err != nil {
+				c.Logger().Errorf("failed to get target group names: %+v", err)
+				return err
+			}
+			adminGroupNames, err := uuid2GroupNames(adminGroupIDs)
+			if err != nil {
+				c.Logger().Errorf("failed to get admin group names: %+v", err)
+				return err
+			}
+			notificationMessages = createQuestionnaireMessage(
+				questionnaireID,
+				params.Title,
+				params.Description,
+				append(allAdminUsers, adminGroupNames...),
+				responseDueDateTime,
+				append(allTargetUsers, targetGroupNames...),
+			)
+		}
+
 		return nil
 	})
 	if err != nil {
 		c.Logger().Errorf("failed to update a questionnaire: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update a questionnaire")
+	}
+
+	for _, message := range notificationMessages {
+		if err := q.PostMessage(message); err != nil {
+			c.Logger().Errorf("failed to post questionnaire publication message (questionnaireID: %d): %+v", questionnaireID, err)
+		}
 	}
 
 	return nil
