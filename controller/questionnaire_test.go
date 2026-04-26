@@ -1281,6 +1281,76 @@ func TestGetQuestionnaire(t *testing.T) {
 	}
 }
 
+func TestGetQuestionnaireRespondentsWithAnonymous(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	questionnaire := sampleQuestionnaire
+	e := echo.New()
+	body, err := json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx := e.NewContext(req, rec)
+	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
+	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous.IsAnonymous = true
+	body, err = json.Marshal(questionnaireAnonymous)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireAnonymousDetail, err := q.PostQuestionnaire(ctx, questionnaireAnonymous)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponseMutex.Lock()
+	defer AddQuestionID2SampleResponseMutex.Unlock()
+	AddQuestionID2SampleResponse(questionnaireDetail.QuestionnaireId)
+	newResponse := sampleResponse
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaire/%d/responses", questionnaireDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userOne)
+	require.NoError(t, err)
+
+	AddQuestionID2SampleResponse(questionnaireAnonymousDetail.QuestionnaireId)
+	newResponse = sampleResponse
+	body, err = json.Marshal(newResponse)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaire/%d/responses", questionnaireAnonymousDetail.QuestionnaireId), bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	_, err = q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaire/%d", questionnaireDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	questionnaireDetail, err = q.GetQuestionnaire(ctx, questionnaireDetail.QuestionnaireId)
+	require.NoError(t, err)
+	assertion.Equal([]string{userOne}, questionnaireDetail.Respondents, "non-anonymous questionnaire respondents")
+
+	req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaire/%d", questionnaireAnonymousDetail.QuestionnaireId), nil)
+	rec = httptest.NewRecorder()
+	ctx = e.NewContext(req, rec)
+	questionnaireAnonymousDetail, err = q.GetQuestionnaire(ctx, questionnaireAnonymousDetail.QuestionnaireId)
+	require.NoError(t, err)
+	assertion.NotNil(questionnaireAnonymousDetail.Respondents, "anonymous questionnaire respondents should be an empty array")
+	assertion.Empty(questionnaireAnonymousDetail.Respondents, "anonymous questionnaire respondents")
+	body, err = json.Marshal(questionnaireAnonymousDetail)
+	require.NoError(t, err)
+	assertion.Contains(string(body), `"respondents":[]`, "anonymous questionnaire respondents JSON")
+}
+
 func TestEditQuestionnaire(t *testing.T) {
 	t.Parallel()
 
