@@ -2,9 +2,12 @@ package model
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,6 +44,7 @@ type Questionnaires struct {
 	IsPublished              bool                  `json:"is_published" gorm:"type:boolean;not null;default:false"`
 	IsAnonymous              bool                  `json:"is_anonymous" gorm:"type:boolean;not null;default:false"`
 	IsDuplicateAnswerAllowed bool                  `json:"is_duplicate_answer_allowed" gorm:"type:boolean;not null;default:false"`
+	RandomOrderSalt          string                `json:"-" gorm:"type:char(64);size:64;not null"`
 }
 
 // BeforeCreate Update時に自動でmodified_atを現在時刻に
@@ -48,6 +52,13 @@ func (questionnaire *Questionnaires) BeforeCreate(_ *gorm.DB) error {
 	now := time.Now()
 	questionnaire.ModifiedAt = now
 	questionnaire.CreatedAt = now
+	if questionnaire.RandomOrderSalt == "" {
+		salt, err := generateRandomOrderSalt()
+		if err != nil {
+			return err
+		}
+		questionnaire.RandomOrderSalt = salt
+	}
 
 	return nil
 }
@@ -57,6 +68,14 @@ func (questionnaire *Questionnaires) BeforeUpdate(_ *gorm.DB) error {
 	questionnaire.ModifiedAt = time.Now()
 
 	return nil
+}
+
+func generateRandomOrderSalt() (string, error) {
+	salt := make([]byte, 32)
+	if _, err := rand.Read(salt); err != nil {
+		return "", fmt.Errorf("failed to generate random order salt: %w", err)
+	}
+	return hex.EncodeToString(salt), nil
 }
 
 // QuestionnaireInfo Questionnaireにtargetかの情報追加
@@ -442,13 +461,32 @@ func (*Questionnaire) GetQuestionnaireInfo(ctx context.Context, questionnaireID 
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get administrator groups: %w", err)
 	}
 
+	type respondentRow struct {
+		ResponseID int
+		UserTraqid string
+	}
+	respondentRows := []respondentRow{}
 	err = db.
 		Session(&gorm.Session{NewDB: true}).
 		Table("respondents").
 		Where("questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL", questionnaire.ID).
-		Pluck("user_traqid", &respondents).Error
+		Select("response_id, user_traqid").
+		Find(&respondentRows).Error
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to get respondents: %w", err)
+	}
+	if questionnaire.IsAnonymous {
+		sort.Slice(respondentRows, func(i, j int) bool {
+			keyI := stableRandomOrderKey(questionnaire.RandomOrderSalt, "respondent", respondentRows[i].UserTraqid)
+			keyJ := stableRandomOrderKey(questionnaire.RandomOrderSalt, "respondent", respondentRows[j].UserTraqid)
+			if keyI == keyJ {
+				return respondentRows[i].ResponseID < respondentRows[j].ResponseID
+			}
+			return keyI < keyJ
+		})
+	}
+	for _, respondent := range respondentRows {
+		respondents = append(respondents, respondent.UserTraqid)
 	}
 
 	return &questionnaire, targets, targetUsers, targetGroups, administrators, administratorUsers, administoratorGroups, respondents, nil

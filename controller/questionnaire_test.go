@@ -2436,6 +2436,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	ctx = e.NewContext(req, rec)
 	response11, err := q.PostQuestionnaireResponse(ctx, questionnaireAnonymousDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
+	_, _ = response10, response11
 
 	AddQuestionID2SampleResponseMutex.Unlock()
 
@@ -2476,11 +2477,11 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 			expect: expect{
 				responseIDList: &[]int{
-					response00.ResponseId,
-					response01.ResponseId,
-					response02.ResponseId,
-					responseUserTwo.ResponseId,
-					response03.ResponseId,
+					responseIDValue(response00.ResponseId),
+					responseIDValue(response01.ResponseId),
+					responseIDValue(response02.ResponseId),
+					responseIDValue(responseUserTwo.ResponseId),
+					responseIDValue(response03.ResponseId),
 				},
 			},
 		},
@@ -2568,9 +2569,9 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 			expect: expect{
 				responseIDList: &[]int{
-					response00.ResponseId,
-					response01.ResponseId,
-					response02.ResponseId,
+					responseIDValue(response00.ResponseId),
+					responseIDValue(response01.ResponseId),
+					responseIDValue(response02.ResponseId),
 				},
 			},
 		},
@@ -2599,8 +2600,8 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 			expect: expect{
 				responseIDList: &[]int{
-					response02.ResponseId,
-					response03.ResponseId,
+					responseIDValue(response02.ResponseId),
+					responseIDValue(response03.ResponseId),
 				},
 			},
 		},
@@ -2612,11 +2613,19 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				questionnaireID:          questionnaireAnonymousDetail.QuestionnaireId,
 				params:                   openapi.GetQuestionnaireResponsesParams{},
 			},
-			expect: expect{
-				responseIDList: &[]int{
-					response10.ResponseId,
-					response11.ResponseId,
+		},
+		{
+			description: "anonymous questionnaire rejects sort",
+			args: args{
+				isAnonymousQuestionnaire: true,
+				userID:                   userOne,
+				questionnaireID:          questionnaireAnonymousDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					Sort: &sortSubmittedAt,
 				},
+			},
+			expect: expect{
+				isErr: true,
 			},
 		},
 	}
@@ -2706,13 +2715,20 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 		if testCase.expect.responseIDList != nil {
 			responseIDList := []int{}
 			for _, response := range responseList {
-				responseIDList = append(responseIDList, response.ResponseId)
+				responseIDList = append(responseIDList, responseIDValue(response.ResponseId))
 			}
 			sort.Slice(*testCase.expect.responseIDList, func(i, j int) bool {
 				return (*testCase.expect.responseIDList)[i] < (*testCase.expect.responseIDList)[j]
 			})
 			sort.Slice(responseIDList, func(i, j int) bool { return responseIDList[i] < responseIDList[j] })
 			assertion.Equal(*testCase.expect.responseIDList, responseIDList, testCase.description, "responseIDList")
+		}
+
+		if testCase.args.isAnonymousQuestionnaire {
+			for _, response := range responseList {
+				assertion.Nil(response.ResponseId, testCase.description, "anonymous responseID")
+				assertion.Nil(response.Respondent, testCase.description, "anonymous respondent")
+			}
 		}
 
 		if testCase.args.params.OnlyMyResponse != nil && *testCase.args.params.OnlyMyResponse {

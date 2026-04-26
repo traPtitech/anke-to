@@ -1141,6 +1141,9 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 		if errors.Is(err, model.ErrRecordNotFound) {
 			return res, echo.NewHTTPError(http.StatusNotFound, "respondent not found")
 		}
+		if errors.Is(err, model.ErrInvalidSortParam) {
+			return res, echo.NewHTTPError(http.StatusBadRequest, "sort is not allowed for anonymous questionnaire")
+		}
 		c.Logger().Errorf("failed to get respondent details: %+v", err)
 		return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to get respondent details")
 	}
@@ -1150,6 +1153,9 @@ func (q *Questionnaire) GetQuestionnaireResponses(c echo.Context, questionnaireI
 		if err != nil {
 			c.Logger().Errorf("failed to convert respondent detail to response: %+v", err)
 			return res, echo.NewHTTPError(http.StatusInternalServerError, "failed to convert respondent detail to response")
+		}
+		if response.IsAnonymous {
+			response.ResponseId = nil
 		}
 		res = append(res, response)
 	}

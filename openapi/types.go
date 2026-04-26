@@ -556,7 +556,7 @@ type Response struct {
 
 	// Respondent 回答者のtraQ ID。匿名回答の場合は返しません。
 	Respondent  *TraqId   `json:"respondent,omitempty"`
-	ResponseId  int       `json:"response_id"`
+	ResponseId  *int      `json:"response_id,omitempty"`
 	SubmittedAt time.Time `json:"submitted_at"`
 }
 
