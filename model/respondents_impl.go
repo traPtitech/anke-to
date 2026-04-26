@@ -332,7 +332,7 @@ func (*Respondent) GetRespondentDetails(ctx context.Context, questionnaireID int
 		Select("is_anonymous", "random_order_salt").
 		Take(&questionnaire).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrRecordNotFound
+		return []RespondentDetail{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get questionnaire: %w", err)
