@@ -51,6 +51,20 @@ var (
 	sampleQuestionnaire                  = openapi.PostQuestionnaireJSONRequestBody{}
 )
 
+type recordingWebhook struct {
+	messages []string
+}
+
+func (w *recordingWebhook) PostMessage(message string) error {
+	w.messages = append(w.messages, message)
+	return nil
+}
+
+func newTestQuestionnaireWithWebhook(webhook *recordingWebhook) *Questionnaire {
+	response := NewResponse(IQuestionnaire, IRespondent, IResponse, ITarget, IQuestion, IOption, IValidation, IScaleLabel, ITransaction)
+	return NewQuestionnaire(IQuestionnaire, ITarget, ITargetGroup, ITargetUser, IAdministrator, IAdministratorGroup, IAdministratorUser, IQuestion, IOption, IScaleLabel, IValidation, ITransaction, IRespondent, webhook, response, NewReminder())
+}
+
 func setupSampleQuestionnaire() {
 	if sampleQuestionnaire.Title != "" {
 		return
@@ -1188,6 +1202,106 @@ func TestPostQuestionnaire(t *testing.T) {
 			assertion.Equal(*testCase.expect.hasReminder, remindStatus, testCase.description, "reminder status")
 		}
 	}
+}
+
+func TestQuestionnairePublicationNotification(t *testing.T) {
+	assertion := assert.New(t)
+
+	post := func(t *testing.T, questionnaireController *Questionnaire, params openapi.PostQuestionnaireJSONRequestBody) openapi.QuestionnaireDetail {
+		t.Helper()
+
+		e := echo.New()
+		body, err := json.Marshal(params)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		detail, err := questionnaireController.PostQuestionnaire(ctx, params)
+		require.NoError(t, err)
+		return detail
+	}
+
+	edit := func(t *testing.T, questionnaireController *Questionnaire, detail openapi.QuestionnaireDetail, params openapi.PostQuestionnaireJSONRequestBody) {
+		t.Helper()
+
+		editParams := postQuestionnaireParams2EditQuestionnaireParams(detail.QuestionnaireId, detail.Questions, params)
+		e := echo.New()
+		body, err := json.Marshal(editParams)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/questionnaires/%d", detail.QuestionnaireId), bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		ctx := e.NewContext(req, rec)
+		err = questionnaireController.EditQuestionnaire(ctx, detail.QuestionnaireId, editParams)
+		require.NoError(t, err)
+	}
+
+	t.Run("not published on create does not notify", func(t *testing.T) {
+		webhook := &recordingWebhook{}
+		questionnaireController := newTestQuestionnaireWithWebhook(webhook)
+		params := sampleQuestionnaire
+		params.IsPublished = false
+
+		post(t, questionnaireController, params)
+
+		assertion.Len(webhook.messages, 0)
+	})
+
+	t.Run("published on create notifies", func(t *testing.T) {
+		webhook := &recordingWebhook{}
+		questionnaireController := newTestQuestionnaireWithWebhook(webhook)
+		params := sampleQuestionnaire
+		params.IsPublished = true
+
+		post(t, questionnaireController, params)
+
+		assertion.Len(webhook.messages, 1)
+	})
+
+	t.Run("draft to published notifies", func(t *testing.T) {
+		webhook := &recordingWebhook{}
+		questionnaireController := newTestQuestionnaireWithWebhook(webhook)
+		params := sampleQuestionnaire
+		params.IsPublished = false
+		detail := post(t, questionnaireController, params)
+
+		params.IsPublished = true
+		edit(t, questionnaireController, detail, params)
+
+		assertion.Len(webhook.messages, 1)
+	})
+
+	t.Run("published to published edit does not notify", func(t *testing.T) {
+		webhook := &recordingWebhook{}
+		questionnaireController := newTestQuestionnaireWithWebhook(webhook)
+		params := sampleQuestionnaire
+		params.IsPublished = true
+		detail := post(t, questionnaireController, params)
+		webhook.messages = nil
+
+		params.Description = "公開状態のまま編集"
+		edit(t, questionnaireController, detail, params)
+
+		assertion.Len(webhook.messages, 0)
+	})
+
+	t.Run("republish notifies each time", func(t *testing.T) {
+		webhook := &recordingWebhook{}
+		questionnaireController := newTestQuestionnaireWithWebhook(webhook)
+		params := sampleQuestionnaire
+		params.IsPublished = false
+		detail := post(t, questionnaireController, params)
+
+		params.IsPublished = true
+		edit(t, questionnaireController, detail, params)
+		params.IsPublished = false
+		edit(t, questionnaireController, detail, params)
+		params.IsPublished = true
+		edit(t, questionnaireController, detail, params)
+
+		assertion.Len(webhook.messages, 2)
+	})
 }
 
 func TestGetQuestionnaire(t *testing.T) {
