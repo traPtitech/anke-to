@@ -41,6 +41,7 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.9.0 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
+	go.mongodb.org/mongo-driver v1.17.4 // indirect
 )
 
 require (
@@ -65,7 +66,7 @@ require (
 )
 
 require (
-	github.com/deckarep/golang-set/v2 v2.8.0
+	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.5
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/traPtitech/go-traq v0.0.0-20240420012203-0152d96098b0
