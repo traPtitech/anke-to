@@ -509,6 +509,9 @@ func (q *Questionnaire) GetQuestionnaire(ctx echo.Context, questionnaireID int) 
 func (q *Questionnaire) EditQuestionnaire(c echo.Context, questionnaireID int, params openapi.EditQuestionnaireJSONRequestBody) error {
 	questionnaireBeforeEdit, targetsBeforeEdit, _, targetGroupsBeforeEdit, adminsBeforeEdit, _, adminGroupsBeforeEdit, _, err := q.GetQuestionnaireInfo(c.Request().Context(), questionnaireID)
 	if err != nil {
+		if errors.Is(err, model.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "questionnaire not found")
+		}
 		c.Logger().Errorf("failed to get questionnaire info before edit: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire info before edit")
 	}
