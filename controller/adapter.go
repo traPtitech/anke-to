@@ -195,6 +195,9 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 	if !questionnaires.ResTimeLimit.Valid {
 		responseDueDateTime = nil
 	}
+	if questionnaires.IsAnonymous {
+		respondents = []string{}
+	}
 	res := openapi.QuestionnaireDetail{
 		Admin:                    createUsersAndGroups(adminUsers, adminGroups),
 		Admins:                   admins,

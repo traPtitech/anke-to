@@ -633,7 +633,7 @@ components:
               items:
                 $ref: "#/components/schemas/TraqId"
               description: |
-                回答者の一覧。匿名アンケートでも返る。
+                回答者の一覧。匿名アンケートの場合は空配列。
             targets:
               type: array
               items:
