@@ -48,8 +48,8 @@ func NewReminder() *Reminder {
 }
 
 var (
-	reminderTimingMinutes = []int{5, 30, 60, 1440, 10080}
-	reminderTimingStrings = []string{"5分", "30分", "1時間", "1日", "1週間"}
+	reminderTimingMinutes = []int{10080, 7200, 4320, 1440, 720, 360, 60}
+	reminderTimingStrings = []string{"1週間", "5日", "3日", "1日", "12時間", "6時間", "1時間"}
 )
 
 func (re *Reminder) ReminderInit() {
