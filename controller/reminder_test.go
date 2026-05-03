@@ -82,13 +82,13 @@ func TestPushReminder(t *testing.T) {
 			},
 		},
 		{
-			description: "4 reminders",
+			description: "3 reminders",
 			args: args{
 				questionnaireID: 1,
 				time:            time.Now().Add(25 * time.Hour),
 			},
 			expect: expect{
-				num: 4,
+				num: 3,
 			},
 		},
 		{
@@ -150,6 +150,46 @@ func TestPushReminder(t *testing.T) {
 	}
 }
 
+func TestReminderTimestamp(t *testing.T) {
+	t.Parallel()
+
+	jst := time.FixedZone("JST", 9*60*60)
+
+	testCases := []struct {
+		description   string
+		limit         time.Time
+		timingMinutes int
+		expected      time.Time
+	}{
+		{
+			description:   "one week reminder before late night deadline is sent at 18 on nominal date",
+			limit:         time.Date(2026, 5, 10, 23, 59, 0, 0, jst),
+			timingMinutes: 10080,
+			expected:      time.Date(2026, 5, 3, 18, 0, 0, 0, jst),
+		},
+		{
+			description:   "one day reminder before noon deadline is sent at previous 18",
+			limit:         time.Date(2026, 5, 10, 12, 0, 0, 0, jst),
+			timingMinutes: 1440,
+			expected:      time.Date(2026, 5, 8, 18, 0, 0, 0, jst),
+		},
+		{
+			description:   "hour reminder keeps exact relative time",
+			limit:         time.Date(2026, 5, 10, 23, 59, 0, 0, jst),
+			timingMinutes: 60,
+			expected:      time.Date(2026, 5, 10, 22, 59, 0, 0, jst),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, testCase.expected, reminderTimestamp(testCase.limit, testCase.timingMinutes))
+		})
+	}
+}
+
 func TestDeleteReminder(t *testing.T) {
 	t.Parallel()
 
@@ -176,7 +216,7 @@ func TestDeleteReminder(t *testing.T) {
 				questionnaireID: 1,
 			},
 			expect: expect{
-				num: 4,
+				num: 3,
 			},
 		},
 		{
