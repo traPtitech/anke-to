@@ -2569,7 +2569,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "administrator cannot view other respondents draft responses",
+			description: "administrator draft response list returns only my draft responses",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2579,11 +2579,13 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 			expect: expect{
-				isErr: true,
+				responseIDList: &[]int{
+					response02.ResponseId,
+				},
 			},
 		},
 		{
-			description: "non administrator cannot view other respondents draft responses",
+			description: "non administrator draft response list returns only my draft responses",
 			args: args{
 				userID:          userTwo,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2593,7 +2595,9 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				},
 			},
 			expect: expect{
-				isErr: true,
+				responseIDList: &[]int{
+					response03.ResponseId,
+				},
 			},
 		},
 		{
