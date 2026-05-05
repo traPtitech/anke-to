@@ -106,7 +106,7 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 	for i := range reminderTimingMinutes {
 		timing := reminderTimingMinutes[i]
 		timingStrings := reminderTimingStrings[i]
-		remindTimeStamp := limit.Add(-time.Duration(timing) * time.Minute)
+		remindTimeStamp := reminderTimestamp(*limit, timing)
 		if remindTimeStamp.After(time.Now()) {
 			re.push(&Job{
 				Timestamp:       remindTimeStamp,
@@ -122,6 +122,28 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 		}
 	}
 	return nil
+}
+
+func reminderTimestamp(limit time.Time, timingMinutes int) time.Time {
+	remindTimeStamp := limit.Add(-time.Duration(timingMinutes) * time.Minute)
+	if timingMinutes < 24*60 {
+		return remindTimeStamp
+	}
+
+	remindDateAt18 := time.Date(
+		remindTimeStamp.Year(),
+		remindTimeStamp.Month(),
+		remindTimeStamp.Day(),
+		18,
+		0,
+		0,
+		0,
+		remindTimeStamp.Location(),
+	)
+	if remindDateAt18.Before(remindTimeStamp) {
+		return remindDateAt18
+	}
+	return remindDateAt18.AddDate(0, 0, -1)
 }
 
 func (re *Reminder) DeleteReminder(questionnaireID int) error {

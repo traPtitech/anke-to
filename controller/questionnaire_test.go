@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -49,6 +50,7 @@ var (
 	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{}
 	sampleQeustionsettingsScale          = openapi.NewQuestion{}
 	sampleQuestionnaire                  = openapi.PostQuestionnaireJSONRequestBody{}
+	sampleQuestionnaireOnce              sync.Once
 )
 
 type recordingWebhook struct {
@@ -66,115 +68,131 @@ func newTestQuestionnaireWithWebhook(webhook *recordingWebhook) *Questionnaire {
 }
 
 func setupSampleQuestionnaire() {
-	if sampleQuestionnaire.Title != "" {
-		return
-	}
-	sampleQuestionSettingsText = openapi.NewQuestion{
-		Title:      "質問（テキスト）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsTextMaxLength := 100
-	err := sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
-		MaxLength:    &sampleQuestionSettingsTextMaxLength,
-		QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
+	sampleQuestionnaireOnce.Do(func() {
+		sampleQuestionSettingsText = openapi.NewQuestion{
+			Title:      "質問（テキスト）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsTextMaxLength := 100
+		err := sampleQuestionSettingsText.FromQuestionSettingsText(openapi.QuestionSettingsText{
+			MaxLength:    &sampleQuestionSettingsTextMaxLength,
+			QuestionType: openapi.QuestionSettingsTextQuestionTypeText,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsText: %v", err))
+		}
+		sampleQuestionSettingsTextLong = openapi.NewQuestion{
+			Title:      "質問（ロングテキスト）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsTextLongMaxLength := 500
+		err = sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
+			MaxLength:    &sampleQuestionSettingsTextLongMaxLength,
+			QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsTextLong: %v", err))
+		}
+		sampleQuestionSettingsNumber = openapi.NewQuestion{
+			Title:      "質問（数値）",
+			IsRequired: true,
+		}
+		sampleQuestionSettingsNumberMaxValue := 100.5
+		sampleQuestionSettingsNumberMinValue := 0.5
+		err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
+			MaxValue:     &sampleQuestionSettingsNumberMaxValue,
+			MinValue:     &sampleQuestionSettingsNumberMinValue,
+			QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsNumber: %v", err))
+		}
+		sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
+			Title:      "質問（単一選択）",
+			IsRequired: true,
+		}
+		err = sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
+			Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
+			QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsSingleChoice: %v", err))
+		}
+		sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
+			Title:      "質問（複数選択）",
+			IsRequired: true,
+		}
+		err = sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
+			Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
+			QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQuestionSettingsMultipleChoice: %v", err))
+		}
+		sampleQeustionsettingsScale = openapi.NewQuestion{
+			Title:      "質問（スケール）",
+			IsRequired: true,
+		}
+		sampleQeustionsettingsScaleMaxLabel := "最大値"
+		sampleQeustionsettingsScaleMinLabel := "最小値"
+		err = sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
+			MaxLabel:     &sampleQeustionsettingsScaleMaxLabel,
+			MaxValue:     10,
+			MinLabel:     &sampleQeustionsettingsScaleMinLabel,
+			MinValue:     1,
+			QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed to setup sampleQeustionsettingsScale: %v", err))
+		}
+
+		sampleAdmin = openapi.UsersAndGroups{
+			Users:  []string{userOne},
+			Groups: []uuid.UUID{},
+		}
+
+		sampleTarget = openapi.UsersAndGroups{
+			Users:  []string{userThree},
+			Groups: []uuid.UUID{},
+		}
+
+		sampleQuestionnaire = openapi.PostQuestionnaireJSONRequestBody{
+			Admin:                    sampleAdmin,
+			Description:              "第1回集会らん☆ぷろ参加者募集",
+			IsDuplicateAnswerAllowed: true,
+			IsAnonymous:              false,
+			IsPublished:              true,
+			Questions: []openapi.NewQuestion{
+				sampleQuestionSettingsText,
+				sampleQuestionSettingsTextLong,
+				sampleQuestionSettingsNumber,
+				sampleQuestionSettingsSingleChoice,
+				sampleQuestionSettingsMultipleChoice,
+				sampleQeustionsettingsScale,
+			},
+			ResponseDueDateTime: nil,
+			ResponseViewableBy:  "anyone",
+			Target:              sampleTarget,
+			Title:               "第1回集会らん☆ぷろ募集アンケート",
+		}
 	})
+}
+
+func newSampleQuestionnaire() openapi.PostQuestionnaireJSONRequestBody {
+	setupSampleQuestionnaire()
+
+	// Deep-copy test fixtures so parallel tests do not share slice-backed state.
+	b, err := json.Marshal(sampleQuestionnaire)
 	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsText: %v", err))
-	}
-	sampleQuestionSettingsTextLong = openapi.NewQuestion{
-		Title:      "質問（ロングテキスト）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsTextLongMaxLength := 500
-	err = sampleQuestionSettingsTextLong.FromQuestionSettingsTextLong(openapi.QuestionSettingsTextLong{
-		MaxLength:    &sampleQuestionSettingsTextLongMaxLength,
-		QuestionType: openapi.QuestionSettingsTextLongQuestionTypeTextLong,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsTextLong: %v", err))
-	}
-	sampleQuestionSettingsNumber = openapi.NewQuestion{
-		Title:      "質問（数値）",
-		IsRequired: true,
-	}
-	sampleQuestionSettingsNumberMaxValue := 100.5
-	sampleQuestionSettingsNumberMinValue := 0.5
-	err = sampleQuestionSettingsNumber.FromQuestionSettingsNumber(openapi.QuestionSettingsNumber{
-		MaxValue:     &sampleQuestionSettingsNumberMaxValue,
-		MinValue:     &sampleQuestionSettingsNumberMinValue,
-		QuestionType: openapi.QuestionSettingsNumberQuestionTypeNumber,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsNumber: %v", err))
-	}
-	sampleQuestionSettingsSingleChoice = openapi.NewQuestion{
-		Title:      "質問（単一選択）",
-		IsRequired: true,
-	}
-	err = sampleQuestionSettingsSingleChoice.FromQuestionSettingsSingleChoice(openapi.QuestionSettingsSingleChoice{
-		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
-		QuestionType: openapi.QuestionSettingsSingleChoiceQuestionTypeSingleChoice,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsSingleChoice: %v", err))
-	}
-	sampleQuestionSettingsMultipleChoice = openapi.NewQuestion{
-		Title:      "質問（複数選択）",
-		IsRequired: true,
-	}
-	err = sampleQuestionSettingsMultipleChoice.FromQuestionSettingsMultipleChoice(openapi.QuestionSettingsMultipleChoice{
-		Options:      []string{"選択肢A", "選択肢B", "選択肢C", "選択肢D"},
-		QuestionType: openapi.QuestionSettingsMultipleChoiceQuestionTypeMultipleChoice,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQuestionSettingsMultipleChoice: %v", err))
-	}
-	sampleQeustionsettingsScale = openapi.NewQuestion{
-		Title:      "質問（スケール）",
-		IsRequired: true,
-	}
-	sampleQeustionsettingsScaleMaxLabel := "最大値"
-	sampleQeustionsettingsScaleMinLabel := "最小値"
-	err = sampleQeustionsettingsScale.FromQuestionSettingsScale(openapi.QuestionSettingsScale{
-		MaxLabel:     &sampleQeustionsettingsScaleMaxLabel,
-		MaxValue:     10,
-		MinLabel:     &sampleQeustionsettingsScaleMinLabel,
-		MinValue:     1,
-		QuestionType: openapi.QuestionSettingsScaleQuestionTypeScale,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to setup sampleQeustionsettingsScale: %v", err))
+		panic(fmt.Sprintf("failed to marshal sampleQuestionnaire: %v", err))
 	}
 
-	sampleAdmin = openapi.UsersAndGroups{
-		Users:  []string{userOne},
-		Groups: []uuid.UUID{},
+	var questionnaire openapi.PostQuestionnaireJSONRequestBody
+	if err := json.Unmarshal(b, &questionnaire); err != nil {
+		panic(fmt.Sprintf("failed to unmarshal sampleQuestionnaire: %v", err))
 	}
 
-	sampleTarget = openapi.UsersAndGroups{
-		Users:  []string{userThree},
-		Groups: []uuid.UUID{},
-	}
-
-	sampleQuestionnaire = openapi.PostQuestionnaireJSONRequestBody{
-		Admin:                    sampleAdmin,
-		Description:              "第1回集会らん☆ぷろ参加者募集",
-		IsDuplicateAnswerAllowed: true,
-		IsAnonymous:              false,
-		IsPublished:              true,
-		Questions: []openapi.NewQuestion{
-			sampleQuestionSettingsText,
-			sampleQuestionSettingsTextLong,
-			sampleQuestionSettingsNumber,
-			sampleQuestionSettingsSingleChoice,
-			sampleQuestionSettingsMultipleChoice,
-			sampleQeustionsettingsScale,
-		},
-		ResponseDueDateTime: nil,
-		ResponseViewableBy:  "anyone",
-		Target:              sampleTarget,
-		Title:               "第1回集会らん☆ぷろ募集アンケート",
-	}
+	return questionnaire
 }
 
 func newQuestion2Question(questionID *int, createdAt *time.Time, newQuestion openapi.NewQuestion) (openapi.Question, error) {
@@ -229,8 +247,9 @@ func TestGetQuestionnaires(t *testing.T) {
 
 	uniqueSearchTitle := fmt.Sprintf("search test %d", time.Now().UnixNano())
 	specialTargetUser := fmt.Sprintf("stgq%d", time.Now().UnixNano())
+	draftAdminUser := fmt.Sprintf("draft-admin-%d", time.Now().UnixNano())
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -241,7 +260,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	_, err = q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -253,7 +272,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted1, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = uniqueSearchTitle
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -265,7 +284,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted2, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Title = "abcde"
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -277,7 +296,7 @@ func TestGetQuestionnaires(t *testing.T) {
 	_, err = q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.Target.Users = []string{specialTargetUser}
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
@@ -289,16 +308,31 @@ func TestGetQuestionnaires(t *testing.T) {
 	questionnairePosted4, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
+	questionnaire = newSampleQuestionnaire()
+	questionnaire.Title = "draft questionnaire"
+	questionnaire.IsPublished = false
+	questionnaire.Admin.Users = []string{draftAdminUser}
+	e = echo.New()
+	body, err = json.Marshal(questionnaire)
+	require.NoError(t, err)
+	req = httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+	rec = httptest.NewRecorder()
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	ctx = e.NewContext(req, rec)
+	questionnaireDraftByUserOne, err := q.PostQuestionnaire(ctx, questionnaire)
+	require.NoError(t, err)
+
 	type args struct {
 		userID string
 		params openapi.GetQuestionnairesParams
 	}
 	type expect struct {
-		isErr               bool
-		err                 error
-		questionnaireIDList *[]int
-		totalRecords        *int
-		pageMax             *int
+		isErr                   bool
+		err                     error
+		questionnaireIDList     *[]int
+		questionnaireIDContains *[]int
+		totalRecords            *int
+		pageMax                 *int
 	}
 	type test struct {
 		description string
@@ -521,6 +555,32 @@ func TestGetQuestionnaires(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "default list includes my draft questionnaire",
+			args: args{
+				userID: draftAdminUser,
+				params: openapi.GetQuestionnairesParams{},
+			},
+			expect: expect{
+				questionnaireIDContains: &[]int{
+					questionnaireDraftByUserOne.QuestionnaireId,
+				},
+			},
+		},
+		{
+			description: "only administrated by me includes my draft questionnaire",
+			args: args{
+				userID: draftAdminUser,
+				params: openapi.GetQuestionnairesParams{
+					OnlyAdministratedByMe: &constTrue,
+				},
+			},
+			expect: expect{
+				questionnaireIDList: &[]int{
+					questionnaireDraftByUserOne.QuestionnaireId,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -628,6 +688,15 @@ func TestGetQuestionnaires(t *testing.T) {
 			sort.Slice(questionnaireIDList, func(i, j int) bool { return questionnaireIDList[i] < questionnaireIDList[j] })
 			assertion.Equal(*testCase.expect.questionnaireIDList, questionnaireIDList, testCase.description, "questionnaireIDList")
 		}
+		if testCase.expect.questionnaireIDContains != nil {
+			questionnaireIDList := []int{}
+			for _, questionnairSummary := range questionnaireList.Questionnaires {
+				questionnaireIDList = append(questionnaireIDList, questionnairSummary.QuestionnaireId)
+			}
+			for _, questionnaireID := range *testCase.expect.questionnaireIDContains {
+				assertion.Contains(questionnaireIDList, questionnaireID, testCase.description, "questionnaireIDContains")
+			}
+		}
 		if testCase.expect.totalRecords != nil {
 			assertion.Equal(*testCase.expect.totalRecords, questionnaireList.TotalRecords, testCase.description, "totalRecords")
 		}
@@ -715,7 +784,7 @@ func TestPostQuestionnaire(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				params: sampleQuestionnaire,
+				params: newSampleQuestionnaire(),
 			},
 		},
 		{
@@ -1309,7 +1378,7 @@ func TestGetQuestionnaire(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -1525,21 +1594,21 @@ func TestEditQuestionnaire(t *testing.T) {
 		{
 			description: "valid",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{false, false, false, false, false, false},
 			},
 		},
 		{
 			description: "valid new question",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{true, true, true, true, true, true},
 			},
 		},
 		{
 			description: "valid some new question",
 			args: args{
-				params:        sampleQuestionnaire,
+				params:        newSampleQuestionnaire(),
 				isNewQuestion: []bool{true, false, true, false, true, false},
 			},
 		},
@@ -1592,7 +1661,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			description: "invalid question id",
 			args: args{
 				invalidQuestionID: true,
-				params:            sampleQuestionnaire,
+				params:            newSampleQuestionnaire(),
 				isNewQuestion:     []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
@@ -1603,7 +1672,7 @@ func TestEditQuestionnaire(t *testing.T) {
 			description: "invalid anonymous to not anonymous",
 			args: args{
 				isAnonymousToNotAnonymous: true,
-				params:                    sampleQuestionnaire,
+				params:                    newSampleQuestionnaire(),
 				isNewQuestion:             []bool{false, false, false, false, false, false},
 			},
 			expect: expect{
@@ -1976,7 +2045,7 @@ func TestEditQuestionnaire(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		questionnaire := sampleQuestionnaire
+		questionnaire := newSampleQuestionnaire()
 		if testCase.args.isAnonymousToNotAnonymous {
 			questionnaire.IsAnonymous = true
 		}
@@ -2156,7 +2225,7 @@ func TestDeleteQuestionnaire(t *testing.T) {
 	for _, testCase := range testCases {
 		var questionnaireID int
 		if !testCase.args.invalidQuestionnaireID {
-			questionnaire := sampleQuestionnaire
+			questionnaire := newSampleQuestionnaire()
 			e := echo.New()
 			body, err := json.Marshal(questionnaire)
 			require.NoError(t, err)
@@ -2214,7 +2283,7 @@ func TestDeleteQuestionnaireWithResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2345,7 +2414,7 @@ func TestDeleteQuestionnaireWithEmptyDraft(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2382,7 +2451,7 @@ func TestGetQuestionnaireMyRemindStatus(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2428,7 +2497,7 @@ func TestEditQuestionnaireMyRemindStatus(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2462,7 +2531,7 @@ func TestEditQuestionnaireMyRemindStatusPersistsExplicitSubscriptionAfterTargetR
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	questionnaire.Target = openapi.UsersAndGroups{
 		Users:  []string{userThree, userFour},
 		Groups: []uuid.UUID{},
@@ -2513,7 +2582,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 
 	assertion := assert.New(t)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
 	require.NoError(t, err)
@@ -2585,7 +2654,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 	response03, err := q.PostQuestionnaireResponse(ctx, questionnaireDetail.QuestionnaireId, newResponse, userTwo)
 	require.NoError(t, err)
 
-	questionnaireAnonymous := sampleQuestionnaire
+	questionnaireAnonymous := newSampleQuestionnaire()
 	questionnaireAnonymous.IsAnonymous = true
 	e = echo.New()
 	body, err = json.Marshal(questionnaireAnonymous)
@@ -2662,9 +2731,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 				responseIDList: &[]int{
 					response00.ResponseId,
 					response01.ResponseId,
-					response02.ResponseId,
 					responseUserTwo.ResponseId,
-					response03.ResponseId,
 				},
 			},
 		},
@@ -2772,7 +2839,7 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			},
 		},
 		{
-			description: "isDraft true does not force only my response",
+			description: "administrator draft response list returns only my draft responses",
 			args: args{
 				userID:          userOne,
 				questionnaireID: questionnaireDetail.QuestionnaireId,
@@ -2784,6 +2851,52 @@ func TestGetQuestionnaireResponses(t *testing.T) {
 			expect: expect{
 				responseIDList: &[]int{
 					response02.ResponseId,
+				},
+			},
+		},
+		{
+			description: "non administrator draft response list returns only my draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constFalse,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				responseIDList: &[]int{
+					response03.ResponseId,
+				},
+			},
+		},
+		{
+			description: "non administrator default response list excludes draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params:          openapi.GetQuestionnaireResponsesParams{},
+			},
+			expect: expect{
+				responseIDList: &[]int{
+					response00.ResponseId,
+					response01.ResponseId,
+					responseUserTwo.ResponseId,
+				},
+			},
+		},
+		{
+			description: "non administrator can still view only my draft responses",
+			args: args{
+				userID:          userTwo,
+				questionnaireID: questionnaireDetail.QuestionnaireId,
+				params: openapi.GetQuestionnaireResponsesParams{
+					OnlyMyResponse: &constTrue,
+					IsDraft:        &constTrue,
+				},
+			},
+			expect: expect{
+				responseIDList: &[]int{
 					response03.ResponseId,
 				},
 			},
@@ -2924,7 +3037,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 
 	responseDueDateTimePlus := time.Now().Add(24 * time.Hour)
 
-	questionnaire := sampleQuestionnaire
+	questionnaire := newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	e := echo.New()
 	body, err := json.Marshal(questionnaire)
@@ -2936,7 +3049,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetail, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	questionnaire.IsAnonymous = true
 	e = echo.New()
@@ -2949,7 +3062,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetailAnonymous, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	questionnaire.ResponseDueDateTime = &responseDueDateTimePlus
 	questionnaire.IsDuplicateAnswerAllowed = false
 	e = echo.New()
@@ -2962,7 +3075,7 @@ func TestPostQuestionnaireResponse(t *testing.T) {
 	questionnaireDetailNoMultipleResponse, err := q.PostQuestionnaire(ctx, questionnaire)
 	require.NoError(t, err)
 
-	questionnaire = sampleQuestionnaire
+	questionnaire = newSampleQuestionnaire()
 	e = echo.New()
 	body, err = json.Marshal(questionnaire)
 	require.NoError(t, err)
