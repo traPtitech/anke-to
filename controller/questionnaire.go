@@ -144,6 +144,13 @@ func (q *Questionnaire) GetQuestionnaires(ctx echo.Context, userID string, param
 	if isDraft != nil && *isDraft {
 		onlyAdministratedByMe = true
 	}
+
+	if !onlyAdministratedByMe && isDraft == nil {
+		// When not specifically fetching drafts and onlyAdministratedByMe is false, exclude them from the list
+		v := false
+		isDraft = &v
+	}
+
 	countOnly := params.CountOnly != nil && *params.CountOnly
 
 	questionnaireList, totalRecords, pageMax, err := q.IQuestionnaire.GetQuestionnaires(ctx.Request().Context(), userID, sort, search, pageNum, onlyTargetingMe, onlyAdministratedByMe, notOverDue, hasMyResponse, hasMyDraft, isDraft, countOnly)
