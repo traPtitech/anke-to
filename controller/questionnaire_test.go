@@ -331,6 +331,7 @@ func TestGetQuestionnaires(t *testing.T) {
 		err                     error
 		questionnaireIDList     *[]int
 		questionnaireIDContains *[]int
+		questionnaireIDExcludes *[]int
 		totalRecords            *int
 		pageMax                 *int
 	}
@@ -556,13 +557,13 @@ func TestGetQuestionnaires(t *testing.T) {
 			},
 		},
 		{
-			description: "default list includes my draft questionnaire",
+			description: "default list excludes my draft questionnaire",
 			args: args{
 				userID: draftAdminUser,
 				params: openapi.GetQuestionnairesParams{},
 			},
 			expect: expect{
-				questionnaireIDContains: &[]int{
+				questionnaireIDExcludes: &[]int{
 					questionnaireDraftByUserOne.QuestionnaireId,
 				},
 			},
@@ -695,6 +696,15 @@ func TestGetQuestionnaires(t *testing.T) {
 			}
 			for _, questionnaireID := range *testCase.expect.questionnaireIDContains {
 				assertion.Contains(questionnaireIDList, questionnaireID, testCase.description, "questionnaireIDContains")
+			}
+		}
+		if testCase.expect.questionnaireIDExcludes != nil {
+			questionnaireIDList := []int{}
+			for _, questionnairSummary := range questionnaireList.Questionnaires {
+				questionnaireIDList = append(questionnaireIDList, questionnairSummary.QuestionnaireId)
+			}
+			for _, questionnaireID := range *testCase.expect.questionnaireIDExcludes {
+				assertion.NotContains(questionnaireIDList, questionnaireID, testCase.description, "questionnaireIDExcludes")
 			}
 		}
 		if testCase.expect.totalRecords != nil {
