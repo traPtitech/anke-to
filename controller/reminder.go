@@ -6,9 +6,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-	// Embed the timezone database so time.LoadLocation("Asia/Tokyo") works
-	// even on minimal runtime images without system zoneinfo.
-	_ "time/tzdata"
 
 	"github.com/google/btree"
 	"github.com/traPtitech/anke-to/model"
