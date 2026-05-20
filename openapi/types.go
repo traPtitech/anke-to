@@ -403,6 +403,11 @@ type QuestionnaireDetail struct {
 	QuestionnaireId int        `json:"questionnaire_id"`
 	Questions       []Question `json:"questions"`
 
+	// RespondentCount 回答した人数（ユニークな回答者数）。匿名アンケートでも実際の人数を返す。
+	// 重複回答が許可されている場合でも、同一ユーザーは1人として数える。
+	// （respondents 配列は匿名時に空になるため、人数はこちらを参照する。）
+	RespondentCount *int `json:"respondent_count,omitempty"`
+
 	// Respondents 回答者の一覧。匿名アンケートの場合は空配列。
 	Respondents []TraqId `json:"respondents"`
 

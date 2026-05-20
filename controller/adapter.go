@@ -195,6 +195,12 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 	if !questionnaires.ResTimeLimit.Valid {
 		responseDueDateTime = nil
 	}
+	uniqueRespondents := make(map[string]struct{}, len(respondents))
+	for _, r := range respondents {
+		uniqueRespondents[r] = struct{}{}
+	}
+	respondentCount := len(uniqueRespondents)
+
 	if questionnaires.IsAnonymous {
 		respondents = []string{}
 	}
@@ -210,6 +216,7 @@ func questionnaire2QuestionnaireDetail(questionnaires model.Questionnaires, admi
 		QuestionnaireId:          questionnaires.ID,
 		Questions:                questionsConverted,
 		Respondents:              respondents,
+		RespondentCount:          &respondentCount,
 		ResponseDueDateTime:      responseDueDateTime,
 		ResponseViewableBy:       convertResSharedTo(questionnaires.ResSharedTo),
 		Target:                   createUsersAndGroups(targetUsers, targetGroups),
