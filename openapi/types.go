@@ -411,6 +411,11 @@ type QuestionnaireDetail struct {
 	// Respondents 回答者の一覧。匿名アンケートの場合は空配列。
 	Respondents []TraqId `json:"respondents"`
 
+	// ResponseCount 回答（提出）の総数。匿名アンケートでも実際の数を返す。
+	// 重複回答が許可されている場合は、同一ユーザーが複数回提出した回答もすべて数える。
+	// 重複が許可されていない場合は respondent_count と一致する。
+	ResponseCount *int `json:"response_count,omitempty"`
+
 	// ResponseDueDateTime 回答期限。この日時を過ぎたら回答できなくなる。nullの場合は回答期限なし。
 	ResponseDueDateTime *time.Time `json:"response_due_date_time,omitempty"`
 
