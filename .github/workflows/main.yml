@@ -43,14 +43,15 @@ jobs:
           if ! git diff --quiet -- "${files[@]}"; then
             git add "${files[@]}"
             git commit -m "chore: regenerate generated files"
-            git push origin HEAD:${{ github.head_ref }}
-            gh workflow run main.yml --ref "${{ github.head_ref }}"
+            git push origin "HEAD:${HEAD_REF}"
+            gh workflow run main.yml --ref "${HEAD_REF}"
             echo "committed=true" >> "$GITHUB_OUTPUT"
           else
             echo "committed=false" >> "$GITHUB_OUTPUT"
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
       - name: Verify generated files are committed
         if: github.event_name != 'pull_request' || github.actor == 'github-actions[bot]' || github.event.pull_request.head.repo.full_name != github.repository
         run: |
