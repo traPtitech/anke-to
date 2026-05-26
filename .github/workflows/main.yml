@@ -6,6 +6,7 @@ on:
       - "main"
       - "develop"
   pull_request:
+  workflow_dispatch:
 
 env:
   TZ: Asia/Tokyo
@@ -15,7 +16,10 @@ jobs:
     name: Generate files
     runs-on: ubuntu-24.04
     permissions:
+      actions: write
       contents: write
+    outputs:
+      generated_commit: ${{ steps.auto_commit.outputs.committed }}
     concurrency:
       group: auto-generate-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
@@ -30,6 +34,7 @@ jobs:
       - run: go generate ./openapi
       - run: go generate -run "wire" ./...
       - name: Auto-commit generated files
+        id: auto_commit
         if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git config user.name "github-actions[bot]"
@@ -37,9 +42,15 @@ jobs:
           files=(openapi/server.go openapi/spec.go openapi/types.go wire_gen.go)
           if ! git diff --quiet -- "${files[@]}"; then
             git add "${files[@]}"
-            git commit -m "chore: regenerate generated files [skip ci]"
+            git commit -m "chore: regenerate generated files"
             git push origin HEAD:${{ github.head_ref }}
+            gh workflow run main.yml --ref "${{ github.head_ref }}"
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "committed=false" >> "$GITHUB_OUTPUT"
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Verify generated files are committed
         if: github.event_name != 'pull_request' || github.actor == 'github-actions[bot]' || github.event.pull_request.head.repo.full_name != github.repository
         run: |
@@ -53,6 +64,7 @@ jobs:
     name: Mod
     runs-on: ubuntu-24.04
     needs: [generate]
+    if: needs.generate.outputs.generated_commit != 'true'
     steps:
       - uses: actions/checkout@v4
         with:
