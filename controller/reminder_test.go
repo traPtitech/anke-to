@@ -85,7 +85,7 @@ func TestPushReminder(t *testing.T) {
 			description: "3 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(25 * time.Hour),
+				time:            time.Now().Add(23 * time.Hour),
 			},
 			expect: expect{
 				num: 3,
@@ -248,9 +248,9 @@ func TestDeleteReminder(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re := NewReminder()
-		reminderLimit1 := time.Now().Add(25 * time.Hour)
+		reminderLimit1 := time.Now().Add(23 * time.Hour)
 		reminderLimit2 := time.Now().Add(2 * time.Hour)
-		reminderLimit3 := time.Now().Add(25 * time.Hour)
+		reminderLimit3 := time.Now().Add(23 * time.Hour)
 		err := re.PushReminder(1, &reminderLimit1)
 		require.NoError(t, err)
 		err = re.PushReminder(2, &reminderLimit2)
@@ -272,6 +272,7 @@ func TestDeleteReminder(t *testing.T) {
 		assertion.Equal(jobsNum-testCase.expect.num, re.tree.Len(), testCase.description, "reminder num")
 	}
 }
+
 func TestCheckRemindStatus(t *testing.T) {
 	t.Parallel()
 
@@ -323,9 +324,9 @@ func TestCheckRemindStatus(t *testing.T) {
 
 	for _, testCase := range testCases {
 		re := NewReminder()
-		reminderLimit1 := time.Now().Add(25 * time.Hour)
+		reminderLimit1 := time.Now().Add(23 * time.Hour)
 		reminderLimit2 := time.Now().Add(2 * time.Hour)
-		reminderLimit3 := time.Now().Add(25 * time.Hour)
+		reminderLimit3 := time.Now().Add(23 * time.Hour)
 		err := re.PushReminder(1, &reminderLimit1)
 		require.NoError(t, err)
 		err = re.PushReminder(2, &reminderLimit2)
