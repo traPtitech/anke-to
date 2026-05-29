@@ -12,6 +12,14 @@ import (
 	"github.com/traPtitech/anke-to/traq"
 )
 
+var jst = func() *time.Location {
+	loc, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		panic(err)
+	}
+	return loc
+}()
+
 type Job struct {
 	Timestamp       time.Time
 	QuestionnaireID int
@@ -125,6 +133,7 @@ func (re *Reminder) PushReminder(questionnaireID int, limit *time.Time) error {
 }
 
 func reminderTimestamp(limit time.Time, timingMinutes int) time.Time {
+	limit = limit.In(jst)
 	remindTimeStamp := limit.Add(-time.Duration(timingMinutes) * time.Minute)
 	if timingMinutes < 24*60 {
 		return remindTimeStamp
@@ -138,7 +147,7 @@ func reminderTimestamp(limit time.Time, timingMinutes int) time.Time {
 		0,
 		0,
 		0,
-		remindTimeStamp.Location(),
+		jst,
 	)
 	if remindDateAt18.Before(remindTimeStamp) {
 		return remindDateAt18

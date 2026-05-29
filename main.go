@@ -5,6 +5,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"strings"
+	_ "time/tzdata"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"

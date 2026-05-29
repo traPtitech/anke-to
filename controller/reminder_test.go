@@ -153,7 +153,8 @@ func TestPushReminder(t *testing.T) {
 func TestReminderTimestamp(t *testing.T) {
 	t.Parallel()
 
-	jst := time.FixedZone("JST", 9*60*60)
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
 
 	testCases := []struct {
 		description   string
@@ -178,6 +179,12 @@ func TestReminderTimestamp(t *testing.T) {
 			limit:         time.Date(2026, 5, 10, 23, 59, 0, 0, jst),
 			timingMinutes: 60,
 			expected:      time.Date(2026, 5, 10, 22, 59, 0, 0, jst),
+		},
+		{
+			description:   "limit in UTC is normalized to JST before 18:00 rounding",
+			limit:         time.Date(2026, 5, 10, 14, 59, 0, 0, time.UTC),
+			timingMinutes: 10080,
+			expected:      time.Date(2026, 5, 3, 18, 0, 0, 0, jst),
 		},
 	}
 
