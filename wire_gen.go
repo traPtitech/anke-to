@@ -16,6 +16,7 @@ import (
 
 import (
 	_ "net/http/pprof"
+	_ "time/tzdata"
 )
 
 // Injectors from wire.go:
