@@ -1544,6 +1544,90 @@ func TestGetQuestionnaireRespondentsWithAnonymous(t *testing.T) {
 	assertion.Contains(string(body), `"respondents":[]`, "anonymous questionnaire respondents JSON")
 }
 
+func TestGetQuestionnaireRespondentCountAndResponseCount(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+	e := echo.New()
+
+	postQuestionnaire := func(isAnonymous bool) openapi.QuestionnaireDetail {
+		params := newSampleQuestionnaire()
+		params.IsAnonymous = isAnonymous
+		body, err := json.Marshal(params)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/questionnaires", bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		detail, err := q.PostQuestionnaire(e.NewContext(req, rec), params)
+		require.NoError(t, err)
+		return detail
+	}
+
+	publicDetail := postQuestionnaire(false)
+	anonDetail := postQuestionnaire(true)
+	emptyDetail := postQuestionnaire(false)
+
+	// Submit responses while holding the mutex: AddQuestionID2SampleResponse
+	// mutates the package-level sampleResponse fixture.
+	AddQuestionID2SampleResponseMutex.Lock()
+	defer AddQuestionID2SampleResponseMutex.Unlock()
+
+	postResponse := func(questionnaireID int, user string, isDraft bool) {
+		AddQuestionID2SampleResponse(questionnaireID)
+		resp := sampleResponse
+		resp.IsDraft = isDraft
+		body, err := json.Marshal(resp)
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/questionnaire/%d/responses", questionnaireID), bytes.NewReader(body))
+		rec := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		_, err = q.PostQuestionnaireResponse(e.NewContext(req, rec), questionnaireID, resp, user)
+		require.NoError(t, err)
+	}
+
+	// userOne submits twice (duplicate allowed), userTwo submits once,
+	// userThree leaves only a draft -- drafts must NOT be counted.
+	for _, qid := range []int{publicDetail.QuestionnaireId, anonDetail.QuestionnaireId} {
+		postResponse(qid, userOne, false)
+		postResponse(qid, userOne, false)
+		postResponse(qid, userTwo, false)
+		postResponse(qid, userThree, true)
+	}
+
+	getDetail := func(questionnaireID int) openapi.QuestionnaireDetail {
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/questionnaire/%d", questionnaireID), nil)
+		rec := httptest.NewRecorder()
+		d, err := q.GetQuestionnaire(e.NewContext(req, rec), questionnaireID)
+		require.NoError(t, err)
+		return d
+	}
+
+	pub := getDetail(publicDetail.QuestionnaireId)
+	if assertion.NotNil(pub.RespondentCount, "public RespondentCount must be set") {
+		assertion.Equal(2, *pub.RespondentCount, "public respondent_count (unique submitters; drafts excluded)")
+	}
+	if assertion.NotNil(pub.ResponseCount, "public ResponseCount must be set") {
+		assertion.Equal(3, *pub.ResponseCount, "public response_count (total submitted; drafts excluded)")
+	}
+
+	anon := getDetail(anonDetail.QuestionnaireId)
+	assertion.Empty(anon.Respondents, "anonymous Respondents must stay empty")
+	if assertion.NotNil(anon.RespondentCount, "anonymous RespondentCount must be set") {
+		assertion.Equal(2, *anon.RespondentCount, "anonymous respondent_count reflects real unique submitters")
+	}
+	if assertion.NotNil(anon.ResponseCount, "anonymous ResponseCount must be set") {
+		assertion.Equal(3, *anon.ResponseCount, "anonymous response_count reflects real total submissions")
+	}
+
+	empty := getDetail(emptyDetail.QuestionnaireId)
+	if assertion.NotNil(empty.RespondentCount, "no-response RespondentCount must be set") {
+		assertion.Equal(0, *empty.RespondentCount, "no-response respondent_count is 0")
+	}
+	if assertion.NotNil(empty.ResponseCount, "no-response ResponseCount must be set") {
+		assertion.Equal(0, *empty.ResponseCount, "no-response response_count is 0")
+	}
+}
+
 func TestEditQuestionnaire(t *testing.T) {
 	t.Parallel()
 
