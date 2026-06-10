@@ -1,4 +1,4 @@
-FROM golang:1.26.4-alpine as builder
+FROM golang:1.26.3-alpine@sha256:91eda9776261207ea25fd06b5b7fed8d397dd2c0a283e77f2ab6e91bfa71079d as builder
 RUN apk add --update --no-cache ca-certificates git \
  && apk add --no-cache gcc libc-dev \
  && apk add --no-cache openssl
