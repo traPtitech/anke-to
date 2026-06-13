@@ -1,4 +1,4 @@
-FROM golang:1.26.3-alpine@sha256:91eda9776261207ea25fd06b5b7fed8d397dd2c0a283e77f2ab6e91bfa71079d as build-step
+FROM golang:1.26.4-alpine@sha256:7a3e50096189ad57c9f9f865e7e4aa8585ed1585248513dc5cda498e2f41812c as build-step
 RUN apk add --update --no-cache ca-certificates git
 
 WORKDIR /go/src/github.com/traPtitech/anke-to
