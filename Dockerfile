@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.21.0
 
 # build backend
-FROM golang:1.26.4-alpine@sha256:7a3e50096189ad57c9f9f865e7e4aa8585ed1585248513dc5cda498e2f41812c as server-build
+FROM golang:1.26.4-alpine@sha256:3ad57304ad93bbec8548a0437ad9e06a455660655d9af011d58b993f6f615648 as server-build
 RUN --mount=type=cache,target=/var/cache/apk \
   apk add --update git
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o /anke-to -ldflags "-s -w"
 
 # run
-FROM alpine:3.24.0@sha256:a2d49ea686c2adfe3c992e47dc3b5e7fa6e6b5055609400dc2acaeb241c829f4
+FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 WORKDIR /app
 
 RUN apk --update --no-cache add tzdata \
