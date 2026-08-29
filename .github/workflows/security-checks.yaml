@@ -1,0 +1,39 @@
+# 各リポジトリに配置する caller ワークフロー（PR 時のセキュリティチェック一式）。
+# .github/workflows/security-checks.yaml として配置する。
+name: security-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # 未固定の action / イメージ参照を検出し、修正を suggestion で提案する
+  pin-support:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: traPtitech/gha-security/.github/workflows/pin-support.yaml@main
+    with:
+      mode: suggest # commit にすると PR ブランチへ直接修正コミットを push する（要 contents: write）
+
+  # 未固定の参照があれば fail（導入直後は required check にせず様子見を推奨）
+  pin-check:
+    permissions:
+      contents: read
+    uses: traPtitech/gha-security/.github/workflows/pin-check.yaml@main
+
+  # 公開から日が浅い依存バージョンの混入を検出して fail し、違反内容を PR コメントで通知
+  # 緊急時は PR に `cooldown-override` ラベルを付けるとスキップされる
+  # 不要な job はまるごと削除してよい（各機能は独立してオン/オフ可能）
+  cooldown-check:
+    permissions:
+      contents: read
+      pull-requests: write # 違反の PR コメント投稿用（pr-comment: false なら read のみで可）
+    uses: traPtitech/gha-security/.github/workflows/cooldown-check.yaml@main
+    # with:
+    #   pr-comment: false        # PR コメント通知を無効化する場合
+    #   npm-min-age-days: 0      # npm チェックを無効化する場合
+    #   go-min-age-days: 0       # Go チェックを無効化する場合
+    #   actions-min-age-days: 0  # actions チェックを無効化する場合
