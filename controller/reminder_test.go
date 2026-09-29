@@ -85,7 +85,7 @@ func TestPushReminder(t *testing.T) {
 			description: "3 reminders",
 			args: args{
 				questionnaireID: 1,
-				time:            time.Now().Add(25 * time.Hour),
+				time:            time.Now().Add(23 * time.Hour),
 			},
 			expect: expect{
 				num: 3,
