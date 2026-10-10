@@ -153,7 +153,7 @@ jobs:
       - run: go install go.uber.org/mock/mockgen@v0.6.0
       - run: go generate ./model ./traq
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@c76cceaaab89abe74e649d2e34c6c9adc26662d2 # v2.10.0
+        uses: reviewdog/action-golangci-lint@284129a3ac23bc5d8ac1522e0b6511df74a8836d # v2.10.2
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
